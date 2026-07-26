@@ -107,12 +107,15 @@ struct TodayView: View {
 private struct HeadlineCard: View {
     let summary: DaySummary
     @Environment(\.motion) private var motion
+    /// The one display figure in the app, scaled by hand because no semantic style is
+    /// anywhere near 46 points.
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize = Design.Text.heroSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: Design.Space.section) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(formatDurationShort(summary.activeSeconds))
-                    .font(Design.Text.hero)
+                    .font(Design.Text.hero(heroSize))
                     .monospacedDigit()
                     // The day's total re-derives every thirty seconds. A number that
                     // replaces itself is a flicker; one that rolls is the same number,
@@ -249,6 +252,11 @@ struct SessionCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            // A real focus ring, so Tab reaches the card and Return opens it. Without this
+            // the whole surface was mouse-only: the cards were buttons the keyboard could
+            // not get to.
+            .focusable()
+            .focusEffectDisabled(false)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityDescription)
             .accessibilityHint(expanded ? "Collapses this session" : "Expands this session")
@@ -316,6 +324,9 @@ struct SessionCard: View {
         }
         // A bookmarked session gently glows rather than shouting: the same card, warmed.
         .card(border: annotation.bookmarked ? Design.Colour.markedBorder : Design.Colour.border)
+        // Escape closes what is open, consistently with every other transient thing on the
+        // Mac. Only when something *is* open, so it does not swallow the key otherwise.
+        .onExitCommand(perform: expanded ? { withAnimation(motion.animation(Design.Motion.settle)) { expanded = false } } : nil)
         // The same actions on right-click, because that is where a Mac user looks first
         // and a ⋯ that only appears once expanded is a menu you have to find.
         .contextMenu {

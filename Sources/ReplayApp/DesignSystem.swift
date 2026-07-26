@@ -90,13 +90,25 @@ enum Design {
 
     // ── typography ────────────────────────────────────────────────────────────
 
-    /// Named roles rather than sizes. A view asks for "the figure a day leads with", not
-    /// for 46pt, so the scale can be retuned in one place.
+    /// Named roles, expressed as **semantic text styles** rather than point sizes.
+    ///
+    /// This is what makes Dynamic Type work. A `Font.system(size: 15)` is 15 points at every
+    /// accessibility setting; `.title3` is 15 points at the default one and grows when
+    /// someone has asked the system for larger text. The role names are unchanged — a view
+    /// still asks for "a session's name" — but what they resolve to now depends on the
+    /// reader rather than on me.
+    ///
+    /// The one figure that stays a fixed size is the hero, and it is scaled explicitly by
+    /// the view that draws it (see `HeadlineCard`): at 46 points it is a display figure, and
+    /// no semantic style is anywhere near it.
     enum Text {
-        /// The number Today exists to show.
-        static let hero = Font.system(size: 46, weight: .bold, design: .rounded)
+        /// The number Today exists to show. Paired with `@ScaledMetric` at the call site.
+        static let heroSize: CGFloat = 46
+        static func hero(_ size: CGFloat) -> Font {
+            .system(size: size, weight: .bold, design: .rounded)
+        }
         /// A page title.
-        static let title = Font.system(size: 28, weight: .bold)
+        static let title = Font.largeTitle.weight(.bold)
         /// A card's headline figure.
         static let figure = Font.callout.weight(.medium)
         /// A session's name.
@@ -112,17 +124,14 @@ enum Design {
         /// An uppercase section label. Pair with ``Design/Text/labelKerning``.
         static let sectionLabel = Font.caption.weight(.semibold)
         /// The uppercase micro-label inside a card.
-        static let cardLabel = Font.system(size: 9, weight: .semibold)
+        static let cardLabel = Font.caption2.weight(.semibold)
         /// Prose meant to be read rather than scanned — a day's story.
-        static let prose = Font.system(size: 15)
-        /// The About panel's mark.
-        static let aboutMark = Font.system(size: 44)
-        /// A glyph small enough to sit inside a ring or a pill, where the type scale's
-        /// smallest step is still too large.
-        static let ringFigure = Font.system(size: 11, weight: .medium)
-        static let ringGlyph = Font.system(size: 12, weight: .bold)
-        static let pillGlyph = Font.system(size: 8, weight: .bold)
-        static let closeGlyph = Font.system(size: 7, weight: .bold)
+        static let prose = Font.title3
+        /// A glyph small enough to sit inside a ring or a pill.
+        static let ringFigure = Font.caption.weight(.medium)
+        static let ringGlyph = Font.caption.weight(.bold)
+        static let pillGlyph = Font.caption2.weight(.bold)
+        static let closeGlyph = Font.caption2.weight(.bold)
 
         /// Uppercase labels need loosening or they set too tight to read.
         static let labelKerning: CGFloat = 0.6
@@ -360,6 +369,7 @@ extension EnvironmentValues {
     var motion: Design.MotionPreference {
         Design.MotionPreference(reduced: accessibilityReduceMotion)
     }
+
 }
 
 extension View {
