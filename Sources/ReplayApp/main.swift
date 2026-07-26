@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var story = StoryModel(model: model, preferences: preferences)
     private lazy var relationships = RelationshipsModel(model: model)
     private lazy var museum = MuseumModel(model: model, projects: projects)
+    private lazy var canvas = CanvasModel(model: model, projects: projects, story: story)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -197,6 +198,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewMenu.addItem(
             withTitle: "Story", action: #selector(openStory), keyEquivalent: "9"
         ).target = self
+        // No shortcut: the digits run out at nine, and Canvas is a place you go to look
+        // around rather than one you flick to.
+        viewMenu.addItem(
+            withTitle: "Canvas", action: #selector(openCanvas), keyEquivalent: ""
+        ).target = self
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
 
@@ -271,6 +277,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 story: story,
                 relationships: relationships,
                 museum: museum,
+                canvas: canvas,
                 onOpenSettings: { [weak self] in self?.openSettings() }
             )
         )
@@ -298,6 +305,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openToday() {
         model.reload()
         navigation.show(.today)
+        showWindow()
+    }
+
+    @objc private func openCanvas() {
+        canvas.load()
+        navigation.show(.canvas)
         showWindow()
     }
 

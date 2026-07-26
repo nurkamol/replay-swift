@@ -474,6 +474,8 @@ function buildExportFixtures() {
        export { detectChapters, chapterDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/chapters.ts"))};
        export { listPeriods, summarizePeriod } from ${JSON.stringify(join(GLAZE, "renderer/lib/autobiography.ts"))};
        export { detectMoments, pickDailyQuote } from ${JSON.stringify(join(GLAZE, "renderer/lib/moments.ts"))};
+       export { buildConstellation } from ${JSON.stringify(join(GLAZE, "renderer/lib/constellation.ts"))};
+       export { buildCanvas } from ${JSON.stringify(join(GLAZE, "renderer/lib/canvas.ts"))};
        export { historyTargets, findMemories, relativeDayLabel, shortDateLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
        export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen, excludeIdleStretches } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
@@ -551,7 +553,7 @@ function buildExportFixtures() {
                projectDefaultName, relativeDayLabel, shortDateLabel, detectRituals,
                detectChapters, chapterDefaultName, listPeriods, summarizePeriod,
                computeLegacy, computeWorkflowPartners, computeRelationship,
-               detectMoments, pickDailyQuote,
+               detectMoments, pickDailyQuote, buildConstellation, buildCanvas,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -660,6 +662,22 @@ function buildExportFixtures() {
        );
        const quote = pickDailyQuote(moments, input.momentNow);
 
+       // The graph behind the canvas, over the workflow fixture's sessions — small
+       // enough to record in full, and it already has two projects and repeated
+       // switching between the same pairs.
+       const constellation = buildConstellation(workflowSessions, 16);
+       const canvasProjects = detectProjects(workflowSessions).map((p) => ({
+         ...p,
+         name: projectDefaultName(p),
+         named: false,
+       }));
+       const canvasChapters = detectChapters(input.chapterSummaries, new Map()).map((c) => ({
+         ...c,
+         name: chapterDefaultName(c),
+         named: false,
+       }));
+       const canvas = buildCanvas(workflowSessions, canvasProjects, canvasChapters, moments);
+
        // How two applications are used together. The anchor is the app that appears in
        // every session of the workflow fixture, so partners exist to be ranked at all.
        const partners = computeWorkflowPartners(workflowSessions, input.anchorKey);
@@ -766,6 +784,8 @@ function buildExportFixtures() {
          legacy,
          moments,
          quoteKey: quote ? quote.key : null,
+         constellation,
+         canvas,
          partners,
          relationship: relationship && {
            ...relationship,
@@ -1297,6 +1317,10 @@ function buildExportFixtures() {
         expected: result.autobiography,
       },
       legacy: { expected: result.legacy },
+      canvas: {
+        constellation: result.constellation,
+        expected: result.canvas,
+      },
       moments: {
         events: momentEvents,
         now: momentNow,

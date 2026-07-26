@@ -1540,6 +1540,383 @@
       ]
     }
   },
+  "canvas": {
+    "constellation": {
+      "nodes": [
+        {
+          "key": "com.apple.Safari",
+          "applicationName": "Safari",
+          "appPath": null,
+          "bundleIdentifier": "com.apple.Safari",
+          "category": "Research",
+          "totalSeconds": 1200,
+          "sessionCount": 2
+        },
+        {
+          "key": "com.microsoft.VSCode",
+          "applicationName": "Code",
+          "appPath": null,
+          "bundleIdentifier": "com.microsoft.VSCode",
+          "category": "Development",
+          "totalSeconds": 1100,
+          "sessionCount": 2
+        },
+        {
+          "key": "com.apple.Terminal",
+          "applicationName": "Terminal",
+          "appPath": null,
+          "bundleIdentifier": "com.apple.Terminal",
+          "category": "Development",
+          "totalSeconds": 700,
+          "sessionCount": 2
+        },
+        {
+          "key": "com.apple.Notes",
+          "applicationName": "Notes",
+          "appPath": null,
+          "bundleIdentifier": "com.apple.Notes",
+          "category": "Writing",
+          "totalSeconds": 600,
+          "sessionCount": 1
+        },
+        {
+          "key": "com.apple.mail",
+          "applicationName": "Mail",
+          "appPath": null,
+          "bundleIdentifier": "com.apple.mail",
+          "category": "Communication",
+          "totalSeconds": 600,
+          "sessionCount": 2
+        }
+      ],
+      "edges": [
+        {
+          "a": "com.apple.Safari",
+          "b": "com.apple.mail",
+          "weight": 2
+        },
+        {
+          "a": "com.apple.Terminal",
+          "b": "com.microsoft.VSCode",
+          "weight": 2
+        }
+      ],
+      "maxWeight": 2
+    },
+    "expected": {
+      "nodes": [
+        {
+          "id": "app:com.apple.Safari",
+          "type": "app",
+          "label": "Safari",
+          "subtitle": "20m · 2 sessions",
+          "category": "Research",
+          "weight": 1200,
+          "appPath": null,
+          "bundleId": "com.apple.Safari",
+          "ref": "com.apple.Safari"
+        },
+        {
+          "id": "app:com.microsoft.VSCode",
+          "type": "app",
+          "label": "Code",
+          "subtitle": "18m · 2 sessions",
+          "category": "Development",
+          "weight": 1100,
+          "appPath": null,
+          "bundleId": "com.microsoft.VSCode",
+          "ref": "com.microsoft.VSCode"
+        },
+        {
+          "id": "app:com.apple.Terminal",
+          "type": "app",
+          "label": "Terminal",
+          "subtitle": "12m · 2 sessions",
+          "category": "Development",
+          "weight": 700,
+          "appPath": null,
+          "bundleId": "com.apple.Terminal",
+          "ref": "com.apple.Terminal"
+        },
+        {
+          "id": "app:com.apple.Notes",
+          "type": "app",
+          "label": "Notes",
+          "subtitle": "10m · 1 session",
+          "category": "Writing",
+          "weight": 600,
+          "appPath": null,
+          "bundleId": "com.apple.Notes",
+          "ref": "com.apple.Notes"
+        },
+        {
+          "id": "app:com.apple.mail",
+          "type": "app",
+          "label": "Mail",
+          "subtitle": "10m · 2 sessions",
+          "category": "Communication",
+          "weight": 600,
+          "appPath": null,
+          "bundleId": "com.apple.mail",
+          "ref": "com.apple.mail"
+        },
+        {
+          "id": "project:com.apple.Safari|com.apple.mail",
+          "type": "project",
+          "label": "Research · Safari",
+          "subtitle": "30m · 2 sessions",
+          "category": "Research",
+          "weight": 1800,
+          "appPath": null,
+          "bundleId": "com.apple.Safari",
+          "ref": "com.apple.Safari|com.apple.mail"
+        },
+        {
+          "id": "project:com.apple.Terminal|com.microsoft.VSCode",
+          "type": "project",
+          "label": "Development · Code",
+          "subtitle": "30m · 2 sessions",
+          "category": "Development",
+          "weight": 1800,
+          "appPath": null,
+          "bundleId": "com.microsoft.VSCode",
+          "ref": "com.apple.Terminal|com.microsoft.VSCode"
+        },
+        {
+          "id": "chapter:1767225600000",
+          "type": "chapter",
+          "label": "Development · Jan 2026",
+          "subtitle": "Jan 1 – Jan 5 · 5 days",
+          "category": "Development",
+          "weight": 19800,
+          "appPath": null,
+          "bundleId": "com.microsoft.VSCode",
+          "ref": "1767225600000"
+        },
+        {
+          "id": "chapter:1767657600000",
+          "type": "chapter",
+          "label": "Research · Jan 2026",
+          "subtitle": "Jan 6 – Jan 9 · 3 days",
+          "category": "Research",
+          "weight": 12600,
+          "appPath": null,
+          "bundleId": "com.apple.Safari",
+          "ref": "1767657600000"
+        },
+        {
+          "id": "chapter:1772236800000",
+          "type": "chapter",
+          "label": "Development · Feb–Mar 2026",
+          "subtitle": "Feb 28 – Mar 4 · 3 days",
+          "category": "Development",
+          "weight": 10800,
+          "appPath": null,
+          "bundleId": "com.microsoft.VSCode",
+          "ref": "1772236800000"
+        },
+        {
+          "id": "chapter:1769644800000",
+          "type": "chapter",
+          "label": "Research · Jan 2026",
+          "subtitle": "Jan 29 – Jan 30 · 2 days",
+          "category": "Research",
+          "weight": 7200,
+          "appPath": null,
+          "bundleId": "com.apple.Safari",
+          "ref": "1769644800000"
+        },
+        {
+          "id": "collection:Research",
+          "type": "collection",
+          "label": "Research",
+          "subtitle": "4 members",
+          "category": "Research",
+          "weight": 22800,
+          "ref": "Research"
+        },
+        {
+          "id": "collection:Development",
+          "type": "collection",
+          "label": "Development",
+          "subtitle": "5 members",
+          "category": "Development",
+          "weight": 34200,
+          "ref": "Development"
+        },
+        {
+          "id": "moment:longest-1770109200000",
+          "type": "moment",
+          "label": "Your longest focus",
+          "subtitle": "30m without switching away, in Code — yesterday.",
+          "category": "Other",
+          "weight": 1,
+          "appPath": null,
+          "bundleId": null,
+          "ref": "1770076800000"
+        },
+        {
+          "id": "moment:peak-1767312000000",
+          "type": "moment",
+          "label": "Your most active day",
+          "subtitle": "2h active on Friday, January 2, 2026, mostly in Code.",
+          "category": "Other",
+          "weight": 1,
+          "appPath": null,
+          "bundleId": null,
+          "ref": "1767312000000"
+        },
+        {
+          "id": "moment:mix-1770076800000",
+          "type": "moment",
+          "label": "Your busiest mix",
+          "subtitle": "8 different apps in a single day — yesterday.",
+          "category": "Other",
+          "weight": 1,
+          "appPath": null,
+          "bundleId": null,
+          "ref": "1770076800000"
+        },
+        {
+          "id": "moment:night-1770163200000",
+          "type": "moment",
+          "label": "A late night",
+          "subtitle": "You were still going at 2:14 AM — today.",
+          "category": "Other",
+          "weight": 1,
+          "appPath": null,
+          "bundleId": null,
+          "ref": "1770163200000"
+        },
+        {
+          "id": "moment:streak-1767744000000",
+          "type": "moment",
+          "label": "A steady stretch",
+          "subtitle": "You were active 7 days in a row, ending on Wednesday, January 7, 2026.",
+          "category": "Other",
+          "weight": 1,
+          "appPath": null,
+          "bundleId": null,
+          "ref": "1767744000000"
+        },
+        {
+          "id": "moment:new-com.apple.Notes",
+          "type": "moment",
+          "label": "First time in Notes",
+          "subtitle": "You opened Notes for the first time 3 days ago.",
+          "category": "Other",
+          "weight": 1,
+          "appPath": null,
+          "bundleId": null,
+          "ref": "1769904000000"
+        },
+        {
+          "id": "moment:origin",
+          "type": "moment",
+          "label": "Where it began",
+          "subtitle": "You've been building this memory for 41 days — since Thursday, December 25, 2025.",
+          "category": "Other",
+          "weight": 1,
+          "appPath": null,
+          "bundleId": null,
+          "ref": "1766620800000"
+        }
+      ],
+      "edges": [
+        {
+          "a": "app:com.apple.Safari",
+          "b": "app:com.apple.mail",
+          "weight": 2,
+          "kind": "app-app"
+        },
+        {
+          "a": "app:com.apple.Terminal",
+          "b": "app:com.microsoft.VSCode",
+          "weight": 2,
+          "kind": "app-app"
+        },
+        {
+          "a": "project:com.apple.Safari|com.apple.mail",
+          "b": "app:com.apple.Safari",
+          "weight": 1200,
+          "kind": "project-app"
+        },
+        {
+          "a": "project:com.apple.Safari|com.apple.mail",
+          "b": "app:com.apple.mail",
+          "weight": 600,
+          "kind": "project-app"
+        },
+        {
+          "a": "project:com.apple.Terminal|com.microsoft.VSCode",
+          "b": "app:com.microsoft.VSCode",
+          "weight": 1100,
+          "kind": "project-app"
+        },
+        {
+          "a": "project:com.apple.Terminal|com.microsoft.VSCode",
+          "b": "app:com.apple.Terminal",
+          "weight": 700,
+          "kind": "project-app"
+        },
+        {
+          "a": "collection:Research",
+          "b": "app:com.apple.Safari",
+          "weight": 1,
+          "kind": "collection-member"
+        },
+        {
+          "a": "collection:Development",
+          "b": "app:com.microsoft.VSCode",
+          "weight": 1,
+          "kind": "collection-member"
+        },
+        {
+          "a": "collection:Development",
+          "b": "app:com.apple.Terminal",
+          "weight": 1,
+          "kind": "collection-member"
+        },
+        {
+          "a": "collection:Research",
+          "b": "project:com.apple.Safari|com.apple.mail",
+          "weight": 1,
+          "kind": "collection-member"
+        },
+        {
+          "a": "collection:Development",
+          "b": "project:com.apple.Terminal|com.microsoft.VSCode",
+          "weight": 1,
+          "kind": "collection-member"
+        },
+        {
+          "a": "collection:Development",
+          "b": "chapter:1767225600000",
+          "weight": 1,
+          "kind": "chapter-collection"
+        },
+        {
+          "a": "collection:Research",
+          "b": "chapter:1767657600000",
+          "weight": 1,
+          "kind": "chapter-collection"
+        },
+        {
+          "a": "collection:Development",
+          "b": "chapter:1772236800000",
+          "weight": 1,
+          "kind": "chapter-collection"
+        },
+        {
+          "a": "collection:Research",
+          "b": "chapter:1769644800000",
+          "weight": 1,
+          "kind": "chapter-collection"
+        }
+      ],
+      "maxAppWeight": 2
+    }
+  },
   "moments": {
     "events": [
       {

@@ -16,7 +16,7 @@ final class Navigation {
     enum Surface: String, CaseIterable, Identifiable, Hashable {
         case today = "Today", apps = "Apps", week = "This Week", timeline = "Timeline", search = "Search"
         case memories = "Memories", collections = "Collections", projects = "Projects"
-        case story = "Story"
+        case story = "Story", canvas = "Canvas"
 
         var id: String { rawValue }
 
@@ -34,6 +34,7 @@ final class Navigation {
             case .collections: "square.stack"
             case .projects: "shippingbox"
             case .story: "book.closed"
+            case .canvas: "sparkles"
             }
         }
 
@@ -50,6 +51,7 @@ final class Navigation {
             case .collections: "Sessions gathered by the kind of work"
             case .projects: "The applications that keep coming back together"
             case .story: "The long view — eras, rituals, and your history told back"
+            case .canvas: "Your history as a landscape you can move through"
             }
         }
     }
@@ -134,6 +136,7 @@ struct RootView: View {
     let story: StoryModel
     let relationships: RelationshipsModel
     let museum: MuseumModel
+    let canvas: CanvasModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -218,6 +221,7 @@ struct RootView: View {
             case .apps: apps.load()
             case .projects: projects.load()
             case .story: story.load()
+            case .canvas: canvas.load()
             case .today: break
             }
         }
@@ -236,6 +240,21 @@ struct RootView: View {
         }
         .help(navigation.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar")
         .accessibilityLabel(navigation.sidebarCollapsed ? "Show sidebar" : "Hide sidebar")
+    }
+
+    /// A node leads wherever that kind of thing lives — the canvas is a way *into* the app
+    /// rather than a place of its own.
+    private func openCanvasNode(_ node: CanvasGraph.Node) {
+        switch node.type {
+        case .app: navigation.open(app: node.ref)
+        case .project: navigation.open(project: node.ref)
+        case .chapter: navigation.open(story: .chapter(node.ref))
+        case .collection:
+            collections.opened = SessionCategory(rawValue: node.ref)
+            navigation.show(.collections)
+        case .moment:
+            if let day = Int64(node.ref) { navigation.open(day: day) }
+        }
     }
 
     @ViewBuilder
@@ -349,6 +368,8 @@ struct RootView: View {
                 apps: apps, preferences: preferences,
                 onOpenApp: { navigation.open(app: $0) }
             )
+        case .canvas:
+            CanvasView(canvas: canvas, onOpen: openCanvasNode)
         case .story:
             StoryView(story: story, onOpen: { navigation.open(story: $0) })
         case .projects:

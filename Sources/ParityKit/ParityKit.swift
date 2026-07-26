@@ -290,6 +290,45 @@ public enum ParityKit {
             public let peakCases: [PeakCase]
         }
 
+        public struct CanvasCase: Decodable, Sendable {
+            public struct Constellation: Decodable, Sendable {
+                public struct Node: Decodable, Sendable {
+                    public let key: String
+                    public let totalSeconds: Int
+                    public let sessionCount: Int
+                }
+                public struct Edge: Decodable, Sendable {
+                    public let a: String
+                    public let b: String
+                    public let weight: Int
+                }
+                public let nodes: [Node]
+                public let edges: [Edge]
+                public let maxWeight: Int
+            }
+            public struct Graph: Decodable, Sendable {
+                public struct Node: Decodable, Sendable {
+                    public let id: String
+                    public let type: String
+                    public let label: String
+                    public let subtitle: String
+                    public let weight: Int
+                    public let ref: String
+                }
+                public struct Edge: Decodable, Sendable {
+                    public let a: String
+                    public let b: String
+                    public let weight: Int
+                    public let kind: String
+                }
+                public let nodes: [Node]
+                public let edges: [Edge]
+                public let maxAppWeight: Int
+            }
+            public let constellation: Constellation
+            public let expected: Graph
+        }
+
         public struct MomentsCase: Decodable, Sendable {
             public struct Seed: Decodable, Sendable {
                 public struct FirstSeen: Decodable, Sendable {
@@ -550,6 +589,8 @@ public enum ParityKit {
         public let relationships: RelationshipsCase
         /// The memories worth rediscovering.
         public let moments: MomentsCase
+        /// The graph behind the memory space.
+        public let canvas: CanvasCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -1183,6 +1224,62 @@ public enum ParityKit {
         equal(mog, "the day's featured moment is chosen from the day itself",
               pickDailyQuote(moments, now: fixture.moments.now, calendar: calendar)?.key,
               fixture.moments.quoteKey)
+
+        // The canvas graph, and the constellation under it. Every node and every edge is
+        // compared: an explorable landscape whose links are subtly wrong is worse than none.
+        let cvg = "canvas"
+        let stars = buildConstellation(workflowSessions, maxNodes: 16)
+        let cvx = fixture.canvas
+        equal(cvg, "the busiest applications, most time first",
+              stars.nodes.map(\.key), cvx.constellation.nodes.map(\.key))
+        equal(cvg, "each with the same time behind it",
+              stars.nodes.map(\.totalSeconds), cvx.constellation.nodes.map(\.totalSeconds))
+        equal(cvg, "across the same sessions",
+              stars.nodes.map(\.sessionCount), cvx.constellation.nodes.map(\.sessionCount))
+        equal(cvg, "tied by the same pairs, strongest first",
+              stars.edges.map { [$0.a, $0.b] },
+              cvx.constellation.edges.map { [$0.a, $0.b] })
+        equal(cvg, "with the same weights",
+              stars.edges.map(\.weight), cvx.constellation.edges.map(\.weight))
+        equal(cvg, "and the same strongest tie", stars.maxWeight, cvx.constellation.maxWeight)
+
+        let canvasProjects = detectProjects(workflowSessions).map {
+            CanvasProject(
+                id: $0.id, name: projectDefaultName($0), category: $0.category,
+                apps: $0.apps, totalSeconds: $0.totalSeconds, sessionCount: $0.sessionCount
+            )
+        }
+        let canvasChapters = detectChapters(summaries, calendar: calendar).map {
+            CanvasChapter(
+                id: $0.id, name: chapterDefaultName($0, calendar: calendar),
+                category: $0.category, apps: $0.apps,
+                totalActiveSeconds: $0.totalActiveSeconds, dayCount: $0.dayCount,
+                startDay: $0.startDay, endDay: $0.endDay
+            )
+        }
+        let graph = buildCanvas(
+            sessions: workflowSessions, projects: canvasProjects,
+            chapters: canvasChapters, moments: moments,
+            calendar: calendar, locale: environment.locale
+        )
+        equal(cvg, "the same nodes, in the same order",
+              graph.nodes.map(\.id), cvx.expected.nodes.map(\.id))
+        equal(cvg, "of the same kinds",
+              graph.nodes.map(\.type.rawValue), cvx.expected.nodes.map(\.type))
+        equal(cvg, "labelled the same", graph.nodes.map(\.label), cvx.expected.nodes.map(\.label))
+        equal(cvg, "with the same supporting line",
+              graph.nodes.map(\.subtitle), cvx.expected.nodes.map(\.subtitle))
+        equal(cvg, "weighted the same", graph.nodes.map(\.weight), cvx.expected.nodes.map(\.weight))
+        equal(cvg, "and opening the same thing",
+              graph.nodes.map(\.ref), cvx.expected.nodes.map(\.ref))
+        equal(cvg, "the same edges, in the same order",
+              graph.edges.map { [$0.a, $0.b] }, cvx.expected.edges.map { [$0.a, $0.b] })
+        equal(cvg, "of the same kinds",
+              graph.edges.map(\.kind.rawValue), cvx.expected.edges.map(\.kind))
+        equal(cvg, "with the same weights",
+              graph.edges.map(\.weight), cvx.expected.edges.map(\.weight))
+        equal(cvg, "and the same strongest application tie",
+              graph.maxAppWeight, cvx.expected.maxAppWeight)
 
         // Rituals — the quiet patterns in a run of days. A part of the day only counts once
         // the same app has led it more than once, which is the guard against a single

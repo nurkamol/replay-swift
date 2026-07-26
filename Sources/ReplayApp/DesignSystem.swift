@@ -239,6 +239,16 @@ enum Design {
         static let arcQuietOpacity: Double = 0.60
         /// A day with nothing recorded, dimmed as a whole — rest, not absence.
         static let arcRestOpacity: Double = 0.50
+
+        /// The canvas. Edges are faint so the nodes read first, and a stronger tie is a
+        /// slightly stronger line rather than a different colour.
+        static let canvasEdgeFloor: Double = 0.10
+        static let canvasEdgeRange: Double = 0.25
+        static let canvasEdgeBase: Double = 0.35
+        static let canvasProjectOpacity: Double = 0.65
+        static let canvasChapterOpacity: Double = 0.70
+        static let canvasMomentOpacity: Double = 0.80
+        static let canvasAppOpacity: Double = 0.55
         static let markedBorder = AnyShapeStyle(Color.yellow.opacity(0.45))
         /// A goal that was reached. The app's only approving colour.
         static let met = Color.green
@@ -399,6 +409,22 @@ enum Design {
         static let arcMaxWidth: CGFloat = 560
         /// The hour scale under the seven rows.
         static let axisHeight: CGFloat = 12
+        /// The canvas: how big a node gets, how far it can be zoomed, and how forgiving a
+        /// click on one is.
+        static let canvasMinRadius: CGFloat = 7
+        static let canvasMaxRadius: CGFloat = 34
+        static let canvasRadiusScale: CGFloat = 0.22
+        static let canvasMomentRadius: CGFloat = 5
+        static let canvasCollectionRadius: CGFloat = 26
+        static let canvasEdgeWidth: CGFloat = 1
+        static let canvasSelectionInset: CGFloat = 3
+        static let canvasSelectionWidth: CGFloat = 2
+        /// Below this drawn radius a label is noise rather than information.
+        static let canvasLabelThreshold: CGFloat = 9
+        static let canvasHitSlack: CGFloat = 6
+        static let canvasMinZoom: CGFloat = 0.4
+        static let canvasMaxZoom: CGFloat = 3
+        static let canvasPreviewWidth: CGFloat = 300
         /// A small numeric field in Settings.
         static let numberField: CGFloat = 60
         /// A tag entry field, sized to a tag rather than to the row.

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 607 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 623 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,8 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| Constellation | done | `buildConstellation` — applications as stars, tied by direct switches, pairs under two dropped |
+| Canvas graph | done | `buildCanvas` — every node and every edge compared, including the subtitles. 16 checks |
 | Moments | done | `detectMoments` + `pickDailyQuote` — seven kinds, each with a threshold, compared as text. 7 checks |
 | The archive | done | `computeLegacy` — first day, active days, years, and the applications behind all of it. 9 checks. Its figures live inside a view upstream, so the fixture re-declares them, as `sessionMatches` does |
 | App relationships | done | `computeWorkflowPartners` + `computeRelationship` — switches, shared sessions, direction and average length. A pair must have been switched between twice to count. 11 checks |
@@ -64,6 +66,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| Canvas | done | the graph drawn as a field, with pan, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
 | Museum | done | the day's featured moment, the milestones, the deepest stretches, what was bookmarked, what was written, and the work that took the most |
 | My Story | done | the archive at a glance: how long, how much, which years, and the applications that ran through it |
 | App relationships | done | reached from an application's "works alongside" list — which way the switching runs, and every session the two shared |
