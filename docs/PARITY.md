@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 529 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 555 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,8 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| Projects | done | `detectProjects` — the same signature grouping as workflows but keeping the whole span, apps aggregated across every session, most recently active first. 10 checks. Names are the only thing stored |
+| Relative day labels | done | `relativeDayLabel` and `shortDateLabel`, both locale renderings and both recorded rather than assumed |
 | Application totals | done | `computeAppStats` — most-used first, idle stretches excluded, an open row measured against `now`, ties holding first-seen order. 7 checks |
 | Resume target | done | `findResumeTarget` + `formatWhen` — the last session you actually stepped away from, never the one you are in. 25 checks, including both sides of the three-minute in-progress window |
 | Workflows (recurring app combinations) | done | `detectWorkflows` — signature grouping, recurring-only, ranked by time. 8 checks. Projects and app-to-app relationships from the same module are **not** ported |
@@ -56,6 +58,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| Projects | done | a grid of what keeps coming back, and a page for each: how it grew, the apps that make it up, and every session under it. Renameable, with an empty name falling back to Replay's own description |
 | Apps | done | ranked by time, with a Today/This Week/This Month window, pinned favourites, and a row leading into that application's own history |
 | An application's history | partial | header, the four figures, which collections it appears in, and its recent sessions. No "works alongside" — `computeWorkflowPartners` is not ported |
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
@@ -79,12 +82,14 @@ function now and live in `ReplayCore` where the suite can reach them.
 
 ## Known divergences to keep an eye on
 
-- **Every workflow on This Week can carry the same title.** A workflow is named after the
-  category most of its sessions were — `"\(category) Workflow"` — so a week spent mostly in
-  a browser produces four rows all called "Research Workflow", told apart only by the app
-  list beneath. Inherited, not introduced: the reference does the same, and the titles are
-  contract-checked. Left alone deliberately. If it is ever changed, change it in the Glaze
-  app first and let `spec/` carry it here.
+- **Workflows and projects can each carry the same name several times over.** A workflow is
+  named after the category most of its sessions were, and a project after that category plus
+  its lead app — so a week spent mostly in a browser produces four "Research Workflow" rows,
+  and real history produces three projects all called "Development · Terminal", told apart
+  only by the app list beneath. Inherited, not introduced: the reference does the same, and
+  both names are contract-checked. Left alone deliberately, and a project at least can be
+  renamed. If it is ever changed, change it in the Glaze app first and let `spec/` carry it
+  here.
 - **A pushed screen had no way back.** A toolbar declared on the root view, or on the
   `NavigationStack` around it, vanishes the moment a destination is pushed: the innermost
   view's toolbar wins and a pushed screen has none. This window hosts SwiftUI inside an

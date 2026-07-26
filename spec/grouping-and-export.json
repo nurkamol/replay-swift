@@ -1090,6 +1090,56 @@
         "now": 1770422400000,
         "label": "Monday at 12:00 PM"
       }
+    ],
+    "dayLabels": [
+      {
+        "at": 1770849900000,
+        "now": 1770857100000,
+        "relative": "Yesterday",
+        "short": "Feb 11, 2026"
+      },
+      {
+        "at": 1770770700000,
+        "now": 1770857100000,
+        "relative": "Yesterday",
+        "short": "Feb 11, 2026"
+      },
+      {
+        "at": 1770597900000,
+        "now": 1770857100000,
+        "relative": "3 days ago",
+        "short": "Feb 9, 2026"
+      },
+      {
+        "at": 1770338700000,
+        "now": 1770857100000,
+        "relative": "6 days ago",
+        "short": "Feb 6, 2026"
+      },
+      {
+        "at": 1770252300000,
+        "now": 1770857100000,
+        "relative": "Feb 5",
+        "short": "Feb 5, 2026"
+      },
+      {
+        "at": 1767401100000,
+        "now": 1770857100000,
+        "relative": "Jan 3",
+        "short": "Jan 3, 2026"
+      },
+      {
+        "at": 1769990400000,
+        "now": 1770422400000,
+        "relative": "5 days ago",
+        "short": "Feb 2, 2026"
+      },
+      {
+        "at": 1770033600000,
+        "now": 1770422400000,
+        "relative": "5 days ago",
+        "short": "Feb 2, 2026"
+      }
     ]
   },
   "workflows": {
@@ -1225,6 +1275,62 @@
         ],
         "totalSeconds": 1800,
         "sessionCount": 2
+      }
+    ],
+    "projects": [
+      {
+        "id": "com.apple.Safari|com.apple.mail",
+        "category": "Research",
+        "apps": [
+          {
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "seconds": 1200
+          },
+          {
+            "applicationName": "Mail",
+            "bundleIdentifier": "com.apple.mail",
+            "appPath": null,
+            "seconds": 600
+          }
+        ],
+        "totalSeconds": 1800,
+        "sessionCount": 2,
+        "firstSeen": 1770195600000,
+        "lastActive": 1770282800000,
+        "sessionStarts": [
+          1770282000000,
+          1770195600000
+        ],
+        "defaultName": "Research · Safari"
+      },
+      {
+        "id": "com.apple.Terminal|com.microsoft.VSCode",
+        "category": "Development",
+        "apps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "seconds": 1100
+          },
+          {
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "seconds": 700
+          }
+        ],
+        "totalSeconds": 1800,
+        "sessionCount": 2,
+        "firstSeen": 1770022800000,
+        "lastActive": 1770110000000,
+        "sessionStarts": [
+          1770109200000,
+          1770022800000
+        ],
+        "defaultName": "Development · Code"
       }
     ]
   },

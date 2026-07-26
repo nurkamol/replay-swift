@@ -356,6 +356,8 @@ enum Design {
         /// read, however wide the window is.
         static let readableWidth: CGFloat = 760
 
+        /// The least width a card in a grid gets before the grid drops to one column.
+        static let cardMinWidth: CGFloat = 320
         /// A settings row's control column, so labels and controls align down the page.
         static let settingsControlGap: CGFloat = 16
         /// The width an app name is given in an app-breakdown row, so bars line up.

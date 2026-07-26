@@ -468,8 +468,9 @@ function buildExportFixtures() {
       `export { groupByDay, computeAppStats } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
        export { buildDayStory } from ${JSON.stringify(join(GLAZE, "renderer/lib/day-story.ts"))};
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
-       export { detectWorkflows } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
-       export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
+       export { detectWorkflows, detectProjects } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
+       export { projectDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/projects.ts"))};
+       export { historyTargets, findMemories, relativeDayLabel, shortDateLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
        export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen, excludeIdleStretches } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
        // sessionMatches is module-private in the view, so the predicate is
@@ -508,7 +509,8 @@ function buildExportFixtures() {
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories, describeBreak,
-               computeWeekSummary, describePeak, detectWorkflows,
+               computeWeekSummary, describePeak, detectWorkflows, detectProjects,
+               projectDefaultName, relativeDayLabel, shortDateLabel,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -560,6 +562,30 @@ function buildExportFixtures() {
          };
        });
        const whenLabels = input.whenCases.map((c) => ({ ...c, label: formatWhen(c.at, c.now) }));
+       // How long ago a day was, and a short absolute date. Both are locale renderings,
+       // so both are recorded rather than assumed.
+       const dayLabels = input.whenCases.map((c) => ({
+         at: c.at,
+         now: c.now,
+         relative: relativeDayLabel(c.at, c.now),
+         short: shortDateLabel(c.at),
+       }));
+
+       // The same signature grouping, keeping the whole span. Session lists are
+       // recorded by start rather than in full: the sessions themselves are already
+       // pinned by the derivation fixtures, and repeating them here would make this
+       // file enormous for no extra assurance.
+       const projects = detectProjects(workflowSessions).map((p) => ({
+         id: p.id,
+         category: p.category,
+         apps: p.apps,
+         totalSeconds: p.totalSeconds,
+         sessionCount: p.sessionCount,
+         firstSeen: p.firstSeen,
+         lastActive: p.lastActive,
+         sessionStarts: p.sessions.map((s) => s.startedAt),
+         defaultName: projectDefaultName(p),
+       }));
 
        // Every branch of describePeak, so the boundary hours are pinned rather
        // than sampled by whatever the week fixture happened to land on.
@@ -652,9 +678,11 @@ function buildExportFixtures() {
          week,
          peakLabels,
          workflows,
+         projects,
          workflowSessionCount: workflowSessions.length,
          resume,
          whenLabels,
+         dayLabels,
          appStats,
          reports,
          sessionCount: sessions.length,
@@ -1054,12 +1082,14 @@ function buildExportFixtures() {
         cases: resumeCases,
         expected: result.resume,
         whenCases: result.whenLabels,
+        dayLabels: result.dayLabels,
       },
       workflows: {
         events: workflowEvents,
         now: workflowNow,
         sessionCount: result.workflowSessionCount,
         expected: result.workflows,
+        projects: result.projects,
       },
       search: { queries: input_searchQueries, expected: result.searchResults },
       history: { summaries: historySummaries, cases: result.history },

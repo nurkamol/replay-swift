@@ -15,7 +15,7 @@ import SwiftUI
 final class Navigation {
     enum Surface: String, CaseIterable, Identifiable, Hashable {
         case today = "Today", apps = "Apps", week = "This Week", timeline = "Timeline", search = "Search"
-        case memories = "Memories", collections = "Collections"
+        case memories = "Memories", collections = "Collections", projects = "Projects"
 
         var id: String { rawValue }
 
@@ -31,6 +31,7 @@ final class Navigation {
             case .search: "magnifyingglass"
             case .memories: "clock.arrow.circlepath"
             case .collections: "square.stack"
+            case .projects: "shippingbox"
             }
         }
 
@@ -45,6 +46,7 @@ final class Navigation {
             case .search: "Find a session by name, note, tag or app"
             case .memories: "What you were doing on this date before"
             case .collections: "Sessions gathered by the kind of work"
+            case .projects: "The applications that keep coming back together"
             }
         }
     }
@@ -67,7 +69,12 @@ final class Navigation {
     /// type from a day so the stack can tell the two destinations apart.
     struct AppHistory: Hashable { var bundleID: String }
 
+    /// A project, by signature.
+    struct ProjectTarget: Hashable { var id: String }
+
     func open(app bundleID: String) { path.append(AppHistory(bundleID: bundleID)) }
+
+    func open(project id: String) { path.append(ProjectTarget(id: id)) }
 
     /// Bumped when something asks for the search field.
     ///
@@ -108,6 +115,7 @@ struct RootView: View {
     let week: WeekModel
     let apps: AppsModel
     let appHistory: AppHistoryModel
+    let projects: ProjectsModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -138,6 +146,19 @@ struct RootView: View {
                             )
                         )
                     }
+                    .navigationDestination(for: Navigation.ProjectTarget.self) { target in
+                        chrome(
+                            ProjectDetailView(
+                                id: target.id,
+                                projects: projects,
+                                annotations: model.annotations,
+                                export: export,
+                                onDeleteSession: { history.deleteSession($0) },
+                                onOpenApp: { navigation.open(app: $0) },
+                                onOpenDay: { navigation.open(day: $0) }
+                            )
+                        )
+                    }
                     .navigationDestination(for: Navigation.AppHistory.self) { target in
                         chrome(
                             AppHistoryView(
@@ -162,6 +183,7 @@ struct RootView: View {
             case .collections: collections.load()
             case .week: week.load()
             case .apps: apps.load()
+            case .projects: projects.load()
             case .today: break
             }
         }
@@ -264,6 +286,8 @@ struct RootView: View {
                 apps: apps, preferences: preferences,
                 onOpenApp: { navigation.open(app: $0) }
             )
+        case .projects:
+            ProjectsView(projects: projects, onOpen: { navigation.open(project: $0) })
         case .week:
             WeekView(week: week)
         case .timeline:

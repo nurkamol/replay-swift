@@ -115,7 +115,7 @@ public func sessionsForWeek(
 }
 
 /// The category most of these sessions were. Ties go to the one seen first, as upstream.
-private func mostCommonCategory(_ sessions: [ActivitySession]) -> SessionCategory {
+func mostCommonCategory(_ sessions: [ActivitySession]) -> SessionCategory {
     var counts: [SessionCategory: Int] = [:]
     var order: [SessionCategory] = []
     for session in sessions {

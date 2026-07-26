@@ -328,6 +328,14 @@ public enum ParityKit {
             public let cases: [Input]
             public let expected: [Expected]
             public let whenCases: [WhenCase]
+            public let dayLabels: [DayLabelCase]
+
+            public struct DayLabelCase: Decodable, Sendable {
+                public let at: Int64
+                public let now: Int64
+                public let relative: String
+                public let short: String
+            }
         }
 
         public struct WorkflowCase: Decodable, Sendable {
@@ -347,6 +355,23 @@ public enum ParityKit {
             public let now: Int64
             public let sessionCount: Int
             public let expected: [Expected]
+            public let projects: [ProjectCase]
+
+            public struct ProjectCase: Decodable, Sendable {
+                public struct App: Decodable, Sendable {
+                    public let applicationName: String
+                    public let seconds: Int
+                }
+                public let id: String
+                public let category: String
+                public let apps: [App]
+                public let totalSeconds: Int
+                public let sessionCount: Int
+                public let firstSeen: Int64
+                public let lastActive: Int64
+                public let sessionStarts: [Int64]
+                public let defaultName: String
+            }
         }
 
         public struct BreakCase: Decodable, Sendable {
@@ -938,6 +963,39 @@ public enum ParityKit {
                   formatWhen(expected.at, now: expected.now,
                              calendar: calendar, locale: environment.locale),
                   expected.label)
+        }
+
+        // Projects — the same grouping, keeping the whole span. Apps are aggregated across
+        // every session here rather than taken from the first, which is the difference from
+        // a workflow and the thing most likely to be got wrong.
+        let pg = "projects"
+        let projects = detectProjects(workflowSessions)
+        let pex = fixture.workflows.projects
+        equal(pg, "most recently active first", projects.map(\.id), pex.map(\.id))
+        equal(pg, "named descriptively until someone types a name",
+              projects.map(projectDefaultName), pex.map(\.defaultName))
+        equal(pg, "carrying the category most of their sessions were",
+              projects.map(\.category.rawValue), pex.map(\.category))
+        equal(pg, "with time aggregated across every session",
+              projects.map { $0.apps.map(\.seconds) }, pex.map { $0.apps.map(\.seconds) })
+        equal(pg, "and the apps ordered by it",
+              projects.map { $0.apps.map(\.applicationName) },
+              pex.map { $0.apps.map(\.applicationName) })
+        equal(pg, "totals", projects.map(\.totalSeconds), pex.map(\.totalSeconds))
+        equal(pg, "session counts", projects.map(\.sessionCount), pex.map(\.sessionCount))
+        equal(pg, "when each was first seen", projects.map(\.firstSeen), pex.map(\.firstSeen))
+        equal(pg, "and last active", projects.map(\.lastActive), pex.map(\.lastActive))
+        equal(pg, "every session under each, newest first",
+              projects.map { $0.sessions.map(\.startedAt) }, pex.map(\.sessionStarts))
+
+        for expected in fixture.resume.dayLabels {
+            equal(rsg, "how long ago \(expected.at) reads",
+                  relativeDayLabel(expected.at, now: expected.now,
+                                   calendar: calendar, locale: environment.locale),
+                  expected.relative)
+            equal(rsg, "and its short date",
+                  shortDateLabel(expected.at, calendar: calendar, locale: environment.locale),
+                  expected.short)
         }
 
         let rg2 = "report text"

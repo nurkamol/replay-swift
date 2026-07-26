@@ -84,3 +84,41 @@ public func formatWhen(
     }
     return "\(formatter.string(from: then)) at \(clock)"
 }
+
+/// "Today", "Yesterday", "3 days ago", "Jul 25" — how long ago a day was.
+///
+/// Relative only inside a week: past that, counting days is work the reader has to do, and
+/// a date is simply clearer.
+public func relativeDayLabel(
+    _ timestamp: Int64, now: Int64,
+    calendar: Calendar = .current, locale: Locale = .current
+) -> String {
+    // Rounded rather than truncated, for the same reason as `formatWhen`: two local
+    // midnights are not 24 hours apart across a daylight-saving boundary.
+    let days = Int((Double(
+        startOfLocalDay(now, calendar: calendar)
+            - startOfLocalDay(timestamp, calendar: calendar)
+    ) / Double(dayMillis)).rounded())
+    if days <= 0 { return "Today" }
+    if days == 1 { return "Yesterday" }
+    if days < 7 { return "\(days) days ago" }
+    return shortLabel(timestamp, template: "MMMd", calendar: calendar, locale: locale)
+}
+
+/// "Jul 25, 2024" — a short absolute date, for a first-seen line where the year matters.
+public func shortDateLabel(
+    _ timestamp: Int64, calendar: Calendar = .current, locale: Locale = .current
+) -> String {
+    shortLabel(timestamp, template: "MMMdy", calendar: calendar, locale: locale)
+}
+
+private func shortLabel(
+    _ timestamp: Int64, template: String, calendar: Calendar, locale: Locale
+) -> String {
+    let formatter = DateFormatter()
+    formatter.calendar = calendar
+    formatter.locale = locale
+    formatter.timeZone = calendar.timeZone
+    formatter.setLocalizedDateFormatFromTemplate(template)
+    return formatter.string(from: Date(timeIntervalSince1970: Double(timestamp) / 1000))
+}

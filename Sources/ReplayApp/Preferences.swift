@@ -111,6 +111,15 @@ final class Preferences {
         }
     }
 
+    /// The names given to projects, keyed by signature.
+    ///
+    /// The only thing about a project that is ever stored. Everything else is derived, so a
+    /// project that stops recurring simply stops appearing — and its name waits here in case
+    /// it comes back.
+    var projectNames: [String: String] {
+        didSet { writeJSON(projectNames, "projectNames") }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -123,6 +132,8 @@ final class Preferences {
         menuBarOnly = defaults.bool(forKey: "menuBarOnly")
         pinnedApps = (defaults.data(forKey: "pinnedApps"))
             .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
+        projectNames = (defaults.data(forKey: "projectNames"))
+            .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
         lastSurface = defaults.string(forKey: "lastSurface") ?? ""
         // Zero and absent both mean "no goal", so an unset default reads as off.
         let goal = defaults.integer(forKey: "focusGoalMinutes")
