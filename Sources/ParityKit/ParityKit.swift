@@ -154,6 +154,30 @@ public enum ParityKit {
             public let annotations: [Annotation]
             public let expected: Reports
         }
+        public struct HistoryCase: Decodable, Sendable {
+            public struct Target: Decodable, Sendable {
+                public let key: String
+                public let label: String
+                public let dayStart: Int64
+            }
+            public struct Found: Decodable, Sendable {
+                public let key: String
+                public let dayStart: Int64
+                public let activeSeconds: Int
+            }
+            public let now: Int64
+            public let targets: [Target]
+            public let found: [Found]
+        }
+        public struct History: Decodable, Sendable {
+            public struct Summary: Decodable, Sendable {
+                public let dayStart: Int64
+                public let activeSeconds: Int
+                public let topAppName: String?
+            }
+            public let summaries: [Summary]
+            public let cases: [HistoryCase]
+        }
         public struct SearchCase: Decodable, Sendable {
             public struct Result: Decodable, Sendable {
                 public let matches: [Int64]
@@ -179,6 +203,7 @@ public enum ParityKit {
         public let grouping: Grouping
         public let report: ReportCase
         public let search: SearchCase
+        public let history: History
         public let scopes: Scopes
     }
 
@@ -723,6 +748,40 @@ public enum ParityKit {
         equal(hg, "substring discovery is what finds an app by a lowercase name",
               ReplayCore.Search.apps(matching: "safari", in: scopeSessions).map(\.applicationName),
               ["Safari"])
+
+        // Memories — which calendar day each offset lands on.
+        //
+        // The month-end cases are the point. JavaScript's Date normalises an overflowing
+        // day (31 March minus a month is 3 March); Swift's `date(byAdding:)` clamps it to
+        // 28 February. A memory labelled "one month ago" has to mean the same day in both
+        // apps, so this pins the arithmetic rather than trusting either default.
+        let memg = "memories"
+        let historySummaries = fixture.history.summaries.map {
+            DailySummary(
+                dayStart: $0.dayStart, activeSeconds: $0.activeSeconds, topAppName: $0.topAppName
+            )
+        }
+        for historyCase in fixture.history.cases {
+            let when = ISO8601DateFormatter().string(from:
+                Date(timeIntervalSince1970: Double(historyCase.now) / 1000)).prefix(10)
+            equal(memg, "\(when): the offsets land on the same days",
+                  Memories.targets(now: historyCase.now, calendar: calendar).map(\.dayStart),
+                  historyCase.targets.map(\.dayStart))
+            equal(memg, "\(when): and are labelled the same",
+                  Memories.targets(now: historyCase.now, calendar: calendar).map(\.label),
+                  historyCase.targets.map(\.label))
+            equal(memg, "\(when): the same offsets have something to show",
+                  Memories.find(
+                      in: historySummaries, now: historyCase.now, calendar: calendar
+                  ).map(\.range.key),
+                  historyCase.found.map(\.key))
+        }
+        check(memg, "a day with a headline of zero is not a memory",
+              Memories.find(
+                  in: [DailySummary(dayStart: startOfLocalDay(t0, calendar: calendar) - dayMillis,
+                                    activeSeconds: 0)],
+                  now: t0, calendar: calendar
+              ).isEmpty)
 
         // focus goals — the app's one evaluative surface, so its rules are checked rather
         // than trusted. The streak rule is the subtle one: an unfinished today must not

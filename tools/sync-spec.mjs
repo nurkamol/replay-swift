@@ -430,6 +430,7 @@ function buildExportFixtures() {
     writeFileSync(
       entry,
       `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
+       export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
        export { buildTimeline, groupSessionsForWeek, sessionUsesApp } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
        // sessionMatches is module-private in the view, so the predicate is
@@ -466,8 +467,8 @@ function buildExportFixtures() {
        globalThis.Date = FrozenDate;
 
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
-               groupSessionsForWeek, sessionUsesApp, sessionMatches } =
-         await import(${JSON.stringify(bundle)});
+               groupSessionsForWeek, sessionUsesApp, sessionMatches,
+               historyTargets, findMemories } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
 
        // Day grouping: record the bucketing only. The label is a locale rendering
@@ -515,7 +516,21 @@ function buildExportFixtures() {
          };
        }
 
+       // Looking back: which calendar day each offset lands on, and which of them
+       // actually hold activity. The month-end cases are the point — see the note
+       // beside the inputs.
+       const history = input.historyNows.map((now) => ({
+         now,
+         targets: historyTargets(now).map((t) => ({ key: t.key, label: t.label, dayStart: t.dayStart })),
+         found: findMemories(input.historySummaries, now).map((m) => ({
+           key: m.range.key,
+           dayStart: m.summary.dayStart,
+           activeSeconds: m.summary.activeSeconds,
+         })),
+       }));
+
        process.stdout.write(JSON.stringify({
+         history,
          grouping,
          reports,
          sessionCount: sessions.length,
@@ -604,6 +619,34 @@ function buildExportFixtures() {
       "nothingatall",
     ];
 
+    /*
+     * Month-end is where the two runtimes disagree, so it is what the fixture is
+     * built around. JavaScript's Date *overflows* — 31 March minus one month is
+     * `new Date(y, 2, 31)`, which is 3 March, not 28 February. Swift's Calendar
+     * clamps to the last valid day instead. Both are defensible; only one matches
+     * the app people already use, and without this fixture the port would have
+     * silently picked the other.
+     */
+    const historyNows = [
+      Date.UTC(2026, 2, 31, 12),  // 31 March — one month back overflows
+      Date.UTC(2026, 4, 31, 12),  // 31 May — same, and three months back too
+      Date.UTC(2024, 1, 29, 12),  // 29 February, a leap day: one year back has no such date
+      Date.UTC(2026, 5, 15, 12),  // an ordinary day, as a control
+    ];
+    // A headline on every day any offset could reach, so "found" is decided by the
+    // date arithmetic rather than by which days happen to exist.
+    const historySummaries = [];
+    for (const now of historyNows) {
+      for (const back of [1, 7, 30, 31, 32, 90, 91, 92, 180, 181, 182, 365, 366, 730, 731]) {
+        const day = Date.UTC(
+          new Date(now).getUTCFullYear(),
+          new Date(now).getUTCMonth(),
+          new Date(now).getUTCDate() - back,
+        );
+        historySummaries.push({ dayStart: day, activeSeconds: 3600, topBundleID: null, topAppName: "Code", topSeconds: 1800 });
+      }
+    }
+
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
@@ -617,6 +660,8 @@ function buildExportFixtures() {
         scopeAnnotations,
         todayStart,
         searchQueries: input_searchQueries,
+        historyNows,
+        historySummaries,
       })],
       {
         cwd: GLAZE,
@@ -636,6 +681,7 @@ function buildExportFixtures() {
       exportedAtMillis: FIXTURE_NOW,
       grouping: { events: groupingEvents, expected: result.grouping },
       search: { queries: input_searchQueries, expected: result.searchResults },
+      history: { summaries: historySummaries, cases: result.history },
       scopes: {
         events: scopeEvents,
         now: scopeNow,

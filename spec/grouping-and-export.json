@@ -162,6 +162,725 @@
       }
     }
   },
+  "history": {
+    "summaries": [
+      {
+        "dayStart": 1774828800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1774310400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1772323200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1772236800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1772150400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1767139200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1767052800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1766966400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1759363200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1759276800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1759190400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1743379200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1743292800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1711843200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1711756800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1780099200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1779580800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1777593600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1777507200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1777420800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1772409600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1772323200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1772236800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1764633600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1764547200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1764460800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1748649600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1748563200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1717113600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1717027200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1709078400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1708560000000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1706572800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1706486400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1706400000000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1701388800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1701302400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1701216000000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1693612800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1693526400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1693440000000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1677628800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1677542400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1646092800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1646006400000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1781395200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1780876800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1778889600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1778803200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1778716800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1773705600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1773619200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1773532800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1765929600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1765843200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1765756800000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1749945600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1749859200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1718409600000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1718323200000,
+        "activeSeconds": 3600,
+        "topBundleID": null,
+        "topAppName": "Code",
+        "topSeconds": 1800
+      }
+    ],
+    "cases": [
+      {
+        "now": 1774958400000,
+        "targets": [
+          {
+            "key": "1d",
+            "label": "Yesterday",
+            "dayStart": 1774828800000
+          },
+          {
+            "key": "1w",
+            "label": "One week ago",
+            "dayStart": 1774310400000
+          },
+          {
+            "key": "1mo",
+            "label": "One month ago",
+            "dayStart": 1772496000000
+          },
+          {
+            "key": "3mo",
+            "label": "Three months ago",
+            "dayStart": 1767139200000
+          },
+          {
+            "key": "6mo",
+            "label": "Six months ago",
+            "dayStart": 1759276800000
+          },
+          {
+            "key": "1y",
+            "label": "One year ago",
+            "dayStart": 1743379200000
+          },
+          {
+            "key": "2y",
+            "label": "Two years ago",
+            "dayStart": 1711843200000
+          }
+        ],
+        "found": [
+          {
+            "key": "1d",
+            "dayStart": 1774828800000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1w",
+            "dayStart": 1774310400000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "3mo",
+            "dayStart": 1767139200000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "6mo",
+            "dayStart": 1759276800000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1y",
+            "dayStart": 1743379200000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "2y",
+            "dayStart": 1711843200000,
+            "activeSeconds": 3600
+          }
+        ]
+      },
+      {
+        "now": 1780228800000,
+        "targets": [
+          {
+            "key": "1d",
+            "label": "Yesterday",
+            "dayStart": 1780099200000
+          },
+          {
+            "key": "1w",
+            "label": "One week ago",
+            "dayStart": 1779580800000
+          },
+          {
+            "key": "1mo",
+            "label": "One month ago",
+            "dayStart": 1777593600000
+          },
+          {
+            "key": "3mo",
+            "label": "Three months ago",
+            "dayStart": 1772496000000
+          },
+          {
+            "key": "6mo",
+            "label": "Six months ago",
+            "dayStart": 1764547200000
+          },
+          {
+            "key": "1y",
+            "label": "One year ago",
+            "dayStart": 1748649600000
+          },
+          {
+            "key": "2y",
+            "label": "Two years ago",
+            "dayStart": 1717113600000
+          }
+        ],
+        "found": [
+          {
+            "key": "1d",
+            "dayStart": 1780099200000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1w",
+            "dayStart": 1779580800000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1mo",
+            "dayStart": 1777593600000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "6mo",
+            "dayStart": 1764547200000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1y",
+            "dayStart": 1748649600000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "2y",
+            "dayStart": 1717113600000,
+            "activeSeconds": 3600
+          }
+        ]
+      },
+      {
+        "now": 1709208000000,
+        "targets": [
+          {
+            "key": "1d",
+            "label": "Yesterday",
+            "dayStart": 1709078400000
+          },
+          {
+            "key": "1w",
+            "label": "One week ago",
+            "dayStart": 1708560000000
+          },
+          {
+            "key": "1mo",
+            "label": "One month ago",
+            "dayStart": 1706486400000
+          },
+          {
+            "key": "3mo",
+            "label": "Three months ago",
+            "dayStart": 1701216000000
+          },
+          {
+            "key": "6mo",
+            "label": "Six months ago",
+            "dayStart": 1693267200000
+          },
+          {
+            "key": "1y",
+            "label": "One year ago",
+            "dayStart": 1677628800000
+          },
+          {
+            "key": "2y",
+            "label": "Two years ago",
+            "dayStart": 1646092800000
+          }
+        ],
+        "found": [
+          {
+            "key": "1d",
+            "dayStart": 1709078400000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1w",
+            "dayStart": 1708560000000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1mo",
+            "dayStart": 1706486400000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "3mo",
+            "dayStart": 1701216000000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1y",
+            "dayStart": 1677628800000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "2y",
+            "dayStart": 1646092800000,
+            "activeSeconds": 3600
+          }
+        ]
+      },
+      {
+        "now": 1781524800000,
+        "targets": [
+          {
+            "key": "1d",
+            "label": "Yesterday",
+            "dayStart": 1781395200000
+          },
+          {
+            "key": "1w",
+            "label": "One week ago",
+            "dayStart": 1780876800000
+          },
+          {
+            "key": "1mo",
+            "label": "One month ago",
+            "dayStart": 1778803200000
+          },
+          {
+            "key": "3mo",
+            "label": "Three months ago",
+            "dayStart": 1773532800000
+          },
+          {
+            "key": "6mo",
+            "label": "Six months ago",
+            "dayStart": 1765756800000
+          },
+          {
+            "key": "1y",
+            "label": "One year ago",
+            "dayStart": 1749945600000
+          },
+          {
+            "key": "2y",
+            "label": "Two years ago",
+            "dayStart": 1718409600000
+          }
+        ],
+        "found": [
+          {
+            "key": "1d",
+            "dayStart": 1781395200000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1w",
+            "dayStart": 1780876800000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1mo",
+            "dayStart": 1778803200000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "3mo",
+            "dayStart": 1773532800000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "6mo",
+            "dayStart": 1765756800000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "1y",
+            "dayStart": 1749945600000,
+            "activeSeconds": 3600
+          },
+          {
+            "key": "2y",
+            "dayStart": 1718409600000,
+            "activeSeconds": 3600
+          }
+        ]
+      }
+    ]
+  },
   "scopes": {
     "events": [
       {

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 405 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 418 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -47,7 +47,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
 | Dock badge | later | |
-| Memories / Today in History | later | |
+| Memories / Today in History | done | fixed calendar offsets over the durable headlines, so a memory survives its day being pruned; the date arithmetic is fixture-pinned |
 | Search | done | by session name, note or tag; by application; and a few phrases ("morning", "longest", "bookmarked") that go straight to a slice — checked against the reference's own predicates |
 | Collections / Projects | later | |
 | Story Mode / Autobiography | later | |
@@ -81,6 +81,11 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
   under (`UTC`) and the checks derive under that calendar rather than the machine's. Without
   it the suite passes only where the fixtures were made — see [FINDINGS.md](FINDINGS.md).
   Verified in UTC, America/New_York and Asia/Tokyo.
+- **Calendar arithmetic normalises rather than clamps.** 31 March minus one month is 3
+  March, not 28 February — JavaScript's `Date` overflows and the memory offsets have to
+  agree across both apps. Swift's `Calendar.date(byAdding:)` clamps and would have been
+  wrong; building `DateComponents` with an out-of-range day and letting `date(from:)`
+  normalise reproduces it. Pinned at three month-ends and a leap day.
 - **There is no PDF export, and that is a decision rather than an omission.** The reference
   offers one; two attempts at it here failed in WebKit — an unattached `WKWebView` never
   finishes loading, and once attached, `createPDF` hung with no timeout available on the
@@ -100,16 +105,18 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Sign and notarise a build.** `scripts/make-app.sh` signs ad-hoc, which runs here and
-   cannot be handed to anyone. **Blocked on a certificate, not on code**: this machine has no
-   Developer ID (`security find-identity -v -p codesigning` reports none), so the script is
-   ready for one and can go no further without an Apple Developer account.
-2. **The memory subsystems** — Memories, Collections, Story Mode, Canvas. Search was the
-   door into this half of the reference; these are the rooms behind it, and Canvas is a
-   project of its own.
-3. **PDF export**, if it is wanted — see the divergence above for what to try next.
+1. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
+   machine has no Developer ID at all, so the next move is a decision about an Apple
+   Developer account. See `docs/ROADMAP.md`.
+2. **Collections** — grouping sessions by what they were about. Derived rather than stored
+   in the reference, so it belongs beside the session derivation and can be fixture-pinned
+   the same way. Keys off the session category, which is already computed and checked.
+3. **Story Mode** — a day narrated back in a few plain sentences, built only from sessions
+   already on screen. Small, and the place the app's voice (SPEC §8) does the most work.
 
 Done and no longer blocking:
+- ~~Memories~~ — the first of the deferred subsystems, and the one that needed no new table:
+  it reads the headlines retention already keeps.
 - ~~Search~~ — by name, note, tag, application, and a handful of phrases; the two application
   predicates kept apart (exact for a chosen app, substring for discovery), which the fixture
   caught the port getting wrong.

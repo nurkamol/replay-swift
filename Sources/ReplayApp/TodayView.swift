@@ -9,7 +9,10 @@ struct TodayView: View {
     let model: AppModel
     let annotations: AnnotationsModel
     let export: ExportModel
+    let memories: MemoriesModel
     @Bindable var preferences: Preferences
+    /// Given so the card can lead somewhere rather than just informing.
+    let onOpenDay: (Int64) -> Void
 
     var body: some View {
         ScrollView {
@@ -36,6 +39,14 @@ struct TodayView: View {
                         )
                     }
                     reflection
+                    // The nearest one only, and only when there is one. Today is about
+                    // today; a gallery of the past belongs on its own surface.
+                    if let memory = memories.memories.first {
+                        TodayInHistoryCard(
+                            memory: memory,
+                            onOpen: { onOpenDay(memory.range.dayStart) }
+                        )
+                    }
                     sessionList
                 } else {
                     quietDay
@@ -45,6 +56,7 @@ struct TodayView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(.background)
+        .onAppear { if !memories.loaded { memories.load() } }
     }
 
     private var header: some View {

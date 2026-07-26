@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
     private lazy var export = ExportModel(model: model)
     private lazy var search = SearchModel(model: model)
+    private lazy var memories = MemoriesModel(model: model)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -118,6 +119,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .target = self
         viewMenu.addItem(withTitle: "Search", action: #selector(openSearch), keyEquivalent: "f")
             .target = self
+        viewMenu.addItem(withTitle: "Memories", action: #selector(openMemories), keyEquivalent: "3")
+            .target = self
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
 
@@ -183,7 +186,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let hosting = NSHostingController(
             rootView: RootView(
                 model: model, history: history, navigation: navigation,
-                preferences: preferences, export: export, search: search
+                preferences: preferences, export: export, search: search, memories: memories
             )
         )
         let window = NSWindow(contentViewController: hosting)
@@ -215,6 +218,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSearch() {
         search.load()
         navigation.show(.search)
+        showWindow()
+    }
+
+    @objc private func openMemories() {
+        memories.load()
+        navigation.show(.memories)
         showWindow()
     }
 

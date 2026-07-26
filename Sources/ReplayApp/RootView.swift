@@ -11,7 +11,7 @@ import SwiftUI
 @Observable
 final class Navigation {
     enum Surface: String, CaseIterable, Identifiable {
-        case today = "Today", timeline = "Timeline", search = "Search"
+        case today = "Today", timeline = "Timeline", search = "Search", memories = "Memories"
         var id: String { rawValue }
     }
 
@@ -38,6 +38,7 @@ struct RootView: View {
     let preferences: Preferences
     let export: ExportModel
     let search: SearchModel
+    let memories: MemoriesModel
 
     /// The opened day, built when it is opened rather than while the body runs — deriving a
     /// day loads its annotations, and a view body must not be what mutates them.
@@ -66,7 +67,8 @@ struct RootView: View {
                 case .today:
                     TodayView(
                         model: model, annotations: model.annotations,
-                        export: export, preferences: preferences
+                        export: export, memories: memories, preferences: preferences,
+                        onOpenDay: { navigation.openDay = $0 }
                     )
                 case .timeline:
                     TimelineView(
@@ -82,6 +84,11 @@ struct RootView: View {
                         export: export,
                         onDeleteSession: { history.deleteSession($0); search.load() }
                     )
+                case .memories:
+                    MemoriesView(
+                        memories: memories,
+                        onOpenDay: { navigation.openDay = $0 }
+                    )
                 }
             }
         }
@@ -92,6 +99,7 @@ struct RootView: View {
             // Search holds a month in memory; reload it when shown so a session deleted
             // elsewhere does not linger as a result that opens onto nothing.
             if new == .search { search.load() }
+            if new == .memories { memories.load() }
         }
         .onChange(of: navigation.openDay, initial: true) { _, _ in reloadOpenDay() }
         .preferredColorScheme(preferences.appearance.colorScheme)
