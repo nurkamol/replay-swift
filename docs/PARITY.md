@@ -22,6 +22,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Session derivation | done | 8 fixtures, exact match including titles and app order |
 | Category table → titles | done | order-sensitive, checked |
 | Daily headlines (rollup) | done | including the no-rows guard |
+| Day summary (Today's figures) | done | fixture-checked: active, apps, sessions, focus rhythm, longest, top app |
 | Bounded rebuild | done | the fix that stopped an import erasing pruned days |
 | Retention prune | done | keeps headlines |
 | Delete a session / a day | done | via the tracker, so in-memory state stays honest |
