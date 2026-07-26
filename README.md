@@ -63,6 +63,8 @@ Sources/ReplayApp/       placeholder; the UI is not started
 Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
 spec/                    GENERATED contract — never hand-edit
 tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
+tools/port-queue.mjs     lists Glaze commits this port still owes
+Resources/AppIcon.icns   the product's icon, carried over from the Glaze app
 docs/                    read these
 scripts/make-app.sh      assemble a runnable .app
 scripts/icon-probe.sh    the sandbox experiment behind docs/FINDINGS.md
@@ -81,6 +83,7 @@ that is the bulk of the work, and [docs/PORTING-MAP.md](docs/PORTING-MAP.md) sco
 | [docs/PORTING-MAP.md](docs/PORTING-MAP.md) | every Glaze API → native equivalent, costs, and the two real risks |
 | [docs/PARITY.md](docs/PARITY.md) | feature-by-feature status ledger |
 | [docs/FINDINGS.md](docs/FINDINGS.md) | questions that decided something, with the evidence |
+| [docs/GLAZE-CHANGELOG.md](docs/GLAZE-CHANGELOG.md) | the reference implementation's release history (a copy) |
 
 Read SPEC.md before writing any feature code. The constants are checked automatically;
 the invariants in that file are the ones that will bite.

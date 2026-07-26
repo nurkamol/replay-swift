@@ -23,11 +23,14 @@ swift build                     # ReplayCore + the parity suite
 swift test                      # 188 checks against the Glaze app — run before every commit
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
+node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 ./scripts/make-app.sh           # assemble a runnable .app
 ```
 
 ## Rules for working here
 
+- **Start a session with `node tools/port-queue.mjs`.** It lists the Glaze commits since
+  this port last caught up, split into behaviour (the spec covers it) and UI (nothing does).
 - **`spec/` is generated. Never hand-edit it.** Change behaviour in the Glaze app, run
   `node tools/sync-spec.mjs`, and the resulting `git diff spec/` is the porting work.
 - **Run the parity suite before committing** (`swift test`, or `swift run replay-parity`

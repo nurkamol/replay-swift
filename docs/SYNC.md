@@ -70,6 +70,31 @@ It has already earned this: the first version of its category-table regex matche
 `/i,`. A permissive extractor would have produced a plausible-looking spec, and the
 Swift port would have quietly mis-titled every browsing and writing session.
 
+## The other half: what the contract cannot see
+
+`spec/` pins behaviour. It says nothing about the 19.6k lines of UI, and that is where most
+Glaze commits land — so that is the work that quietly accumulates. `tools/port-queue.mjs`
+closes the gap by reading the commit `spec/constants.json` records and listing everything
+since:
+
+```bash
+node tools/port-queue.mjs            # print the queue
+node tools/port-queue.mjs --write    # also write docs/PORT-QUEUE.md
+```
+
+It sorts the files each commit touched into what they mean here:
+
+| bucket | what to do |
+|---|---|
+| **contract** — `main/services`, `main/handlers`, `renderer/lib` | regenerate the spec; `git diff spec/` is the precise change, and the parity suite has your back |
+| **ui** — `renderer/main`, `renderer/components`, `renderer/settings` | port by hand. **Nothing checks this** — this is the list that matters |
+| **copy** — changelogs, FAQ text | mirror the wording |
+| **ignore** — `package.json` timestamps, lockfiles, build config | nothing to do |
+
+Between the two tools the question "what do I owe the native app?" has a mechanical answer:
+`port-queue` says which commits, `sync-spec` says exactly what changed in the ones that
+matter, and `swift test` says whether you got it right.
+
 ## What the contract does not cover
 
 Be clear-eyed about the boundary. `spec/` pins **behaviour of the core**: storage,
@@ -82,6 +107,8 @@ derivation, thresholds. It says nothing about:
   pruned day's headline is the only record left of it, that an annotation is live only
   while its first event exists. Those are the rules a port gets wrong at the *design*
   level, and no fixture catches them.
+- **The Glaze app's release history**, which is mirrored into
+  [GLAZE-CHANGELOG.md](GLAZE-CHANGELOG.md) as a copy — refresh it when it moves.
 - **The Glaze app's own tests.** Six suites live in that repo's scratchpad workflow;
   they check the reference implementation's store, not this port.
 
