@@ -11,7 +11,8 @@ import SwiftUI
 @Observable
 final class Navigation {
     enum Surface: String, CaseIterable, Identifiable {
-        case today = "Today", timeline = "Timeline", search = "Search", memories = "Memories"
+        case today = "Today", timeline = "Timeline", search = "Search"
+        case memories = "Memories", collections = "Collections"
         var id: String { rawValue }
     }
 
@@ -39,6 +40,7 @@ struct RootView: View {
     let export: ExportModel
     let search: SearchModel
     let memories: MemoriesModel
+    let collections: CollectionsModel
 
     /// The opened day, built when it is opened rather than while the body runs — deriving a
     /// day loads its annotations, and a view body must not be what mutates them.
@@ -89,6 +91,13 @@ struct RootView: View {
                         memories: memories,
                         onOpenDay: { navigation.openDay = $0 }
                     )
+                case .collections:
+                    CollectionsView(
+                        collections: collections,
+                        annotations: model.annotations,
+                        export: export,
+                        onDeleteSession: { history.deleteSession($0); collections.load() }
+                    )
                 }
             }
         }
@@ -100,6 +109,7 @@ struct RootView: View {
             // elsewhere does not linger as a result that opens onto nothing.
             if new == .search { search.load() }
             if new == .memories { memories.load() }
+            if new == .collections { collections.load() }
         }
         .onChange(of: navigation.openDay, initial: true) { _, _ in reloadOpenDay() }
         .preferredColorScheme(preferences.appearance.colorScheme)

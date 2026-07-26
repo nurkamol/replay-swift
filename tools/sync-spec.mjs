@@ -430,6 +430,7 @@ function buildExportFixtures() {
     writeFileSync(
       entry,
       `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
+       export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
        export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
        export { buildTimeline, groupSessionsForWeek, sessionUsesApp } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
@@ -468,7 +469,8 @@ function buildExportFixtures() {
 
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
-               historyTargets, findMemories } = await import(${JSON.stringify(bundle)});
+               historyTargets, findMemories,
+               computeCollections, COLLECTION_CATEGORIES } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
 
        // Day grouping: record the bucketing only. The label is a locale rendering
@@ -529,7 +531,25 @@ function buildExportFixtures() {
          })),
        }));
 
+       // Collections, over sessions built so two categories tie on total time — the
+       // case where JavaScript's stable sort quietly decides the order and Swift's
+       // does not.
+       const collectionSessions = buildTimeline(input.collectionEvents, input.collectionNow)
+         .filter((item) => item.kind === "session");
+       const collections = computeCollections(collectionSessions).map((c) => ({
+         category: c.category,
+         label: c.label,
+         sessionCount: c.sessionCount,
+         totalSeconds: c.totalSeconds,
+         apps: c.apps.map((a) => ({ applicationName: a.applicationName, seconds: a.seconds })),
+       }));
+
        process.stdout.write(JSON.stringify({
+         collections: {
+           definitions: COLLECTION_CATEGORIES,
+           sessionCount: collectionSessions.length,
+           expected: collections,
+         },
          history,
          grouping,
          reports,
@@ -647,6 +667,29 @@ function buildExportFixtures() {
       }
     }
 
+    /*
+     * Two runs of equal length in different categories, so Development and Research
+     * tie on total seconds and the order is decided by the tiebreak rather than by
+     * the data. Plus a Communication run of its own, and a session that lands in
+     * "Other" — which must not become a collection.
+     */
+    const collectionNow = FIXTURE_NOW;
+    const collectionBase = FIXTURE_NOW - min(600);
+    const collectionEvents = [
+      // Development, 20 minutes.
+      ev(200, "Code", "com.microsoft.VSCode", collectionBase, 1200),
+      // Research, also 20 minutes — the tie.
+      ev(201, "Safari", "com.apple.Safari", collectionBase + min(30), 1200),
+      // Communication, also 20 minutes: Research and Communication tie on total, and
+      // their order can only come from the declared category order.
+      ev(202, "Slack", "com.tinyspeck.slackmacgap", collectionBase + min(60), 1200),
+      // Two apps sharing a category, to exercise the per-app fold and its own tie.
+      ev(203, "Terminal", "com.apple.Terminal", collectionBase + min(90), 900),
+      ev(204, "Xcode", "com.apple.dt.Xcode", collectionBase + min(110), 900),
+      // Something the category table does not name, which must stay out.
+      ev(205, "SomeUnknownApp", "com.example.unknown", collectionBase + min(140), 1200),
+    ];
+
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
@@ -662,6 +705,8 @@ function buildExportFixtures() {
         searchQueries: input_searchQueries,
         historyNows,
         historySummaries,
+        collectionEvents,
+        collectionNow,
       })],
       {
         cwd: GLAZE,
@@ -682,6 +727,11 @@ function buildExportFixtures() {
       grouping: { events: groupingEvents, expected: result.grouping },
       search: { queries: input_searchQueries, expected: result.searchResults },
       history: { summaries: historySummaries, cases: result.history },
+      collections: {
+        events: collectionEvents,
+        now: collectionNow,
+        ...result.collections,
+      },
       scopes: {
         events: scopeEvents,
         now: scopeNow,

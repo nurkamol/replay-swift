@@ -881,6 +881,148 @@
       }
     ]
   },
+  "collections": {
+    "events": [
+      {
+        "id": 200,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769964000000,
+        "endedAt": 1769965200000,
+        "duration": 1200
+      },
+      {
+        "id": 201,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769965800000,
+        "endedAt": 1769967000000,
+        "duration": 1200
+      },
+      {
+        "id": 202,
+        "type": "activated",
+        "applicationName": "Slack",
+        "bundleIdentifier": "com.tinyspeck.slackmacgap",
+        "appPath": null,
+        "startedAt": 1769967600000,
+        "endedAt": 1769968800000,
+        "duration": 1200
+      },
+      {
+        "id": 203,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1769969400000,
+        "endedAt": 1769970300000,
+        "duration": 900
+      },
+      {
+        "id": 204,
+        "type": "activated",
+        "applicationName": "Xcode",
+        "bundleIdentifier": "com.apple.dt.Xcode",
+        "appPath": null,
+        "startedAt": 1769970600000,
+        "endedAt": 1769971500000,
+        "duration": 900
+      },
+      {
+        "id": 205,
+        "type": "activated",
+        "applicationName": "SomeUnknownApp",
+        "bundleIdentifier": "com.example.unknown",
+        "appPath": null,
+        "startedAt": 1769972400000,
+        "endedAt": 1769973600000,
+        "duration": 1200
+      }
+    ],
+    "now": 1770000000000,
+    "definitions": [
+      {
+        "category": "Development",
+        "label": "Development"
+      },
+      {
+        "category": "Design",
+        "label": "Design"
+      },
+      {
+        "category": "Research",
+        "label": "Research"
+      },
+      {
+        "category": "Communication",
+        "label": "Communication"
+      },
+      {
+        "category": "Writing",
+        "label": "Writing"
+      },
+      {
+        "category": "Media",
+        "label": "Media"
+      },
+      {
+        "category": "Admin",
+        "label": "Utilities"
+      }
+    ],
+    "sessionCount": 6,
+    "expected": [
+      {
+        "category": "Development",
+        "label": "Development",
+        "sessionCount": 3,
+        "totalSeconds": 3000,
+        "apps": [
+          {
+            "applicationName": "Code",
+            "seconds": 1200
+          },
+          {
+            "applicationName": "Terminal",
+            "seconds": 900
+          },
+          {
+            "applicationName": "Xcode",
+            "seconds": 900
+          }
+        ]
+      },
+      {
+        "category": "Research",
+        "label": "Research",
+        "sessionCount": 1,
+        "totalSeconds": 1200,
+        "apps": [
+          {
+            "applicationName": "Safari",
+            "seconds": 1200
+          }
+        ]
+      },
+      {
+        "category": "Communication",
+        "label": "Communication",
+        "sessionCount": 1,
+        "totalSeconds": 1200,
+        "apps": [
+          {
+            "applicationName": "Slack",
+            "seconds": 1200
+          }
+        ]
+      }
+    ]
+  },
   "scopes": {
     "events": [
       {

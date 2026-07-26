@@ -13,7 +13,7 @@ follow the Glaze app's, so "level with 2.3.2" means this port matches that relea
 ## Unreleased — 0.1.0
 
 The first version that is an application rather than a library with a placeholder `main`.
-Level with **Glaze 2.3.2** (`d355ba2`), verified by **418 checks**.
+Level with **Glaze 2.3.2** (`d355ba2`), verified by **432 checks**.
 
 ### Added
 
@@ -38,6 +38,8 @@ Level with **Glaze 2.3.2** (`d355ba2`), verified by **418 checks**.
   field did nothing.
 - **Memories** — what you were doing on this date a week, a month, or up to two years ago,
   read from the durable daily headlines so a memory outlives the day's raw events.
+- **Collections** — every session of one kind, with its running totals and the apps that
+  defined it. Derived from the category a session already has, so there is nothing to file.
 - **CI** running the parity suite on every push, in four timezones.
 
 ### Fixed — differences found between the two implementations
@@ -86,7 +88,7 @@ These are the ones worth reading. Each was invisible until something checked it.
   and points readers at HTML for anything longer. See `docs/PARITY.md` for what to try next.
 - **The app is not signed for distribution.** `scripts/make-app.sh` signs ad-hoc, which runs
   on the machine that built it and nowhere else.
-- **Most of the memory subsystems are not started** — Collections, Story Mode, Canvas.
+- **Most of the memory subsystems are not started** — Story Mode, Projects, Canvas.
 - **The suite covers the core, not the interface.** Every UI behaviour above was verified by
   running the app against real data, which is weaker than a fixture and is recorded as such
   in the ledger.

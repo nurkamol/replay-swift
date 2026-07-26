@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 418 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 432 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -49,7 +49,8 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Dock badge | later | |
 | Memories / Today in History | done | fixed calendar offsets over the durable headlines, so a memory survives its day being pruned; the date arithmetic is fixture-pinned |
 | Search | done | by session name, note or tag; by application; and a few phrases ("morning", "longest", "bookmarked") that go straight to a slice — checked against the reference's own predicates |
-| Collections / Projects | later | |
+| Collections | done | derived from the session category — no table, nothing to file. Both orderings tie-broken, with the fixture built so both ties occur |
+| Projects | later | needs detection logic with no equivalent here yet |
 | Story Mode / Autobiography | later | |
 | Canvas | later | a project of its own |
 | Screensaver / Ambient | later | |
@@ -60,8 +61,15 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 ## Known divergences to keep an eye on
 
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
-  `(value, originalOffset)` in both `summarizeApps` and `buildTimeline`. A fixture covers
-  it — do not "simplify" it away.
+  `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, and both orderings in
+  `Collections.compute`. Fixtures cover each — the collections one is built so two
+  categories tie on total and two apps tie inside one, because a fixture that never ties
+  would pass against an unstable sort. Do not "simplify" any of them away.
+- **Two apps can share a display name.** Sessions fold apps on
+  `bundleIdentifier ?? applicationName`, so the Glaze Replay and this port both appear as
+  "Replay" in a collection's app list. It reads like a duplicate and is not one; the
+  reference keys the same way, and folding on the name instead would merge two genuinely
+  different applications.
 - **`Rules` is duplicated.** The thresholds exist in `Model.swift` *and* in
   `spec/constants.json`. Deliberate: the shipping app should not depend on parsing JSON.
   The parity check is what keeps the two copies equal.
@@ -108,13 +116,16 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 1. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
    machine has no Developer ID at all, so the next move is a decision about an Apple
    Developer account. See `docs/ROADMAP.md`.
-2. **Collections** — grouping sessions by what they were about. Derived rather than stored
-   in the reference, so it belongs beside the session derivation and can be fixture-pinned
-   the same way. Keys off the session category, which is already computed and checked.
-3. **Story Mode** — a day narrated back in a few plain sentences, built only from sessions
-   already on screen. Small, and the place the app's voice (SPEC §8) does the most work.
+2. **Story Mode** — a day narrated back in a few plain sentences, built only from sessions
+   already on screen. Small, and the place the app's voice (SPEC §8) does the most work: a
+   sentence that overclaims is worse than no sentence.
+3. **A harness for the interface.** Every surface in this port was verified by running it
+   and looking, which has now been true eight times running. `spec/` cannot express a view;
+   closing that gap needs a different kind of test, and it is the largest quiet risk here.
 
 Done and no longer blocking:
+- ~~Collections~~ — sessions gathered by the kind of work they were, derived rather than
+  filed. `Admin` is shown as "Utilities", and `Other` is deliberately not a collection.
 - ~~Memories~~ — the first of the deferred subsystems, and the one that needed no new table:
   it reads the headlines retention already keeps.
 - ~~Search~~ — by name, note, tag, application, and a handful of phrases; the two application

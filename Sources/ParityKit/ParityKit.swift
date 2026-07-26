@@ -154,6 +154,28 @@ public enum ParityKit {
             public let annotations: [Annotation]
             public let expected: Reports
         }
+        public struct CollectionsCase: Decodable, Sendable {
+            public struct Definition: Decodable, Sendable {
+                public let category: String
+                public let label: String
+            }
+            public struct App: Decodable, Sendable {
+                public let applicationName: String
+                public let seconds: Int
+            }
+            public struct Expected: Decodable, Sendable {
+                public let category: String
+                public let label: String
+                public let sessionCount: Int
+                public let totalSeconds: Int
+                public let apps: [App]
+            }
+            public let events: [Fixture.Event]
+            public let now: Int64
+            public let definitions: [Definition]
+            public let sessionCount: Int
+            public let expected: [Expected]
+        }
         public struct HistoryCase: Decodable, Sendable {
             public struct Target: Decodable, Sendable {
                 public let key: String
@@ -204,6 +226,7 @@ public enum ParityKit {
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
+        public let collections: CollectionsCase
         public let scopes: Scopes
     }
 
@@ -748,6 +771,49 @@ public enum ParityKit {
         equal(hg, "substring discovery is what finds an app by a lowercase name",
               ReplayCore.Search.apps(matching: "safari", in: scopeSessions).map(\.applicationName),
               ["Safari"])
+
+        // Collections — sessions gathered by the kind of work they were.
+        //
+        // Both orderings are tie-broken explicitly here, and the fixture is built so both
+        // ties actually occur: two categories on equal totals, and two apps on equal time
+        // inside one. JavaScript's sort is stable and falls back on insertion order without
+        // saying so; Swift's is not, so an untie-broken port would reorder between launches
+        // and pass a fixture that happened not to tie.
+        let cg = "collections"
+        equal(cg, "the same categories are collectable, in the same order",
+              Collections.categories.map(\.category.rawValue),
+              fixture.collections.definitions.map(\.category))
+        equal(cg, "and carry the same labels — Admin is shown as Utilities",
+              Collections.categories.map(\.label),
+              fixture.collections.definitions.map(\.label))
+
+        let collectionSessions = buildTimeline(
+            fixture.collections.events.map(event),
+            now: fixture.collections.now,
+            calendar: calendar
+        ).compactMap { if case .session(let s) = $0 { return s } else { return nil } }
+        equal(cg, "the fixture's sessions derive the same here",
+              collectionSessions.count, fixture.collections.sessionCount)
+
+        let computed = Collections.compute(collectionSessions)
+        equal(cg, "the same collections, fullest first",
+              computed.map(\.category.rawValue), fixture.collections.expected.map(\.category))
+        equal(cg, "with the same totals",
+              computed.map(\.totalSeconds), fixture.collections.expected.map(\.totalSeconds))
+        equal(cg, "and the same session counts",
+              computed.map(\.sessionCount), fixture.collections.expected.map(\.sessionCount))
+        for (index, expected) in fixture.collections.expected.enumerated() {
+            guard index < computed.count else { break }
+            equal(cg, "\(expected.category): the same apps, most time first",
+                  computed[index].apps.map(\.applicationName),
+                  expected.apps.map(\.applicationName))
+            equal(cg, "\(expected.category): with the same times",
+                  computed[index].apps.map(\.seconds), expected.apps.map(\.seconds))
+        }
+        check(cg, "a session the category table could not name is not collected",
+              !computed.contains { $0.category == .other })
+        check(cg, "an app list is capped",
+              computed.allSatisfy { $0.apps.count <= Collections.appLimit })
 
         // Memories — which calendar day each offset lands on.
         //
