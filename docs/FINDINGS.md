@@ -58,3 +58,42 @@ thing to confirm on the first real submission. The apps probed live in `/Applica
 `NSWorkspace.shared.icon(forFile:)` on the path from
 `urlForApplication(withBundleIdentifier:)`. No entitlement to request, no fallback
 artwork to commission, and one fewer argument to have with App Review.
+
+---
+
+## Backup import: what a round trip does and does not preserve
+
+**Date:** 2026-07-26 · **Reproduce:** `swift run replay-import <backup.json> /tmp/test.db` · **Verdict:** safe, with one documented gap
+
+Tested against a real export of 3,084 rows from the Glaze app's own database.
+
+**A bug found and fixed on the way.** The Glaze importer's accepted-types set was
+`activated, launched, terminated` — **`idle` was missing**, while the exporter writes every
+row. So restoring a backup dropped every measured away stretch, and because a gap with no
+`idle` row behind it is relabelled by the derivation, those stretches came back as "Replay
+wasn't running" rather than "away". That is not lost detail, it is a changed account of the
+day. Fixed in Glaze (`EVENT_TYPES` now includes `idle`), pinned in
+`spec/constants.json → backup.acceptedEventTypes` so neither implementation can drop one
+silently again, and covered by the parity suite.
+
+**What the round trip preserves.** Import merges on `(type, started_at, bundle_identifier)`
+and skips what it already has, which makes running it twice a no-op. On real data:
+
+| row type | rows | lost on import |
+|---|---|---|
+| `activated` | 2,762 | **0** |
+| `idle` | 53 | **0** |
+| `launched` | 100 | 4 |
+| `terminated` | 169 | 7 |
+
+The derived timeline is identical either side — 2,815 rows, 210,491 seconds — so everything
+any view reads survives intact.
+
+**The gap, stated plainly.** 11 rows *were* dropped: zero-duration `launched`/`terminated`
+point events where the same app produced two notifications in the same millisecond, which
+that identity triple cannot tell apart. Nothing in either app reads those rows — the
+timeline, the headlines, and every total are built from `activated` and `idle` only — so the
+practical effect is nil. It was left alone deliberately: making the identity stricter would
+risk re-importing genuine duplicates, which is the worse failure. But it means **"lossless"
+is the wrong word for the round trip**, and the honest claim is "loses nothing any view
+reads".

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.1 (`9dcd1bb`) · **Verified by:** `swift test` (or `swift run replay-parity`), 188 checks
+**Level with:** Glaze 2.3.1 + the import fix (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 188 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -30,7 +30,8 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Compaction safety (copy, verify) | todo | the store has the pieces; the sequence is not wired |
 | Reflections | todo | table exists; no read/write yet |
 | Annotations (notes, bookmarks, tags) | todo | table and pruning exist; no read/write yet |
-| Backup export / import | todo | needed for migration off Glaze — see SYNC.md |
+| Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
+| Backup export | todo | writing a backup, for the other direction |
 
 ## App — the surfaces
 
@@ -71,10 +72,13 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Backup import**, so a Glaze user's history can move over and the port has real data
-   to develop against. Format is pinned in `spec/constants.json` (`replay.activity` v1).
-2. **Menu bar item + Today**, the smallest thing that is recognisably Replay.
-3. **Timeline**, with the session card and its ⋯ menu.
+1. **Menu bar item + Today**, the smallest thing that is recognisably Replay. Real data is
+   available now: `swift run replay-import <backup.json> /tmp/dev.db`.
+2. **Timeline**, with the session card and its ⋯ menu.
+3. **A past day**, reopened — remembering it must filter to runs that *began* that day
+   (SPEC §5).
 
-~~Prototype the icon API under App Sandbox~~ — **done**, and it works with no entitlement.
-See [FINDINGS.md](FINDINGS.md).
+Done and no longer blocking:
+- ~~Prototype the icon API under App Sandbox~~ — works with no entitlement.
+- ~~Backup import~~ — verified against a real 3,084-row export; found and fixed a Glaze bug
+  that was dropping away time. Both in [FINDINGS.md](FINDINGS.md).

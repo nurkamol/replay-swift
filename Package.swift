@@ -24,6 +24,9 @@ let package = Package(
         // A one-off diagnostic, kept because it answers a question that decides the App
         // Store route — see scripts/icon-probe.sh and docs/PORTING-MAP.md.
         .executable(name: "icon-probe", targets: ["IconProbe"]),
+        // Brings a Glaze user's history across, and gives the UI real data to develop
+        // against rather than fixtures.
+        .executable(name: "replay-import", targets: ["ReplayImport"]),
     ],
     targets: [
         .target(name: "ReplayCore"),
@@ -38,5 +41,6 @@ let package = Package(
         .testTarget(name: "ReplayCoreTests", dependencies: ["ParityKit", "ReplayCore"]),
 
         .executableTarget(name: "IconProbe"),
+        .executableTarget(name: "ReplayImport", dependencies: ["ReplayCore"]),
     ]
 )

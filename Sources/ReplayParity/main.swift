@@ -16,7 +16,7 @@ do {
     print("Checking this port against Glaze \(report.glazeVersion) (\(report.glazeCommit))")
     print("spec: \(report.specRoot)\n")
 
-    for group in ["constants", "category table", "schema"] {
+    for group in ["constants", "category table", "schema", "backup"] {
         let checks = report.checks.filter { $0.group == group }
         let failed = checks.filter { !$0.passed }
         print("\(failed.isEmpty ? "✓" : "✗") \(group) — \(checks.count) checks")

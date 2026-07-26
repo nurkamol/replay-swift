@@ -77,11 +77,17 @@ public enum ParityKit {
             public let minSessionSeconds: Int
             public let categoryPatterns: [CategoryPattern]
         }
+        public struct BackupInfo: Decodable, Sendable {
+            public let format: String
+            public let version: Int
+            public let acceptedEventTypes: [String]
+        }
         public let glazeVersion: String
         public let glazeCommit: String
         public let tracker: Tracker
         public let store: Store
         public let derivation: Derivation
+        public let backup: BackupInfo
     }
 
     // ── results ───────────────────────────────────────────────────────────────
@@ -283,6 +289,71 @@ public enum ParityKit {
         equal(group, "and reports the day it fell on", deleted.dayStarts, [startOfLocalDay(t0)])
         store.close()
         try? FileManager.default.removeItem(at: tmp)
+
+        // backup format — the migration path off the Glaze app, so a mismatch here means
+        // a user's exported history cannot be read.
+        let g4 = "backup"
+        equal(g4, "format string", Backup.format, constants.backup.format)
+        equal(g4, "format version", Backup.version, constants.backup.version)
+        equal(g4, "accepted row types",
+              Backup.acceptedTypes.map(\.rawValue).sorted(),
+              constants.backup.acceptedEventTypes.sorted())
+        check(g4, "accepts idle rows — dropping them relabels away time as not-recorded",
+              Backup.acceptedTypes.contains(.idle))
+
+        // A backup written in the documented shape, read back, and imported twice: the
+        // second import must be a no-op, which is what makes the operation safe to repeat.
+        let backupURL = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("replay-parity-backup-\(UUID().uuidString).json")
+        let t1 = Int64(1_770_000_000_000)
+        let backupJSON = """
+            {
+              "format": "\(Backup.format)",
+              "version": \(Backup.version),
+              "exportedAt": "2026-07-26T12:00:00.000Z",
+              "appVersion": "\(constants.glazeVersion)",
+              "eventCount": 4,
+              "events": [
+                {"type":"activated","application_name":"Code","bundle_identifier":"com.microsoft.VSCode",
+                 "started_at":\(t1),"ended_at":\(t1 + 600_000),"duration":600,"metadata":null},
+                {"type":"idle","application_name":"Away","bundle_identifier":null,
+                 "started_at":\(t1 + 600_000),"ended_at":\(t1 + 1_200_000),"duration":600,"metadata":null},
+                {"type":"activated","application_name":"Safari","bundle_identifier":"com.apple.Safari",
+                 "started_at":\(t1 + 1_200_000),"ended_at":\(t1 + 1_500_000),"duration":300,"metadata":null},
+                {"type":"nonsense","application_name":"","started_at":"not a number"}
+              ]
+            }
+            """
+        try backupJSON.write(to: backupURL, atomically: true, encoding: .utf8)
+
+        let restoreDB = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("replay-parity-restore-\(UUID().uuidString).db")
+        let restoreStore = ActivityStore(path: restoreDB.path)
+        try restoreStore.open()
+
+        let parsed = try Backup.read(contentsOf: backupURL)
+        equal(g4, "reads the valid rows", parsed.rows.count, 3)
+        equal(g4, "drops the malformed row", parsed.skipped, 1)
+        check(g4, "keeps the away row", parsed.rows.contains { $0.type == .idle })
+
+        let first = try restoreStore.importBackup(from: backupURL, now: t1 + 2_000_000)
+        equal(g4, "first import restores every valid row", first.imported, 3)
+        equal(g4, "and stores them", try restoreStore.countRows(), 3)
+        let second = try restoreStore.importBackup(from: backupURL, now: t1 + 2_000_000)
+        equal(g4, "importing the same file again imports nothing", second.imported, 0)
+        equal(g4, "skipping them instead", second.skipped, 3)
+        equal(g4, "so the row count is unchanged", try restoreStore.countRows(), 3)
+
+        do {
+            _ = try Backup.read(Data(#"{"format":"something.else","events":[]}"#.utf8))
+            check(g4, "a foreign format is refused", false, "it was accepted")
+        } catch {
+            check(g4, "a foreign format is refused", true)
+        }
+
+        restoreStore.close()
+        try? FileManager.default.removeItem(at: restoreDB)
+        try? FileManager.default.removeItem(at: backupURL)
 
         return Report(
             glazeVersion: constants.glazeVersion,

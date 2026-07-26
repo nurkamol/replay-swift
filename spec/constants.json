@@ -84,7 +84,13 @@
   },
   "backup": {
     "format": "replay.activity",
-    "version": 1
+    "version": 1,
+    "acceptedEventTypes": [
+      "activated",
+      "launched",
+      "terminated",
+      "idle"
+    ]
   },
   "retentionDayOptions": [
     0,

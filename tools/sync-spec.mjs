@@ -158,6 +158,17 @@ const constants = {
   backup: {
     format: (handlersSrc.match(/BACKUP_FORMAT = "([^"]+)"/) ?? [])[1] ?? null,
     version: Number((handlersSrc.match(/BACKUP_VERSION = (\d+)/) ?? [])[1] ?? NaN),
+    // Which row types an import accepts. Pinned because omitting one is silent data
+    // loss, not an error: `idle` was missing here and a restore dropped every away
+    // stretch, relabelling those gaps "Replay wasn't running".
+    acceptedEventTypes: (() => {
+      const block = handlersSrc.match(/EVENT_TYPES = new Set\(\[([^\]]*)\]\)/);
+      if (!block) {
+        problems.push("handlers/activity.ts: EVENT_TYPES not found");
+        return [];
+      }
+      return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    })(),
   },
   retentionDayOptions: (() => {
     const view = read("renderer/settings/settings-view.tsx");

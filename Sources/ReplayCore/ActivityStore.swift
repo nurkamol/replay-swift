@@ -174,6 +174,30 @@ public final class ActivityStore {
         return out
     }
 
+    // ── helpers for extensions in other files (Backup.swift) ──────────────────
+
+    /// Run a statement, ignoring any rows it returns.
+    func execute(_ sql: String, _ params: [Value] = []) throws {
+        try run(sql, params)
+    }
+
+    /// Whether a query matched anything — for existence checks.
+    func queryFirst(_ sql: String, _ params: [Value] = []) throws -> Bool {
+        try !query(sql, params, row: { _ in true }).isEmpty
+    }
+
+    /// Run `body` inside a transaction, rolling back if it throws.
+    func transaction(_ body: () throws -> Void) throws {
+        try exec("BEGIN")
+        do {
+            try body()
+            try exec("COMMIT")
+        } catch {
+            try? exec("ROLLBACK")
+            throw error
+        }
+    }
+
     private func text(_ statement: OpaquePointer, _ column: Int32) -> String? {
         guard let cString = sqlite3_column_text(statement, column) else { return nil }
         return String(cString: cString)
