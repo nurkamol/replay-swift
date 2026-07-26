@@ -21,6 +21,9 @@ let package = Package(
         .library(name: "ReplayCore", targets: ["ReplayCore"]),
         .executable(name: "ReplayApp", targets: ["ReplayApp"]),
         .executable(name: "replay-parity", targets: ["ReplayParity"]),
+        // A one-off diagnostic, kept because it answers a question that decides the App
+        // Store route — see scripts/icon-probe.sh and docs/PORTING-MAP.md.
+        .executable(name: "icon-probe", targets: ["IconProbe"]),
     ],
     targets: [
         .target(name: "ReplayCore"),
@@ -33,5 +36,7 @@ let package = Package(
         .target(name: "ParityKit", dependencies: ["ReplayCore"]),
         .executableTarget(name: "ReplayParity", dependencies: ["ParityKit"]),
         .testTarget(name: "ReplayCoreTests", dependencies: ["ParityKit", "ReplayCore"]),
+
+        .executableTarget(name: "IconProbe"),
     ]
 )

@@ -71,8 +71,10 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Prototype `NSWorkspace.icon(forFile:)` in a sandboxed build.** Two hours, de-risks
-   months — see PORTING-MAP "the two risks".
-2. **Backup import**, so a Glaze user's history can move over and the port has real data
-   to develop against.
-3. **Menu bar item + Today**, the smallest thing that is recognisably Replay.
+1. **Backup import**, so a Glaze user's history can move over and the port has real data
+   to develop against. Format is pinned in `spec/constants.json` (`replay.activity` v1).
+2. **Menu bar item + Today**, the smallest thing that is recognisably Replay.
+3. **Timeline**, with the session card and its ⋯ menu.
+
+~~Prototype the icon API under App Sandbox~~ — **done**, and it works with no entitlement.
+See [FINDINGS.md](FINDINGS.md).

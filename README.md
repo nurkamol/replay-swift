@@ -64,7 +64,8 @@ Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
 spec/                    GENERATED contract — never hand-edit
 tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
 docs/                    read these
-scripts/make-app.sh      assemble a runnable .app without Xcode
+scripts/make-app.sh      assemble a runnable .app
+scripts/icon-probe.sh    the sandbox experiment behind docs/FINDINGS.md
 ```
 
 **The core is done and verified.** Storage, session derivation, and the tracker are
@@ -79,6 +80,7 @@ that is the bulk of the work, and [docs/PORTING-MAP.md](docs/PORTING-MAP.md) sco
 | [docs/SYNC.md](docs/SYNC.md) | **how the two stay honest** — the generated contract and the loop |
 | [docs/PORTING-MAP.md](docs/PORTING-MAP.md) | every Glaze API → native equivalent, costs, and the two real risks |
 | [docs/PARITY.md](docs/PARITY.md) | feature-by-feature status ledger |
+| [docs/FINDINGS.md](docs/FINDINGS.md) | questions that decided something, with the evidence |
 
 Read SPEC.md before writing any feature code. The constants are checked automatically;
 the invariants in that file are the ones that will bite.

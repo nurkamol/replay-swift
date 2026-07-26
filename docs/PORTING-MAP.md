@@ -85,14 +85,13 @@ One caveat with a *beta* Xcode: its SDK is macOS 27 and notarising against a bet
 not something to ship on. Build releases with a stable Xcode when there is a release to
 build.
 
-## The two risks worth prototyping early
+## Risks
 
-**1. App icons inside the sandbox.** `NSWorkspace.icon(forFile:)` on a path in
-`/Applications` is the one API here whose sandbox behaviour I am not certain of, and
-Replay's timeline is *made of* app icons — every session card, every breakdown row. If
-it is blocked, the fallbacks are a bundled icon set (poor) or a temporary-exception
-entitlement (App Review friction). **Test this on a hardened sandboxed build before
-committing to the App Store route.** It is a two-hour experiment that de-risks months.
+**1. App icons inside the sandbox — ANSWERED, not a risk.** Tested 2026-07-26: all 12
+probed icons come back **byte-identical** under a bare `com.apple.security.app-sandbox`,
+with no entitlement and no exception. `urlForApplication(withBundleIdentifier:)` works
+too, so the whole bundle-id → path → icon chain is clear. Reproduce with
+`./scripts/icon-probe.sh`; evidence and caveats in [FINDINGS.md](FINDINGS.md).
 
 **2. App Review on a tracking app.** An app that logs which applications you use will
 draw privacy scrutiny. The defence is strong and should be stated plainly in the
@@ -108,5 +107,5 @@ taken on the App Store by other apps — check availability before building the 
 | Mac App Store | discovery, trust, payments | sandbox (see risk 1), review, 30% |
 
 For a privacy-first local app, direct distribution first is the lower-risk path — and it
-keeps the option open. The sandbox work is the same either way if you build for it from
-the start, which is why the icon question is worth answering now rather than later.
+keeps the option open. With the icon question answered, the App Store route no longer has
+a known technical blocker: the sandbox costs nothing that Replay actually needs.
