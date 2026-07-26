@@ -392,6 +392,44 @@ public enum ParityKit {
         equal(group, "and reports the day it fell on", deleted.dayStarts, [startOfLocalDay(t0)])
         equal(ag, "deleting the session orphans its annotation",
               try store.pruneOrphanAnnotations(), 1)
+
+        // maintenance — the operations Settings runs. The compaction sequence is SPEC §7,
+        // where the order *is* the safety: copy, vacuum, verify by integrity check **and**
+        // row count, and only then remove the copy.
+        let mg = "maintenance"
+        let excludable = try store.openSession(
+            name: "Sublime Text", bundleID: "com.sublimetext.4", appPath: nil, startedAt: t0
+        )
+        try store.closeSession(id: excludable, endedAt: t0 + 60_000)
+        equal(mg, "known apps are read from the events themselves",
+              try store.listKnownApps().map(\.bundleIdentifier), ["com.sublimetext.4"])
+
+        let rowsBefore = try store.countRows()
+        let copyPath = URL(fileURLWithPath: tmp.path).deletingLastPathComponent()
+            .appendingPathComponent("activity-before-compaction.db").path
+        let compaction = try store.compactSafely()
+        equal(mg, "compaction verifies the row count survived", compaction.rows, rowsBefore)
+        check(mg, "it reports no surviving copy when it verified", compaction.backupPath == nil)
+        check(mg, "and the copy it took is gone from disk",
+              !FileManager.default.fileExists(atPath: copyPath))
+        check(mg, "the database still passes its integrity check", store.integrityCheck().ok)
+        equal(mg, "and still holds every row", try store.countRows(), rowsBefore)
+
+        // Excluding an app erases what it recorded — past as well as future.
+        equal(mg, "excluding nothing deletes nothing", try store.deleteByBundleIDs([]), 0)
+        equal(mg, "excluding an app deletes its rows",
+              try store.deleteByBundleIDs(["com.sublimetext.4"]), 1)
+        equal(mg, "and leaves the rest alone", try store.countRows(), rowsBefore - 1)
+
+        // Clearing history means what it says: no rows, and no headline left behind.
+        try store.upsertSummary(dayStart: startOfLocalDay(t0), now: t0)
+        _ = try store.setBookmarked(sessionStart: t0, bookmarked: true, now: t0)
+        _ = try store.clearAllHistory()
+        equal(mg, "clearing history removes every row", try store.countRows(), 0)
+        equal(mg, "and every headline",
+              try store.dailySummaries(from: 0, to: t0 + dayMillis).count, 0)
+        equal(mg, "and every annotation", try store.annotations(from: 0, to: t0 + dayMillis).count, 0)
+
         store.close()
         try? FileManager.default.removeItem(at: tmp)
 

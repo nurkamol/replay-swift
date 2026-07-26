@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 298 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 310 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -18,7 +18,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Away stretches from idle time | done | `CGEventSource`, no permission needed |
 | Launch / terminate rows | done | with the same de-duplication window |
 | Ignored background agents | done | list checked against the spec |
-| Excluded applications | partial | tracker honours the set; no persistence or UI yet |
+| Excluded applications | done | persisted, applied to the tracker live, and excluding erases that app's history |
 | Session derivation | done | 8 fixtures, exact match including titles and app order |
 | Category table → titles | done | order-sensitive, checked |
 | Daily headlines (rollup) | done | including the no-rows guard |
@@ -28,7 +28,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Delete a session / a day | done | via the tracker, so in-memory state stays honest |
 | Orphaned-annotation pruning | done | reachability, not by application |
 | Compaction + thresholds | done | `reclaimableBytes` documented as a lower bound |
-| Compaction safety (copy, verify) | todo | the store has the pieces; the sequence is not wired |
+| Compaction safety (copy, verify) | done | `compactSafely` — copy, VACUUM, verify by integrity check **and** row count; a failed verify leaves the copy and names it |
 | Reflections | todo | table exists; no read/write yet |
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
@@ -42,7 +42,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Today | partial | headline, top app, sessions, breaks, expandable cards. No reflection or focus-goal card yet |
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, delete). No layers, filters, or per-day export |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); says so when a day's rows are pruned but its headline survives. No reflection, story, or chapter context |
-| Settings | todo | v1: General, Privacy, Data/Storage, Guide, About |
+| Settings | partial | General, Privacy, Data, Guide, About in their own window. No Shortcuts tab (no custom shortcuts yet), no focus goal, no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | todo | Markdown, CSV, JSON first; PDF/HTML later |
 | Dock badge | later | |
@@ -66,6 +66,15 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
   The parity check is what keeps the two copies equal.
 - **Different container.** The native app cannot read the Glaze app's live database.
   Migration is via the backup JSON, not the file.
+- **Preferences live in `UserDefaults`, not a JSON file.** The reference keeps its settings
+  in `userData/settings.json` because its tray, tracker and windows are separate processes.
+  Natively they are one process, and `UserDefaults` is what a Mac app is expected to use.
+  The *values* match the reference's defaults, which is the part a user would notice. The
+  two apps could not share a settings file anyway — different containers.
+- **Excluding an app is verified by the suite, not on real data.** `deleteByBundleIDs` and
+  its consequences are checked, and the sheet was exercised in the running app, but no
+  exclusion was ever confirmed against the real database: doing so permanently erases that
+  app's history, which is not a thing to spend to prove a button works.
 - **`groupByDay` has no fixture.** It is generated-spec-adjacent behaviour (SPEC §5) that
   `tools/sync-spec.mjs` does not emit scenarios for, so it is verified by reading against
   `activity.ts:487` and by the day view and Timeline agreeing on real data — not by the
@@ -79,17 +88,21 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Settings** — General, Privacy, Data/Storage, Guide, About. Excluded applications is
-   already honoured by the tracker and has nowhere to be edited, which is the most visible
-   half-built thing left.
-2. **Export a day / a session** — Markdown, CSV, JSON. Now worth doing: annotations exist,
-   so an export can carry the note and tags rather than being reissued later with a column
-   added.
-3. **Reflections** — the day's written memory. The table exists; it is the same read/write
+1. **Export** — a day, a session, and a full backup. The last big gap in "your timeline is
+   yours": import exists (`replay-import`) and Settings offers no way out. Markdown, CSV,
+   JSON first.
+2. **Reflections** — the day's written memory. The table exists; it is the same read/write
    shape as annotations, keyed by day rather than by session, and it is what a reopened day
    is most obviously missing.
+3. **Menu-bar-only mode** — the reference's `menuBarMode`. `main.swift` still forces
+   `.regular` with a note saying a Dock icon is convenient while the UI is being built; the
+   UI is now built enough that this should become the setting it is upstream.
 
 Done and no longer blocking:
+- ~~Settings~~ — General, Privacy, Data, Guide, About, in their own window. Excluded
+  applications is persisted and applied live, retention prunes on change, and Compact runs
+  the SPEC §7 sequence. Verified against the real database: reclaimed 12 KB with 3,144 rows
+  and the integrity check intact, and no copy left behind.
 - ~~Notes, tags and bookmarks~~ — read/write against the real database, marks on a collapsed
   card, and 15 checks. Tag normalisation is now part of the generated contract rather than
   hand-copied: `tools/sync-spec.mjs` extracts the two caps from the reference's `setTags`.

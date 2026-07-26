@@ -13,7 +13,8 @@ import SQLite3
 /// something, the `started_at` lower bound that keeps range scans bounded).
 public final class ActivityStore {
     private var db: OpaquePointer?
-    private let path: String
+    // Internal so Maintenance.swift can name the file it is copying and rewriting.
+    let path: String
 
     public init(path: String) {
         self.path = path
@@ -108,7 +109,7 @@ public final class ActivityStore {
 
     // ── plumbing ──────────────────────────────────────────────────────────────
 
-    private func handle() throws -> OpaquePointer {
+    func handle() throws -> OpaquePointer {
         guard let db else { throw StoreError.open("store used before open()") }
         return db
     }

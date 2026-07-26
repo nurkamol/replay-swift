@@ -13,13 +13,22 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = AppModel()
     private lazy var history = HistoryModel(model: model)
+    private let preferences = Preferences()
+    private lazy var settings = SettingsModel(
+        model: model, history: history, preferences: preferences
+    )
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
+    private var settingsWindow: NSWindow?
     private var menuRefresh: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         model.start()
+        // The tracker is told what to skip before the window appears, so an excluded app is
+        // never recorded in the gap between launching and looking.
+        model.applyExclusions(preferences.excludedBundleIDs)
+        navigation.surface = preferences.launchSurface == .timeline ? .timeline : .today
         installStatusItem()
         showWindow()
 
@@ -75,7 +84,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let hosting = NSHostingController(
-            rootView: RootView(model: model, history: history, navigation: navigation)
+            rootView: RootView(
+                model: model, history: history, navigation: navigation, preferences: preferences
+            )
         )
         let window = NSWindow(contentViewController: hosting)
         window.title = "Replay"
@@ -101,6 +112,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         history.reload()
         navigation.show(.timeline)
         showWindow()
+    }
+
+    /// Settings in its own window, as a Mac app does — not a third tab in the main one.
+    @objc private func openSettings() {
+        settings.reload()
+        if let settingsWindow {
+            settingsWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let hosting = NSHostingController(
+            rootView: SettingsView(model: model, settings: settings, preferences: preferences)
+        )
+        let window = NSWindow(contentViewController: hosting)
+        window.title = "Replay Settings"
+        window.styleMask = [.titled, .closable]
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow = window
     }
 
     @objc private func toggleTracking() {
@@ -153,6 +185,9 @@ extension AppDelegate: NSMenuDelegate {
             action: #selector(toggleTracking),
             keyEquivalent: ""
         ).target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+            .target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Replay", action: #selector(quit), keyEquivalent: "q").target = self
     }

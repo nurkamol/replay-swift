@@ -111,6 +111,14 @@ final class AppModel {
 
     // ── actions ───────────────────────────────────────────────────────────────
 
+    /// Hand the tracker the set it should never record.
+    ///
+    /// Applied live rather than at the next launch: excluding an app is a privacy action,
+    /// and one that only takes effect after a restart is not one.
+    func applyExclusions(_ bundleIDs: Set<String>) {
+        tracker?.excludedBundleIDs = bundleIDs
+    }
+
     func setTracking(_ enabled: Bool) {
         guard let tracker else { return }
         if enabled { tracker.start() } else { tracker.stop() }

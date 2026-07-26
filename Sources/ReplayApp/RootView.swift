@@ -35,6 +35,7 @@ struct RootView: View {
     let model: AppModel
     let history: HistoryModel
     @Bindable var navigation: Navigation
+    let preferences: Preferences
 
     /// The opened day, built when it is opened rather than while the body runs — deriving a
     /// day loads its annotations, and a view body must not be what mutates them.
@@ -73,6 +74,7 @@ struct RootView: View {
         .onChange(of: navigation.openDay, initial: true) { _, day in
             opened = day.map { (history.day($0), history.headline($0)) }
         }
+        .preferredColorScheme(preferences.appearance.colorScheme)
     }
 
     private var picker: some View {
