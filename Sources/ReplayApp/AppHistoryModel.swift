@@ -26,6 +26,8 @@ final class AppHistoryModel {
     private(set) var sessions: [ActivitySession] = []
     /// Which collections those sessions fall into — the kinds of work this app is part of.
     private(set) var collections: [SessionCategory] = []
+    /// The applications this one is most entwined with — how you already work.
+    private(set) var partners: [WorkflowPartner] = []
     private(set) var loaded = false
 
     private let model: AppModel
@@ -70,6 +72,8 @@ final class AppHistoryModel {
             .sorted { $0.startedAt > $1.startedAt }
             .prefix(12)
             .map { $0 }
+
+        partners = Array(computeWorkflowPartners(derived, anchorKey: bundleID).prefix(5))
 
         // Ordered by the collections table rather than by how many sessions landed in each,
         // so the chips read in the same order everywhere in the app.

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 580 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 600 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,8 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| The archive | done | `computeLegacy` — first day, active days, years, and the applications behind all of it. 9 checks. Its figures live inside a view upstream, so the fixture re-declares them, as `sessionMatches` does |
+| App relationships | done | `computeWorkflowPartners` + `computeRelationship` — switches, shared sessions, direction and average length. A pair must have been switched between twice to count. 11 checks |
 | Rituals | done | `detectRituals` — the app that leads each part of the day and the one a day begins with, each needing more than one day to count. 6 checks |
 | Chapters | done | `detectChapters` — eras from the durable headlines, split on character change or a gap over 16 days. 10 checks |
 | Autobiography | done | `listPeriods` + `summarizePeriod` — the history as sentences, compared word for word. 9 checks |
@@ -61,12 +63,14 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| My Story | done | the archive at a glance: how long, how much, which years, and the applications that ran through it |
+| App relationships | done | reached from an application's "works alongside" list — which way the switching runs, and every session the two shared |
 | Story | done | a hub over the narrative surfaces, plus the rituals a run of days settles into |
 | Chapters | done | the eras, and a page for each: what it held, what led its days, and every day in it. Renameable |
 | Autobiography | done | a period picker over every week, month and year the history touches, and the paragraph for it |
 | Projects | done | a grid of what keeps coming back, and a page for each: how it grew, the apps that make it up, and every session under it. Renameable, with an empty name falling back to Replay's own description |
 | Apps | done | ranked by time, with a Today/This Week/This Month window, pinned favourites, and a row leading into that application's own history |
-| An application's history | partial | header, the four figures, which collections it appears in, and its recent sessions. No "works alongside" — `computeWorkflowPartners` is not ported |
+| An application's history | done | header, the four figures, which collections it appears in, the applications it works alongside, and its recent sessions |
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
@@ -107,6 +111,11 @@ function now and live in `ReplayCore` where the suite can reach them.
   application came to the front — so Firefox reads "575 sessions" for a week in which Today
   would call the same span three. Inherited: the reference uses the same word for the same
   number. Left alone for the same reason as the workflow titles.
+- **`Text` group-separates an `Int`.** `Text("\(year)")` renders 2026 as "2,026" — the
+  interpolation is a `LocalizedStringKey`'s, and it formats numbers. Concatenating with `+`
+  first makes it a plain `String` and avoids it, which is why most counts in this app were
+  already safe by accident. Found by looking at My Story. Any new `Text("\(someInt)")` is
+  suspect.
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
   `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, `detectWorkflows`,
   `computeWeekSummary`, and both orderings in `Collections.compute`. Fixtures cover each — the collections one is built so two

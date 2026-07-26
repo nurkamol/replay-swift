@@ -1506,6 +1506,81 @@
       }
     ]
   },
+  "legacy": {
+    "expected": {
+      "firstDay": 1767225600000,
+      "lastDay": 1772582400000,
+      "totalSeconds": 50460,
+      "activeDays": 14,
+      "years": [
+        2026
+      ],
+      "favorites": [
+        {
+          "bundleId": "com.microsoft.VSCode",
+          "name": "Code",
+          "appPath": null,
+          "seconds": 27000,
+          "days": 7
+        },
+        {
+          "bundleId": "com.apple.Safari",
+          "name": "Safari",
+          "appPath": null,
+          "seconds": 19860,
+          "days": 6
+        },
+        {
+          "bundleId": "com.apple.Terminal",
+          "name": "Terminal",
+          "appPath": null,
+          "seconds": 3600,
+          "days": 1
+        }
+      ]
+    }
+  },
+  "relationships": {
+    "anchorKey": "com.apple.Terminal",
+    "partnerKey": "com.microsoft.VSCode",
+    "partners": [
+      {
+        "key": "com.microsoft.VSCode",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "switches": 2,
+        "sharedSessions": 2,
+        "forward": 0,
+        "backward": 2,
+        "avgTogetherSeconds": 900
+      }
+    ],
+    "relationship": {
+      "a": {
+        "key": "com.apple.Terminal",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null
+      },
+      "b": {
+        "key": "com.microsoft.VSCode",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null
+      },
+      "switches": 2,
+      "aToB": 0,
+      "bToA": 2,
+      "sharedSessions": 2,
+      "avgTogetherSeconds": 900,
+      "sessionStarts": [
+        1770109200000,
+        1770022800000
+      ]
+    },
+    "hasNoRelationship": true
+  },
   "chapters": {
     "summaries": [
       {

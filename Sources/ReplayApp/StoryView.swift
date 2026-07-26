@@ -20,6 +20,16 @@ struct StoryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.block) {
+                // Across the full width: it is the whole archive, and the other two are
+                // ways into parts of it.
+                hub(
+                    "My Story", "archivebox",
+                    "The whole of it at a glance — how long you have been building this, "
+                        + "and everything it holds.",
+                    .legacy
+                )
+                .settlesIntoView(reduced: motion.reduced)
+
                 LazyVGrid(columns: columns, spacing: Design.Space.row) {
                     hub(
                         "Autobiography", "text.book.closed",

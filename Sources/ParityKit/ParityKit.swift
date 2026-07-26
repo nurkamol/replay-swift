@@ -290,6 +290,48 @@ public enum ParityKit {
             public let peakCases: [PeakCase]
         }
 
+        public struct RelationshipsCase: Decodable, Sendable {
+            public struct Partner: Decodable, Sendable {
+                public let applicationName: String
+                public let switches: Int
+                public let sharedSessions: Int
+                public let forward: Int
+                public let backward: Int
+                public let avgTogetherSeconds: Int
+            }
+            public struct Pair: Decodable, Sendable {
+                public let switches: Int
+                public let aToB: Int
+                public let bToA: Int
+                public let sharedSessions: Int
+                public let avgTogetherSeconds: Int
+                public let sessionStarts: [Int64]
+            }
+            public let anchorKey: String
+            public let partnerKey: String
+            public let partners: [Partner]
+            public let relationship: Pair?
+            public let hasNoRelationship: Bool
+        }
+
+        public struct LegacyCase: Decodable, Sendable {
+            public struct App: Decodable, Sendable {
+                public let bundleId: String
+                public let name: String
+                public let seconds: Int
+                public let days: Int
+            }
+            public struct Expected: Decodable, Sendable {
+                public let firstDay: Int64
+                public let lastDay: Int64
+                public let totalSeconds: Int
+                public let activeDays: Int
+                public let years: [Int]
+                public let favorites: [App]
+            }
+            public let expected: Expected?
+        }
+
         public struct AutobiographyCase: Decodable, Sendable {
             public struct Expected: Decodable, Sendable {
                 public struct App: Decodable, Sendable {
@@ -477,6 +519,10 @@ public enum ParityKit {
         public let chapters: ChaptersCase
         /// The history told back, a period at a time.
         public let autobiography: AutobiographyCase
+        /// The whole archive, at a glance.
+        public let legacy: LegacyCase
+        /// How two applications are used together.
+        public let relationships: RelationshipsCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -1057,6 +1103,26 @@ public enum ParityKit {
         equal(abg, "and every sentence, word for word",
               told.map(\.sentences), abx.map(\.sentences))
 
+        // The archive. Its figures live inside a view upstream rather than in a module, so
+        // the fixture re-declares them — the same compromise `sessionMatches` needed, and
+        // the same reason: the alternative is nothing checking them at all.
+        let lg = "the archive"
+        if let lex = fixture.legacy.expected, let legacy = computeLegacy(summaries, calendar: calendar) {
+            equal(lg, "when it begins", legacy.firstDay, lex.firstDay)
+            equal(lg, "and where it has reached", legacy.lastDay, lex.lastDay)
+            equal(lg, "active days", legacy.activeDays, lex.activeDays)
+            equal(lg, "total time", legacy.totalSeconds, lex.totalSeconds)
+            equal(lg, "the years it spans, newest first", legacy.years, lex.years)
+            equal(lg, "the applications that ran through it",
+                  legacy.favourites.map(\.applicationName), lex.favorites.map(\.name))
+            equal(lg, "with the same time behind each",
+                  legacy.favourites.map(\.seconds), lex.favorites.map(\.seconds))
+            equal(lg, "across the same days",
+                  legacy.favourites.map(\.days), lex.favorites.map(\.days))
+        }
+        check(lg, "no history is no archive, rather than an empty one",
+              computeLegacy([], calendar: calendar) == nil)
+
         // Rituals — the quiet patterns in a run of days. A part of the day only counts once
         // the same app has led it more than once, which is the guard against a single
         // sitting reading as a habit.
@@ -1141,6 +1207,40 @@ public enum ParityKit {
                              calendar: calendar, locale: environment.locale),
                   expected.label)
         }
+
+        // How two applications are used together. A pair must have been switched between
+        // at least twice to count, so a single incidental hop never reads as a bond.
+        let rlg = "relationships"
+        let rlx = fixture.relationships
+        let partners = computeWorkflowPartners(workflowSessions, anchorKey: rlx.anchorKey)
+        equal(rlg, "the applications most entwined with the anchor, strongest first",
+              partners.map(\.identity.applicationName), rlx.partners.map(\.applicationName))
+        equal(rlg, "switched between the same number of times",
+              partners.map(\.switches), rlx.partners.map(\.switches))
+        equal(rlg, "across the same shared sessions",
+              partners.map(\.sharedSessions), rlx.partners.map(\.sharedSessions))
+        equal(rlg, "leaning the same way",
+              partners.map { [$0.forward, $0.backward] },
+              rlx.partners.map { [$0.forward, $0.backward] })
+        equal(rlg, "for the same average length",
+              partners.map(\.averageTogetherSeconds), rlx.partners.map(\.avgTogetherSeconds))
+
+        let pair = computeRelationship(
+            workflowSessions, keyA: rlx.anchorKey, keyB: rlx.partnerKey
+        )
+        equal(rlg, "a pair's switches", pair?.switches, rlx.relationship?.switches)
+        equal(rlg, "which way they go",
+              pair.map { [$0.aToB, $0.bToA] }, rlx.relationship.map { [$0.aToB, $0.bToA] })
+        equal(rlg, "how many sessions they shared",
+              pair?.sharedSessions, rlx.relationship?.sharedSessions)
+        equal(rlg, "and how long those ran",
+              pair?.averageTogetherSeconds, rlx.relationship?.avgTogetherSeconds)
+        equal(rlg, "the shared sessions, newest first",
+              pair?.sessions.map(\.startedAt), rlx.relationship?.sessionStarts)
+        check(rlg, "two applications that never met have no relationship, rather than an empty one",
+              (computeRelationship(
+                  workflowSessions, keyA: rlx.anchorKey, keyB: "com.example.never"
+              ) == nil) == rlx.hasNoRelationship)
 
         // Projects — the same grouping, keeping the whole span. Apps are aggregated across
         // every session here rather than taken from the first, which is the difference from

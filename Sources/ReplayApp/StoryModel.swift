@@ -53,6 +53,15 @@ final class StoryModel {
 
     func chapter(_ id: String) -> NamedChapter? { chapters.first { $0.id == id } }
 
+    /// The whole archive. Computed on demand rather than held: it is a handful of
+    /// aggregates over headlines already in the database, and caching it would only make
+    /// it possible for it to be stale.
+    func legacy() -> Legacy? {
+        let today = startOfLocalDay(Int64(Date().timeIntervalSince1970 * 1000))
+        let summaries = (try? model.store.dailySummaries(from: 0, to: today + dayMillis)) ?? []
+        return computeLegacy(summaries, appPaths: appPaths(summaries))
+    }
+
     /// The story of one period, told now rather than cached — it is a paragraph of text
     /// assembled from numbers already in hand, and holding it would only risk it going stale.
     func autobiography(for period: Period) -> Autobiography {

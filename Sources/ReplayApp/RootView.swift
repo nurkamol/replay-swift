@@ -76,13 +76,18 @@ final class Navigation {
     struct ProjectTarget: Hashable { var id: String }
 
     /// One of the narrative surfaces behind Story.
-    enum StoryTarget: Hashable { case autobiography, chapters, chapter(String) }
+    enum StoryTarget: Hashable { case autobiography, chapters, chapter(String), legacy }
+
+    /// Two applications, and how they are used together.
+    struct Pair: Hashable { var a: String; var b: String }
 
     func open(app bundleID: String) { path.append(AppHistory(bundleID: bundleID)) }
 
     func open(project id: String) { path.append(ProjectTarget(id: id)) }
 
     func open(story target: StoryTarget) { path.append(target) }
+
+    func open(pair a: String, _ b: String) { path.append(Pair(a: a, b: b)) }
 
     /// Bumped when something asks for the search field.
     ///
@@ -125,6 +130,7 @@ struct RootView: View {
     let appHistory: AppHistoryModel
     let projects: ProjectsModel
     let story: StoryModel
+    let relationships: RelationshipsModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -178,6 +184,18 @@ struct RootView: View {
                                 history: appHistory,
                                 annotations: model.annotations,
                                 export: export,
+                                onDeleteSession: { history.deleteSession($0) },
+                                onOpenPair: { navigation.open(pair: $0, $1) }
+                            )
+                        )
+                    }
+                    .navigationDestination(for: Navigation.Pair.self) { target in
+                        chrome(
+                            RelationshipView(
+                                keyA: target.a, keyB: target.b,
+                                relationships: relationships,
+                                annotations: model.annotations,
+                                export: export,
                                 onDeleteSession: { history.deleteSession($0) }
                             )
                         )
@@ -227,6 +245,12 @@ struct RootView: View {
         case .chapter(let id):
             ChapterDetailView(
                 id: id, story: story, onOpenDay: { navigation.open(day: $0) }
+            )
+        case .legacy:
+            LegacyView(
+                story: story, projects: projects,
+                onOpenApp: { navigation.open(app: $0) },
+                onOpenAutobiography: { navigation.open(story: .autobiography) }
             )
         }
     }

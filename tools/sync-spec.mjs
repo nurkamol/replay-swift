@@ -468,7 +468,7 @@ function buildExportFixtures() {
       `export { groupByDay, computeAppStats } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
        export { buildDayStory } from ${JSON.stringify(join(GLAZE, "renderer/lib/day-story.ts"))};
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
-       export { detectWorkflows, detectProjects } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
+       export { detectWorkflows, detectProjects, computeWorkflowPartners, computeRelationship } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
        export { projectDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/projects.ts"))};
        export { detectRituals } from ${JSON.stringify(join(GLAZE, "renderer/lib/rituals.ts"))};
        export { detectChapters, chapterDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/chapters.ts"))};
@@ -480,6 +480,40 @@ function buildExportFixtures() {
        // re-declared here character for character. If it drifts upstream this
        // fixture keeps asserting the old rule — the one risk in extracting it,
        // and the reason it is copied rather than approximated.
+       // The archive's figures are computed inside the legacy view upstream, not in a
+       // lib module, so like sessionMatches above they are re-declared here character
+       // for character. Same risk, same reason: without this nothing checks them.
+       // (No backticks in this comment: it lives inside a template literal.)
+       export function computeLegacy(summaries, directory) {
+         const active = summaries.filter((s) => s.activeSeconds > 0);
+         if (active.length === 0) return null;
+         const firstDay = Math.min(...active.map((s) => s.dayStart));
+         const lastDay = Math.max(...active.map((s) => s.dayStart));
+         const totalSeconds = active.reduce((sum, s) => sum + s.activeSeconds, 0);
+         const years = [...new Set(active.map((s) => new Date(s.dayStart).getFullYear()))].sort((a, b) => b - a);
+         const appAgg = new Map();
+         for (const s of active) {
+           const key = s.topBundleId ?? s.topAppName ?? "unknown";
+           const entry = appAgg.get(key);
+           if (entry) {
+             entry.seconds += s.topSeconds;
+             entry.days += 1;
+           } else {
+             appAgg.set(key, {
+               name: s.topAppName ?? key,
+               appPath: s.topBundleId ? directory.get(s.topBundleId)?.appPath ?? null : null,
+               seconds: s.topSeconds,
+               days: 1,
+             });
+           }
+         }
+         const favorites = [...appAgg.entries()]
+           .map(([bundleId, v]) => ({ bundleId, ...v }))
+           .sort((a, b) => b.seconds - a.seconds)
+           .slice(0, 6);
+         return { firstDay, lastDay, totalSeconds, activeDays: active.length, years, favorites };
+       }
+
        export function sessionMatches(session, annotation, query) {
          const q = query.replace(/^#/, "").toLowerCase();
          if (session.title.toLowerCase().includes(q)) return true;
@@ -515,6 +549,7 @@ function buildExportFixtures() {
                computeWeekSummary, describePeak, detectWorkflows, detectProjects,
                projectDefaultName, relativeDayLabel, shortDateLabel, detectRituals,
                detectChapters, chapterDefaultName, listPeriods, summarizePeriod,
+               computeLegacy, computeWorkflowPartners, computeRelationship,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -615,6 +650,16 @@ function buildExportFixtures() {
          ...summarizePeriod(period, input.chapterSummaries, new Map(), input.reflectionCounts[period.key] ?? 0),
        }));
 
+       const legacy = computeLegacy(input.chapterSummaries, new Map());
+
+       // How two applications are used together. The anchor is the app that appears in
+       // every session of the workflow fixture, so partners exist to be ranked at all.
+       const partners = computeWorkflowPartners(workflowSessions, input.anchorKey);
+       const relationship = computeRelationship(
+         workflowSessions, input.anchorKey, input.partnerKey,
+       );
+       const noRelationship = computeRelationship(workflowSessions, input.anchorKey, "com.example.never");
+
        // Every branch of describePeak, so the boundary hours are pinned rather
        // than sampled by whatever the week fixture happened to land on.
        const peakLabels = input.peakCases.map((p) => ({ ...p, label: describePeak(p) }));
@@ -710,6 +755,14 @@ function buildExportFixtures() {
          rituals,
          chapters,
          autobiography,
+         legacy,
+         partners,
+         relationship: relationship && {
+           ...relationship,
+           sessionStarts: relationship.sessions.map((s) => s.startedAt),
+           sessions: undefined,
+         },
+         hasNoRelationship: noRelationship === null,
          workflowSessionCount: workflowSessions.length,
          resume,
          whenLabels,
@@ -1119,6 +1172,9 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        // Terminal is in both editor sessions; Code is the other half of that pair.
+        anchorKey: "com.apple.Terminal",
+        partnerKey: "com.microsoft.VSCode",
         chapterSummaries,
         // Reflections live in their own table, so the count is supplied. Two periods get
         // one, so the singular and the plural are both exercised, and the rest get none
@@ -1191,6 +1247,14 @@ function buildExportFixtures() {
       },
       autobiography: {
         expected: result.autobiography,
+      },
+      legacy: { expected: result.legacy },
+      relationships: {
+        anchorKey: "com.apple.Terminal",
+        partnerKey: "com.microsoft.VSCode",
+        partners: result.partners,
+        relationship: result.relationship,
+        hasNoRelationship: result.hasNoRelationship,
       },
       chapters: {
         summaries: chapterSummaries,

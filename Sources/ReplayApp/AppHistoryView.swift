@@ -12,6 +12,7 @@ struct AppHistoryView: View {
     let annotations: AnnotationsModel
     let export: ExportModel
     let onDeleteSession: (ActivitySession) -> Void
+    let onOpenPair: (String, String) -> Void
 
     @Environment(\.motion) private var motion
 
@@ -24,6 +25,7 @@ struct AppHistoryView: View {
                     header
                     tiles
                     if !history.collections.isEmpty { appearsIn }
+                    if !history.partners.isEmpty { alongside }
                     if !history.sessions.isEmpty { recent }
                 }
             }
@@ -93,6 +95,59 @@ struct AppHistoryView: View {
                         .overlay(Capsule().strokeBorder(Design.Colour.border))
                 }
             }
+        }
+        .settlesIntoView(reduced: motion.reduced)
+    }
+
+    /// The applications this one is most entwined with.
+    private var alongside: some View {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
+            Text("Works alongside").sectionLabelStyle()
+            VStack(spacing: 0) {
+                ForEach(history.partners, id: \.identity.key) { partner in
+                    Button {
+                        if let other = partner.identity.bundleIdentifier {
+                            onOpenPair(bundleID, other)
+                        }
+                    } label: {
+                        HStack(spacing: Design.Space.card) {
+                            AppIcon(
+                                bundleID: partner.identity.bundleIdentifier,
+                                appPath: partner.identity.appPath,
+                                size: Design.Icon.stack
+                            )
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(partner.identity.applicationName)
+                                    .font(Design.Text.detail.weight(.medium))
+                                Text(
+                                    "\(partner.switches) "
+                                        + "\(partner.switches == 1 ? "switch" : "switches") · "
+                                        + "\(partner.sharedSessions) shared"
+                                )
+                                .font(Design.Text.micro)
+                                .foregroundStyle(.tertiary)
+                                .monospacedDigit()
+                            }
+                            Spacer(minLength: Design.Space.inline)
+                            Text(formatDurationShort(partner.averageTogetherSeconds))
+                                .font(Design.Text.detail)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                            Image(systemName: "chevron.right")
+                                .font(Design.Text.micro)
+                                .foregroundStyle(.quaternary)
+                        }
+                        .padding(.horizontal, Design.Space.snug)
+                        .padding(.vertical, Design.Space.snug)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(partner.identity.bundleIdentifier == nil)
+                    .accessibilityHint("Opens how these two are used together")
+                }
+            }
+            .padding(Design.Space.snug)
+            .card(border: Design.Colour.borderQuiet)
         }
         .settlesIntoView(reduced: motion.reduced)
     }

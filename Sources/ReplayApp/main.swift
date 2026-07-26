@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var appHistory = AppHistoryModel(model: model)
     private lazy var projects = ProjectsModel(model: model, preferences: preferences)
     private lazy var story = StoryModel(model: model, preferences: preferences)
+    private lazy var relationships = RelationshipsModel(model: model)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -267,6 +268,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 appHistory: appHistory,
                 projects: projects,
                 story: story,
+                relationships: relationships,
                 onOpenSettings: { [weak self] in self?.openSettings() }
             )
         )
