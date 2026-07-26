@@ -79,7 +79,7 @@ struct CollectionsView: View {
                 if let opened = collections.opened {
                     openedCollection(opened)
                 } else if collections.collections.isEmpty {
-                    empty
+                    empty.centredInPage()
                 } else {
                     VStack(spacing: Design.Space.row) {
                         ForEach(collections.collections, id: \.category) { collection in
@@ -184,5 +184,12 @@ private struct CollectionRow: View {
         }
         .buttonStyle(.plain)
         .card(border: Design.Colour.fillStrong)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(collection.label), \(formatDurationShort(collection.totalSeconds)) across "
+                + "\(collection.sessionCount) "
+                + "\(collection.sessionCount == 1 ? "session" : "sessions")"
+        )
+        .accessibilityHint("Opens this collection")
     }
 }

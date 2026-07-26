@@ -69,6 +69,13 @@ final class Navigation {
         show(.search)
         focusSearchRequests += 1
     }
+
+    /// Whether the sidebar is put away. Held here rather than in the view so the View menu
+    /// can flip it — ⌃⌘S is the shortcut every Mac app with a sidebar uses, and a toolbar
+    /// button that is the *only* way to reach it is not keyboard accessible.
+    var sidebarCollapsed = false
+
+    func toggleSidebar() { sidebarCollapsed.toggle() }
 }
 
 /// The window.
@@ -87,10 +94,21 @@ struct RootView: View {
     let memories: MemoriesModel
     let collections: CollectionsModel
 
-    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    /// Given so the sidebar button can reach it — the automatic one only appears in some
+    /// configurations, and a sidebar you cannot put away is not a sidebar.
+    let onOpenSettings: () -> Void
+
+    @Environment(\.motion) private var motion
+
+    private var columnVisibility: Binding<NavigationSplitViewVisibility> {
+        Binding(
+            get: { navigation.sidebarCollapsed ? .detailOnly : .all },
+            set: { navigation.sidebarCollapsed = ($0 == .detailOnly) }
+        )
+    }
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
+        NavigationSplitView(columnVisibility: columnVisibility) {
             sidebar
         } detail: {
             NavigationStack(path: $navigation.path) {
@@ -102,6 +120,9 @@ struct RootView: View {
                             annotations: model.annotations,
                             export: export
                         )
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) { sidebarToggle }
                     }
             }
         }
@@ -120,12 +141,43 @@ struct RootView: View {
         .preferredColorScheme(preferences.appearance.colorScheme)
     }
 
-    private var sidebar: some View {
-        List(Navigation.Surface.allCases, selection: $navigation.surface) { item in
-            NavigationLink(value: item) {
-                Label(item.rawValue, systemImage: item.symbol)
+    /// Show or hide the sidebar. Named for what it will do, not for what it is, so
+    /// VoiceOver announces the action rather than the furniture.
+    private var sidebarToggle: some View {
+        Button {
+            withAnimation(motion.animation(Design.Motion.settle)) {
+                navigation.toggleSidebar()
             }
-            .accessibilityHint(item.purpose)
+        } label: {
+            Image(systemName: "sidebar.leading")
+        }
+        .help(navigation.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar")
+        .accessibilityLabel(navigation.sidebarCollapsed ? "Show sidebar" : "Hide sidebar")
+    }
+
+    private var sidebar: some View {
+        VStack(spacing: 0) {
+            List(Navigation.Surface.allCases, selection: $navigation.surface) { item in
+                NavigationLink(value: item) {
+                    Label(item.rawValue, systemImage: item.symbol)
+                }
+                .accessibilityHint(item.purpose)
+            }
+
+            // Settings sits at the foot of the sidebar rather than only in a menu: it is
+            // where every app with a source list puts the thing you reach for last, and it
+            // stops Settings being a keyboard shortcut you have to know about.
+            Divider()
+            Button(action: onOpenSettings) {
+                Label("Settings", systemImage: "gearshape")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, Design.Space.card)
+            .padding(.vertical, Design.Space.row)
+            .keyboardShortcut(",", modifiers: .command)
+            .help("Replay Settings")
         }
         .navigationSplitViewColumnWidth(
             min: Design.Layout.sidebarMinWidth,

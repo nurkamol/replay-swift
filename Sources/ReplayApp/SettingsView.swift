@@ -21,18 +21,76 @@ struct SettingsView: View {
     let export: ExportModel
     @Bindable var preferences: Preferences
 
+    /// The panes, in the order they are worth reaching for.
+    private enum Pane: String, CaseIterable, Identifiable, Hashable {
+        case general = "General", privacy = "Privacy", data = "Data"
+        case guide = "Guide", about = "About"
+
+        var id: String { rawValue }
+
+        var symbol: String {
+            switch self {
+            case .general: "gearshape"
+            case .privacy: "hand.raised"
+            case .data: "internaldrive"
+            case .guide: "questionmark.circle"
+            case .about: "info.circle"
+            }
+        }
+
+        /// The tint behind each glyph, as System Settings does it. Colour here is
+        /// wayfinding rather than decoration: it makes a pane recognisable at a glance
+        /// before its name is read.
+        var tint: Color {
+            switch self {
+            case .general: .gray
+            case .privacy: .blue
+            case .data: .indigo
+            case .guide: .teal
+            case .about: .secondary
+            }
+        }
+    }
+
+    @State private var pane: Pane = .general
+
     var body: some View {
-        TabView {
-            GeneralTab(model: model, preferences: preferences)
-                .tabItem { Label("General", systemImage: "gearshape") }
-            PrivacyTab(model: model, settings: settings, preferences: preferences)
-                .tabItem { Label("Privacy", systemImage: "hand.raised") }
-            DataTab(settings: settings, export: export, preferences: preferences)
-                .tabItem { Label("Data", systemImage: "internaldrive") }
-            GuideTab()
-                .tabItem { Label("Guide", systemImage: "questionmark.circle") }
-            AboutTab()
-                .tabItem { Label("About", systemImage: "info.circle") }
+        NavigationSplitView {
+            List(Pane.allCases, selection: $pane) { item in
+                NavigationLink(value: item) {
+                    Label {
+                        Text(item.rawValue)
+                    } icon: {
+                        // A tinted rounded tile rather than a bare glyph — the shape
+                        // System Settings uses, and the reason its list reads as a set of
+                        // places rather than a list of words.
+                        Image(systemName: item.symbol)
+                            .font(Design.Text.detail)
+                            .foregroundStyle(.white)
+                            .frame(
+                                width: Design.Icon.settingsTile,
+                                height: Design.Icon.settingsTile
+                            )
+                            .background(
+                                item.tint,
+                                in: RoundedRectangle(cornerRadius: Design.Radius.small)
+                            )
+                    }
+                }
+            }
+            .navigationSplitViewColumnWidth(Design.Layout.settingsSidebarWidth)
+        } detail: {
+            Group {
+                switch pane {
+                case .general: GeneralTab(model: model, preferences: preferences)
+                case .privacy:
+                    PrivacyTab(model: model, settings: settings, preferences: preferences)
+                case .data: DataTab(settings: settings, export: export, preferences: preferences)
+                case .guide: GuideTab()
+                case .about: AboutTab()
+                }
+            }
+            .navigationTitle(pane.rawValue)
         }
         .onAppear { settings.reload() }
     }
@@ -44,7 +102,7 @@ struct SettingsView: View {
 ///
 /// The width is fixed because a settings window's is; the height is not, so a short pane is
 /// a short window rather than a tall one with air at the bottom.
-private struct Pane<Content: View>: View {
+private struct PaneForm<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -52,7 +110,7 @@ private struct Pane<Content: View>: View {
             content
         }
         .formStyle(.grouped)
-        .frame(width: Design.Layout.settingsWidth)
+        .frame(minWidth: Design.Layout.settingsDetailWidth)
     }
 }
 
@@ -124,7 +182,7 @@ private struct GeneralTab: View {
     private var keepsGoal: Bool { preferences.focusGoalMinutes != nil }
 
     var body: some View {
-        Pane {
+        PaneForm {
             Section {
                 Picker("Appearance", selection: $preferences.appearance) {
                     ForEach(Appearance.allCases) { Text($0.label).tag($0) }
@@ -212,7 +270,7 @@ private struct PrivacyTab: View {
     @State private var managingExclusions = false
 
     var body: some View {
-        Pane {
+        PaneForm {
             Section {
                 // The promise, stated once and plainly, before any control.
                 Label {
@@ -387,7 +445,7 @@ private struct DataTab: View {
     private var matching: Int { export.count(scope) }
 
     var body: some View {
-        Pane {
+        PaneForm {
             Section {
                 LabeledContent("Report") {
                     HStack(spacing: Design.Space.snug) {
@@ -519,7 +577,7 @@ private struct GuideTab: View {
     ]
 
     var body: some View {
-        Pane {
+        PaneForm {
             Section {
                 ForEach(entries) { entry in
                     // Disclosure rather than four paragraphs: the questions stay scannable,
@@ -562,6 +620,7 @@ private struct AboutTab: View {
                 .padding(.top, Design.Space.tight)
         }
         .padding(Design.Space.page)
-        .frame(width: Design.Layout.settingsWidth)
+        .frame(minWidth: Design.Layout.settingsDetailWidth)
+        .frame(maxHeight: .infinity)
     }
 }

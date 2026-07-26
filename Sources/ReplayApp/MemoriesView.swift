@@ -36,7 +36,7 @@ struct MemoriesView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.section) {
                 if memories.memories.isEmpty {
-                    empty
+                    empty.centredInPage()
                 } else {
                     VStack(spacing: Design.Space.row) {
                         ForEach(memories.memories, id: \.range.key) { memory in
@@ -100,6 +100,13 @@ private struct MemoryRow: View {
         }
         .buttonStyle(.plain)
         .card(border: Design.Colour.fillStrong)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "\(memory.range.label), \(fullDayLabel(memory.range.dayStart)), "
+                + "\(formatDurationShort(memory.summary.activeSeconds)) active"
+                + (memory.summary.topAppName.map { ", mostly \($0)" } ?? "")
+        )
+        .accessibilityHint("Opens that day")
     }
 }
 

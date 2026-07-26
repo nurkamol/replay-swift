@@ -102,35 +102,71 @@ struct SearchView: View {
     let onDeleteSession: (ActivitySession) -> Void
 
     @Environment(\.motion) private var motion
+    @FocusState private var fieldFocused: Bool
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.section) {
+                field
+
                 if let chosen = search.chosenApp {
                     narrowedTo(chosen)
                 }
                 if search.chosenApp != nil || !search.query.trimmingCharacters(in: .whitespaces).isEmpty {
                     results
                 } else {
-                    hint
+                    hint.centredInPage()
                 }
             }
             .pageContent()
         }
         .background(.background)
         .navigationTitle("Search")
-        // The system's search field, in the system's place, with the system's behaviours:
-        // ⌘F focuses it, Escape clears it, and it looks like every other one on the Mac.
-        .searchable(
-            text: Binding(get: { search.query }, set: { search.query = $0 }),
-            placement: .toolbar,
-            prompt: "A session, a note, a tag, an app"
-        )
-        // Behind availability rather than by raising the deployment target: dropping
-        // macOS 14 is a product decision, not a way to reach one modifier. On 14 the Find
-        // command still brings you to Search — it just does not put the caret in the field.
-        .modifier(FocusSearchOnRequest(requests: navigation.focusSearchRequests))
         .onAppear { if !search.loaded { search.load() } }
+        .onChange(of: navigation.focusSearchRequests, initial: true) { _, _ in
+            if navigation.focusSearchRequests > 0 { fieldFocused = true }
+        }
+    }
+
+    /// The search field, leading the surface at full width.
+    ///
+    /// In the toolbar it was a small box in the top right of a wide window, which reads as
+    /// a filter on something rather than as the point of the screen. Searching *is* this
+    /// surface, so the field is the first and widest thing on it — the shape Spotlight and
+    /// Notes use when finding is the task rather than a refinement of one.
+    private var field: some View {
+        HStack(spacing: Design.Space.row) {
+            Image(systemName: "magnifyingglass")
+                .font(.title3)
+                .foregroundStyle(.tertiary)
+
+            TextField(
+                "A session, a note, a tag, an app",
+                text: Binding(get: { search.query }, set: { search.query = $0 })
+            )
+            .textFieldStyle(.plain)
+            .font(.title3)
+            .focused($fieldFocused)
+            // Escape gives the field up rather than clearing the app's state, which is
+            // what Escape means everywhere else on the Mac.
+            .onExitCommand { fieldFocused = false }
+
+            if !search.query.isEmpty {
+                Button {
+                    search.chosenApp = nil
+                    search.query = ""
+                    fieldFocused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill").font(.title3)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tertiary)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, Design.Space.cardRoomy)
+        .frame(height: Design.Layout.searchFieldHeight)
+        .card(radius: Design.Radius.control, background: Design.Colour.surfaceInset)
     }
 
     /// The chip that says the results are narrowed to one app, and how to stop.
@@ -235,27 +271,5 @@ private struct SectionLabel: View {
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
             .kerning(Design.Text.labelKerning)
-    }
-}
-
-
-/// Puts the caret in the toolbar's search field when something asks for it.
-private struct FocusSearchOnRequest: ViewModifier {
-    let requests: Int
-    @FocusState private var focused: Bool
-
-    func body(content: Content) -> some View {
-        if #available(macOS 15.0, *) {
-            content
-                .searchFocused($focused)
-                // `initial: true` matters: Find switches surface *and* bumps the counter,
-                // so this view is created after the change. Without it the modifier waits
-                // for a second Find that has already happened.
-                .onChange(of: requests, initial: true) { _, _ in
-                    if requests > 0 { focused = true }
-                }
-        } else {
-            content
-        }
     }
 }

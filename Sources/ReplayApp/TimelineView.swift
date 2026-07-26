@@ -19,7 +19,7 @@ struct TimelineView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.block) {
                 if history.days.isEmpty {
-                    empty
+                    empty.centredInPage()
                 } else {
                     ForEach(history.days) { day in
                         DaySection(
@@ -58,14 +58,14 @@ struct TimelineView: View {
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text(history.range == .today ? "A quiet day" : "No history yet")
-                .font(.headline)
+        ContentUnavailableView {
+            Label(
+                history.range == .today ? "A quiet day" : "No history yet",
+                systemImage: "calendar.day.timeline.left"
+            )
+        } description: {
             Text(emptyDetail)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
-        .padding(.vertical, Design.Space.emptyStateRoomy)
     }
 
     private var emptyDetail: String {

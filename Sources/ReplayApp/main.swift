@@ -25,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
     private var settingsWindow: NSWindow?
+    /// Kept so its title can say what it will do rather than what it is.
+    private var sidebarMenuItem: NSMenuItem?
     private var menuRefresh: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -32,7 +34,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The tracker is told what to skip before the window appears, so an excluded app is
         // never recorded in the gap between launching and looking.
         model.applyExclusions(preferences.excludedBundleIDs)
-        navigation.surface = preferences.launchSurface == .timeline ? .timeline : .today
+        // A pinned "open on" is an instruction and wins; otherwise come back to where the
+        // window was left, which is what a Mac app does.
+        if let pinned = Navigation.Surface(rawValue: preferences.launchSurface.label),
+           preferences.launchSurface != .today {
+            navigation.surface = pinned
+        } else if let last = Navigation.Surface(rawValue: preferences.lastSurface) {
+            navigation.surface = last
+        }
         if preferences.menuBarOnly { NSApp.setActivationPolicy(.accessory) }
         installApplicationMenu()
         installStatusItem()
@@ -46,7 +55,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         // Flush the open session so its duration is recorded rather than lost.
+        preferences.lastSurface = navigation.surface.rawValue
         model.shutdown()
+    }
+
+    /// The Dock menu: what you would want without bringing the window forward first.
+    ///
+    /// Built fresh each time it opens, like the menu bar's, so it states the truth rather
+    /// than a cached one.
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        model.reload()
+        let menu = NSMenu()
+
+        if let summary = model.summary, summary.switches > 0 {
+            let today = NSMenuItem(
+                title: "\(formatDurationShort(summary.activeSeconds)) active today",
+                action: nil, keyEquivalent: ""
+            )
+            today.isEnabled = false
+            menu.addItem(today)
+            menu.addItem(.separator())
+        }
+
+        menu.addItem(withTitle: "Open Today", action: #selector(openToday), keyEquivalent: "")
+            .target = self
+        menu.addItem(withTitle: "Search…", action: #selector(findInReplay), keyEquivalent: "")
+            .target = self
+        menu.addItem(.separator())
+        menu.addItem(
+            withTitle: model.isRecording ? "Pause Recording" : "Resume Recording",
+            action: #selector(toggleTracking), keyEquivalent: ""
+        ).target = self
+        return menu
     }
 
     /// Closing the window must not quit: Replay keeps recording, and the menu bar is where
@@ -119,6 +159,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let viewItem = NSMenuItem()
         let viewMenu = NSMenu(title: "View")
+        let sidebarItem = viewMenu.addItem(
+            withTitle: "Hide Sidebar", action: #selector(toggleSidebar), keyEquivalent: "s"
+        )
+        sidebarItem.keyEquivalentModifierMask = [.command, .control]
+        sidebarItem.target = self
+        self.sidebarMenuItem = sidebarItem
+        viewMenu.addItem(.separator())
         viewMenu.addItem(withTitle: "Today", action: #selector(openToday), keyEquivalent: "1")
             .target = self
         viewMenu.addItem(withTitle: "Timeline", action: #selector(openTimeline), keyEquivalent: "2")
@@ -199,7 +246,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             rootView: RootView(
                 model: model, history: history, navigation: navigation,
                 preferences: preferences, export: export, search: search, memories: memories,
-                collections: collections
+                collections: collections,
+                onOpenSettings: { [weak self] in self?.openSettings() }
             )
         )
         let window = NSWindow(contentViewController: hosting)
@@ -213,7 +261,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
+        // The system restores the frame; `center()` is only the first-run fallback.
         window.center()
+        window.setFrameAutosaveName("ReplayMainWindow")
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
@@ -230,6 +280,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openTimeline() {
         history.reload()
         navigation.show(.timeline)
+        showWindow()
+    }
+
+    @objc private func toggleSidebar() {
+        navigation.toggleSidebar()
+        sidebarMenuItem?.title = navigation.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar"
         showWindow()
     }
 
@@ -273,14 +329,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The window takes its size from the pane rather than the other way round, so
         // switching tabs resizes it the way System Settings does — and a short pane is a
         // short window instead of one with air at the bottom.
-        hosting.sizingOptions = [.preferredContentSize]
+        // A split view fills what it is given rather than asking for a size, so the
+        // window sets its own — and can be resized, which a two-column settings window
+        // should be.
+        hosting.sizingOptions = []
         let window = NSWindow(contentViewController: hosting)
         window.title = "Replay Settings"
-        // No resize control: a settings window is sized by its content, and each pane
-        // asks for the height it needs.
-        window.styleMask = [.titled, .closable]
+        window.styleMask = [.titled, .closable, .resizable, .fullSizeContentView]
+        window.setContentSize(
+            NSSize(width: Design.Layout.settingsWidth, height: Design.Layout.settingsHeight)
+        )
+        window.contentMinSize = NSSize(
+            width: Design.Layout.settingsSidebarWidth + Design.Layout.settingsDetailWidth,
+            height: Design.Layout.settingsHeight
+        )
         window.isReleasedWhenClosed = false
         window.center()
+        window.setFrameAutosaveName("ReplaySettingsWindow")
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow = window

@@ -166,6 +166,34 @@ final class ExportModel {
         }
     }
 
+    /// Hand a report to the system's share sheet rather than to a save panel.
+    ///
+    /// Written to a temporary file first because that is what every sharing service takes —
+    /// Mail wants an attachment, Messages wants a file, Notes wants a document. A string
+    /// would only reach a subset of them.
+    func share(_ format: Report.Format, label: String, sessions: [ActivitySession], from view: NSView?) {
+        let entries = entries(for: sessions)
+        guard !entries.isEmpty, let view else {
+            errorMessage = "There's nothing recorded here to share"
+            return
+        }
+        do {
+            let name = Report.defaultName(label: label, format: format)
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+            let content = format == .html
+                ? Report.html(label: label, entries: entries, icon: { [self] in iconDataURI($0) })
+                : Report.build(format, label: label, entries: entries)
+            try content.write(to: url, atomically: true, encoding: .utf8)
+
+            let picker = NSSharingServicePicker(items: [url])
+            picker.show(relativeTo: view.bounds, of: view, preferredEdge: .maxY)
+            status = nil
+            errorMessage = nil
+        } catch {
+            errorMessage = "Couldn't prepare that for sharing: \(error.localizedDescription)"
+        }
+    }
+
     /// Read a backup back in. Merges rather than replaces — an import never erases.
     func importBackup() {
         let panel = NSOpenPanel()

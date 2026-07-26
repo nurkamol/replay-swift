@@ -65,6 +65,15 @@ final class Preferences {
     var menuBarOnly: Bool {
         didSet { write(menuBarOnly, "menuBarOnly") }
     }
+    /// The surface the window was showing when it was last closed.
+    ///
+    /// Restored on launch unless the user has pinned an opening surface, because coming
+    /// back to where you were is the behaviour a Mac app has — and the pinned choice is an
+    /// explicit instruction that outranks it.
+    var lastSurface: String {
+        didSet { write(lastSurface, "lastSurface") }
+    }
+
     /// A daily focus target in minutes, or `nil` for none.
     ///
     /// Off by default and opt-in on purpose: Replay describes the day, it does not set
@@ -96,6 +105,7 @@ final class Preferences {
         excludedApps = (defaults.data(forKey: "excludedApps"))
             .flatMap { try? JSONDecoder().decode([ExcludedApp].self, from: $0) } ?? []
         menuBarOnly = defaults.bool(forKey: "menuBarOnly")
+        lastSurface = defaults.string(forKey: "lastSurface") ?? ""
         // Zero and absent both mean "no goal", so an unset default reads as off.
         let goal = defaults.integer(forKey: "focusGoalMinutes")
         focusGoalMinutes = goal > 0 ? goal : nil

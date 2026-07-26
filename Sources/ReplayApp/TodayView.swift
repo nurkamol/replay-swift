@@ -48,7 +48,7 @@ struct TodayView: View {
                     }
                     sessionList
                 } else {
-                    quietDay
+                    quietDay.centredInPage()
                 }
             }
             .pageContent()
@@ -290,6 +290,18 @@ struct SessionCard: View {
                                 }
                             }
                         }
+                        Menu("Share Session") {
+                            ForEach(Report.Format.allCases, id: \.self) { format in
+                                Button(format.label) {
+                                    export.share(
+                                        format,
+                                        label: session.title,
+                                        sessions: [session],
+                                        from: NSApp.keyWindow?.contentView
+                                    )
+                                }
+                            }
+                        }
                         Divider()
                         Button("Delete Session…", role: .destructive, action: onDelete)
                     } label: {
@@ -304,6 +316,33 @@ struct SessionCard: View {
         }
         // A bookmarked session gently glows rather than shouting: the same card, warmed.
         .card(border: annotation.bookmarked ? Design.Colour.markedBorder : Design.Colour.border)
+        // The same actions on right-click, because that is where a Mac user looks first
+        // and a ⋯ that only appears once expanded is a menu you have to find.
+        .contextMenu {
+            Button(annotation.bookmarked ? "Remove Bookmark" : "Bookmark") {
+                annotations.setBookmarked(session.startedAt, !annotation.bookmarked)
+            }
+            Divider()
+            Menu("Export Session") {
+                ForEach(Report.Format.allCases, id: \.self) { format in
+                    Button(format.label) {
+                        export.exportReport(format, label: session.title, sessions: [session])
+                    }
+                }
+            }
+            Menu("Share Session") {
+                ForEach(Report.Format.allCases, id: \.self) { format in
+                    Button(format.label) {
+                        export.share(
+                            format, label: session.title, sessions: [session],
+                            from: NSApp.keyWindow?.contentView
+                        )
+                    }
+                }
+            }
+            Divider()
+            Button("Delete Session…", role: .destructive, action: onDelete)
+        }
     }
 }
 
@@ -334,6 +373,10 @@ private struct AppShareRow: View {
                 .foregroundStyle(.secondary)
                 .frame(width: Design.Layout.durationColumn, alignment: .trailing)
         }
+        // The bar is a picture of the number beside it; announcing both would say the
+        // same thing twice.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(app.applicationName), \(formatDurationShort(app.seconds))")
     }
 }
 
@@ -364,14 +407,15 @@ struct BreakRow: View {
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
             Text(label).font(.caption.weight(.medium)).foregroundStyle(.secondary)
+            // The figure ("8m away") is the point and the explanation supports it, so the
+            // explanation truncates rather than wrapping. Not `layoutPriority(-1)`, which
+            // starved it to nothing at every width — a row that silently drops half its
+            // meaning is worse than one that wraps.
             Text(detail)
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .lineLimit(1)
                 .truncationMode(.tail)
-                // The figure ("8m away") is the point; the explanation gives way first
-                // when the column is narrow rather than wrapping under it.
-                .layoutPriority(-1)
             Rectangle().fill(.quaternary).frame(height: 1)
         }
         .padding(.vertical, Design.Space.hairline)

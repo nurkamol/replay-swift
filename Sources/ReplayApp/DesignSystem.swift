@@ -296,6 +296,8 @@ enum Design {
         static let glyphColumn: CGFloat = 26
         /// The app's own icon, in About.
         static let about: CGFloat = 64
+        /// A tinted tile in the Settings source list.
+        static let settingsTile: CGFloat = 20
     }
 
     // ── layout ────────────────────────────────────────────────────────────────
@@ -314,9 +316,11 @@ enum Design {
         static let sidebarWidth: CGFloat = 200
         static let sidebarMaxWidth: CGFloat = 260
 
-        /// Settings, which is a fixed-size window as Mac settings are.
-        static let settingsWidth: CGFloat = 560
-        static let settingsHeight: CGFloat = 460
+        /// Settings: a source list and a pane, as System Settings is.
+        static let settingsWidth: CGFloat = 720
+        static let settingsHeight: CGFloat = 520
+        static let settingsSidebarWidth: CGFloat = 190
+        static let settingsDetailWidth: CGFloat = 480
         /// A sheet that lists things — the exclusion picker.
         static let sheetWidth: CGFloat = 460
         static let sheetHeight: CGFloat = 420
@@ -336,6 +340,8 @@ enum Design {
         static let barThickness: CGFloat = 4
         /// A rule between sections.
         static let hairline: CGFloat = 1
+        /// The prominent search field at the head of the Search surface.
+        static let searchFieldHeight: CGFloat = 44
         /// A progress ring's stroke.
         static let ringThickness: CGFloat = 4
         /// The row a progress bar is laid out in.
@@ -414,6 +420,16 @@ extension View {
                 .opacity(reduced ? 1 : (phase.isIdentity ? 1 : 0.6))
                 .scaleEffect(reduced ? 1 : (phase.isIdentity ? 1 : 0.985))
         }
+    }
+
+    /// Content that should sit in the middle of whatever room it has, rather than at the
+    /// left edge of a measure that is narrower than the window.
+    ///
+    /// An empty state is the whole screen when it is showing. Constraining it to the
+    /// reading measure and then aligning that measure left put it a third of the way across
+    /// a wide window, which reads as a layout mistake rather than as emptiness.
+    func centredInPage() -> some View {
+        frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// A page's scrolling content: one gutter, one rhythm, one measure, every surface.
