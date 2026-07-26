@@ -249,6 +249,10 @@ enum Design {
         static let canvasChapterOpacity: Double = 0.70
         static let canvasMomentOpacity: Double = 0.80
         static let canvasAppOpacity: Double = 0.55
+        /// A ring around an icon. An application wears a quiet one — its own icon already
+        /// says what it is — and everything built on top of one wears a solid ring, so a
+        /// project is never mistaken for the app whose icon it borrows.
+        static let canvasRingQuiet: Double = 0.35
         static let markedBorder = AnyShapeStyle(Color.yellow.opacity(0.45))
         /// A goal that was reached. The app's only approving colour.
         static let met = Color.green
@@ -421,6 +425,14 @@ enum Design {
         static let canvasSelectionWidth: CGFloat = 2
         /// Below this drawn radius a label is noise rather than information.
         static let canvasLabelThreshold: CGFloat = 9
+        /// And below this one an icon is a smudge, so the node stays a plain dot.
+        static let canvasIconThreshold: CGFloat = 8
+        /// The size icons are rasterised at, once. Large enough that the deepest zoom is
+        /// still downscaling rather than stretching.
+        static let canvasSymbolSize: CGFloat = 96
+        /// The ring that keeps a node's kind legible once its face is an app icon.
+        static let canvasRingWidth: CGFloat = 2
+        static let canvasRingWidthStrong: CGFloat = 3
         static let canvasHitSlack: CGFloat = 6
         static let canvasMinZoom: CGFloat = 0.4
         static let canvasMaxZoom: CGFloat = 3

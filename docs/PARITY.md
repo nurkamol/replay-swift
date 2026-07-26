@@ -66,7 +66,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
-| Canvas | done | the graph drawn as a field, with pan, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
+| Canvas | done | the graph drawn as a field of real application icons, with pan, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
 | Museum | done | the day's featured moment, the milestones, the deepest stretches, what was bookmarked, what was written, and the work that took the most |
 | My Story | done | the archive at a glance: how long, how much, which years, and the applications that ran through it |
 | App relationships | done | reached from an application's "works alongside" list — which way the switching runs, and every session the two shared |

@@ -94,7 +94,31 @@ struct CanvasView: View {
                     let box = CGRect(
                         x: at.x - radius, y: at.y - radius, width: radius * 2, height: radius * 2
                     )
-                    context.fill(Circle().path(in: box), with: .color(colour(for: node)))
+
+                    // An application's own icon when there is one and there is room for it:
+                    // a field of real icons is recognisable at a glance in a way a field of
+                    // coloured dots never is. Clipped to the circle so the field keeps one
+                    // shape, and ringed so the node's *kind* survives wearing another
+                    // thing's face — a project built on Terminal must not read as Terminal.
+                    let icon = radius >= Design.Layout.canvasIconThreshold
+                        ? context.resolveSymbol(id: node.id)
+                        : nil
+                    if let icon {
+                        context.drawLayer { layer in
+                            layer.clip(to: Circle().path(in: box))
+                            layer.draw(icon, in: box)
+                        }
+                        context.stroke(
+                            Circle().path(in: box),
+                            with: .color(ring(for: node)),
+                            lineWidth: node.type == .app
+                                ? Design.Layout.canvasRingWidth
+                                : Design.Layout.canvasRingWidthStrong
+                        )
+                    } else {
+                        context.fill(Circle().path(in: box), with: .color(colour(for: node)))
+                    }
+
                     if node.id == selected?.id {
                         context.stroke(
                             Circle().path(in: box.insetBy(
@@ -114,6 +138,18 @@ struct CanvasView: View {
                             anchor: .top
                         )
                     }
+                }
+            } symbols: {
+                // Declared once at a fixed size and resolved per frame from the cache, so
+                // panning does not re-rasterise anything. Only nodes that actually have an
+                // application behind them appear here; the rest fall back to a dot.
+                ForEach(canvas.graph.nodes.filter(hasIcon), id: \.id) { node in
+                    AppIcon(
+                        bundleID: node.bundleID,
+                        appPath: node.appPath,
+                        size: Design.Layout.canvasSymbolSize
+                    )
+                    .tag(node.id)
                 }
             }
             .contentShape(Rectangle())
@@ -199,6 +235,24 @@ struct CanvasView: View {
             let scaled: CGFloat = CGFloat(Double(node.weight).squareRoot())
                 * Design.Layout.canvasRadiusScale
             return min(Design.Layout.canvasMaxRadius, Design.Layout.canvasMinRadius + scaled)
+        }
+    }
+
+    /// Whether this node has an application to show. A collection is a kind of work rather
+    /// than a thing you can open, and a moment only has one when it is about an application.
+    private func hasIcon(_ node: CanvasGraph.Node) -> Bool {
+        node.appPath != nil || node.bundleID != nil
+    }
+
+    /// The ring around an icon, which is what carries the node's kind once its face is
+    /// borrowed. Quiet on an application, solid on everything built from one.
+    private func ring(for node: CanvasGraph.Node) -> Color {
+        switch node.type {
+        case .app: .secondary.opacity(Design.Colour.canvasRingQuiet)
+        case .project: .accentColor
+        case .chapter: .orange
+        case .moment: .yellow
+        case .collection: .accentColor
         }
     }
 
