@@ -7,6 +7,7 @@ import SwiftUI
 /// figures are large because they are the point; everything else is quiet around them.
 struct TodayView: View {
     let model: AppModel
+    let annotations: AnnotationsModel
 
     var body: some View {
         ScrollView {
@@ -58,7 +59,11 @@ struct TodayView: View {
             ForEach(Array(model.timeline.enumerated()), id: \.offset) { _, item in
                 switch item {
                 case .session(let session):
-                    SessionCard(session: session, onDelete: { model.deleteSession(session) })
+                    SessionCard(
+                        session: session,
+                        annotations: annotations,
+                        onDelete: { model.deleteSession(session) }
+                    )
                 case .breakItem(let gap):
                     BreakRow(gap: gap)
                 }
@@ -138,8 +143,11 @@ private struct HeadlineCard: View {
 /// is found, which is the whole point of building it from the same derivation.
 struct SessionCard: View {
     let session: ActivitySession
+    let annotations: AnnotationsModel
     let onDelete: () -> Void
     @State private var expanded = false
+
+    private var annotation: SessionAnnotation { annotations.annotation(for: session.startedAt) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -166,6 +174,7 @@ struct SessionCard: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
+                    AnnotationMarks(annotation: annotation)
                     Text(formatDurationShort(session.activeSeconds))
                         .font(.callout.weight(.medium))
                         .monospacedDigit()
@@ -187,11 +196,23 @@ struct SessionCard: View {
                 }
                 .padding(12)
 
+                Divider().padding(.horizontal, 12)
+                AnnotationEditor(
+                    sessionStart: session.startedAt,
+                    annotation: annotation,
+                    annotations: annotations
+                )
+                .padding(12)
+
                 // Actions on the whole session, in their own row at the foot of the card —
                 // the same shape as the Glaze app, and out of the way until wanted.
                 HStack {
                     Spacer()
                     Menu {
+                        Button(annotation.bookmarked ? "Remove Bookmark" : "Bookmark") {
+                            annotations.setBookmarked(session.startedAt, !annotation.bookmarked)
+                        }
+                        Divider()
                         Button("Delete Session…", role: .destructive, action: onDelete)
                     } label: {
                         Image(systemName: "ellipsis")
@@ -204,8 +225,13 @@ struct SessionCard: View {
             }
         }
         .background(.quaternary.opacity(0.18), in: RoundedRectangle(cornerRadius: 10))
+        // A bookmarked session gently glows rather than shouting: the same border, warmed.
         .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary.opacity(0.5), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10).strokeBorder(
+                annotation.bookmarked ? AnyShapeStyle(.yellow.opacity(0.45))
+                    : AnyShapeStyle(.quaternary.opacity(0.5)),
+                lineWidth: 1
+            )
         )
     }
 }

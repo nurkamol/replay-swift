@@ -20,8 +20,20 @@ final class AppModel {
     private(set) var now: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
 
     let store: ActivityStore
+    /// Shared with every surface, so a bookmark set in the Timeline is already true here.
+    let annotations: AnnotationsModel
     private var tracker: ActivityTracker?
     private var timer: Timer?
+    /// When the derivation last ran, so the clock can tick faster than the figures.
+    private var lastDerivedAt: Int64 = 0
+
+    /// How often the day is re-derived against a fresh `now`.
+    ///
+    /// The reference re-derives on a 30s timer (`useNow`, and a matching `refetchInterval`).
+    /// Without it the headline only moves when the tracker records a switch, so leaving
+    /// Replay in front freezes Today at whatever it read on the last one — while a day
+    /// opened from the Timeline, which derives on demand, reads higher.
+    private static let deriveIntervalMillis: Int64 = 30_000
 
     /// The app's own container, so the native app never touches the Glaze database.
     static var defaultDatabaseURL: URL {
@@ -31,6 +43,7 @@ final class AppModel {
 
     init(databaseURL: URL = AppModel.defaultDatabaseURL) {
         store = ActivityStore(path: databaseURL.path)
+        annotations = AnnotationsModel(store: store)
         do {
             try FileManager.default.createDirectory(
                 at: databaseURL.deletingLastPathComponent(), withIntermediateDirectories: true
@@ -64,14 +77,19 @@ final class AppModel {
         store.close()
     }
 
+    /// One second is enough for a live "23m" to look alive; the day itself is re-derived on
+    /// the slower interval, because a headline measured in minutes does not need a query a
+    /// second to stay true.
     private func tick() {
         now = Int64(Date().timeIntervalSince1970 * 1000)
         current = tracker?.current
         isAway = tracker?.isAway ?? false
+        if now - lastDerivedAt >= Self.deriveIntervalMillis { reload() }
     }
 
     func reload() {
         now = Int64(Date().timeIntervalSince1970 * 1000)
+        lastDerivedAt = now
         let dayStart = startOfLocalDay(now)
         do {
             // Only runs that *began* today: the query reaches back on purpose, and a
@@ -81,6 +99,7 @@ final class AppModel {
                 .filter { $0.startedAt >= dayStart }
             timeline = buildTimeline(events, now: now)
             summary = computeDaySummary(events: events, timeline: timeline, dayStart: dayStart, now: now)
+            annotations.load(from: dayStart, to: dayStart + dayMillis)
             errorMessage = nil
         } catch {
             errorMessage = "\(error)"

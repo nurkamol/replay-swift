@@ -151,8 +151,10 @@ public final class ActivityStore {
         return statement
     }
 
+    // Internal rather than private so the extensions in Backup.swift and Annotations.swift
+    // can build statements the same way this file does, instead of each growing its own.
     @discardableResult
-    private func run(_ sql: String, _ params: [Value] = []) throws -> Int {
+    func run(_ sql: String, _ params: [Value] = []) throws -> Int {
         let statement = try prepare(sql, params)
         defer { sqlite3_finalize(statement) }
         let status = sqlite3_step(statement)
@@ -162,7 +164,7 @@ public final class ActivityStore {
         return Int(sqlite3_changes(try handle()))
     }
 
-    private func query<T>(
+    func query<T>(
         _ sql: String,
         _ params: [Value] = [],
         row: (OpaquePointer) -> T

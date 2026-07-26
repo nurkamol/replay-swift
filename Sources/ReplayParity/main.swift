@@ -16,19 +16,24 @@ do {
     print("Checking this port against Glaze \(report.glazeVersion) (\(report.glazeCommit))")
     print("spec: \(report.specRoot)\n")
 
-    for group in ["constants", "category table", "schema", "backup"] {
-        let checks = report.checks.filter { $0.group == group }
-        let failed = checks.filter { !$0.passed }
-        print("\(failed.isEmpty ? "✓" : "✗") \(group) — \(checks.count) checks")
+    // Groups are read off the report rather than listed here, so adding one to the suite
+    // cannot leave it silently unprinted — a summary that omits a group reads like coverage
+    // that does not exist. The per-fixture groups (`derivation/…`, `summary/…`) are folded
+    // into the section below, which names every fixture anyway.
+    var groups: [String] = []
+    for check in report.checks where !check.group.contains("/") {
+        if !groups.contains(check.group) { groups.append(check.group) }
     }
 
-    print("✓ session derivation")
+    for group in groups {
+        let checks = report.checks.filter { $0.group == group }
+        print("\(checks.allSatisfy(\.passed) ? "✓" : "✗") \(group) — \(checks.count) checks")
+    }
+
+    print("\(report.fixtureResults.allSatisfy(\.passed) ? "✓" : "✗") session derivation")
     for fixture in report.fixtureResults {
         print("   \(fixture.passed ? "✓" : "✗") \(fixture.name) — \(fixture.description)")
     }
-
-    let store = report.checks.filter { $0.group == "store round-trip" }
-    print("\(store.allSatisfy(\.passed) ? "✓" : "✗") store round-trip — \(store.count) checks")
 
     print("")
     if report.passed {

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 281 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 298 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -30,7 +30,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Compaction + thresholds | done | `reclaimableBytes` documented as a lower bound |
 | Compaction safety (copy, verify) | todo | the store has the pieces; the sequence is not wired |
 | Reflections | todo | table exists; no read/write yet |
-| Annotations (notes, bookmarks, tags) | todo | table and pruning exist; no read/write yet |
+| Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | todo | writing a backup, for the other direction |
 
@@ -43,7 +43,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, delete). No layers, filters, or per-day export |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); says so when a day's rows are pruned but its headline survives. No reflection, story, or chapter context |
 | Settings | todo | v1: General, Privacy, Data/Storage, Guide, About |
-| Session card (expand, apps, note) | partial | expands to the app breakdown with a ⋯ delete. Notes, tags and bookmarks not yet |
+| Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | todo | Markdown, CSV, JSON first; PDF/HTML later |
 | Dock badge | later | |
 | Memories / Today in History | later | |
@@ -66,13 +66,6 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
   The parity check is what keeps the two copies equal.
 - **Different container.** The native app cannot read the Glaze app's live database.
   Migration is via the backup JSON, not the file.
-- **Today's figures go stale while the window is open.** `AppModel.reload` runs when the
-  tracker records something; `tick` only advances the clock, so the headline does not
-  re-derive on its own. Leave Replay frontmost for twenty minutes and Today still reads
-  what it read on the last app switch, while a day opened from the Timeline — which
-  re-derives against a fresh `now` — reads higher. The Glaze app has no such gap: `useNow`
-  re-derives on a timer. Fixing it is a line in `tick`; it is listed below rather than done
-  because it belongs to Today, not to the Timeline that exposed it.
 - **`groupByDay` has no fixture.** It is generated-spec-adjacent behaviour (SPEC §5) that
   `tools/sync-spec.mjs` does not emit scenarios for, so it is verified by reading against
   `activity.ts:487` and by the day view and Timeline agreeing on real data — not by the
@@ -86,14 +79,22 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Notes, tags and bookmarks** on a session — the `annotations` table and its orphan
-   pruning already exist, so this is read/write plus UI.
-2. **Make Today re-derive on its timer**, so it stops disagreeing with a day opened from the
-   Timeline. A line in `AppModel.tick`, and the smallest real bug currently on the board.
-3. **Settings** — General, Privacy, Data/Storage, Guide, About. Excluded applications is
-   already honoured by the tracker and has nowhere to be edited.
+1. **Settings** — General, Privacy, Data/Storage, Guide, About. Excluded applications is
+   already honoured by the tracker and has nowhere to be edited, which is the most visible
+   half-built thing left.
+2. **Export a day / a session** — Markdown, CSV, JSON. Now worth doing: annotations exist,
+   so an export can carry the note and tags rather than being reissued later with a column
+   added.
+3. **Reflections** — the day's written memory. The table exists; it is the same read/write
+   shape as annotations, keyed by day rather than by session, and it is what a reopened day
+   is most obviously missing.
 
 Done and no longer blocking:
+- ~~Notes, tags and bookmarks~~ — read/write against the real database, marks on a collapsed
+  card, and 15 checks. Tag normalisation is now part of the generated contract rather than
+  hand-copied: `tools/sync-spec.mjs` extracts the two caps from the reference's `setTags`.
+- ~~Today going stale while the window is open~~ — it re-derives on a 30s timer, matching
+  the reference's `useNow`. Watched it move from 7h 4m to 7h 21m with the window untouched.
 - ~~Timeline, and a past day reopened~~ — running against real data; the day view and the
   Timeline agree, and the SPEC §5 filter demonstrably drops a midnight-crossing run (one on
   2026-07-26 in the current database).

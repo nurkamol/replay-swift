@@ -103,12 +103,17 @@ public enum ParityKit {
             public let version: Int
             public let acceptedEventTypes: [String]
         }
+        public struct Annotations: Decodable, Sendable {
+            public let maxTagLength: Int
+            public let maxTags: Int
+        }
         public let glazeVersion: String
         public let glazeCommit: String
         public let tracker: Tracker
         public let store: Store
         public let derivation: Derivation
         public let backup: BackupInfo
+        public let annotations: Annotations
     }
 
     // ── results ───────────────────────────────────────────────────────────────
@@ -197,6 +202,8 @@ public enum ParityKit {
         equal(g1, "recordingGapSeconds",
               Rules.recordingGapSeconds, constants.derivation.recordingGapSeconds)
         equal(g1, "minSessionSeconds", Rules.minSessionSeconds, constants.derivation.minSessionSeconds)
+        equal(g1, "maxTagLength", Rules.maxTagLength, constants.annotations.maxTagLength)
+        equal(g1, "maxTags", Rules.maxTags, constants.annotations.maxTags)
 
         // the category table — order-sensitive, because first match wins and it names
         // the session.
@@ -326,9 +333,65 @@ public enum ParityKit {
         equal(group, "duration computed by SQL, in seconds", read.first?.duration, 600)
         equal(group, "a fresh database has nothing to reclaim", try store.reclaimableBytes(), 0)
         check(group, "integrity check passes", store.integrityCheck().ok)
+        // annotations, against the same file. These have no generated fixture — the sync
+        // tool emits the two caps and the schema, not scenarios — so what is checked is the
+        // behaviour the reference's `AnnotationsStore` documents in prose: keyed by session
+        // start, merged on write, and deleted rather than kept blank.
+        let ag = "annotations"
+        let sessionStart = t0
+        equal(ag, "an unannotated session reads back empty",
+              try store.annotation(sessionStart: sessionStart), SessionAnnotation(sessionStart: sessionStart))
+
+        _ = try store.setNote(sessionStart: sessionStart, note: "shipped the timeline", now: t0)
+        _ = try store.setBookmarked(sessionStart: sessionStart, bookmarked: true, now: t0)
+        // Normalisation is the part a port gets wrong: case, a leading #, blanks, and
+        // duplicates all have to collapse, or one tag becomes two.
+        _ = try store.setTags(
+            sessionStart: sessionStart,
+            tags: ["#Deep Work", "deep work", "  ", "Shipping", String(repeating: "x", count: 40)],
+            now: t0
+        )
+        let stored = try store.annotation(sessionStart: sessionStart)
+        equal(ag, "the note survives", stored.note, "shipped the timeline")
+        equal(ag, "the bookmark survives a later write", stored.bookmarked, true)
+        equal(ag, "tags normalise, dedupe and drop blanks",
+              stored.tags, ["deep work", "shipping", String(repeating: "x", count: Rules.maxTagLength)])
+        equal(ag, "a tag is capped at maxTagLength", stored.tags.last?.count, Rules.maxTagLength)
+        equal(ag, "tags are capped at maxTags",
+              try store.setTags(
+                  sessionStart: sessionStart,
+                  tags: (0..<(Rules.maxTags + 5)).map { "tag\($0)" },
+                  now: t0
+              ).tags.count,
+              Rules.maxTags)
+
+        equal(ag, "a range query finds it",
+              try store.annotations(from: sessionStart, to: sessionStart + 1).count, 1)
+        equal(ag, "a range that excludes its start does not",
+              try store.annotations(from: sessionStart + 1, to: sessionStart + 2).count, 0)
+        equal(ag, "bookmarks are listed", try store.bookmarkedAnnotations().count, 1)
+        equal(ag, "allTags reports what is in use", try store.allTags().count, Rules.maxTags)
+
+        // Cleared back to empty, the row goes rather than lingering as a blank.
+        _ = try store.setBookmarked(sessionStart: sessionStart, bookmarked: false, now: t0)
+        _ = try store.setTags(sessionStart: sessionStart, tags: [], now: t0)
+        let emptied = try store.setNote(sessionStart: sessionStart, note: "   ", now: t0)
+        equal(ag, "an emptied annotation reports no updatedAt", emptied.updatedAt, 0)
+        equal(ag, "and leaves no row behind",
+              try store.annotations(from: sessionStart, to: sessionStart + 1).count, 0)
+
+        // Orphan pruning is by reachability: an annotation is live exactly while some
+        // event still starts at that instant.
+        _ = try store.setBookmarked(sessionStart: sessionStart, bookmarked: true, now: t0)
+        equal(ag, "an annotation on a live session is kept", try store.pruneOrphanAnnotations(), 0)
+        _ = try store.setBookmarked(sessionStart: t0 - 1, bookmarked: true, now: t0)
+        equal(ag, "one pointing at no event is pruned", try store.pruneOrphanAnnotations(), 1)
+
         let deleted = try store.deleteEvents(ids: [id])
         equal(group, "delete by id removes one row", deleted.removed, 1)
         equal(group, "and reports the day it fell on", deleted.dayStarts, [startOfLocalDay(t0)])
+        equal(ag, "deleting the session orphans its annotation",
+              try store.pruneOrphanAnnotations(), 1)
         store.close()
         try? FileManager.default.removeItem(at: tmp)
 

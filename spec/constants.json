@@ -92,6 +92,10 @@
       "idle"
     ]
   },
+  "annotations": {
+    "maxTagLength": 32,
+    "maxTags": 12
+  },
   "retentionDayOptions": [
     0,
     365,

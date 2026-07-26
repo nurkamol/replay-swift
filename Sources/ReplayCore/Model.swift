@@ -31,6 +31,10 @@ public enum Rules {
     /// Ids named per `DELETE … IN (…)`, bounded by SQLite's parameter limit.
     public static let deleteChunk: Int = 400
 
+    /// Caps on a session's tags, applied after normalising.
+    public static let maxTagLength: Int = 32
+    public static let maxTags: Int = 12
+
     /// Background agents that steal focus without being "used".
     public static let ignoredBundleIDs: Set<String> = [
         "com.apple.UserNotificationCenter",

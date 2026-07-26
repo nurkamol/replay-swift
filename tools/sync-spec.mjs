@@ -170,6 +170,21 @@ const constants = {
       return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
     })(),
   },
+  annotations: (() => {
+    // Tag normalisation is behaviour, not decoration: the same tag typed as "#Deep Work"
+    // and "deep work" has to land on one row, or a filter silently splits in two. The
+    // limits are inline `.slice(...)` calls in `setTags` rather than named constants, so
+    // these are anchored to the surrounding expressions — if Glaze refactors that
+    // function, this complains instead of quietly pinning a stale number.
+    const maxTagLength = (annotationsSrc.match(/replace\(\/\^#\+\/, ""\)\.toLowerCase\(\)\.slice\(0, (\d+)\)/) ?? [])[1];
+    const maxTags = (annotationsSrc.match(/tags: clean\.slice\(0, (\d+)\)/) ?? [])[1];
+    if (maxTagLength === undefined) problems.push("annotations-store.ts: tag length cap not found in setTags");
+    if (maxTags === undefined) problems.push("annotations-store.ts: tag count cap not found in setTags");
+    return {
+      maxTagLength: maxTagLength === undefined ? null : Number(maxTagLength),
+      maxTags: maxTags === undefined ? null : Number(maxTags),
+    };
+  })(),
   retentionDayOptions: (() => {
     const view = read("renderer/settings/settings-view.tsx");
     const block = view.match(/Keep activity for[\s\S]{0,1200}?<\/Select>/);

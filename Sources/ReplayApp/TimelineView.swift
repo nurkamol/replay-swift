@@ -8,6 +8,7 @@ import SwiftUI
 /// legible. It describes; it does not grade. A day with nothing on it simply is not there.
 struct TimelineView: View {
     let history: HistoryModel
+    let annotations: AnnotationsModel
     /// Given so a day can be opened from its ⋯ menu.
     let onOpenDay: (Int64) -> Void
 
@@ -20,7 +21,12 @@ struct TimelineView: View {
                     empty
                 } else {
                     ForEach(history.days) { day in
-                        DaySection(day: day, history: history, onOpenDay: onOpenDay)
+                        DaySection(
+                            day: day,
+                            history: history,
+                            annotations: annotations,
+                            onOpenDay: onOpenDay
+                        )
                     }
                 }
             }
@@ -79,6 +85,7 @@ struct TimelineView: View {
 private struct DaySection: View {
     let day: TimelineDay
     let history: HistoryModel
+    let annotations: AnnotationsModel
     let onOpenDay: (Int64) -> Void
 
     @State private var confirmingDelete = false
@@ -96,7 +103,11 @@ private struct DaySection: View {
                 }
                 switch item {
                 case .session(let session):
-                    SessionCard(session: session, onDelete: { history.deleteSession(session) })
+                    SessionCard(
+                        session: session,
+                        annotations: annotations,
+                        onDelete: { history.deleteSession(session) }
+                    )
                 case .breakItem(let gap):
                     BreakRow(gap: gap)
                 }
@@ -192,6 +203,7 @@ private struct PartDivider: View {
 struct DayView: View {
     let day: TimelineDay
     let headline: DailySummary?
+    let annotations: AnnotationsModel
     let onDeleteSession: (ActivitySession) -> Void
     let onBack: () -> Void
 
@@ -213,7 +225,11 @@ struct DayView: View {
                         ForEach(Array(day.items.enumerated()), id: \.offset) { _, item in
                             switch item {
                             case .session(let session):
-                                SessionCard(session: session, onDelete: { onDeleteSession(session) })
+                                SessionCard(
+                                    session: session,
+                                    annotations: annotations,
+                                    onDelete: { onDeleteSession(session) }
+                                )
                             case .breakItem(let gap):
                                 BreakRow(gap: gap)
                             }

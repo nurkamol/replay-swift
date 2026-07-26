@@ -36,12 +36,17 @@ struct RootView: View {
     let history: HistoryModel
     @Bindable var navigation: Navigation
 
+    /// The opened day, built when it is opened rather than while the body runs — deriving a
+    /// day loads its annotations, and a view body must not be what mutates them.
+    @State private var opened: (day: TimelineDay, headline: DailySummary?)?
+
     var body: some View {
         VStack(spacing: 0) {
-            if let day = navigation.openDay {
+            if let opened {
                 DayView(
-                    day: history.day(day),
-                    headline: history.headline(day),
+                    day: opened.day,
+                    headline: opened.headline,
+                    annotations: model.annotations,
                     onDeleteSession: { history.deleteSession($0) },
                     onBack: { navigation.openDay = nil }
                 )
@@ -50,9 +55,13 @@ struct RootView: View {
                 Divider()
                 switch navigation.surface {
                 case .today:
-                    TodayView(model: model)
+                    TodayView(model: model, annotations: model.annotations)
                 case .timeline:
-                    TimelineView(history: history, onOpenDay: { navigation.openDay = $0 })
+                    TimelineView(
+                        history: history,
+                        annotations: model.annotations,
+                        onOpenDay: { navigation.openDay = $0 }
+                    )
                 }
             }
         }
@@ -60,6 +69,9 @@ struct RootView: View {
             // The Timeline reads the store directly rather than following the tracker, so
             // it reloads when it is shown rather than on every recorded event.
             if new == .timeline { history.reload() }
+        }
+        .onChange(of: navigation.openDay, initial: true) { _, day in
+            opened = day.map { (history.day($0), history.headline($0)) }
         }
     }
 

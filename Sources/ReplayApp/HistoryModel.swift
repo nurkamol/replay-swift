@@ -115,6 +115,7 @@ final class HistoryModel {
                 built = built.filter { $0.dayStart == wanted }
             }
             days = built
+            model.annotations.load(from: from, to: to)
             errorMessage = nil
         } catch {
             errorMessage = "\(error)"
@@ -131,6 +132,7 @@ final class HistoryModel {
         let end = dayStart + dayMillis
         let events = ((try? store.sessions(from: dayStart, to: end)) ?? [])
             .filter { $0.startedAt >= dayStart && $0.startedAt < end }
+        model.annotations.load(from: dayStart, to: end)
         return TimelineDay(
             dayStart: dayStart,
             label: dayLabel(dayStart, today: startOfLocalDay(now)),
@@ -153,6 +155,9 @@ final class HistoryModel {
     func deleteDay(_ dayStart: Int64) {
         do {
             _ = try store.deleteDay(dayStart: dayStart)
+            // Explicit rather than left to the orphan prune below: notes and bookmarks are
+            // memories of the sessions being erased, so they go with them by intent.
+            _ = try store.deleteAnnotations(from: dayStart, to: dayStart + dayMillis)
             _ = try store.pruneOrphanAnnotations()
             try store.compactIfWasteful()
             reload()
