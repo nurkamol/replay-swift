@@ -720,6 +720,142 @@
       }
     ]
   },
+  "workflows": {
+    "events": [
+      {
+        "id": 500,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770022800000,
+        "endedAt": 1770023400000,
+        "duration": 600
+      },
+      {
+        "id": 501,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770023400000,
+        "endedAt": 1770023800000,
+        "duration": 400
+      },
+      {
+        "id": 502,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770109200000,
+        "endedAt": 1770109700000,
+        "duration": 500
+      },
+      {
+        "id": 503,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770109700000,
+        "endedAt": 1770110000000,
+        "duration": 300
+      },
+      {
+        "id": 504,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770195600000,
+        "endedAt": 1770196300000,
+        "duration": 700
+      },
+      {
+        "id": 505,
+        "type": "activated",
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "startedAt": 1770196300000,
+        "endedAt": 1770196600000,
+        "duration": 300
+      },
+      {
+        "id": 506,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770282000000,
+        "endedAt": 1770282500000,
+        "duration": 500
+      },
+      {
+        "id": 507,
+        "type": "activated",
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "startedAt": 1770282500000,
+        "endedAt": 1770282800000,
+        "duration": 300
+      },
+      {
+        "id": 508,
+        "type": "activated",
+        "applicationName": "Notes",
+        "bundleIdentifier": "com.apple.Notes",
+        "appPath": null,
+        "startedAt": 1770368400000,
+        "endedAt": 1770369000000,
+        "duration": 600
+      }
+    ],
+    "now": 1770379200000,
+    "sessionCount": 5,
+    "expected": [
+      {
+        "id": "com.apple.Safari|com.apple.mail",
+        "title": "Research Workflow",
+        "category": "Research",
+        "apps": [
+          {
+            "applicationName": "Safari",
+            "appPath": null,
+            "bundleIdentifier": "com.apple.Safari"
+          },
+          {
+            "applicationName": "Mail",
+            "appPath": null,
+            "bundleIdentifier": "com.apple.mail"
+          }
+        ],
+        "totalSeconds": 1800,
+        "sessionCount": 2
+      },
+      {
+        "id": "com.apple.Terminal|com.microsoft.VSCode",
+        "title": "Development Workflow",
+        "category": "Development",
+        "apps": [
+          {
+            "applicationName": "Code",
+            "appPath": null,
+            "bundleIdentifier": "com.microsoft.VSCode"
+          },
+          {
+            "applicationName": "Terminal",
+            "appPath": null,
+            "bundleIdentifier": "com.apple.Terminal"
+          }
+        ],
+        "totalSeconds": 1800,
+        "sessionCount": 2
+      }
+    ]
+  },
   "search": {
     "queries": [
       "code",

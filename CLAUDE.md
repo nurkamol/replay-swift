@@ -20,7 +20,7 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 489 checks against the Glaze app — run before every commit
+swift test                      # 497 checks against the Glaze app — run before every commit
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
@@ -65,7 +65,7 @@ node tools/design-audit.mjs     # fails if any view hard-codes a value instead o
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 489 checks. **The UI is largely built**: an application menu, a menu bar item,
+Glaze app — 497 checks. **The UI is largely built**: an application menu, a menu bar item,
 Today (headline, focus goal, reflection), the Timeline, a reopened past day, Search, Memories, Collections, a
 session's notes/tags/bookmarks, Settings, and export — reports as Markdown, CSV, JSON or
 HTML, plus full backups. What is left is Projects, Canvas, PDF export, and signing — which is blocked on a Developer ID rather

@@ -290,6 +290,25 @@ public enum ParityKit {
             public let peakCases: [PeakCase]
         }
 
+        public struct WorkflowCase: Decodable, Sendable {
+            public struct Expected: Decodable, Sendable {
+                public struct App: Decodable, Sendable {
+                    public let applicationName: String
+                    public let bundleIdentifier: String?
+                }
+                public let id: String
+                public let title: String
+                public let category: String
+                public let apps: [App]
+                public let totalSeconds: Int
+                public let sessionCount: Int
+            }
+            public let events: [Fixture.Event]
+            public let now: Int64
+            public let sessionCount: Int
+            public let expected: [Expected]
+        }
+
         public struct BreakCase: Decodable, Sendable {
             public let reason: String
             public let seconds: Int
@@ -306,6 +325,8 @@ public enum ParityKit {
         public let breaks: [BreakCase]
         /// A whole week, straight from the reference's `computeWeekSummary`.
         public let week: WeekCase
+        /// Recurring application combinations, from the reference's `detectWorkflows`.
+        public let workflows: WorkflowCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -786,6 +807,33 @@ public enum ParityKit {
                   )),
                   expected.label)
         }
+
+        // Recurring application combinations. A one-off pairing must not read as a habit,
+        // and a single-app session is not a combination at all.
+        let fg = "workflows"
+        let workflowSessions = sessionsForWeek(
+            fixture.workflows.events.map(event),
+            now: fixture.workflows.now,
+            calendar: calendar
+        )
+        equal(fg, "the fixture's sessions derive the same here",
+              workflowSessions.count, fixture.workflows.sessionCount)
+        let detected = detectWorkflows(workflowSessions)
+        let wfx = fixture.workflows.expected
+        equal(fg, "only recurring combinations, ordered by time with ties by first seen",
+              detected.map(\.id), wfx.map(\.id))
+        equal(fg, "each named for the category most of its sessions were",
+              detected.map(\.title), wfx.map(\.title))
+        equal(fg, "carrying that category", detected.map(\.category.rawValue), wfx.map(\.category))
+        equal(fg, "the apps that define each, most-used first",
+              detected.map { $0.apps.map(\.applicationName) },
+              wfx.map { $0.apps.map(\.applicationName) })
+        equal(fg, "identified the same way",
+              detected.map { $0.apps.map { $0.bundleIdentifier ?? "" } },
+              wfx.map { $0.apps.map { $0.bundleIdentifier ?? "" } })
+        equal(fg, "with the same totals", detected.map(\.totalSeconds), wfx.map(\.totalSeconds))
+        equal(fg, "across the same number of sessions",
+              detected.map(\.sessionCount), wfx.map(\.sessionCount))
 
         let rg2 = "report text"
         let reportSessions = buildTimeline(

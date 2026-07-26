@@ -11,6 +11,9 @@ import ReplayCore
 @Observable
 final class WeekModel {
     private(set) var summary: WeekSummary?
+    /// The recurring application combinations behind the same seven days. Capped at four:
+    /// this is a note about how the week went, not a catalogue.
+    private(set) var workflows: [Workflow] = []
     private(set) var errorMessage: String?
 
     /// "February 2 – February 8" — the span, named the way a person would say it.
@@ -31,6 +34,7 @@ final class WeekModel {
         do {
             let events = try store.sessions(from: dayStarts[0], to: today + dayMillis)
             summary = computeWeekSummary(events: events, dayStarts: dayStarts, now: now)
+            workflows = Array(detectWorkflows(sessionsForWeek(events, now: now)).prefix(4))
             rangeLabel = Self.range(from: dayStarts[0], to: dayStarts[6])
             errorMessage = nil
         } catch {

@@ -51,6 +51,8 @@ enum Design {
         static let emptyStateRoomy: CGFloat = 40
         /// Between the stats on a headline card, which need more separation than a row.
         static let statGap: CGFloat = 22
+        /// A stack of app icons, overlapped so the group reads as one thing.
+        static let iconOverlap: CGFloat = -8
     }
 
     /// A pill: a tag, a badge, a streak. Its own scale because the numbers are set by the

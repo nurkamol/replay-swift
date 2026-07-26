@@ -21,6 +21,7 @@ struct WeekView: View {
                 if let summary = week.summary, summary.activeSeconds > 0 {
                     figures(summary)
                     rhythm(summary)
+                    if !week.workflows.isEmpty { workflows }
                     mostUsed(summary)
                 } else {
                     empty.centredInPage()
@@ -89,6 +90,25 @@ struct WeekView: View {
                     .padding(.top, Design.Space.tight)
             }
         }
+    }
+
+    // ── the combinations ──────────────────────────────────────────────────────
+
+    /// Applications that keep showing up together.
+    ///
+    /// Absent rather than empty when nothing recurs: a heading over a blank space implies
+    /// something failed to load, and what actually happened is that a week of one-off
+    /// pairings has no habits in it to report.
+    private var workflows: some View {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
+            Text("Recurring together").sectionLabelStyle()
+            VStack(spacing: Design.Space.snug) {
+                ForEach(week.workflows, id: \.id) { workflow in
+                    WorkflowRow(workflow: workflow)
+                }
+            }
+        }
+        .settlesIntoView(reduced: motion.reduced)
     }
 
     // ── the applications ──────────────────────────────────────────────────────
@@ -287,6 +307,59 @@ private struct WeekAppRow: View {
         .accessibilityLabel(
             "\(app.applicationName), \(formatDurationShort(app.seconds)), "
                 + "on \(app.daysUsed) \(app.daysUsed == 1 ? "day" : "days")"
+        )
+    }
+}
+
+/// One recurring combination: whose apps, how long, how often.
+private struct WorkflowRow: View {
+    let workflow: Workflow
+
+    var body: some View {
+        HStack(spacing: Design.Space.card) {
+            // Overlapped rather than spaced, so three apps read as one thing — which is
+            // the claim: these were used together, not one after another.
+            HStack(spacing: Design.Space.iconOverlap) {
+                ForEach(workflow.apps, id: \.applicationName) { app in
+                    AppIcon(
+                        bundleID: app.bundleIdentifier,
+                        appPath: app.appPath,
+                        size: Design.Icon.stack
+                    )
+                    .background(
+                        Circle()
+                            .fill(.background)
+                            .padding(-Design.Layout.hairline)
+                    )
+                }
+            }
+            VStack(alignment: .leading, spacing: 0) {
+                Text(workflow.title).font(Design.Text.itemTitle)
+                Text(workflow.apps.map(\.applicationName).joined(separator: " · "))
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            Spacer(minLength: Design.Space.inline)
+            VStack(alignment: .trailing, spacing: 0) {
+                Text(formatDurationShort(workflow.totalSeconds))
+                    .font(Design.Text.detail.weight(.medium))
+                    .monospacedDigit()
+                Text("\(workflow.sessionCount)×")
+                    .font(Design.Text.micro)
+                    .foregroundStyle(.tertiary)
+                    .monospacedDigit()
+            }
+        }
+        .padding(.horizontal, Design.Space.cardRoomy)
+        .padding(.vertical, Design.Space.card)
+        .card(border: Design.Colour.border)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(workflow.title), \(workflow.apps.map(\.applicationName).joined(separator: ", ")), "
+                + "\(formatDurationShort(workflow.totalSeconds)) across "
+                + "\(workflow.sessionCount) sessions"
         )
     }
 }

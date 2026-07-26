@@ -468,6 +468,7 @@ function buildExportFixtures() {
       `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
        export { buildDayStory } from ${JSON.stringify(join(GLAZE, "renderer/lib/day-story.ts"))};
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
+       export { detectWorkflows } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
        export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
        export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
@@ -507,7 +508,7 @@ function buildExportFixtures() {
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories, describeBreak,
-               computeWeekSummary, describePeak,
+               computeWeekSummary, describePeak, detectWorkflows,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
@@ -532,6 +533,10 @@ function buildExportFixtures() {
          ...weekSummary,
          peakLabel: weekSummary.peak ? describePeak(weekSummary.peak) : null,
        };
+       // Recurring application combinations.
+       const workflowSessions = groupSessionsForWeek(input.workflowEvents, input.workflowNow);
+       const workflows = detectWorkflows(workflowSessions);
+
        // Every branch of describePeak, so the boundary hours are pinned rather
        // than sampled by whatever the week fixture happened to land on.
        const peakLabels = input.peakCases.map((p) => ({ ...p, label: describePeak(p) }));
@@ -622,6 +627,8 @@ function buildExportFixtures() {
          breaks,
          week,
          peakLabels,
+         workflows,
+         workflowSessionCount: workflowSessions.length,
          reports,
          sessionCount: sessions.length,
          searchResults,
@@ -848,6 +855,32 @@ function buildExportFixtures() {
     ];
     const weekNow = wd(6, 12);
 
+    /*
+     * Workflows need their own events: the week fixture's sessions never repeat a
+     * combination, which is the whole point of the detection. Five days, one session
+     * each — two that share an editor-and-terminal signature, two that share a
+     * browser-and-mail one, and one single-app session that must be skipped because a
+     * workflow is a combination rather than an app. The two recurring signatures are
+     * built to total exactly the same time, so the fixture pins the tie-break: they can
+     * only be ordered by which was seen first, and days arrive newest first.
+     */
+    const workflowDay = 1_769_990_400_000;
+    const wf = (day, h, m = 0, sec = 0) =>
+      workflowDay + day * DAY + h * 3_600_000 + m * 60_000 + sec * 1000;
+    const workflowEvents = [
+      ev(500, "Code", "com.microsoft.VSCode", wf(0, 9), 600),
+      ev(501, "Terminal", "com.apple.Terminal", wf(0, 9, 10), 400),
+      ev(502, "Code", "com.microsoft.VSCode", wf(1, 9), 500),
+      ev(503, "Terminal", "com.apple.Terminal", wf(1, 9, 8, 20), 300),
+      ev(504, "Safari", "com.apple.Safari", wf(2, 9), 700),
+      ev(505, "Mail", "com.apple.mail", wf(2, 9, 11, 40), 300),
+      ev(506, "Safari", "com.apple.Safari", wf(3, 9), 500),
+      ev(507, "Mail", "com.apple.mail", wf(3, 9, 8, 20), 300),
+      // One app on its own: a session, but never a workflow.
+      ev(508, "Notes", "com.apple.Notes", wf(4, 9), 600),
+    ];
+    const workflowNow = wf(4, 12);
+
     /** The hour boundaries in `describePeak`, from each side. */
     const peakCases = [
       { weekday: 0, hour: 0, seconds: 1 },
@@ -865,6 +898,8 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        workflowEvents,
+        workflowNow,
         weekEvents,
         weekDayStarts,
         weekNow,
@@ -910,6 +945,12 @@ function buildExportFixtures() {
         now: weekNow,
         expected: result.week,
         peakCases: result.peakLabels,
+      },
+      workflows: {
+        events: workflowEvents,
+        now: workflowNow,
+        sessionCount: result.workflowSessionCount,
+        expected: result.workflows,
       },
       search: { queries: input_searchQueries, expected: result.searchResults },
       history: { summaries: historySummaries, cases: result.history },
