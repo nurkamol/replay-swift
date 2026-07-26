@@ -119,3 +119,9 @@ Command Line Tools alone (Swift 6.2.3) still builds everything and runs
 
 No external dependencies, on purpose: SQLite from the system, AppKit for the tracker,
 SwiftUI for the UI. Nothing to resolve, nothing to vendor.
+
+## Licence
+
+[Apache License 2.0](LICENSE) — Copyright © 2026 Nurkamol Vakhidov. Same terms as the Glaze
+implementation. The licence covers the code, not the name: §6 grants no trademark rights, so
+a derivative should not present itself as Replay. See [NOTICE](NOTICE).
