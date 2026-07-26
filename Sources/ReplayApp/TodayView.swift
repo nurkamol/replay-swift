@@ -395,21 +395,10 @@ private struct AppShareRow: View {
 struct BreakRow: View {
     let gap: ActivityBreak
 
-    private var label: String {
-        switch gap.reason {
-        case .away: "\(formatDurationShort(gap.seconds)) away"
-        case .idle: "\(formatDurationShort(gap.seconds)) idle in \(gap.applicationName ?? "one app")"
-        case .unrecorded: "\(formatDurationShort(gap.seconds)) not recorded"
-        }
-    }
-
-    private var detail: String {
-        switch gap.reason {
-        case .away: "No keyboard or mouse activity"
-        case .idle: "One app held focus without input"
-        case .unrecorded: "Replay wasn't running, or tracking was paused"
-        }
-    }
+    /// The words come from `ReplayCore`, where the parity suite can reach them.
+    private var described: BreakDescription { describeBreak(gap) }
+    private var label: String { described.title }
+    private var detail: String { described.detail }
 
     var body: some View {
         HStack(spacing: Design.Space.inline) {

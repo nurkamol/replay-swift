@@ -243,10 +243,20 @@ public enum ParityKit {
             public let allSessionStarts: [Int64]
             public let expected: [String: [Int64]]
         }
+        public struct BreakCase: Decodable, Sendable {
+            public let reason: String
+            public let seconds: Int
+            public let applicationName: String?
+            public let title: String
+            public let detail: String
+        }
         public let timeZone: String
         public let locale: String
         public let exportedAtMillis: Int64
         public let grouping: Grouping
+        /// What each kind of gap is called, straight from the reference's own
+        /// `describeBreak`. Pure copy, and copy is where a port drifts silently.
+        public let breaks: [BreakCase]
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -661,6 +671,23 @@ public enum ParityKit {
               grouped.map { $0.events.map(\.id) }, fixture.grouping.expected.map(\.eventIds))
         check(dg, "a run before midnight lands on the day it began, not the day it reached",
               grouped.last?.events.map(\.id) == [1])
+
+        let bg = "break copy"
+        for expected in fixture.breaks {
+            guard let reason = BreakReason(rawValue: expected.reason) else {
+                check(bg, "the port knows the reason '\(expected.reason)'", false)
+                continue
+            }
+            let described = describeBreak(ActivityBreak(
+                reason: reason, startedAt: 0, endedAt: 0, seconds: expected.seconds,
+                applicationName: expected.applicationName
+            ))
+            let named = expected.applicationName.map { " in \($0)" } ?? ""
+            equal(bg, "a \(expected.seconds)s \(expected.reason) gap\(named) is titled the same",
+                  described.title, expected.title)
+            equal(bg, "and explained the same",
+                  described.detail, expected.detail)
+        }
 
         let rg2 = "report text"
         let reportSessions = buildTimeline(

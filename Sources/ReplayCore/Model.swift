@@ -153,6 +153,20 @@ public struct ActivityBreak: Equatable, Sendable {
     public var seconds: Int
     public var applicationName: String?
     public var appPath: String?
+
+    /// Public so the parity suite can build one from a fixture rather than deriving a
+    /// whole timeline to reach a single gap.
+    public init(
+        reason: BreakReason, startedAt: Int64, endedAt: Int64, seconds: Int,
+        applicationName: String? = nil, appPath: String? = nil
+    ) {
+        self.reason = reason
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.seconds = seconds
+        self.applicationName = applicationName
+        self.appPath = appPath
+    }
 }
 
 public enum TimelineItem: Equatable, Sendable {

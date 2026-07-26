@@ -68,6 +68,45 @@
       }
     ]
   },
+  "breaks": [
+    {
+      "kind": "break",
+      "reason": "unrecorded",
+      "seconds": 480,
+      "startedAt": 0,
+      "endedAt": 0,
+      "title": "8m not recorded",
+      "detail": "Replay wasn’t running or tracking was paused"
+    },
+    {
+      "kind": "break",
+      "reason": "away",
+      "seconds": 3600,
+      "startedAt": 0,
+      "endedAt": 0,
+      "title": "1h away",
+      "detail": "No keyboard or mouse activity"
+    },
+    {
+      "kind": "break",
+      "reason": "idle",
+      "seconds": 90,
+      "startedAt": 0,
+      "endedAt": 0,
+      "applicationName": "Safari",
+      "title": "2m break",
+      "detail": "Safari stayed in front, no switching"
+    },
+    {
+      "kind": "break",
+      "reason": "idle",
+      "seconds": 5400,
+      "startedAt": 0,
+      "endedAt": 0,
+      "title": "1h 30m break",
+      "detail": "No app switching"
+    }
+  ],
   "search": {
     "queries": [
       "code",

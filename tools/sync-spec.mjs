@@ -470,7 +470,7 @@ function buildExportFixtures() {
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
        export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
-       export { buildTimeline, groupSessionsForWeek, sessionUsesApp } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
+       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
        // sessionMatches is module-private in the view, so the predicate is
        // re-declared here character for character. If it drifts upstream this
        // fixture keeps asserting the old rule — the one risk in extracting it,
@@ -506,7 +506,7 @@ function buildExportFixtures() {
 
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
-               historyTargets, findMemories,
+               historyTargets, findMemories, describeBreak,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
@@ -518,6 +518,11 @@ function buildExportFixtures() {
          dayStart: Number(group.key),
          eventIds: group.events.map((e) => e.id),
        }));
+
+       // How a gap is named. Pure copy, and copy is where a port drifts without
+       // anything failing: the words are the product (SPEC §8), and nothing else
+       // in this contract covers them.
+       const breaks = input.breakCases.map((c) => ({ ...c, ...describeBreak(c) }));
 
        const sessions = buildTimeline(input.reportEvents, input.reportNow)
          .filter((item) => item.kind === "session");
@@ -602,6 +607,7 @@ function buildExportFixtures() {
          },
          history,
          grouping,
+         breaks,
          reports,
          sessionCount: sessions.length,
          searchResults,
@@ -791,9 +797,22 @@ function buildExportFixtures() {
       { name: "nothing at all", now: hour(12), events: [] },
     ];
 
+    /*
+     * One case per branch of `describeBreak`, including both idle shapes. The
+     * durations differ so a swapped-in wrong formatter cannot pass by accident,
+     * and 90 seconds is there because it is where the short formatter rounds.
+     */
+    const breakCases = [
+      { kind: "break", reason: "unrecorded", seconds: 480, startedAt: 0, endedAt: 0 },
+      { kind: "break", reason: "away", seconds: 3_600, startedAt: 0, endedAt: 0 },
+      { kind: "break", reason: "idle", seconds: 90, startedAt: 0, endedAt: 0, applicationName: "Safari" },
+      { kind: "break", reason: "idle", seconds: 5_400, startedAt: 0, endedAt: 0 },
+    ];
+
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        breakCases,
         groupingEvents,
         reportEvents,
         reportNow,
@@ -827,6 +846,7 @@ function buildExportFixtures() {
       locale: FIXTURE_LOCALE,
       exportedAtMillis: FIXTURE_NOW,
       grouping: { events: groupingEvents, expected: result.grouping },
+      breaks: result.breaks,
       search: { queries: input_searchQueries, expected: result.searchResults },
       history: { summaries: historySummaries, cases: result.history },
       stories: { cases: storyCases, expected: result.stories },

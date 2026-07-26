@@ -1,0 +1,84 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Debug ReplayApp",
+            "target": "ReplayApp",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug ReplayApp"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Release ReplayApp",
+            "target": "ReplayApp",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release ReplayApp"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Debug replay-parity",
+            "target": "replay-parity",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug replay-parity"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Release replay-parity",
+            "target": "replay-parity",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release replay-parity"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Debug icon-probe",
+            "target": "icon-probe",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug icon-probe"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Release icon-probe",
+            "target": "icon-probe",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release icon-probe"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Debug replay-import",
+            "target": "replay-import",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug replay-import"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Release replay-import",
+            "target": "replay-import",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release replay-import"
+        }
+    ]
+}

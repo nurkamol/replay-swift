@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 450 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 458 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,16 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+
+### Break copy, now covered
+
+`describeBreak` was view code, so nothing checked it — and this port had drifted from the
+reference in three places: an idle gap read "2m idle in Safari" instead of "2m break", its
+explanation invented "One app held focus without input" where the reference names the app
+that stayed in front, and an editorial comma had crept into the unrecorded line. The words
+are the product (SPEC §8), so they are generated into the contract from the reference's own
+function now and live in `ReplayCore` where the suite can reach them.
+
 
 ## App — the surfaces
 
