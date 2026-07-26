@@ -6,6 +6,7 @@ import SwiftUI
 /// It describes rather than grades — no targets, no red, no scolding a quiet day. The
 /// figures are large because they are the point; everything else is quiet around them.
 struct TodayView: View {
+    @Environment(\.motion) private var motion
     let model: AppModel
     let annotations: AnnotationsModel
     let export: ExportModel
@@ -17,8 +18,6 @@ struct TodayView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.block) {
-                header
-
                 if let summary = model.summary, summary.switches > 0 {
                     HeadlineCard(summary: summary)
                     // Only when one has been asked for. No goal means no card, not an
@@ -52,32 +51,21 @@ struct TodayView: View {
                     quietDay
                 }
             }
-            .padding(Design.Space.page)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .pageContent()
         }
         .background(.background)
+        .navigationTitle("Today")
+        .navigationSubtitle(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
         .onAppear { if !memories.loaded { memories.load() } }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: Design.Space.hairline) {
-            Text("Today")
-                .font(Design.Text.title)
-            Text(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
 
     private var quietDay: some View {
-        VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text("A quiet day")
-                .font(.headline)
-            Text("Nothing recorded yet — your sessions will appear here as you work.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        ContentUnavailableView {
+            Label("A quiet day", systemImage: "moon.stars")
+        } description: {
+            Text("Nothing recorded yet. Your sessions will appear here as you work.")
         }
-        .padding(.vertical, Design.Space.emptyStateRoomy)
     }
 
     private var reflection: some View {
@@ -106,6 +94,7 @@ struct TodayView: View {
                         export: export,
                         onDelete: { model.deleteSession(session) }
                     )
+                    .settlesIntoView(reduced: motion.reduced)
                 case .breakItem(let gap):
                     BreakRow(gap: gap)
                 }
@@ -117,6 +106,7 @@ struct TodayView: View {
 /// The day in one glance: how long, across how much, and what dominated it.
 private struct HeadlineCard: View {
     let summary: DaySummary
+    @Environment(\.motion) private var motion
 
     var body: some View {
         VStack(alignment: .leading, spacing: Design.Space.section) {
@@ -124,6 +114,12 @@ private struct HeadlineCard: View {
                 Text(formatDurationShort(summary.activeSeconds))
                     .font(Design.Text.hero)
                     .monospacedDigit()
+                    // The day's total re-derives every thirty seconds. A number that
+                    // replaces itself is a flicker; one that rolls is the same number,
+                    // still counting.
+                    .contentTransition(.numericText())
+                    .animation(motion.animation(Design.Motion.settle), value: summary.activeSeconds)
+                    .accessibilityLabel("\(formatDurationShort(summary.activeSeconds)) active today")
                 Text("active")
                     .font(.title3)
                     .foregroundStyle(.secondary)
@@ -188,14 +184,36 @@ struct SessionCard: View {
     let annotations: AnnotationsModel
     let export: ExportModel
     let onDelete: () -> Void
+
     @State private var expanded = false
+    @Environment(\.motion) private var motion
 
     private var annotation: SessionAnnotation { annotations.annotation(for: session.startedAt) }
+
+    /// One sentence, because VoiceOver reads a card as a sentence rather than as the six
+    /// fragments it is laid out from. Marks are named, since their meaning is carried by
+    /// colour and shape on screen.
+    private var accessibilityDescription: String {
+        var parts = [
+            session.title,
+            formatRange(session.startedAt, session.endedAt),
+            "\(formatDurationShort(session.activeSeconds)) active",
+            "\(session.apps.count) \(session.apps.count == 1 ? "app" : "apps")",
+        ]
+        if annotation.bookmarked { parts.append("bookmarked") }
+        if !annotation.tags.isEmpty {
+            parts.append("tagged \(annotation.tags.joined(separator: ", "))")
+        }
+        if !annotation.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            parts.append("has a note")
+        }
+        return parts.joined(separator: ", ")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
-                withAnimation(Design.Motion.inPlace) { expanded.toggle() }
+                withAnimation(motion.animation(Design.Motion.settle)) { expanded.toggle() }
             } label: {
                 HStack(spacing: Design.Space.card) {
                     HStack(spacing: Design.Space.tight) {
@@ -221,14 +239,20 @@ struct SessionCard: View {
                     Text(formatDurationShort(session.activeSeconds))
                         .font(Design.Text.figure)
                         .monospacedDigit()
-                    Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                    Image(systemName: "chevron.down")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(expanded ? 180 : 0))
+                        .accessibilityHidden(true)
                 }
                 .padding(Design.Space.card)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(accessibilityDescription)
+            .accessibilityHint(expanded ? "Collapses this session" : "Expands this session")
+            .accessibilityAddTraits(.isButton)
 
             if expanded {
                 Divider().padding(.horizontal, Design.Space.card)
@@ -340,7 +364,14 @@ struct BreakRow: View {
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
             Text(label).font(.caption.weight(.medium)).foregroundStyle(.secondary)
-            Text(detail).font(.caption).foregroundStyle(.tertiary)
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                // The figure ("8m away") is the point; the explanation gives way first
+                // when the column is narrow rather than wrapping under it.
+                .layoutPriority(-1)
             Rectangle().fill(.quaternary).frame(height: 1)
         }
         .padding(.vertical, Design.Space.hairline)

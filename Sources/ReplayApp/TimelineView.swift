@@ -13,11 +13,11 @@ struct TimelineView: View {
     /// Given so a day can be opened from its ⋯ menu.
     let onOpenDay: (Int64) -> Void
 
+    @Environment(\.motion) private var motion
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.block) {
-                header
-
                 if history.days.isEmpty {
                     empty
                 } else {
@@ -32,33 +32,28 @@ struct TimelineView: View {
                     }
                 }
             }
-            .padding(Design.Space.page)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .pageContent()
         }
         .background(.background)
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: Design.Space.row) {
-            VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text("Timeline")
-                    .font(Design.Text.title)
-                Text(history.range.subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Picker("Range", selection: Binding(
-                get: { history.range },
-                set: { history.range = $0 }
-            )) {
-                ForEach(TimeRange.allCases) { range in
-                    Text(range.label).tag(range)
+        .navigationTitle("Timeline")
+        .navigationSubtitle(history.range.subtitle)
+        .toolbar {
+            // The range belongs in the chrome rather than the content: it governs the whole
+            // surface, and a control that scrolls away with what it controls is a control
+            // you have to go looking for.
+            ToolbarItem(placement: .principal) {
+                Picker("Range", selection: Binding(
+                    get: { history.range },
+                    set: { history.range = $0 }
+                )) {
+                    ForEach(TimeRange.allCases) { range in
+                        Text(range.label).tag(range)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .help("How much history the Timeline shows")
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
         }
     }
 
@@ -85,6 +80,7 @@ struct TimelineView: View {
 
 /// One day in the Timeline: its divider, its actions, and everything that happened on it.
 private struct DaySection: View {
+    @Environment(\.motion) private var motion
     let day: TimelineDay
     let history: HistoryModel
     let annotations: AnnotationsModel
@@ -112,6 +108,7 @@ private struct DaySection: View {
                         export: export,
                         onDelete: { history.deleteSession(session) }
                     )
+                    .settlesIntoView(reduced: motion.reduced)
                 case .breakItem(let gap):
                     BreakRow(gap: gap)
                 }
@@ -216,6 +213,7 @@ private struct PartDivider: View {
 /// pruned past the retention window — it says so plainly rather than pretending the day was
 /// empty, because the day's headline is still there to prove otherwise.
 struct DayView: View {
+    @Environment(\.motion) private var motion
     let day: TimelineDay
     let headline: DailySummary?
     let reflection: Reflection
@@ -223,7 +221,6 @@ struct DayView: View {
     let export: ExportModel
     let onReflect: (String) -> Void
     let onDeleteSession: (ActivitySession) -> Void
-    let onBack: () -> Void
 
     private var story: [String] { DayStory.build(day.sessions) }
 
@@ -297,6 +294,7 @@ struct DayView: View {
                                     export: export,
                                     onDelete: { onDeleteSession(session) }
                                 )
+                    .settlesIntoView(reduced: motion.reduced)
                             case .breakItem(let gap):
                                 BreakRow(gap: gap)
                             }
@@ -304,29 +302,45 @@ struct DayView: View {
                     }
                 }
             }
-            .padding(Design.Space.page)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .pageContent()
         }
         .background(.background)
+        .navigationTitle(fullDayLabel(day.dayStart))
+        .navigationSubtitle(
+            day.items.isEmpty ? "" : "\(formatDurationShort(day.activeSeconds)) active"
+        )
+        .toolbar {
+            if !day.sessions.isEmpty {
+                ToolbarItem {
+                    Menu {
+                        ForEach(Report.Format.allCases, id: \.self) { format in
+                            Button(format.label) {
+                                export.exportReport(
+                                    format,
+                                    label: fullDayLabel(day.dayStart),
+                                    sessions: day.sessions
+                                )
+                            }
+                        }
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+                    .help("Export this day")
+                }
+            }
+        }
     }
 
+    /// No back button of its own: the navigation stack draws one, and ⌘[ works because it
+    /// is the system's rather than a `Button` that happens to look like it.
     private var header: some View {
-        VStack(alignment: .leading, spacing: Design.Space.inline) {
-            Button(action: onBack) {
-                Label("Timeline", systemImage: "chevron.left")
-                    .font(.callout)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-
-            VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text(fullDayLabel(day.dayStart))
-                    .font(Design.Text.title)
-                if !day.items.isEmpty {
-                    Text("\(formatDurationShort(day.activeSeconds)) active")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+        VStack(alignment: .leading, spacing: Design.Space.hairline) {
+            Text(fullDayLabel(day.dayStart))
+                .font(Design.Text.title)
+            if !day.items.isEmpty {
+                Text("\(formatDurationShort(day.activeSeconds)) active")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
         }
     }

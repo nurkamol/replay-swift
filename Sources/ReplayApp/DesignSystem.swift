@@ -165,6 +165,31 @@ enum Design {
         static func enterDelay(_ index: Int, base: Double = 0) -> Double {
             min(base + Double(index) * staggerSeconds, staggerCapSeconds)
         }
+
+        /// A spring for things that move rather than merely change.
+        ///
+        /// No bounce. Replay's motion is settling, not springing — a card arriving should
+        /// look like it came to rest, and overshoot on a list of someone's day reads as
+        /// playfulness the content does not have.
+        static let settle = Animation.spring(duration: 0.42, bounce: 0)
+    }
+
+    /// Motion, with Reduce Motion respected.
+    ///
+    /// Not a courtesy. When someone has asked the system to stop moving things, an animation
+    /// is not a nicety they are missing out on — it is the thing they asked not to happen.
+    /// So this returns `nil`, and the change lands immediately rather than in a shorter
+    /// animation that still moves.
+    struct MotionPreference {
+        var reduced: Bool
+
+        func animation(_ animation: Animation) -> Animation? { reduced ? nil : animation }
+
+        /// A transition that becomes a plain opacity change when motion is reduced —
+        /// appearing and disappearing still need to be legible.
+        func transition(_ transition: AnyTransition) -> AnyTransition {
+            reduced ? .opacity : transition
+        }
     }
 
     // ── colour ────────────────────────────────────────────────────────────────
@@ -276,9 +301,19 @@ enum Design {
     // ── layout ────────────────────────────────────────────────────────────────
 
     enum Layout {
-        /// The main window's default size.
-        static let windowWidth: CGFloat = 680
+        /// The main window's default size: a sidebar plus a detail column wide enough for
+        /// the readable measure below, rather than the pre-sidebar width with a column
+        /// carved out of it.
+        static let windowWidth: CGFloat = 980
         static let windowHeight: CGFloat = 760
+        static let windowMinWidth: CGFloat = 720
+        static let windowMinHeight: CGFloat = 480
+        /// The sidebar. A range rather than a number, because a split view lets the user
+        /// decide and only needs to be told what is sensible.
+        static let sidebarMinWidth: CGFloat = 170
+        static let sidebarWidth: CGFloat = 200
+        static let sidebarMaxWidth: CGFloat = 260
+
         /// Settings, which is a fixed-size window as Mac settings are.
         static let settingsWidth: CGFloat = 560
         static let settingsHeight: CGFloat = 460
@@ -313,6 +348,13 @@ enum Design {
 }
 
 // ── the tokens, applied ───────────────────────────────────────────────────────
+
+extension EnvironmentValues {
+    /// How this view should move, given what the user has asked the system for.
+    var motion: Design.MotionPreference {
+        Design.MotionPreference(reduced: accessibilityReduceMotion)
+    }
+}
 
 extension View {
     /// A card: the app's fundamental container.
@@ -359,10 +401,30 @@ extension View {
             .kerning(Design.Text.labelKerning)
     }
 
-    /// A page's scrolling content: one gutter, one rhythm, every surface.
+    /// A card settling as it comes into view.
+    ///
+    /// A `scrollTransition` rather than an entrance animation, because the content is a
+    /// list of someone's day: rows arrive as they are scrolled to, not all at once on
+    /// appear, and the effect has to be undetectable when you are reading rather than
+    /// scrolling. Nothing moves — only opacity and a fraction of a point of scale, which
+    /// reads as depth rather than as animation.
+    func settlesIntoView(reduced: Bool) -> some View {
+        scrollTransition(.interactive, axis: .vertical) { content, phase in
+            content
+                .opacity(reduced ? 1 : (phase.isIdentity ? 1 : 0.6))
+                .scaleEffect(reduced ? 1 : (phase.isIdentity ? 1 : 0.985))
+        }
+    }
+
+    /// A page's scrolling content: one gutter, one rhythm, one measure, every surface.
+    ///
+    /// The measure matters more since the window gained a sidebar. Without it a card runs
+    /// the full width of a maximised display, and a line of forty words is tiring to read
+    /// however much room there is for it.
     func pageContent() -> some View {
         self
             .padding(Design.Space.page)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: Design.Layout.readableWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 }

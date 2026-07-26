@@ -64,10 +64,17 @@ struct CollectionsView: View {
     let export: ExportModel
     let onDeleteSession: (ActivitySession) -> Void
 
+    @Environment(\.motion) private var motion
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.section) {
-                header
+                if let opened = collections.opened {
+                    Button { collections.opened = nil } label: {
+                        Label("All collections", systemImage: "chevron.left")
+                    }
+                    .buttonStyle(.link)
+                }
 
                 if let opened = collections.opened {
                     openedCollection(opened)
@@ -83,34 +90,16 @@ struct CollectionsView: View {
                     }
                 }
             }
-            .padding(Design.Space.page)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .pageContent()
         }
         .background(.background)
+        .navigationTitle(
+            collections.opened.map(Collections.label(for:)) ?? "Collections"
+        )
+        .navigationSubtitle(
+            collections.opened == nil ? "Sessions gathered by the kind of work they were" : ""
+        )
         .onAppear { if !collections.loaded { collections.load() } }
-    }
-
-    @ViewBuilder
-    private var header: some View {
-        if let opened = collections.opened {
-            VStack(alignment: .leading, spacing: Design.Space.inline) {
-                Button { collections.opened = nil } label: {
-                    Label("Collections", systemImage: "chevron.left").font(.callout)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                Text(Collections.label(for: opened))
-                    .font(Design.Text.title)
-            }
-        } else {
-            VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text("Collections")
-                    .font(Design.Text.title)
-                Text("Your sessions, gathered by the kind of work they were.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
     }
 
     @ViewBuilder
@@ -134,25 +123,22 @@ struct CollectionsView: View {
                         export: export,
                         onDelete: { onDeleteSession(session) }
                     )
+                    .settlesIntoView(reduced: motion.reduced)
                 }
             }
         }
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text("Nothing collected yet")
-                .font(.headline)
+        ContentUnavailableView {
+            Label("Nothing collected yet", systemImage: "square.stack")
+        } description: {
             Text(
                 "A collection is every session of one kind — development, research, writing. "
-                    + "They appear on their own as you work, with nothing to set up and nothing "
-                    + "to file."
+                    + "They appear on their own as you work, with nothing to set up and "
+                    + "nothing to file."
             )
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, Design.Space.emptyState)
     }
 }
 

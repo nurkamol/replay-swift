@@ -15,7 +15,10 @@ struct AnnotationMarks: View {
                 if annotation.bookmarked {
                     Image(systemName: "bookmark.fill")
                         .font(.caption2)
-                        .foregroundStyle(.yellow)
+                        .foregroundStyle(Design.Colour.marked)
+                        // Bounces once when it is set, and never again: an icon should
+                        // animate when its meaning changes, not while it merely exists.
+                        .symbolEffect(.bounce, value: annotation.bookmarked)
                         .accessibilityLabel("Bookmarked")
                 }
                 if !annotation.tags.isEmpty {

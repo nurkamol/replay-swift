@@ -109,6 +109,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         editMenu.addItem(
             withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"
         )
+        editMenu.addItem(.separator())
+        // Find lives in Edit, where every Mac app puts it, and goes to the search field
+        // rather than to a surface — ⌘F means "let me type a query", not "show me search".
+        editMenu.addItem(withTitle: "Find…", action: #selector(findInReplay), keyEquivalent: "f")
+            .target = self
         editItem.submenu = editMenu
         main.addItem(editItem)
 
@@ -118,12 +123,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .target = self
         viewMenu.addItem(withTitle: "Timeline", action: #selector(openTimeline), keyEquivalent: "2")
             .target = self
-        viewMenu.addItem(withTitle: "Search", action: #selector(openSearch), keyEquivalent: "f")
+        // Numbered in sidebar order. Search is ⌘3 rather than ⌘F: ⌘F is Find, and
+        // `.searchable` binds it to focus the field — a menu item that stole it switched
+        // surfaces and then swallowed the keystrokes meant for the search box.
+        viewMenu.addItem(withTitle: "Search", action: #selector(openSearch), keyEquivalent: "3")
             .target = self
-        viewMenu.addItem(withTitle: "Memories", action: #selector(openMemories), keyEquivalent: "3")
+        viewMenu.addItem(withTitle: "Memories", action: #selector(openMemories), keyEquivalent: "4")
             .target = self
         viewMenu.addItem(
-            withTitle: "Collections", action: #selector(openCollections), keyEquivalent: "4"
+            withTitle: "Collections", action: #selector(openCollections), keyEquivalent: "5"
         ).target = self
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
@@ -199,6 +207,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.setContentSize(
             NSSize(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
         )
+        window.contentMinSize = NSSize(
+            width: Design.Layout.windowMinWidth, height: Design.Layout.windowMinHeight
+        )
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
@@ -219,6 +230,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openTimeline() {
         history.reload()
         navigation.show(.timeline)
+        showWindow()
+    }
+
+    @objc private func findInReplay() {
+        navigation.focusSearch()
         showWindow()
     }
 

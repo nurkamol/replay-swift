@@ -35,14 +35,6 @@ struct MemoriesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.section) {
-                VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                    Text("Memories")
-                        .font(Design.Text.title)
-                    Text("What you were doing on this date before.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
                 if memories.memories.isEmpty {
                     empty
                 } else {
@@ -53,28 +45,24 @@ struct MemoriesView: View {
                     }
                 }
             }
-            .padding(Design.Space.page)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .pageContent()
         }
         .background(.background)
+        .navigationTitle("Memories")
+        .navigationSubtitle("What you were doing on this date before")
         .onAppear { memories.load() }
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text("Nothing to look back on yet")
-                .font(.headline)
+        ContentUnavailableView {
+            Label("Nothing to look back on yet", systemImage: "clock.arrow.circlepath")
+        } description: {
             Text(
                 "Replay looks at the same date a week, a month, and up to two years ago. "
-                    + "Once you have history at one of those, it appears here — and it keeps "
-                    + "appearing after the raw activity has been pruned, because a day's "
-                    + "headline outlives it."
+                    + "A memory keeps appearing after the raw activity has been pruned, "
+                    + "because a day's headline outlives it."
             )
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, Design.Space.emptyState)
     }
 }
 
