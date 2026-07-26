@@ -139,19 +139,24 @@ function now and live in `ReplayCore` where the suite can reach them.
 
 ## Next three things
 
-1. **A harness for the *behaviour* behind the views.** The design audit now guards how views
-   look; nothing guards what their models do. `AppModel`, `HistoryModel`, `SearchModel` and
-   the rest hold real logic — loading, filtering, deleting, reloading — and none of it is
-   tested, because they live in an executable target that no test can import. Moving them
-   into a library is the unlock, and it is the largest quiet risk left.
-2. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
+1. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
    machine has no Developer ID at all. A decision, not a task. See `docs/ROADMAP.md`.
+2. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
+   `SettingsModel` and `CollectionsModel` have none, and the tracker's own live-state
+   handling is still only exercised by using the app.
 3. **Projects** — the same signature grouping as workflows, but keeping the whole span so a
    combination gets a page of its own with a first-seen date and every session under it.
    `detectProjects`, `computeWorkflowPartners` and `computeRelationship` are all in the
    reference's `workflows.ts` and none is ported.
 
 Done and no longer blocking:
+- ~~The models were untestable~~ — they never were. This ledger recorded them as beyond
+  reach "because they live in an executable target that no test can import", and that was
+  simply false: `@testable import ReplayApp` works, and the only thing between those models
+  and a test was someone writing one. Nine now run against a real SQLite file in a temporary
+  directory — range filtering, the reopened-day rule, annotation caching, deletion, the
+  week's seven days, and search's snapshot. Each was checked by breaking the code it guards:
+  deleting the day filter in `HistoryModel.day` fails two of them.
 - ~~This Week was missing entirely~~ — a whole reference surface the ledger had never
   recorded. `computeWeekSummary` is ported and generated into the contract (31 checks): the
   seven days, each day's hourly arc, application shares with how many days each appeared on,

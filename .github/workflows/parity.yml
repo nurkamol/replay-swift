@@ -9,10 +9,13 @@
 # still current?". That second question is what `node tools/port-queue.mjs`
 # answers, at a desk, with the reference app present.
 #
-# `swift run replay-parity` is the authoritative check: it needs no Xcode
-# selection and no test framework, which is exactly why the suite was built to run
-# that way. `swift test` runs the same checks through swift-testing and is kept
-# because it is what a developer runs locally — if it breaks here, it breaks there.
+# `swift run replay-parity` is the authoritative check for the *contract*: it needs
+# no Xcode selection and no test framework, which is exactly why the suite was built
+# to run that way. `swift test` runs those same checks through swift-testing and,
+# since it can reach the app target, the model behaviour suite as well — loading,
+# range filtering, caching and deletion, which the contract says nothing about.
+# That half needs a real toolchain and a macOS as new as the app's deployment
+# target, which is why this job is pinned rather than run on whatever is current.
 
 name: parity
 
@@ -76,5 +79,5 @@ jobs:
           done
           exit $status
 
-      - name: Parity suite through swift-testing
+      - name: Parity and model behaviour through swift-testing
         run: swift test

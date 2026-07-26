@@ -48,6 +48,7 @@ let package = Package(
         .executableTarget(name: "ReplayParity", dependencies: ["ParityKit"]),
         .testTarget(name: "ReplayCoreTests", dependencies: ["ParityKit", "ReplayCore"]),
 
+        .testTarget(name: "ReplayAppTests", dependencies: ["ReplayApp", "ReplayCore"]),
         .executableTarget(name: "IconProbe"),
         .executableTarget(name: "ReplayImport", dependencies: ["ReplayCore"]),
     ]
