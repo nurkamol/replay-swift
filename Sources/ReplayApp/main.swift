@@ -196,7 +196,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         let window = NSWindow(contentViewController: hosting)
         window.title = "Replay"
-        window.setContentSize(NSSize(width: 680, height: 760))
+        window.setContentSize(
+            NSSize(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+        )
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false

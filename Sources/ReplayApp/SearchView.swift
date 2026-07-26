@@ -102,7 +102,7 @@ struct SearchView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Design.Space.section) {
                 header
                 if search.chosenApp != nil || !search.query.trimmingCharacters(in: .whitespaces).isEmpty {
                     results
@@ -110,7 +110,7 @@ struct SearchView: View {
                     hint
                 }
             }
-            .padding(24)
+            .padding(Design.Space.page)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(.background)
@@ -118,11 +118,11 @@ struct SearchView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
             Text("Search")
-                .font(.system(size: 28, weight: .bold))
+                .font(Design.Text.title)
 
-            HStack(spacing: 8) {
+            HStack(spacing: Design.Space.inline) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.tertiary)
                 TextField("A session, a note, a tag, an app…", text: Binding(
                     get: { search.query },
@@ -141,28 +141,28 @@ struct SearchView: View {
                     .foregroundStyle(.tertiary)
                 }
             }
-            .padding(.horizontal, 10).padding(.vertical, 7)
-            .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, Design.Pill.fieldHorizontal).padding(.vertical, Design.Pill.fieldVertical)
+            .background(Design.Colour.surfaceInset, in: RoundedRectangle(cornerRadius: Design.Radius.control))
 
             if let chosen = search.chosenApp {
-                HStack(spacing: 6) {
+                HStack(spacing: Design.Space.snug) {
                     Text("in \(chosen)").font(.caption.weight(.medium))
                     Button {
                         search.chosenApp = nil
                     } label: {
-                        Image(systemName: "xmark").font(.system(size: 8, weight: .bold))
+                        Image(systemName: "xmark").font(Design.Text.pillGlyph)
                     }
                     .buttonStyle(.plain)
                 }
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 9).padding(.vertical, 3)
-                .background(.quaternary.opacity(0.5), in: Capsule())
+                .padding(.horizontal, Design.Pill.leadingRoomy).padding(.vertical, Design.Pill.countVertical)
+                .background(Design.Colour.fillStrong, in: Capsule())
             }
         }
     }
 
     private var hint: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Design.Space.snug) {
             Text("Find a session again")
                 .font(.headline)
             Text(
@@ -175,7 +175,7 @@ struct SearchView: View {
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 30)
+        .padding(.vertical, Design.Space.emptyState)
     }
 
     @ViewBuilder
@@ -186,27 +186,27 @@ struct SearchView: View {
 
         if !search.apps.isEmpty {
             SectionLabel("Applications")
-            VStack(spacing: 6) {
+            VStack(spacing: Design.Space.snug) {
                 ForEach(search.apps, id: \.applicationName) { app in
                     Button {
                         search.chosenApp = app.applicationName
                     } label: {
-                        HStack(spacing: 10) {
-                            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: 20)
+                        HStack(spacing: Design.Space.row) {
+                            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: Design.Icon.listItem)
                             Text(app.applicationName).font(.body)
                             Spacer()
                             Text("\(app.sessionCount) \(app.sessionCount == 1 ? "session" : "sessions")")
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                             Text(formatDurationShort(app.seconds))
-                                .font(.callout.weight(.medium))
+                                .font(Design.Text.figure)
                                 .monospacedDigit()
                         }
-                        .padding(10)
+                        .padding(Design.Space.row)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .background(.quaternary.opacity(0.18), in: RoundedRectangle(cornerRadius: 8))
+                    .background(Design.Colour.surfaceQuiet, in: RoundedRectangle(cornerRadius: Design.Radius.control))
                 }
             }
         }
@@ -215,14 +215,14 @@ struct SearchView: View {
             Text("Nothing found in the last \(Report.fetchDays) days.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .padding(.vertical, 20)
+                .padding(.vertical, Design.Space.block)
         } else {
             SectionLabel(
                 "\(search.sessions.count) \(search.sessions.count == 1 ? "session" : "sessions")"
             )
-            VStack(spacing: 10) {
+            VStack(spacing: Design.Space.row) {
                 ForEach(search.sessions, id: \.startedAt) { session in
-                    VStack(alignment: .leading, spacing: 3) {
+                    VStack(alignment: .leading, spacing: Design.Space.tight) {
                         // A result is undated in the Timeline's sense, so it says its day —
                         // "which one was that" is usually the question being asked.
                         Text(fullDayLabel(startOfLocalDay(session.startedAt)))
@@ -247,9 +247,9 @@ private struct SectionLabel: View {
 
     var body: some View {
         Text(text)
-            .font(.caption.weight(.semibold))
+            .font(Design.Text.sectionLabel)
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
-            .kerning(0.6)
+            .kerning(Design.Text.labelKerning)
     }
 }

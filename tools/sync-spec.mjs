@@ -185,6 +185,42 @@ const constants = {
       maxTags: maxTags === undefined ? null : Number(maxTags),
     };
   })(),
+  motion: (() => {
+    /*
+     * The motion system, from the reference's own stylesheet and page shell.
+     *
+     * Extracted rather than eyeballed because these are the numbers that make two
+     * implementations feel like one product. A port that guesses 0.2s where the
+     * reference says 180ms is not visibly wrong in a screenshot and is wrong every
+     * time anyone uses it.
+     */
+    const css = read("renderer/styles.css");
+    const page = read("renderer/components/page.tsx");
+    const duration = (name) => {
+      const match = css.match(new RegExp(`--replay-duration-${name}:\\s*(\\d+)ms`));
+      if (!match) problems.push(`styles.css: --replay-duration-${name} not found`);
+      return match ? Number(match[1]) : null;
+    };
+    const curve = (name) => {
+      const match = css.match(
+        new RegExp(`--replay-ease-${name}:\\s*cubic-bezier\\(([^)]+)\\)`),
+      );
+      if (!match) {
+        problems.push(`styles.css: --replay-ease-${name} not found`);
+        return null;
+      }
+      return match[1].split(",").map((n) => Number(n.trim()));
+    };
+    return {
+      pressMs: duration("press"),
+      hoverMs: duration("hover"),
+      enterMs: duration("enter"),
+      easeSoft: curve("soft"),
+      easeStandard: curve("standard"),
+      enterStepMs: constant(page, "page.tsx", "ENTER_STEP_MS"),
+      enterCapMs: constant(page, "page.tsx", "ENTER_CAP_MS"),
+    };
+  })(),
   retentionDayOptions: (() => {
     const view = read("renderer/settings/settings-view.tsx");
     const block = view.match(/Keep activity for[\s\S]{0,1200}?<\/Select>/);

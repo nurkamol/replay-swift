@@ -20,10 +20,11 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 443 checks against the Glaze app — run before every commit
+swift test                      # 450 checks against the Glaze app — run before every commit
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
+node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token
 ./scripts/make-app.sh           # assemble a runnable .app
 ```
 
@@ -40,6 +41,10 @@ node tools/port-queue.mjs      # what changed in Glaze that this port still owes
   current is what `node tools/port-queue.mjs` answers, and only with the Glaze app present.
 - **Commit `spec/` together with the Swift change** that matches it, so every commit says
   which upstream version it corresponds to.
+- **No view spells a number.** Every visual constant — radius, spacing, type, motion,
+  colour, icon size, window metric — lives in `Sources/ReplayApp/DesignSystem.swift`, and
+  `node tools/design-audit.mjs` fails the build if a view hard-codes one. The motion values
+  are the reference's own and are checked by the parity suite, so the two apps move alike.
 - **No external dependencies.** SQLite from the system (`import SQLite3`), AppKit,
   SwiftUI. Nothing to resolve, nothing to vendor. Do not add GRDB — the SQL here has to
   stay readable against the reference implementation's SQL.
@@ -56,7 +61,7 @@ node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 443 checks. **The UI is largely built**: an application menu, a menu bar item,
+Glaze app — 450 checks. **The UI is largely built**: an application menu, a menu bar item,
 Today (headline, focus goal, reflection), the Timeline, a reopened past day, Search, Memories, Collections, a
 session's notes/tags/bookmarks, Settings, and export — reports as Markdown, CSV, JSON or
 HTML, plus full backups. What is left is Projects, Canvas, PDF export, and signing — which is blocked on a Developer ID rather

@@ -15,24 +15,24 @@ struct FocusGoalCard: View {
     let onSetGoal: (Int?) -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: Design.Space.cardRoomy) {
             ProgressRing(fraction: progress.fraction, met: progress.met)
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Focus goal")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(Design.Text.cardLabel)
                     .foregroundStyle(.tertiary)
-                    .kerning(0.6)
+                    .kerning(Design.Text.labelKerning)
                     .textCase(.uppercase)
 
                 if progress.met {
                     Text("Goal reached — \(formatDurationShort(progress.activeSeconds))")
-                        .font(.callout.weight(.medium))
+                        .font(Design.Text.figure)
                         .monospacedDigit()
                 } else {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Design.Space.tight) {
                         Text(formatDurationShort(progress.activeSeconds))
-                            .font(.callout.weight(.medium))
+                            .font(Design.Text.figure)
                             .monospacedDigit()
                         Text("of \(formatDurationShort(progress.goalSeconds))")
                             .font(.callout)
@@ -52,13 +52,13 @@ struct FocusGoalCard: View {
 
             // Only past one day: "1 day" is not a streak, it is today.
             if streak > 1 {
-                HStack(spacing: 4) {
+                HStack(spacing: Design.Space.tight) {
                     Image(systemName: "flame.fill").font(.caption2)
-                    Text("\(streak) days").font(.caption.weight(.semibold)).monospacedDigit()
+                    Text("\(streak) days").font(Design.Text.sectionLabel).monospacedDigit()
                 }
                 .foregroundStyle(.orange)
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(.orange.opacity(0.12), in: Capsule())
+                .padding(.horizontal, Design.Pill.horizontal).padding(.vertical, Design.Pill.vertical)
+                .background(.orange.opacity(Design.Colour.streakOpacity), in: Capsule())
             }
 
             // Adjustable from where it is read, rather than only from Settings — the figure
@@ -85,12 +85,9 @@ struct FocusGoalCard: View {
             .menuIndicator(.hidden)
             .fixedSize()
         }
-        .padding(14)
+        .padding(Design.Space.cardRoomy)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary.opacity(0.4), lineWidth: 1)
-        )
+        .card(background: Design.Colour.surface, border: Design.Colour.fill)
     }
 }
 
@@ -103,26 +100,26 @@ private struct ProgressRing: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(.quaternary.opacity(0.6), lineWidth: 4)
+                .stroke(Design.Colour.divider, lineWidth: Design.Layout.ringThickness)
             Circle()
                 .trim(from: 0, to: max(0.001, fraction))
                 .stroke(
                     met ? AnyShapeStyle(.green) : AnyShapeStyle(.tint),
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    style: StrokeStyle(lineWidth: Design.Layout.ringThickness, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
             if met {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(Design.Text.ringGlyph)
                     .foregroundStyle(.green)
             } else {
                 Text("\(Int((fraction * 100).rounded()))")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(Design.Text.ringFigure)
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: 38, height: 38)
-        .animation(.easeOut(duration: 0.25), value: fraction)
+        .frame(width: Design.Icon.ring, height: Design.Icon.ring)
+        .animation(Design.Motion.inPlace, value: fraction)
     }
 }

@@ -25,7 +25,7 @@ struct SettingsView: View {
             AboutTab()
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 560, height: 460)
+        .frame(width: Design.Layout.settingsWidth, height: Design.Layout.settingsHeight)
         .onAppear { settings.reload() }
     }
 }
@@ -39,8 +39,8 @@ private struct Row<Control: View>: View {
     @ViewBuilder let control: Control
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .top, spacing: Design.Space.section) {
+            VStack(alignment: .leading, spacing: Design.Space.hairline) {
                 Text(label).font(.body)
                 if let description {
                     Text(description)
@@ -52,7 +52,7 @@ private struct Row<Control: View>: View {
             Spacer(minLength: 0)
             control.fixedSize()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Design.Pill.vertical)
     }
 }
 
@@ -62,13 +62,13 @@ private struct Section<Content: View>: View {
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Design.Space.inline) {
             if let title {
                 Text(title)
-                    .font(.caption.weight(.semibold))
+                    .font(Design.Text.sectionLabel)
                     .foregroundStyle(.secondary)
                     .textCase(.uppercase)
-                    .kerning(0.6)
+                    .kerning(Design.Text.labelKerning)
             }
             if let description {
                 Text(description)
@@ -86,10 +86,10 @@ private struct TabScroll<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: Design.Space.block) {
                 content
             }
-            .padding(20)
+            .padding(Design.Space.block)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -228,10 +228,10 @@ private struct GeneralTab: View {
                         + "\(Goals.format(Goals.maxCustomMinutes)), for a target that isn't a "
                         + "round hour."
                 ) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: Design.Space.snug) {
                         TextField("", value: customMinutes, format: .number)
                             .textFieldStyle(.roundedBorder)
-                            .frame(width: 60)
+                            .frame(width: Design.Layout.numberField)
                             .multilineTextAlignment(.trailing)
                         Text("min").font(.caption).foregroundStyle(.secondary)
                     }
@@ -274,7 +274,7 @@ private struct PrivacyTab: View {
     var body: some View {
         TabScroll {
             // The promise, stated once and plainly, before any control.
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Design.Space.snug) {
                 Label("Everything stays on this Mac", systemImage: "checkmark.shield")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.green)
@@ -287,13 +287,13 @@ private struct PrivacyTab: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(14)
+            .padding(Design.Space.cardRoomy)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+            .background(Design.Colour.surfaceRaised, in: RoundedRectangle(cornerRadius: Design.Radius.card))
 
             // What is actually on disk, so "local" is verifiable rather than claimed.
             if let info = settings.info {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: Design.Space.row) {
                     HStack(alignment: .top, spacing: 0) {
                         Stat(label: "Tracked", value: "\(info.trackedApps)")
                         Stat(label: "Excluded", value: "\(info.excludedApps)")
@@ -309,7 +309,7 @@ private struct PrivacyTab: View {
                         )
                     }
                     Divider()
-                    HStack(spacing: 6) {
+                    HStack(spacing: Design.Space.snug) {
                         Image(systemName: "internaldrive").font(.caption2).foregroundStyle(.tertiary)
                         Text(info.path)
                             .font(.caption2.monospaced())
@@ -319,10 +319,8 @@ private struct PrivacyTab: View {
                             .textSelection(.enabled)
                     }
                 }
-                .padding(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary.opacity(0.5), lineWidth: 1)
-                )
+                .padding(Design.Space.card)
+                .card(background: AnyShapeStyle(.clear), border: Design.Colour.fillStrong)
             }
 
             Section(title: "Tracking") {
@@ -352,13 +350,13 @@ private struct PrivacyTab: View {
         var body: some View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(label)
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(Design.Text.cardLabel)
                     .foregroundStyle(.tertiary)
-                    .kerning(0.5)
+                    .kerning(Design.Text.tightKerning)
                     .textCase(.uppercase)
-                Text(value).font(.callout.weight(.medium)).monospacedDigit()
+                Text(value).font(Design.Text.figure).monospacedDigit()
                 if let note {
-                    Text(note).font(.system(size: 9)).foregroundStyle(.tertiary)
+                    Text(note).font(Design.Text.cardLabel).foregroundStyle(.tertiary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -376,7 +374,7 @@ private struct ExclusionsSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: Design.Space.tight) {
                 Text("Excluded applications").font(.headline)
                 Text(
                     "Replay never records an excluded app. Excluding one also erases what it "
@@ -386,7 +384,7 @@ private struct ExclusionsSheet: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(16)
+            .padding(Design.Space.section)
 
             Divider()
 
@@ -394,14 +392,14 @@ private struct ExclusionsSheet: View {
                 Text("No applications recorded yet.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                    .padding(24)
+                    .padding(Design.Space.page)
                     .frame(maxWidth: .infinity, alignment: .center)
             } else {
                 List {
                     ForEach(settings.exclusionCandidates, id: \.bundleIdentifier) { app in
                         let excluded = preferences.excludedBundleIDs.contains(app.bundleIdentifier)
-                        HStack(spacing: 10) {
-                            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: 20)
+                        HStack(spacing: Design.Space.row) {
+                            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: Design.Icon.listItem)
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(app.applicationName).font(.body)
                                 Text(app.bundleIdentifier)
@@ -423,7 +421,7 @@ private struct ExclusionsSheet: View {
                             .toggleStyle(.switch)
                             .controlSize(.mini)
                         }
-                        .padding(.vertical, 2)
+                        .padding(.vertical, Design.Space.hairline)
                     }
                 }
                 .listStyle(.inset)
@@ -435,9 +433,9 @@ private struct ExclusionsSheet: View {
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
             }
-            .padding(12)
+            .padding(Design.Space.card)
         }
-        .frame(width: 460, height: 420)
+        .frame(width: Design.Layout.sheetWidth, height: Design.Layout.sheetHeight)
         .alert(
             "Exclude \(pendingExclusion?.applicationName ?? "this app")?",
             isPresented: Binding(
@@ -485,8 +483,8 @@ private struct DataTab: View {
                     description: "Today, this week, this month, or everything you bookmarked or "
                         + "wrote a note on — as Markdown, CSV or JSON."
                 ) {
-                    VStack(alignment: .trailing, spacing: 6) {
-                        HStack(spacing: 6) {
+                    VStack(alignment: .trailing, spacing: Design.Space.snug) {
+                        HStack(spacing: Design.Space.snug) {
                             Picker("Scope", selection: $scope) {
                                 ForEach(Report.Scope.allCases, id: \.self) {
                                     Text($0.label).tag($0)
@@ -520,7 +518,7 @@ private struct DataTab: View {
                     description: "Every row as readable JSON — the format Replay can restore "
                         + "from. Importing merges; it never overwrites what is already here."
                 ) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: Design.Space.inline) {
                         Button("Export…") { export.exportBackup() }
                         Button("Import…") { export.importBackup() }
                     }
@@ -648,10 +646,10 @@ private struct GuideTab: View {
     var body: some View {
         TabScroll {
             Section(description: "How Replay works, in plain terms.") {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: Design.Space.cardRoomy) {
                     ForEach(entries) { entry in
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(entry.question).font(.body.weight(.medium))
+                        VStack(alignment: .leading, spacing: Design.Space.tight) {
+                            Text(entry.question).font(Design.Text.itemTitle)
                             Text(entry.answer)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -670,10 +668,10 @@ private struct AboutTab: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Design.Space.inline) {
             Spacer()
             Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 44))
+                .font(Design.Text.aboutMark)
                 .foregroundStyle(.tint)
             Text("Replay").font(.title3.weight(.semibold))
             Text("Version \(version)")
@@ -684,7 +682,7 @@ private struct AboutTab: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 320)
+                .frame(maxWidth: Design.Layout.readableWidth / 2)
             Spacer()
         }
         .frame(maxWidth: .infinity)

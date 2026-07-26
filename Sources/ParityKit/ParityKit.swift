@@ -110,6 +110,15 @@ public enum ParityKit {
             public let maxTagLength: Int
             public let maxTags: Int
         }
+        public struct Motion: Decodable, Sendable {
+            public let pressMs: Int
+            public let hoverMs: Int
+            public let enterMs: Int
+            public let easeSoft: [Double]
+            public let easeStandard: [Double]
+            public let enterStepMs: Int
+            public let enterCapMs: Int
+        }
         public struct FocusGoal: Decodable, Sendable {
             public let presetMinutes: [Int]
             public let minCustomMinutes: Int
@@ -123,6 +132,7 @@ public enum ParityKit {
         public let backup: BackupInfo
         public let annotations: Annotations
         public let focusGoal: FocusGoal
+        public let motion: Motion
     }
 
     /// Day grouping and report text, run against the real Glaze code under a pinned clock,
@@ -336,6 +346,22 @@ public enum ParityKit {
         equal(g1, "focus goal presets", Goals.presetMinutes, constants.focusGoal.presetMinutes)
         equal(g1, "minCustomGoalMinutes", Goals.minCustomMinutes, constants.focusGoal.minCustomMinutes)
         equal(g1, "maxCustomGoalMinutes", Goals.maxCustomMinutes, constants.focusGoal.maxCustomMinutes)
+
+        // motion — the design system's durations and curves, which are the reference's own.
+        // A port that guesses 0.2s where the reference says 180ms is not visibly wrong in a
+        // screenshot and is wrong every time anybody uses it.
+        equal(g1, "press duration",
+              Int((MotionTokens.pressSeconds * 1000).rounded()), constants.motion.pressMs)
+        equal(g1, "hover duration",
+              Int((MotionTokens.hoverSeconds * 1000).rounded()), constants.motion.hoverMs)
+        equal(g1, "enter duration",
+              Int((MotionTokens.enterSeconds * 1000).rounded()), constants.motion.enterMs)
+        equal(g1, "the soft curve", MotionTokens.easeSoft, constants.motion.easeSoft)
+        equal(g1, "the standard curve", MotionTokens.easeStandard, constants.motion.easeStandard)
+        equal(g1, "stagger step",
+              Int((MotionTokens.staggerSeconds * 1000).rounded()), constants.motion.enterStepMs)
+        equal(g1, "stagger cap",
+              Int((MotionTokens.staggerCapSeconds * 1000).rounded()), constants.motion.enterCapMs)
 
         // the category table — order-sensitive, because first match wins and it names
         // the session.

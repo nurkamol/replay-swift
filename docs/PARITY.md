@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 443 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 450 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -39,6 +39,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | capability | status | notes |
 |---|---|---|
 | Menu bar item | done | current app, today's total, pause/resume, Open Today/Timeline, Settings, Quit |
+| Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, reflection, sessions and breaks |
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
@@ -107,6 +108,10 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
   The comparison folds non-breaking spaces onto plain ones and nothing else.
 - **A session can display an end before its start.** Inherited from the reference's away
   handling, not introduced here — see [FINDINGS.md](FINDINGS.md).
+- **Motion is part of the contract.** The durations and easing curves in
+  `DesignSystem.swift` are the reference's own, extracted from its stylesheet into
+  `spec/constants.json`. A port that guesses 0.2s where the reference says 180ms is not
+  visibly wrong in a screenshot and is wrong every time anybody uses it.
 - **The parity suite is the only test coverage.** It runs both as `swift test`
   (swift-testing, needs `DEVELOPER_DIR` set to the Xcode beta) and as
   `swift run replay-parity` (no Xcode). It covers the core thoroughly and everything else
@@ -114,17 +119,20 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **A harness for the interface.** Every surface in this port was verified by running it
-   and looking — now nine times running. `spec/` cannot express a view, so closing this
-   needs a different kind of test than the contract provides. It is the largest quiet risk
-   here and it grows with each feature.
+1. **A harness for the *behaviour* behind the views.** The design audit now guards how views
+   look; nothing guards what their models do. `AppModel`, `HistoryModel`, `SearchModel` and
+   the rest hold real logic — loading, filtering, deleting, reloading — and none of it is
+   tested, because they live in an executable target that no test can import. Moving them
+   into a library is the unlock, and it is the largest quiet risk left.
 2. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
-   machine has no Developer ID at all. A decision about an Apple Developer account, not a
-   task. See `docs/ROADMAP.md`.
+   machine has no Developer ID at all. A decision, not a task. See `docs/ROADMAP.md`.
 3. **Projects**, the last of the small derived subsystems. Needs detection logic that has no
-   equivalent here yet, which is why it trails Collections rather than shipping beside it.
+   equivalent here yet.
 
 Done and no longer blocking:
+- ~~Hard-coded values scattered through the views~~ — one design system, every view reading
+  from it, and an audit in CI that fails the build if one drifts back. Changing
+  `Radius.card` once visibly re-rounds every card in the app; that was checked by doing it.
 - ~~Story Mode~~ — every clause filled from recorded activity, and a day too thin to narrate
   gets no story rather than a padded one. Compared as text, because the text is the claim.
 - ~~Collections~~ — sessions gathered by the kind of work they were, derived rather than

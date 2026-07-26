@@ -53,6 +53,12 @@ jobs:
           fi
           echo "$(echo "$listed" | wc -l | tr -d ' ') fixtures, all indexed"
 
+      # A design system only holds if nothing bypasses it. One view with a literal
+      # padding in it is not a bug anyone reports — it is how "change a token to
+      # change the app" quietly stops being true.
+      - name: No view spells a number
+        run: node tools/design-audit.mjs
+
       - name: Build
         run: swift build
 

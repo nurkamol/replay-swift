@@ -66,7 +66,7 @@ struct CollectionsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Design.Space.section) {
                 header
 
                 if let opened = collections.opened {
@@ -74,7 +74,7 @@ struct CollectionsView: View {
                 } else if collections.collections.isEmpty {
                     empty
                 } else {
-                    VStack(spacing: 10) {
+                    VStack(spacing: Design.Space.row) {
                         ForEach(collections.collections, id: \.category) { collection in
                             CollectionRow(collection: collection) {
                                 collections.opened = collection.category
@@ -83,7 +83,7 @@ struct CollectionsView: View {
                     }
                 }
             }
-            .padding(24)
+            .padding(Design.Space.page)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(.background)
@@ -93,19 +93,19 @@ struct CollectionsView: View {
     @ViewBuilder
     private var header: some View {
         if let opened = collections.opened {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Design.Space.inline) {
                 Button { collections.opened = nil } label: {
                     Label("Collections", systemImage: "chevron.left").font(.callout)
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 Text(Collections.label(for: opened))
-                    .font(.system(size: 28, weight: .bold))
+                    .font(Design.Text.title)
             }
         } else {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Design.Space.hairline) {
                 Text("Collections")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(Design.Text.title)
                 Text("Your sessions, gathered by the kind of work they were.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -117,14 +117,14 @@ struct CollectionsView: View {
     private func openedCollection(_ category: SessionCategory) -> some View {
         let inCategory = collections.sessions(in: category)
         Text("\(inCategory.count) \(inCategory.count == 1 ? "session" : "sessions")")
-            .font(.caption.weight(.semibold))
+            .font(Design.Text.sectionLabel)
             .foregroundStyle(.secondary)
             .textCase(.uppercase)
-            .kerning(0.6)
+            .kerning(Design.Text.labelKerning)
 
-        VStack(spacing: 10) {
+        VStack(spacing: Design.Space.row) {
             ForEach(inCategory, id: \.startedAt) { session in
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: Design.Space.tight) {
                     Text(fullDayLabel(startOfLocalDay(session.startedAt)))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
@@ -140,7 +140,7 @@ struct CollectionsView: View {
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Design.Space.snug) {
             Text("Nothing collected yet")
                 .font(.headline)
             Text(
@@ -152,7 +152,7 @@ struct CollectionsView: View {
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 30)
+        .padding(.vertical, Design.Space.emptyState)
     }
 }
 
@@ -162,14 +162,14 @@ private struct CollectionRow: View {
 
     var body: some View {
         Button(action: onOpen) {
-            HStack(spacing: 12) {
+            HStack(spacing: Design.Space.card) {
                 Image(systemName: collectionSymbol(collection.category))
                     .font(.title3)
                     .foregroundStyle(.tint)
-                    .frame(width: 26)
+                    .frame(width: Design.Icon.glyphColumn)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(collection.label).font(.body.weight(.medium))
+                VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                    Text(collection.label).font(Design.Text.itemTitle)
                     // The apps that defined it, which says more about a collection than
                     // its name does.
                     Text(collection.apps.map(\.applicationName).joined(separator: " · "))
@@ -182,7 +182,7 @@ private struct CollectionRow: View {
 
                 VStack(alignment: .trailing, spacing: 1) {
                     Text(formatDurationShort(collection.totalSeconds))
-                        .font(.callout.weight(.medium))
+                        .font(Design.Text.figure)
                         .monospacedDigit()
                     Text("\(collection.sessionCount) \(collection.sessionCount == 1 ? "session" : "sessions")")
                         .font(.caption2)
@@ -193,13 +193,10 @@ private struct CollectionRow: View {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .padding(Design.Space.cardRoomy)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(.quaternary.opacity(0.18), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary.opacity(0.5), lineWidth: 1)
-        )
+        .card(border: Design.Colour.fillStrong)
     }
 }

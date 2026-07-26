@@ -96,6 +96,25 @@
     "maxTagLength": 32,
     "maxTags": 12
   },
+  "motion": {
+    "pressMs": 90,
+    "hoverMs": 180,
+    "enterMs": 460,
+    "easeSoft": [
+      0.16,
+      1,
+      0.3,
+      1
+    ],
+    "easeStandard": [
+      0.32,
+      0.72,
+      0,
+      1
+    ],
+    "enterStepMs": 28,
+    "enterCapMs": 560
+  },
   "retentionDayOptions": [
     0,
     365,

@@ -13,7 +13,7 @@ follow the Glaze app's, so "level with 2.3.2" means this port matches that relea
 ## Unreleased — 0.1.0
 
 The first version that is an application rather than a library with a placeholder `main`.
-Level with **Glaze 2.3.2** (`d355ba2`), verified by **443 checks**.
+Level with **Glaze 2.3.2** (`d355ba2`), verified by **450 checks**.
 
 ### Added
 
@@ -43,7 +43,13 @@ Level with **Glaze 2.3.2** (`d355ba2`), verified by **443 checks**.
 - **Story Mode** — a reopened day told back in a few plain sentences, every clause filled
   from recorded activity. A day too thin to narrate honestly gets no story rather than a
   padded one.
-- **CI** running the parity suite on every push, in four timezones.
+- **A design system.** Every visual constant — radii, spacing, typography, motion, springs,
+  materials, elevation, shadows, colour, icon sizes, window and sheet metrics, card chrome —
+  in one file, with every view reading from it. `node tools/design-audit.mjs` fails the
+  build if a view hard-codes a value, so the system cannot rot one plausible number at a
+  time. The motion tokens are the reference's own, extracted into the generated contract and
+  checked by the parity suite.
+- **CI** running the parity suite on every push, in four timezones, plus the design audit.
 
 ### Fixed — differences found between the two implementations
 

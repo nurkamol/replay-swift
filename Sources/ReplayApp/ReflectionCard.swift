@@ -16,15 +16,15 @@ struct ReflectionCard: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: Design.Space.snug) {
+            HStack(spacing: Design.Space.snug) {
                 Image(systemName: "pencil.line")
                     .font(.caption)
                     .foregroundStyle(.tint)
                 Text("Reflection")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(Design.Text.cardLabel)
                     .foregroundStyle(.tertiary)
-                    .kerning(0.6)
+                    .kerning(Design.Text.labelKerning)
                     .textCase(.uppercase)
             }
 
@@ -36,12 +36,9 @@ struct ReflectionCard: View {
                 .onChange(of: focused) { _, isFocused in if !isFocused { commit() } }
                 .onExitCommand { value = reflection.text; focused = false }
         }
-        .padding(14)
+        .padding(Design.Space.cardRoomy)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary.opacity(0.4), lineWidth: 1)
-        )
+        .card(background: Design.Colour.surface, border: Design.Colour.fill)
         // A borderless field on an empty day is an invisible target; the card takes the click.
         .contentShape(Rectangle())
         .onTapGesture { focused = true }

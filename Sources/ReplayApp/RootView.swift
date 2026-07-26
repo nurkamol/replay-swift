@@ -130,7 +130,7 @@ struct RootView: View {
         .pickerStyle(.segmented)
         .labelsHidden()
         .fixedSize()
-        .padding(.vertical, 8)
+        .padding(.vertical, Design.Space.inline)
         .frame(maxWidth: .infinity)
     }
 }

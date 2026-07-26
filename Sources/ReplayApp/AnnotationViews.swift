@@ -11,7 +11,7 @@ struct AnnotationMarks: View {
 
     var body: some View {
         if !annotation.isEmpty {
-            HStack(spacing: 5) {
+            HStack(spacing: Design.Space.snug) {
                 if annotation.bookmarked {
                     Image(systemName: "bookmark.fill")
                         .font(.caption2)
@@ -19,7 +19,7 @@ struct AnnotationMarks: View {
                         .accessibilityLabel("Bookmarked")
                 }
                 if !annotation.tags.isEmpty {
-                    HStack(spacing: 2) {
+                    HStack(spacing: Design.Space.hairline) {
                         Image(systemName: "tag")
                         Text("\(annotation.tags.count)").monospacedDigit()
                     }
@@ -48,7 +48,7 @@ struct AnnotationEditor: View {
     let annotations: AnnotationsModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
             TagEditor(sessionStart: sessionStart, tags: annotation.tags, annotations: annotations)
             NoteEditor(sessionStart: sessionStart, note: annotation.note, annotations: annotations)
         }
@@ -65,34 +65,34 @@ private struct TagEditor: View {
     @FocusState private var fieldFocused: Bool
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: Design.Space.snug) {
             Image(systemName: "tag")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
             ForEach(tags, id: \.self) { tag in
-                HStack(spacing: 3) {
+                HStack(spacing: Design.Space.tight) {
                     Text("#\(tag)")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                     Button {
                         annotations.setTags(sessionStart, tags.filter { $0 != tag })
                     } label: {
-                        Image(systemName: "xmark").font(.system(size: 7, weight: .bold))
+                        Image(systemName: "xmark").font(Design.Text.closeGlyph)
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(.tertiary)
                     .accessibilityLabel("Remove tag \(tag)")
                 }
-                .padding(.leading, 7).padding(.trailing, 5).padding(.vertical, 2)
-                .background(.quaternary.opacity(0.5), in: Capsule())
+                .padding(.leading, Design.Pill.fieldVertical).padding(.trailing, Design.Pill.trailingTight).padding(.vertical, Design.Space.hairline)
+                .background(Design.Colour.fillStrong, in: Capsule())
             }
 
             if adding {
                 TextField("tag", text: $draft)
                     .textFieldStyle(.roundedBorder)
                     .font(.caption)
-                    .frame(width: 90)
+                    .frame(width: Design.Layout.tagField)
                     .focused($fieldFocused)
                     .onSubmit(commit)
                     .onChange(of: fieldFocused) { _, focused in if !focused { commit() } }
@@ -132,11 +132,11 @@ private struct NoteEditor: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: Design.Space.inline) {
             Image(systemName: "note.text")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
-                .padding(.top, 3)
+                .padding(.top, Design.Space.tight)
 
             // A plain growing field rather than a boxed text view: a note on a memory
             // should feel like writing in a margin, not filling in a form.

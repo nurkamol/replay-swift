@@ -34,10 +34,10 @@ struct MemoriesView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Design.Space.section) {
+                VStack(alignment: .leading, spacing: Design.Space.hairline) {
                     Text("Memories")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(Design.Text.title)
                     Text("What you were doing on this date before.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -46,14 +46,14 @@ struct MemoriesView: View {
                 if memories.memories.isEmpty {
                     empty
                 } else {
-                    VStack(spacing: 10) {
+                    VStack(spacing: Design.Space.row) {
                         ForEach(memories.memories, id: \.range.key) { memory in
                             MemoryRow(memory: memory, onOpen: { onOpenDay(memory.range.dayStart) })
                         }
                     }
                 }
             }
-            .padding(24)
+            .padding(Design.Space.page)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(.background)
@@ -61,7 +61,7 @@ struct MemoriesView: View {
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Design.Space.snug) {
             Text("Nothing to look back on yet")
                 .font(.headline)
             Text(
@@ -74,7 +74,7 @@ struct MemoriesView: View {
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 30)
+        .padding(.vertical, Design.Space.emptyState)
     }
 }
 
@@ -84,15 +84,15 @@ private struct MemoryRow: View {
 
     var body: some View {
         Button(action: onOpen) {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: Design.Space.card) {
+                VStack(alignment: .leading, spacing: Design.Space.hairline) {
                     Text(memory.range.label)
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(Design.Text.cardLabel)
                         .foregroundStyle(.tertiary)
-                        .kerning(0.6)
+                        .kerning(Design.Text.labelKerning)
                         .textCase(.uppercase)
                     Text(fullDayLabel(memory.range.dayStart))
-                        .font(.body.weight(.medium))
+                        .font(Design.Text.itemTitle)
                     if let top = memory.summary.topAppName {
                         Text("Mostly \(top)")
                             .font(.caption)
@@ -101,20 +101,17 @@ private struct MemoryRow: View {
                 }
                 Spacer()
                 Text(formatDurationShort(memory.summary.activeSeconds))
-                    .font(.callout.weight(.medium))
+                    .font(Design.Text.figure)
                     .monospacedDigit()
                 Image(systemName: "chevron.right")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .padding(Design.Space.cardRoomy)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(.quaternary.opacity(0.18), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary.opacity(0.5), lineWidth: 1)
-        )
+        .card(border: Design.Colour.fillStrong)
     }
 }
 
@@ -128,15 +125,15 @@ struct TodayInHistoryCard: View {
 
     var body: some View {
         Button(action: onOpen) {
-            HStack(spacing: 12) {
+            HStack(spacing: Design.Space.card) {
                 Image(systemName: "clock.arrow.circlepath")
                     .font(.title3)
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(memory.range.label)
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(Design.Text.cardLabel)
                         .foregroundStyle(.tertiary)
-                        .kerning(0.6)
+                        .kerning(Design.Text.labelKerning)
                         .textCase(.uppercase)
                     Text(detail)
                         .font(.callout)
@@ -146,14 +143,11 @@ struct TodayInHistoryCard: View {
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .padding(Design.Space.cardRoomy)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary.opacity(0.4), lineWidth: 1)
-        )
+        .card(background: Design.Colour.surface, border: Design.Colour.fill)
     }
 
     /// States what is actually known and no more: the headline has a total and a top app,

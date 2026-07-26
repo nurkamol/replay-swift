@@ -15,7 +15,7 @@ struct TimelineView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: Design.Space.block) {
                 header
 
                 if history.days.isEmpty {
@@ -32,17 +32,17 @@ struct TimelineView: View {
                     }
                 }
             }
-            .padding(24)
+            .padding(Design.Space.page)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(.background)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
+            VStack(alignment: .leading, spacing: Design.Space.hairline) {
                 Text("Timeline")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(Design.Text.title)
                 Text(history.range.subtitle)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -63,14 +63,14 @@ struct TimelineView: View {
     }
 
     private var empty: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Design.Space.snug) {
             Text(history.range == .today ? "A quiet day" : "No history yet")
                 .font(.headline)
             Text(emptyDetail)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 40)
+        .padding(.vertical, Design.Space.emptyStateRoomy)
     }
 
     private var emptyDetail: String {
@@ -94,7 +94,7 @@ private struct DaySection: View {
     @State private var confirmingDelete = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
             header
 
             ForEach(Array(day.items.enumerated()), id: \.offset) { index, item in
@@ -134,12 +134,12 @@ private struct DaySection: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: Design.Space.row) {
             Text(day.label)
-                .font(.caption.weight(.semibold))
+                .font(Design.Text.sectionLabel)
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
-                .kerning(0.6)
+                .kerning(Design.Text.labelKerning)
                 .fixedSize()
 
             Rectangle().fill(.quaternary).frame(height: 1)
@@ -198,15 +198,15 @@ private struct PartDivider: View {
     let part: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Design.Space.inline) {
             Text(part)
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.tertiary)
                 .textCase(.uppercase)
-                .kerning(0.5)
-            Rectangle().fill(.quaternary.opacity(0.6)).frame(height: 1)
+                .kerning(Design.Text.tightKerning)
+            Rectangle().fill(Design.Colour.divider).frame(height: 1)
         }
-        .padding(.top, 4)
+        .padding(.top, Design.Space.tight)
     }
 }
 
@@ -229,26 +229,26 @@ struct DayView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: Design.Space.block) {
                 header
 
                 // The day in a few sentences, when it can support them. A thin day gets
                 // none rather than a padded one — see DayStory.
                 if !story.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: Design.Space.snug) {
                         Text("The story of this day")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(Design.Text.cardLabel)
                             .foregroundStyle(.tertiary)
-                            .kerning(0.6)
+                            .kerning(Design.Text.labelKerning)
                             .textCase(.uppercase)
                         Text(story.joined(separator: " "))
-                            .font(.system(size: 15))
-                            .lineSpacing(3)
+                            .font(Design.Text.prose)
+                            .lineSpacing(Design.Text.proseLineSpacing)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(16)
+                    .padding(Design.Space.section)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
+                    .background(Design.Colour.surface, in: RoundedRectangle(cornerRadius: Design.Radius.card))
                 }
 
                 // Offered even on a day whose rows were pruned: what you wrote about a day
@@ -263,13 +263,13 @@ struct DayView: View {
                 if day.items.isEmpty {
                     pruned
                 } else {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: Design.Space.row) {
                         HStack {
                             Text("\(day.sessions.count) \(day.sessions.count == 1 ? "session" : "sessions")")
-                                .font(.caption.weight(.semibold))
+                                .font(Design.Text.sectionLabel)
                                 .foregroundStyle(.secondary)
                                 .textCase(.uppercase)
-                                .kerning(0.6)
+                                .kerning(Design.Text.labelKerning)
                             Spacer()
                             Menu("Export…") {
                                 ForEach(Report.Format.allCases, id: \.self) { format in
@@ -304,14 +304,14 @@ struct DayView: View {
                     }
                 }
             }
-            .padding(24)
+            .padding(Design.Space.page)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(.background)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Design.Space.inline) {
             Button(action: onBack) {
                 Label("Timeline", systemImage: "chevron.left")
                     .font(.callout)
@@ -319,9 +319,9 @@ struct DayView: View {
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Design.Space.hairline) {
                 Text(fullDayLabel(day.dayStart))
-                    .font(.system(size: 28, weight: .bold))
+                    .font(Design.Text.title)
                 if !day.items.isEmpty {
                     Text("\(formatDurationShort(day.activeSeconds)) active")
                         .font(.subheadline)
@@ -332,14 +332,14 @@ struct DayView: View {
     }
 
     private var pruned: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Design.Space.snug) {
             Text("No timeline for this day")
                 .font(.headline)
             Text(prunedDetail)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 40)
+        .padding(.vertical, Design.Space.emptyStateRoomy)
     }
 
     /// The headline is what survives pruning, so when there is one the day was not empty —

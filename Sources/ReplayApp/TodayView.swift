@@ -16,7 +16,7 @@ struct TodayView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: Design.Space.block) {
                 header
 
                 if let summary = model.summary, summary.switches > 0 {
@@ -52,7 +52,7 @@ struct TodayView: View {
                     quietDay
                 }
             }
-            .padding(24)
+            .padding(Design.Space.page)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(.background)
@@ -60,9 +60,9 @@ struct TodayView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Design.Space.hairline) {
             Text("Today")
-                .font(.system(size: 28, weight: .bold))
+                .font(Design.Text.title)
             Text(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -70,14 +70,14 @@ struct TodayView: View {
     }
 
     private var quietDay: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Design.Space.snug) {
             Text("A quiet day")
                 .font(.headline)
             Text("Nothing recorded yet — your sessions will appear here as you work.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 40)
+        .padding(.vertical, Design.Space.emptyStateRoomy)
     }
 
     private var reflection: some View {
@@ -90,12 +90,12 @@ struct TodayView: View {
     }
 
     private var sessionList: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
             Text("\(model.sessions.count) \(model.sessions.count == 1 ? "session" : "sessions")")
-                .font(.caption.weight(.semibold))
+                .font(Design.Text.sectionLabel)
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
-                .kerning(0.6)
+                .kerning(Design.Text.labelKerning)
 
             ForEach(Array(model.timeline.enumerated()), id: \.offset) { _, item in
                 switch item {
@@ -119,17 +119,17 @@ private struct HeadlineCard: View {
     let summary: DaySummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Design.Space.section) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(formatDurationShort(summary.activeSeconds))
-                    .font(.system(size: 46, weight: .bold, design: .rounded))
+                    .font(Design.Text.hero)
                     .monospacedDigit()
                 Text("active")
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 22) {
+            HStack(spacing: Design.Space.statGap) {
                 Stat(value: "\(summary.appsUsed)", label: "applications")
                 Stat(value: "\(summary.sessionCount)", label: "sessions")
                 if let focus = summary.focus {
@@ -144,34 +144,34 @@ private struct HeadlineCard: View {
             }
 
             if let top = summary.mostUsed {
-                HStack(spacing: 10) {
-                    AppIcon(bundleID: top.bundleIdentifier, appPath: top.appPath, size: 26)
+                HStack(spacing: Design.Space.row) {
+                    AppIcon(bundleID: top.bundleIdentifier, appPath: top.appPath, size: Design.Icon.feature)
                     VStack(alignment: .leading, spacing: 0) {
                         Text("TOP APP")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(Design.Text.cardLabel)
                             .foregroundStyle(.tertiary)
-                            .kerning(0.6)
-                        Text(top.applicationName).font(.callout.weight(.medium))
+                            .kerning(Design.Text.labelKerning)
+                        Text(top.applicationName).font(Design.Text.figure)
                     }
                     Spacer()
                     Text(formatDurationShort(top.seconds))
-                        .font(.callout.weight(.medium))
+                        .font(Design.Text.figure)
                         .monospacedDigit()
                 }
-                .padding(12)
-                .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+                .padding(Design.Space.card)
+                .background(Design.Colour.fill, in: RoundedRectangle(cornerRadius: Design.Radius.card))
             }
         }
-        .padding(20)
+        .padding(Design.Space.block)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.25), in: RoundedRectangle(cornerRadius: 14))
+        .background(Design.Colour.surfaceRaised, in: RoundedRectangle(cornerRadius: Design.Radius.surface))
     }
 
     private struct Stat: View {
         let value: String
         let label: String
         var body: some View {
-            HStack(spacing: 5) {
+            HStack(spacing: Design.Space.snug) {
                 Text(value).font(.callout.weight(.semibold)).monospacedDigit()
                 Text(label).font(.callout).foregroundStyle(.secondary)
             }
@@ -195,23 +195,23 @@ struct SessionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
-                withAnimation(.easeOut(duration: 0.18)) { expanded.toggle() }
+                withAnimation(Design.Motion.inPlace) { expanded.toggle() }
             } label: {
-                HStack(spacing: 12) {
-                    HStack(spacing: 4) {
+                HStack(spacing: Design.Space.card) {
+                    HStack(spacing: Design.Space.tight) {
                         ForEach(session.apps.prefix(4), id: \.applicationName) { app in
-                            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: 22)
+                            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: Design.Icon.stack)
                         }
                         if session.apps.count > 4 {
                             Text("+\(session.apps.count - 4)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
-                                .padding(.horizontal, 5).padding(.vertical, 3)
-                                .background(.quaternary.opacity(0.5), in: Capsule())
+                                .padding(.horizontal, Design.Pill.countHorizontal).padding(.vertical, Design.Pill.countVertical)
+                                .background(Design.Colour.fillStrong, in: Capsule())
                         }
                     }
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(session.title).font(.body.weight(.medium))
+                        Text(session.title).font(Design.Text.itemTitle)
                         Text("\(formatRange(session.startedAt, session.endedAt)) · \(session.apps.count) apps · \(session.switches) switches")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -219,33 +219,33 @@ struct SessionCard: View {
                     Spacer()
                     AnnotationMarks(annotation: annotation)
                     Text(formatDurationShort(session.activeSeconds))
-                        .font(.callout.weight(.medium))
+                        .font(Design.Text.figure)
                         .monospacedDigit()
                     Image(systemName: expanded ? "chevron.up" : "chevron.down")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
-                .padding(12)
+                .padding(Design.Space.card)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
             if expanded {
-                Divider().padding(.horizontal, 12)
-                VStack(spacing: 6) {
+                Divider().padding(.horizontal, Design.Space.card)
+                VStack(spacing: Design.Space.snug) {
                     ForEach(session.apps, id: \.applicationName) { app in
                         AppShareRow(app: app, maxSeconds: session.apps.first?.seconds ?? 1)
                     }
                 }
-                .padding(12)
+                .padding(Design.Space.card)
 
-                Divider().padding(.horizontal, 12)
+                Divider().padding(.horizontal, Design.Space.card)
                 AnnotationEditor(
                     sessionStart: session.startedAt,
                     annotation: annotation,
                     annotations: annotations
                 )
-                .padding(12)
+                .padding(Design.Space.card)
 
                 // Actions on the whole session, in their own row at the foot of the card —
                 // the same shape as the Glaze app, and out of the way until wanted.
@@ -274,19 +274,12 @@ struct SessionCard: View {
                     .menuStyle(.borderlessButton)
                     .fixedSize()
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 10)
+                .padding(.horizontal, Design.Space.card)
+                .padding(.bottom, Design.Space.row)
             }
         }
-        .background(.quaternary.opacity(0.18), in: RoundedRectangle(cornerRadius: 10))
-        // A bookmarked session gently glows rather than shouting: the same border, warmed.
-        .overlay(
-            RoundedRectangle(cornerRadius: 10).strokeBorder(
-                annotation.bookmarked ? AnyShapeStyle(.yellow.opacity(0.45))
-                    : AnyShapeStyle(.quaternary.opacity(0.5)),
-                lineWidth: 1
-            )
-        )
+        // A bookmarked session gently glows rather than shouting: the same card, warmed.
+        .card(border: annotation.bookmarked ? Design.Colour.markedBorder : Design.Colour.border)
     }
 }
 
@@ -295,23 +288,27 @@ private struct AppShareRow: View {
     let maxSeconds: Int
 
     var body: some View {
-        HStack(spacing: 10) {
-            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: 18)
-            Text(app.applicationName).font(.subheadline).frame(width: 150, alignment: .leading)
+        HStack(spacing: Design.Space.row) {
+            AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: Design.Icon.inline)
+            Text(app.applicationName).font(.subheadline).frame(width: Design.Layout.appNameColumn, alignment: .leading)
             GeometryReader { geometry in
                 let fraction = maxSeconds > 0 ? Double(app.seconds) / Double(maxSeconds) : 0
                 ZStack(alignment: .leading) {
-                    Capsule().fill(.quaternary.opacity(0.4)).frame(height: 4)
-                    Capsule().fill(.tint).frame(width: geometry.size.width * fraction, height: 4)
+                    Capsule().fill(Design.Colour.fill).frame(height: Design.Layout.ringThickness)
+                    Capsule().fill(.tint)
+                        .frame(
+                            width: geometry.size.width * fraction,
+                            height: Design.Layout.ringThickness
+                        )
                 }
                 .frame(height: geometry.size.height, alignment: .center)
             }
-            .frame(height: 12)
+            .frame(height: Design.Layout.barRow)
             Text(formatDurationShort(app.seconds))
                 .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-                .frame(width: 56, alignment: .trailing)
+                .frame(width: Design.Layout.durationColumn, alignment: .trailing)
         }
     }
 }
@@ -337,8 +334,8 @@ struct BreakRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
-            Rectangle().fill(.quaternary).frame(width: 18, height: 1)
+        HStack(spacing: Design.Space.inline) {
+            Rectangle().fill(.quaternary).frame(width: Design.Icon.inline, height: Design.Layout.hairline)
             Image(systemName: gap.reason == .unrecorded ? "circle.slash" : "moon.zzz")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
@@ -346,7 +343,7 @@ struct BreakRow: View {
             Text(detail).font(.caption).foregroundStyle(.tertiary)
             Rectangle().fill(.quaternary).frame(height: 1)
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, Design.Space.hairline)
     }
 }
 
