@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 import PackageDescription
 
 // Zero external dependencies on purpose.
@@ -8,6 +8,14 @@ import PackageDescription
 // would be pleasant but the queries here are hand-written SQL that has to stay readable
 // against the Glaze app's SQL, which a query builder would only obscure.
 //
+// Deployment target is macOS 26 — the newest `PackageDescription` can name — and the
+// tools-version is 6.2 because `.v26` was introduced there.
+//
+// Raised deliberately: Replay is built to sit alongside the current system, and the
+// interface APIs it leans on begin at 15 (`searchFocused`) and 26 (the current material and
+// symbol work). `ReplayCore` needs none of it; the requirement is the interface's alone,
+// which is why the parity suite still runs anywhere the toolchain does.
+//
 // Xcode 27 beta lives at /Applications/Xcode-beta.app but is not the selected developer
 // directory, so `swift test` needs it pointed out:
 //
@@ -16,7 +24,7 @@ import PackageDescription
 // `swift build` and `swift run replay-parity` work either way. See README.md.
 let package = Package(
     name: "Replay",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v26)],
     products: [
         .library(name: "ReplayCore", targets: ["ReplayCore"]),
         .executable(name: "ReplayApp", targets: ["ReplayApp"]),

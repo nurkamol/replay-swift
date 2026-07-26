@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   parity:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 20
 
     steps:
@@ -36,8 +36,10 @@ jobs:
 
       - name: Toolchain
         run: |
+          sw_vers
           xcode-select -p
           swift --version
+          xcrun --show-sdk-version
 
       # A half-committed regeneration is easy to miss by eye: a new scenario file
       # without its index entry, or an index entry whose file never got added.

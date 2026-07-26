@@ -150,6 +150,7 @@ struct SearchView: View {
             // Escape gives the field up rather than clearing the app's state, which is
             // what Escape means everywhere else on the Mac.
             .onExitCommand { fieldFocused = false }
+            .onSubmit { fieldFocused = false }
 
             if !search.query.isEmpty {
                 Button {

@@ -45,6 +45,10 @@ node tools/design-audit.mjs     # fails if any view hard-codes a value instead o
   colour, icon size, window metric — lives in `Sources/ReplayApp/DesignSystem.swift`, and
   `node tools/design-audit.mjs` fails the build if a view hard-codes one. The motion values
   are the reference's own and are checked by the parity suite, so the two apps move alike.
+- **Deployment target is macOS 26**, with `swift-tools-version: 6.2` because `.v26` was
+  introduced there. Raised on purpose: the interface leans on APIs that begin at 15 and 26.
+  `ReplayCore` needs none of them, so the parity suite still runs anywhere the toolchain
+  does — but CI needs a runner at least that new, which is why it is pinned to `macos-26`.
 - **No external dependencies.** SQLite from the system (`import SQLite3`), AppKit,
   SwiftUI. Nothing to resolve, nothing to vendor. Do not add GRDB — the SQL here has to
   stay readable against the reference implementation's SQL.
