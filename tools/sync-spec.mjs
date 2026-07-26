@@ -302,6 +302,18 @@ const SCENARIOS = [
   },
 ];
 
+/*
+ * Session titles are named after the *local* day part ("Morning in Code"), so a
+ * fixture generated without a pinned timezone records the machine that produced
+ * it: the same code in UTC would call that session "Late night in Code" and the
+ * committed fixture would fail. Everything the tool runs is pinned to one
+ * timezone and locale, and every fixture records which, so the checks can derive
+ * under the same calendar rather than the runner's.
+ */
+const FIXTURE_TZ = "UTC";
+const FIXTURE_LOCALE = "en-US";
+const FIXTURE_ENV = { TZ: FIXTURE_TZ, LC_ALL: FIXTURE_LOCALE.replace("-", "_") + ".UTF-8" };
+
 function buildFixtures() {
   const tmp = mkdtempSync(join(tmpdir(), "replay-spec-"));
   try {
@@ -380,8 +392,159 @@ function buildFixtures() {
       cwd: GLAZE,
       encoding: "utf8",
       maxBuffer: 32 * 1024 * 1024,
+      env: { ...process.env, ...FIXTURE_ENV },
     });
-    return JSON.parse(json);
+    return JSON.parse(json).map((fixture) => ({ timeZone: FIXTURE_TZ, ...fixture }));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+/*
+ * Day grouping and report export, run against the real Glaze code.
+ *
+ * Both were previously "verified by reading the reference", which is the weakest
+ * kind of verification this project has and the kind that quietly rots. They are
+ * generated together because they need the same thing the session fixtures don't:
+ * a **pinned clock, timezone and locale**.
+ *
+ *   · `groupByDay` buckets by *local* midnight, so its answer depends on TZ.
+ *   · A report prints dates, times and an "exported" stamp, so its text depends
+ *     on TZ, on the locale, and on the wall clock at the moment it ran.
+ *
+ * The runner therefore fixes `Date` to one instant and runs under a fixed TZ and
+ * locale, and the fixture records which — so the Swift side can format under the
+ * same and compare like for like. Without that, the fixture would encode
+ * whichever machine last ran the tool.
+ */
+/** The instant a report claims it was exported at. Arbitrary, but fixed. */
+const FIXTURE_NOW = 1_770_000_000_000;
+
+function buildExportFixtures() {
+  const tmp = mkdtempSync(join(tmpdir(), "replay-spec-export-"));
+  try {
+    const bundle = join(tmp, "reference.mjs");
+    // One bundle with both entry points, so the two fixtures cannot be generated
+    // from different versions of the same helpers.
+    const entry = join(tmp, "entry.ts");
+    writeFileSync(
+      entry,
+      `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
+       export { buildExport } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
+       export { buildTimeline } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};`,
+    );
+    execFileSync(
+      "npx",
+      ["esbuild", entry, "--bundle", "--format=esm", "--platform=node", `--outfile=${bundle}`],
+      { cwd: GLAZE, stdio: "pipe" },
+    );
+
+    const runner = join(tmp, "run-export.mjs");
+    writeFileSync(
+      runner,
+      `// Freeze the clock before the reference code can read it, so "exported at"
+       // and any relative reasoning are the same on every run.
+       const FIXED = ${FIXTURE_NOW};
+       const RealDate = Date;
+       class FrozenDate extends RealDate {
+         constructor(...args) { super(...(args.length ? args : [FIXED])); }
+         static now() { return FIXED; }
+       }
+       globalThis.Date = FrozenDate;
+
+       const { groupByDay, buildExport, buildTimeline } = await import(${JSON.stringify(bundle)});
+       const input = JSON.parse(process.argv[2]);
+
+       // Day grouping: record the bucketing only. The label is a locale rendering
+       // of "today", which is not a property of the grouping and would make the
+       // fixture expire overnight.
+       const grouping = groupByDay(input.groupingEvents).map((group) => ({
+         dayStart: Number(group.key),
+         eventIds: group.events.map((e) => e.id),
+       }));
+
+       const sessions = buildTimeline(input.reportEvents, input.reportNow)
+         .filter((item) => item.kind === "session");
+       const entries = sessions.map((session, index) => ({
+         session,
+         annotation: input.annotations[index] ?? undefined,
+       }));
+
+       const reports = {};
+       for (const format of ["markdown", "csv", "json"]) {
+         reports[format] = buildExport(format, { label: input.label }, entries).content;
+       }
+
+       process.stdout.write(JSON.stringify({ grouping, reports, sessionCount: sessions.length }));`,
+    );
+
+    // Events either side of two local midnights, plus one out of order, so the
+    // fixture pins both the bucketing and the sort within a day.
+    const DAY = 86_400_000;
+    const midnight = 1_770_076_800_000; // 2026-02-03T00:00:00Z
+    const groupingEvents = [
+      ev(1, "Code", "com.microsoft.VSCode", midnight - min(20), 600),
+      ev(2, "Safari", "com.apple.Safari", midnight + min(10), 600),
+      ev(3, "Code", "com.microsoft.VSCode", midnight + min(5), 120),
+      ev(4, "Mail", "com.apple.mail", midnight + DAY + min(30), 300),
+    ];
+
+    const reportNow = FIXTURE_NOW;
+    const reportStart = FIXTURE_NOW - min(120);
+    // Two runs with a recording gap between them, so the report covers more than one
+    // session. Each run is kept under `idleBreakSeconds` — a row that long is absence
+    // rather than focus, and would be dropped from the report as a break.
+    const reportEvents = [
+      ev(1, "Code", "com.microsoft.VSCode", reportStart, 1200),
+      ev(2, "Safari", "com.apple.Safari", reportStart + min(35), 900),
+    ];
+    // One annotated session and one bare, so a report is checked with and without
+    // the parts a note contributes. The comma and quote are deliberate: CSV
+    // quoting is a rule, not a formatting preference.
+    const annotations = [
+      {
+        sessionStart: reportStart,
+        note: 'shipped it, and said "done"',
+        bookmarked: true,
+        tags: ["deep work", "shipping"],
+        updatedAt: reportNow,
+      },
+    ];
+
+    const json = execFileSync(
+      "node",
+      [runner, JSON.stringify({
+        groupingEvents,
+        reportEvents,
+        reportNow,
+        annotations,
+        label: "This Week",
+      })],
+      {
+        cwd: GLAZE,
+        encoding: "utf8",
+        maxBuffer: 32 * 1024 * 1024,
+        env: { ...process.env, ...FIXTURE_ENV },
+      },
+    );
+
+    const result = JSON.parse(json);
+    if (result.sessionCount === 0) {
+      problems.push("export fixture produced no sessions — the derivation input is wrong");
+    }
+    return {
+      timeZone: FIXTURE_TZ,
+      locale: FIXTURE_LOCALE,
+      exportedAtMillis: FIXTURE_NOW,
+      grouping: { events: groupingEvents, expected: result.grouping },
+      report: {
+        label: "This Week",
+        now: reportNow,
+        events: reportEvents,
+        annotations,
+        expected: result.reports,
+      },
+    };
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -405,6 +568,13 @@ try {
   fixtures = buildFixtures();
 } catch (error) {
   problems.push(`could not run the Glaze derivation code: ${error.message.split("\n")[0]}`);
+}
+
+let exportFixture = null;
+try {
+  exportFixture = buildExportFixtures();
+} catch (error) {
+  problems.push(`could not run the Glaze grouping/export code: ${error.message.split("\n")[0]}`);
 }
 
 if (problems.length > 0) {
@@ -440,6 +610,11 @@ for (const fixture of fixtures) {
 }
 
 writeFileSync(
+  join(SPEC, "grouping-and-export.json"),
+  JSON.stringify({ _generated: provenance, ...exportFixture }, null, 2) + "\n",
+);
+
+writeFileSync(
   join(SPEC, "fixtures", "index.json"),
   JSON.stringify(
     { _generated: provenance, fixtures: fixtures.map((f) => f.name) },
@@ -452,4 +627,5 @@ console.log(`spec/ regenerated from Glaze ${glazeVersion} (${glazeCommit})`);
 console.log(`  schema.sql        ${schemaParts.length} statement blocks`);
 console.log(`  constants.json    ${Object.keys(constants).length} groups`);
 console.log(`  fixtures/         ${fixtures.length} scenarios`);
+console.log(`  grouping-and-export.json  ${exportFixture.grouping.expected.length} days, ${Object.keys(exportFixture.report.expected).length} report formats`);
 console.log(`\nReview 'git diff spec/' — anything that changed is work for the native port.`);

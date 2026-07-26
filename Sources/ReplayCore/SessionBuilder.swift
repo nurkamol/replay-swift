@@ -72,8 +72,10 @@ public func dayPart(of epochMillis: Int64, calendar: Calendar = .current) -> Str
 ///
 /// One dominant app names the session after itself; otherwise a category with
 /// enough of the time names it; otherwise it stays plain.
-func nameSession(apps: [SessionApp], startedAt: Int64) -> (title: String, category: SessionCategory) {
-    let part = dayPart(of: startedAt)
+func nameSession(
+    apps: [SessionApp], startedAt: Int64, calendar: Calendar = .current
+) -> (title: String, category: SessionCategory) {
+    let part = dayPart(of: startedAt, calendar: calendar)
     guard let top = apps.first else { return ("\(part) Session", .other) }
 
     var byCategory: [SessionCategory: Double] = [:]
@@ -162,7 +164,9 @@ func summarizeApps(_ events: [ActivityEvent], now: Int64) -> (apps: [SessionApp]
 /// Finally: a run under `minSessionSeconds` with fewer than 3 rows is a stray switch
 /// and is dropped, and breaks at either end are trimmed because they say nothing
 /// about the shape of the day.
-public func buildTimeline(_ events: [ActivityEvent], now: Int64) -> [TimelineItem] {
+public func buildTimeline(
+    _ events: [ActivityEvent], now: Int64, calendar: Calendar = .current
+) -> [TimelineItem] {
     let ordered = events
         .filter { $0.type == .activated || $0.type == .idle }
         .enumerated()
@@ -189,7 +193,7 @@ public func buildTimeline(_ events: [ActivityEvent], now: Int64) -> [TimelineIte
             return
         }
 
-        let named = nameSession(apps: apps, startedAt: startedAt)
+        let named = nameSession(apps: apps, startedAt: startedAt, calendar: calendar)
         items.append(.session(ActivitySession(
             title: named.title,
             category: named.category,

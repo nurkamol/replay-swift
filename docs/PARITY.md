@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 349 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 379 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -45,7 +45,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
 | Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
-| Export a day / a session | partial | a day as Markdown, CSV or JSON, carrying notes and tags. PDF/HTML later; no session-level or multi-day scopes yet |
+| Export a day / a session | partial | a day as Markdown, CSV or JSON, carrying notes and tags — text checked against the reference's own output. PDF/HTML later; no session-level or multi-day scopes yet |
 | Dock badge | later | |
 | Memories / Today in History | later | |
 | Search | later | |
@@ -76,10 +76,14 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
   its consequences are checked, and the sheet was exercised in the running app, but no
   exclusion was ever confirmed against the real database: doing so permanently erases that
   app's history, which is not a thing to spend to prove a button works.
-- **`groupByDay` has no fixture.** It is generated-spec-adjacent behaviour (SPEC §5) that
-  `tools/sync-spec.mjs` does not emit scenarios for, so it is verified by reading against
-  `activity.ts:487` and by the day view and Timeline agreeing on real data — not by the
-  suite. A fixture would need a change to the sync tool.
+- **Fixtures are timezone-pinned, and the checks must honour that.** Session titles are
+  named after the *local* day part, so every fixture records the timezone it was generated
+  under (`UTC`) and the checks derive under that calendar rather than the machine's. Without
+  it the suite passes only where the fixtures were made — see [FINDINGS.md](FINDINGS.md).
+  Verified in UTC, America/New_York and Asia/Tokyo.
+- **Report text is compared with one deliberate fold.** Foundation and Node disagree on the
+  space before a meridiem (U+202F vs U+0020) because they bundle different ICU versions.
+  The comparison folds non-breaking spaces onto plain ones and nothing else.
 - **A session can display an end before its start.** Inherited from the reference's away
   handling, not introduced here — see [FINDINGS.md](FINDINGS.md).
 - **The parity suite is the only test coverage.** It runs both as `swift test`
@@ -90,17 +94,19 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 ## Next three things
 
 1. **Export scopes beyond one day** — this week, this month, bookmarks, notes, and a single
-   session. The formats, the entry-building and the save panel all exist; what is missing is
-   choosing what a report covers, which is the `ExportScope` list upstream.
-2. **Fixtures for what the suite still cannot see.** `groupByDay` and the three report
-   serialisers are verified by reading the reference and by running the app, not by the
-   contract. Teaching `tools/sync-spec.mjs` to emit scenarios for them is the one change
-   that shrinks the "verified by reading" list rather than growing it.
-3. **Search**, or the first of the memory subsystems. Everything the reference calls
-   Memories, Collections, Story Mode and Canvas is still `later`; Search is the smallest
-   door into that half of the app and the one most useful on its own.
+   session. The formats, the entry-building and the save panel all exist, and the text is now
+   checked against the reference; what is missing is choosing what a report covers.
+2. **Search**, the smallest door into the half of the app still marked `later` — Memories,
+   Collections, Story Mode, Canvas — and the one most useful on its own.
+3. **A CI run.** The suite is now timezone-portable and needs no Xcode
+   (`swift run replay-parity`), which was the blocker. Nothing currently runs it but a human
+   remembering to.
 
 Done and no longer blocking:
+- ~~`groupByDay` and the report serialisers verified only by reading~~ — both now run against
+  output the reference actually produced, generated under a pinned clock, timezone and
+  locale. Finding five real divergences in the process, and one latent bug in the suite
+  itself: it had only ever passed in the timezone its fixtures were made in.
 - ~~The application menu, the focus goal, and Today's reflection~~ — ⌘, ⌘W and ⌘C/⌘V now
   work; the goal card was watched met (green ring, 3-day streak verified against the stored
   headlines) and unmet (96%, "21m to go", no flame, no red).

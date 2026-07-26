@@ -67,6 +67,9 @@ public enum ParityKit {
             public let mostUsed: TopApp?
             public let longestSessionSeconds: Int?
         }
+        /// The timezone the fixture was generated under. Session titles are named after
+        /// the *local* day part, so deriving in any other zone renames them.
+        public let timeZone: String
         public let name: String
         public let description: String
         public let now: Int64
@@ -120,6 +123,42 @@ public enum ParityKit {
         public let backup: BackupInfo
         public let annotations: Annotations
         public let focusGoal: FocusGoal
+    }
+
+    /// Day grouping and report text, run against the real Glaze code under a pinned clock,
+    /// timezone and locale. See `spec/grouping-and-export.json`.
+    public struct GroupingAndExport: Decodable, Sendable {
+        public struct Group: Decodable, Sendable {
+            public let dayStart: Int64
+            public let eventIds: [Int64]
+        }
+        public struct Grouping: Decodable, Sendable {
+            public let events: [Fixture.Event]
+            public let expected: [Group]
+        }
+        public struct Annotation: Decodable, Sendable {
+            public let sessionStart: Int64
+            public let note: String
+            public let bookmarked: Bool
+            public let tags: [String]
+        }
+        public struct Reports: Decodable, Sendable {
+            public let markdown: String
+            public let csv: String
+            public let json: String
+        }
+        public struct ReportCase: Decodable, Sendable {
+            public let label: String
+            public let now: Int64
+            public let events: [Fixture.Event]
+            public let annotations: [Annotation]
+            public let expected: Reports
+        }
+        public let timeZone: String
+        public let locale: String
+        public let exportedAtMillis: Int64
+        public let grouping: Grouping
+        public let report: ReportCase
     }
 
     // ── results ───────────────────────────────────────────────────────────────
@@ -252,7 +291,14 @@ public enum ParityKit {
         for name in index.fixtures {
             let fixture = try load(Fixture.self, "fixtures/\(name).json", from: root)
             let before = checks.count
-            let produced = buildTimeline(fixture.events.map(event), now: fixture.now)
+            // Derived in the timezone the fixture was generated under, not the machine's.
+            // Session titles are named after the local day part, so without this the suite
+            // passes here and fails in CI — the fixture would be recording where it was made.
+            var fixtureCalendar = Calendar(identifier: .gregorian)
+            fixtureCalendar.timeZone = TimeZone(identifier: fixture.timeZone) ?? .gmt
+            let produced = buildTimeline(
+                fixture.events.map(event), now: fixture.now, calendar: fixtureCalendar
+            )
             let group = "derivation/\(name)"
 
             equal(group, "number of items", produced.count, fixture.expected.count)
@@ -443,6 +489,147 @@ public enum ParityKit {
         _ = try store.setReflection(dayStart: day, text: "   ", now: t0)
         equal(rg, "cleared back to blank, it leaves no row",
               try store.reflections(from: day, to: day + dayMillis).count, 0)
+
+        /// Compare multi-line text and, on a mismatch, name the first line that differs.
+        ///
+        /// A whole report echoed into a terminal is not a diagnosis; the line number and the
+        /// two versions of that one line are.
+        func equalText(_ group: String, _ what: String, _ actual: String, _ expected: String) {
+            if actual == expected {
+                checks.append(Check(group: group, what: what, passed: true, detail: nil))
+                return
+            }
+            let ours = actual.components(separatedBy: "\n")
+            let theirs = expected.components(separatedBy: "\n")
+            var detail = "differs in length only (\(ours.count) lines vs \(theirs.count))"
+            for index in 0..<max(ours.count, theirs.count) {
+                let a = index < ours.count ? ours[index] : "<no line>"
+                let b = index < theirs.count ? theirs[index] : "<no line>"
+                if a != b {
+                    detail = "line \(index + 1):\n        ours: \(a)\n        spec: \(b)"
+                    break
+                }
+            }
+            checks.append(Check(group: group, what: what, passed: false, detail: detail))
+        }
+
+        /// Fold the non-breaking space variants onto a plain space.
+        ///
+        /// Foundation and Node bundle different ICU versions, and the newer one separates a
+        /// time from its meridiem with a narrow no-break space (U+202F) where the older uses
+        /// U+0020 — so "2:40:00 AM" and "2:40:00 AM" differ by a byte neither implementation
+        /// chose. Pinning that byte would make the suite fail on an OS or Node upgrade for a
+        /// reason no reader of the file could see. Only the space class is folded; every
+        /// other character still has to match exactly.
+        func withPlainSpaces(_ text: String) -> String {
+            text
+                .replacingOccurrences(of: "\u{202F}", with: " ")
+                .replacingOccurrences(of: "\u{00A0}", with: " ")
+        }
+
+        // Day grouping and report text, against output the reference actually produced.
+        // Both used to be "verified by reading the reference", which is the weakest kind of
+        // verification here — these replace it.
+        let fixture = try load(GroupingAndExport.self, "grouping-and-export.json", from: root)
+        let environment = ReplayCore.Report.Environment(
+            locale: Locale(identifier: fixture.locale),
+            timeZone: TimeZone(identifier: fixture.timeZone) ?? .gmt
+        )
+        // Grouping buckets by *local* midnight, so it is checked in the timezone the
+        // fixture was generated under — otherwise this measures the machine, not the code.
+        let calendar: Calendar = {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = environment.timeZone
+            return calendar
+        }()
+
+        let dg = "day grouping"
+        let grouped = groupByDay(fixture.grouping.events.map(event), calendar: calendar)
+        equal(dg, "the same days, newest first",
+              grouped.map(\.dayStart), fixture.grouping.expected.map(\.dayStart))
+        equal(dg, "with the same rows in each, oldest first within a day",
+              grouped.map { $0.events.map(\.id) }, fixture.grouping.expected.map(\.eventIds))
+        check(dg, "a run before midnight lands on the day it began, not the day it reached",
+              grouped.last?.events.map(\.id) == [1])
+
+        let rg2 = "report text"
+        let reportSessions = buildTimeline(
+            fixture.report.events.map(event), now: fixture.report.now, calendar: calendar
+        )
+            .compactMap { if case .session(let s) = $0 { return s } else { return nil } }
+        equal(rg2, "the fixture's sessions derive the same here",
+              reportSessions.count, fixture.report.annotations.isEmpty ? 0 : 2)
+        let reportEntries = reportSessions.enumerated().map { index, session in
+            ReplayCore.Report.Entry(
+                session: session,
+                annotation: index < fixture.report.annotations.count
+                    ? SessionAnnotation(
+                        sessionStart: fixture.report.annotations[index].sessionStart,
+                        note: fixture.report.annotations[index].note,
+                        bookmarked: fixture.report.annotations[index].bookmarked,
+                        tags: fixture.report.annotations[index].tags
+                    )
+                    : nil
+            )
+        }
+        let exportedAt = Date(timeIntervalSince1970: Double(fixture.exportedAtMillis) / 1000)
+
+        // Markdown and CSV are compared as text, because the text *is* the artefact: a
+        // report is a file someone keeps, and a stray meridiem or a missing quote is a
+        // difference they would see.
+        equalText(rg2, "markdown matches the reference, character for character",
+              withPlainSpaces(ReplayCore.Report.build(
+                  .markdown, label: fixture.report.label, entries: reportEntries,
+                  now: exportedAt, environment: environment
+              )),
+              withPlainSpaces(fixture.report.expected.markdown))
+        equalText(rg2, "csv matches the reference, character for character",
+              withPlainSpaces(ReplayCore.Report.build(
+                  .csv, label: fixture.report.label, entries: reportEntries,
+                  now: exportedAt, environment: environment
+              )),
+              withPlainSpaces(fixture.report.expected.csv))
+
+        // JSON is compared as structure: both sides pretty-print, but key order is not part
+        // of the format and pinning it would fail for a reason no consumer would care about.
+        let ours = try? JSONSerialization.jsonObject(
+            with: Data(ReplayCore.Report.build(
+                .json, label: fixture.report.label, entries: reportEntries,
+                now: exportedAt, environment: environment
+            ).utf8)
+        ) as? [String: Any]
+        let theirs = try? JSONSerialization.jsonObject(
+            with: Data(fixture.report.expected.json.utf8)
+        ) as? [String: Any]
+        check(rg2, "json parses on both sides", ours != nil && theirs != nil)
+        if let ours, let theirs {
+            equal(rg2, "the same keys", ours.keys.sorted(), theirs.keys.sorted())
+            equal(rg2, "the same exported-at, milliseconds included",
+                  ours["exportedAt"] as? String, theirs["exportedAt"] as? String)
+            equal(rg2, "the same scope", ours["scope"] as? String, theirs["scope"] as? String)
+            equal(rg2, "the same session count",
+                  ours["sessionCount"] as? Int, theirs["sessionCount"] as? Int)
+            let oursSessions = (ours["sessions"] as? [[String: Any]]) ?? []
+            let theirsSessions = (theirs["sessions"] as? [[String: Any]]) ?? []
+            equal(rg2, "the same number of sessions serialised",
+                  oursSessions.count, theirsSessions.count)
+            for (index, theirSession) in theirsSessions.enumerated() {
+                guard index < oursSessions.count else { break }
+                let ourSession = oursSessions[index]
+                equal(rg2, "session \(index) keys",
+                      ourSession.keys.sorted(), theirSession.keys.sorted())
+                for key in ["title", "startedAt", "endedAt", "category", "note"] {
+                    equal(rg2, "session \(index) \(key)",
+                          ourSession[key] as? String, theirSession[key] as? String)
+                }
+                equal(rg2, "session \(index) activeSeconds",
+                      ourSession["activeSeconds"] as? Int, theirSession["activeSeconds"] as? Int)
+                equal(rg2, "session \(index) bookmarked",
+                      ourSession["bookmarked"] as? Bool, theirSession["bookmarked"] as? Bool)
+                equal(rg2, "session \(index) tags",
+                      ourSession["tags"] as? [String], theirSession["tags"] as? [String])
+            }
+        }
 
         // focus goals — the app's one evaluative surface, so its rules are checked rather
         // than trusted. The streak rule is the subtle one: an unfinished today must not

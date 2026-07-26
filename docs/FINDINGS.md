@@ -175,3 +175,51 @@ loss upstream is the subject of the finding above.
 tested against its own reader, never against a human reading the output. And a lenient
 parser needs a caller that notices when leniency swallowed everything — `declaredCount`
 exists for exactly that comparison and should be checked on import, not just recorded.
+
+---
+
+## The parity suite only passed in one timezone
+
+**Date:** 2026-07-26 · **Reproduce:** `TZ=Asia/Tokyo swift run replay-parity` · **Verdict:** fixed
+
+Teaching `tools/sync-spec.mjs` to emit fixtures for day grouping and report text meant
+pinning a timezone, because both depend on one. That pinning immediately failed against the
+*existing* derivation fixtures — and the reason turned out to be a latent bug in the suite
+rather than in either implementation.
+
+**Session titles are named after the local day part.** `nameSession` calls `dayPart(of:)`,
+which reads the hour from `Calendar.current`. The fixture generator ran under whatever
+timezone the machine had, and the Swift checks derived under the same one, so the two always
+agreed — on that machine. The committed fixture said `"Morning in Code"` for an event at
+`1770000000000`, which is 07:40 in +05 and 02:40 in UTC. In UTC the same code names it
+`"Late night in Code"`, and the check fails:
+
+```
+· [derivation/one-session-two-apps] [0] title
+    got Late night in Code, want Morning in Code
+```
+
+Nobody would have seen this until the suite ran somewhere else — CI, a colleague's machine,
+or this one after a move. A fixture that encodes the machine that produced it is worse than
+no fixture, because it looks like coverage.
+
+**The fix, in three parts.** `buildTimeline` takes a `calendar` and threads it to
+`nameSession`; the generator pins `TZ` and `LC_ALL` for every runner and records the timezone
+in each fixture; the checks build a calendar from that field rather than using the machine's.
+The suite now passes in UTC, America/New_York and Asia/Tokyo alike.
+
+**A second divergence surfaced on the way**, and was *not* fixed, deliberately. Foundation
+and Node bundle different ICU versions: the newer separates a time from its meridiem with a
+narrow no-break space (U+202F) where the older uses a plain space. So `2:40:00 AM` from
+Swift and `2:40:00 AM` from Node differ by one invisible byte that neither implementation
+chose. The comparison folds the non-breaking space variants onto U+0020 and nothing else —
+pinning that byte would break the suite on an OS or Node upgrade for a reason no reader of
+the exported file could ever see.
+
+**What the fixtures caught in the port itself**, none of which reading the reference had
+found: the markdown timestamp used an abbreviated date where the reference uses
+`toLocaleString()`; `dateStyle = .short` renders a two-digit year (`2/2/26`) where JavaScript
+renders four; a session's time range collapsed its shared meridiem (`12:40 – 1:00 AM`) where
+a report prints both (`12:40 AM – 1:00 AM`); the JSON omitted the `scope` field entirely; and
+`exportedAt` lacked the milliseconds `toISOString()` writes. Five real differences in a
+format that had been "verified by reading".

@@ -21,6 +21,24 @@ public enum Report {
         }
     }
 
+    /// How dates and times in a report are rendered.
+    ///
+    /// Injectable rather than always `.current` because the generated fixture is produced
+    /// under a pinned locale and timezone — without a seam to match it, a check of report
+    /// text would only ever pass on a machine set the same way. Real exports use the
+    /// user's own settings, which is the default.
+    public struct Environment: Sendable {
+        public var locale: Locale
+        public var timeZone: TimeZone
+
+        public init(locale: Locale = .current, timeZone: TimeZone = .current) {
+            self.locale = locale
+            self.timeZone = timeZone
+        }
+
+        public static let current = Environment()
+    }
+
     public enum Format: String, CaseIterable, Sendable {
         case markdown, csv, json
 
@@ -50,10 +68,16 @@ public enum Report {
         return "Replay \(label) \(stamp).\(format.fileExtension)"
     }
 
-    public static func build(_ format: Format, label: String, entries: [Entry], now: Date = Date()) -> String {
+    public static func build(
+        _ format: Format,
+        label: String,
+        entries: [Entry],
+        now: Date = Date(),
+        environment: Environment = .current
+    ) -> String {
         switch format {
-        case .markdown: markdown(label: label, entries: entries, now: now)
-        case .csv: csv(entries)
+        case .markdown: markdown(label: label, entries: entries, now: now, environment: environment)
+        case .csv: csv(entries, environment: environment)
         case .json: json(label: label, entries: entries, now: now)
         }
     }
@@ -61,18 +85,27 @@ public enum Report {
     // ── markdown ──────────────────────────────────────────────────────────────
 
     /// Grouped by day, so the document reads like a journal rather than a table.
-    static func markdown(label: String, entries: [Entry], now: Date) -> String {
+    static func markdown(
+        label: String, entries: [Entry], now: Date, environment: Environment
+    ) -> String {
         var lines = ["# Replay — \(label)", ""]
         let count = entries.count
+        // Built from a template rather than `dateStyle = .short`, which renders a two-digit
+        // year ("2/2/26") where JavaScript's `toLocaleString()` renders four ("2/2/2026").
+        // The template keeps the ordering and separators the reader's locale expects while
+        // pinning the fields the reference actually prints.
+        let stamp = DateFormatter()
+        stamp.locale = environment.locale
+        stamp.timeZone = environment.timeZone
+        stamp.setLocalizedDateFormatFromTemplate("yyyyMdjmmss")
         lines.append(
-            "_\(count) \(count == 1 ? "session" : "sessions"), exported "
-                + "\(now.formatted(date: .abbreviated, time: .shortened))_"
+            "_\(count) \(count == 1 ? "session" : "sessions"), exported \(stamp.string(from: now))_"
         )
         lines.append("")
 
         var currentDay = ""
         for entry in entries {
-            let day = longDayLabel(entry.session.startedAt)
+            let day = longDayLabel(entry.session.startedAt, environment)
             if day != currentDay {
                 currentDay = day
                 lines.append("## \(day)")
@@ -83,8 +116,11 @@ public enum Report {
             let apps = entry.session.apps.count
             lines.append("### \(entry.session.title)\(bookmark)")
             lines.append("")
+            // Both ends carry their meridiem here, unlike the collapsed range on a session
+            // card: a line read out of context in a document cannot borrow the other end's.
             lines.append(
-                "**\(formatRange(entry.session.startedAt, entry.session.endedAt))** · "
+                "**\(timeLabel(entry.session.startedAt, environment)) – "
+                    + "\(timeLabel(entry.session.endedAt, environment))** · "
                     + "\(formatDurationShort(entry.session.activeSeconds)) · "
                     + "\(apps) \(apps == 1 ? "app" : "apps")"
             )
@@ -122,7 +158,7 @@ public enum Report {
         return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 
-    static func csv(_ entries: [Entry]) -> String {
+    static func csv(_ entries: [Entry], environment: Environment = .current) -> String {
         let header = [
             "Date", "Start", "End", "Duration", "Category", "Title",
             "Applications", "Tags", "Bookmarked", "Note",
@@ -131,9 +167,9 @@ public enum Report {
         for entry in entries {
             let session = entry.session
             let cells = [
-                longDayLabel(session.startedAt),
-                timeLabel(session.startedAt),
-                timeLabel(session.endedAt),
+                longDayLabel(session.startedAt, environment),
+                timeLabel(session.startedAt, environment),
+                timeLabel(session.endedAt, environment),
                 formatDurationShort(session.activeSeconds),
                 session.category.rawValue,
                 session.title,
@@ -150,7 +186,10 @@ public enum Report {
     // ── json ──────────────────────────────────────────────────────────────────
 
     static func json(label: String, entries: [Entry], now: Date) -> String {
+        // Milliseconds, because that is what JavaScript's `toISOString()` writes and a
+        // consumer of both implementations' exports should not have to handle two shapes.
         let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         func stamp(_ millis: Int64) -> String {
             iso.string(from: Date(timeIntervalSince1970: Double(millis) / 1000))
         }
@@ -177,6 +216,9 @@ public enum Report {
 
         let payload: [String: Any] = [
             "exportedAt": iso.string(from: now),
+            // The reference names an arbitrary label "day" — the named scopes it also has
+            // (today, week, month, bookmarks, notes) are not built here yet.
+            "scope": "day",
             "label": label,
             "sessionCount": entries.count,
             "sessions": sessions,
@@ -189,14 +231,19 @@ public enum Report {
 }
 
 /// "Sunday, July 26" — how a day is named inside a report.
-func longDayLabel(_ millis: Int64) -> String {
-    Date(timeIntervalSince1970: Double(millis) / 1000)
-        .formatted(.dateTime.weekday(.wide).month(.wide).day())
+func longDayLabel(_ millis: Int64, _ environment: Report.Environment = .current) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = environment.locale
+    formatter.timeZone = environment.timeZone
+    formatter.setLocalizedDateFormatFromTemplate("EEEEMMMMd")
+    return formatter.string(from: Date(timeIntervalSince1970: Double(millis) / 1000))
 }
 
 /// "9:11 AM" — one end of a range, where `formatRange` would collapse the meridiem.
-func timeLabel(_ millis: Int64) -> String {
+func timeLabel(_ millis: Int64, _ environment: Report.Environment = .current) -> String {
     let formatter = DateFormatter()
+    formatter.locale = environment.locale
+    formatter.timeZone = environment.timeZone
     formatter.dateFormat = "h:mm a"
     return formatter.string(from: Date(timeIntervalSince1970: Double(millis) / 1000))
 }
