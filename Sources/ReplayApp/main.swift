@@ -254,8 +254,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 model: model, settings: settings, export: export, preferences: preferences
             )
         )
+        // The window takes its size from the pane rather than the other way round, so
+        // switching tabs resizes it the way System Settings does — and a short pane is a
+        // short window instead of one with air at the bottom.
+        hosting.sizingOptions = [.preferredContentSize]
         let window = NSWindow(contentViewController: hosting)
         window.title = "Replay Settings"
+        // No resize control: a settings window is sized by its content, and each pane
+        // asks for the height it needs.
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
         window.center()

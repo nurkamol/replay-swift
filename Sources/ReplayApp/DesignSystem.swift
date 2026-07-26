@@ -269,6 +269,8 @@ enum Design {
         static let ring: CGFloat = 38
         /// A category glyph's column in a collection row, so labels align down the list.
         static let glyphColumn: CGFloat = 26
+        /// The app's own icon, in About.
+        static let about: CGFloat = 64
     }
 
     // ── layout ────────────────────────────────────────────────────────────────
