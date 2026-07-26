@@ -68,5 +68,5 @@ The core is done and verified: storage, session derivation, and the tracker all 
 Glaze app — 623 checks. **The UI is largely built**: an application menu, a menu bar item,
 Today (headline, focus goal, reflection), the Timeline, a reopened past day, Search, Memories, Collections, a
 session's notes/tags/bookmarks, Settings, and export — reports as Markdown, CSV, JSON or
-HTML, plus full backups. Counted against the reference's own router, this port now has **all 20 of its routes**. What
+HTML, plus full backups, and a screensaver. Counted against the reference's own router, this port now has **all 20 of its routes**. What
 is left is PDF export, and signing, which is blocked on a Developer ID rather than on code. See `docs/PARITY.md` for the ledger and what is next.

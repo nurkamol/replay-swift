@@ -115,8 +115,32 @@ struct CanvasView: View {
                                 ? Design.Layout.canvasRingWidth
                                 : Design.Layout.canvasRingWidthStrong
                         )
+                        // A project or a chapter is wearing its lead application's face, so
+                        // it says what it *is* in the corner. An application needs no badge:
+                        // its own icon is already the whole answer.
+                        if let badge = badgeSymbol(for: node),
+                           radius >= Design.Layout.canvasBadgeRadius * 2,
+                           let glyph = context.resolveSymbol(id: "badge:\(badge)") {
+                            let size = Design.Layout.canvasBadgeRadius
+                            let corner = CGPoint(
+                                x: box.maxX - size * 0.7, y: box.maxY - size * 0.7
+                            )
+                            let disc = CGRect(
+                                x: corner.x - size, y: corner.y - size,
+                                width: size * 2, height: size * 2
+                            )
+                            context.fill(Circle().path(in: disc), with: .color(ring(for: node)))
+                            context.draw(glyph, at: corner, anchor: .center)
+                        }
                     } else {
                         context.fill(Circle().path(in: box), with: .color(colour(for: node)))
+                        // A collection has no application behind it, so it wears the glyph
+                        // it wears everywhere else in the app rather than a blank disc.
+                        if node.type == .collection,
+                           radius >= Design.Layout.canvasIconThreshold,
+                           let glyph = context.resolveSymbol(id: "collection:\(node.ref)") {
+                            context.draw(glyph, at: at, anchor: .center)
+                        }
                     }
 
                     if node.id == selected?.id {
@@ -129,15 +153,42 @@ struct CanvasView: View {
                             lineWidth: Design.Layout.canvasSelectionWidth
                         )
                     }
-                    // Labels only past a certain size: a field of overlapping text at low
-                    // zoom is less legible than no text at all.
-                    if radius > Design.Layout.canvasLabelThreshold {
-                        context.draw(
-                            Text(node.label).font(Design.Text.micro).foregroundStyle(.secondary),
-                            at: CGPoint(x: at.x, y: at.y + radius + Design.Space.inline),
-                            anchor: .top
+                }
+
+                // Labels last, and placed greedily: walk the nodes in descending
+                // significance and keep a name only when its box clears every box already
+                // placed. Two overlapping labels are less readable than one, and dropping
+                // the *smaller* node's name is the choice a person would make. The selected
+                // node always keeps its own, whatever it collides with.
+                var placed: [CGRect] = []
+                let ordered = canvas.graph.nodes
+                    .filter { $0.id == selected?.id }
+                    + canvas.graph.nodes
+                        .filter { $0.id != selected?.id }
+                        .sorted { self.radius(for: $0) > self.radius(for: $1) }
+                for node in ordered {
+                    guard let point = canvas.positions[node.id] else { continue }
+                    let radius = self.radius(for: node) * scale
+                    guard radius > Design.Layout.canvasLabelThreshold else { continue }
+                    let at = place(point)
+                    let text = context.resolve(
+                        Text(node.label).font(Design.Text.micro).foregroundStyle(.secondary)
+                    )
+                    let size = text.measure(
+                        in: CGSize(width: CGFloat.infinity, height: CGFloat.infinity)
+                    )
+                    let origin = CGPoint(
+                        x: at.x - size.width / 2, y: at.y + radius + Design.Space.inline
+                    )
+                    let box = CGRect(origin: origin, size: size)
+                        .insetBy(
+                            dx: -Design.Layout.canvasLabelPadding,
+                            dy: -Design.Layout.canvasLabelPadding
                         )
-                    }
+                    let isSelected = node.id == selected?.id
+                    if !isSelected && placed.contains(where: { $0.intersects(box) }) { continue }
+                    placed.append(box)
+                    context.draw(text, at: origin, anchor: .topLeading)
                 }
             } symbols: {
                 // Declared once at a fixed size and resolved per frame from the cache, so
@@ -150,6 +201,20 @@ struct CanvasView: View {
                         size: Design.Layout.canvasSymbolSize
                     )
                     .tag(node.id)
+                }
+                // A collection's own glyph, the same one it wears on the Collections
+                // surface, so the two read as the same thing.
+                ForEach(Collections.categories.map(\.category), id: \.self) { category in
+                    Image(systemName: collectionSymbol(category))
+                        .font(Design.Text.prose)
+                        .foregroundStyle(.white)
+                        .tag("collection:\(category.rawValue)")
+                }
+                ForEach(["shippingbox.fill", "book.closed.fill", "sparkle"], id: \.self) { name in
+                    Image(systemName: name)
+                        .font(.system(size: Design.Layout.canvasBadgeGlyph, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .tag("badge:\(name)")
                 }
             }
             .contentShape(Rectangle())
@@ -242,6 +307,16 @@ struct CanvasView: View {
     /// than a thing you can open, and a moment only has one when it is about an application.
     private func hasIcon(_ node: CanvasGraph.Node) -> Bool {
         node.appPath != nil || node.bundleID != nil
+    }
+
+    /// What a node that borrows another thing's icon puts in its corner.
+    private func badgeSymbol(for node: CanvasGraph.Node) -> String? {
+        switch node.type {
+        case .project: "shippingbox.fill"
+        case .chapter: "book.closed.fill"
+        case .moment: "sparkle"
+        case .app, .collection: nil
+        }
     }
 
     /// The ring around an icon, which is what carries the node's kind once its face is

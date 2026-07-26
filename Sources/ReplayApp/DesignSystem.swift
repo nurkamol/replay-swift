@@ -51,6 +51,9 @@ enum Design {
         static let emptyStateRoomy: CGFloat = 40
         /// Between the stats on a headline card, which need more separation than a row.
         static let statGap: CGFloat = 22
+        /// The screensaver drifts through a tall, airy column.
+        static let screensaverGap: CGFloat = 40
+        static let screensaverPadding: CGFloat = 48
         /// A stack of app icons, overlapped so the group reads as one thing.
         static let iconOverlap: CGFloat = -8
     }
@@ -136,6 +139,10 @@ enum Design {
         static let ringGlyph = Font.caption.weight(.bold)
         static let pillGlyph = Font.caption2.weight(.bold)
         static let closeGlyph = Font.caption2.weight(.bold)
+        /// The screensaver, which is read from across a room rather than at a desk.
+        static let screensaverHeading = Font.title.weight(.semibold)
+        static let screensaverTitle = Font.title3.weight(.medium)
+        static let screensaverKerning: CGFloat = 1.8
 
         /// Uppercase labels need loosening or they set too tight to read.
         static let labelKerning: CGFloat = 0.6
@@ -185,6 +192,12 @@ enum Design {
         /// look like it came to rest, and overshoot on a list of someone's day reads as
         /// playfulness the content does not have.
         static let settle = Animation.spring(duration: 0.42, bounce: 0)
+
+        /// How long one pass of the screensaver takes, and how long it takes when someone
+        /// has asked the system to reduce motion — slower rather than stopped, because a
+        /// screensaver that does not move is a poster.
+        static let screensaverDriftSeconds: Double = 90
+        static let screensaverSlowSeconds: Double = 240
     }
 
     /// Motion, with Reduce Motion respected.
@@ -253,6 +266,18 @@ enum Design {
         /// says what it is — and everything built on top of one wears a solid ring, so a
         /// project is never mistaken for the app whose icon it borrows.
         static let canvasRingQuiet: Double = 0.35
+
+        /// The screensaver. Everything is white at a chosen weight rather than a palette:
+        /// the room it plays in is dark, and colour would be the thing asking for attention.
+        static let screensaverBackground = Color(red: 0.027, green: 0.027, blue: 0.035)
+        static let screensaverPrimary: Double = 0.80
+        static let screensaverSecondary: Double = 0.70
+        static let screensaverTertiary: Double = 0.35
+        static let screensaverQuiet: Double = 0.30
+        static let screensaverIconOpacity: Double = 0.70
+        static let screensaverFavouriteOpacity: Double = 0.80
+        static let screensaverExitOpacity: Double = 0.40
+        static let screensaverHintOpacity: Double = 0.20
         static let markedBorder = AnyShapeStyle(Color.yellow.opacity(0.45))
         /// A goal that was reached. The app's only approving colour.
         static let met = Color.green
@@ -333,6 +358,10 @@ enum Design {
         static let appHeader: CGFloat = 64
         /// An application's own icon in the Apps list, where it is the row's subject.
         static let appRow: CGFloat = 36
+        /// The stack on a session, and one favourite, in the screensaver — larger, because
+        /// it is read from further away.
+        static let screensaverStack: CGFloat = 32
+        static let screensaverFavourite: CGFloat = 44
         /// The app you are being offered to return to, on the resume card.
         static let resume: CGFloat = 48
         /// The app's own icon, in About.
@@ -430,6 +459,11 @@ enum Design {
         /// The size icons are rasterised at, once. Large enough that the deepest zoom is
         /// still downscaling rather than stretching.
         static let canvasSymbolSize: CGFloat = 96
+        /// A badge on a node that wears another thing's icon, and the glyph inside it.
+        static let canvasBadgeRadius: CGFloat = 7
+        static let canvasBadgeGlyph: CGFloat = 8
+        /// Padding around a label when deciding whether two of them collide.
+        static let canvasLabelPadding: CGFloat = 4
         /// The ring that keeps a node's kind legible once its face is an app icon.
         static let canvasRingWidth: CGFloat = 2
         static let canvasRingWidthStrong: CGFloat = 3
@@ -437,6 +471,9 @@ enum Design {
         static let canvasMinZoom: CGFloat = 0.4
         static let canvasMaxZoom: CGFloat = 3
         static let canvasPreviewWidth: CGFloat = 300
+        /// The screensaver's column, and how far its edges dissolve.
+        static let screensaverColumnWidth: CGFloat = 460
+        static let screensaverFade: CGFloat = 160
         /// A small numeric field in Settings.
         static let numberField: CGFloat = 60
         /// A tag entry field, sized to a tag rather than to the row.

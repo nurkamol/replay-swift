@@ -141,6 +141,8 @@ struct RootView: View {
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
     let onOpenSettings: () -> Void
+    /// Likewise — the overlay is an `NSWindow`, which a view cannot raise on its own.
+    let onOpenScreensaver: () -> Void
 
     @Environment(\.motion) private var motion
 
@@ -226,6 +228,16 @@ struct RootView: View {
             }
         }
         .preferredColorScheme(preferences.appearance.colorScheme)
+    }
+
+    /// One entry in the sidebar. The rows are built by hand rather than from `allCases`
+    /// because the order is a grouping decision, not the order the cases happen to be
+    /// declared in.
+    private func row(_ item: Navigation.Surface) -> some View {
+        NavigationLink(value: item) {
+            Label(item.rawValue, systemImage: item.symbol)
+        }
+        .accessibilityHint(item.purpose)
     }
 
     /// Show or hide the sidebar. Named for what it will do, not for what it is, so
@@ -324,17 +336,47 @@ struct RootView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            List(Navigation.Surface.allCases, selection: $navigation.surface) { item in
-                NavigationLink(value: item) {
-                    Label(item.rawValue, systemImage: item.symbol)
+            // Grouped rather than one flat list of ten. The sections answer three different
+            // questions — what is happening, what I work in, what has happened — and a Mac
+            // sidebar is expected to say so rather than make you read the whole column.
+            List(selection: $navigation.surface) {
+                Section {
+                    row(.today)
+                    row(.search)
                 }
-                .accessibilityHint(item.purpose)
+                Section("Recent") {
+                    row(.week)
+                    row(.timeline)
+                }
+                Section("Library") {
+                    row(.apps)
+                    row(.projects)
+                    row(.collections)
+                }
+                Section("Looking back") {
+                    row(.memories)
+                    row(.story)
+                    row(.canvas)
+                }
             }
+
+            // The screensaver and Settings sit at the foot rather than in the list: neither
+            // is a place in the app, and putting them among the surfaces would suggest they
+            // are. Both are also in the menus, for anyone who reaches there first.
+            Divider()
+            Button(action: onOpenScreensaver) {
+                Label("Screensaver", systemImage: "sparkles.tv")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, Design.Space.card)
+            .padding(.top, Design.Space.row)
+            .help("A slow drift through your day")
 
             // Settings sits at the foot of the sidebar rather than only in a menu: it is
             // where every app with a source list puts the thing you reach for last, and it
             // stops Settings being a keyboard shortcut you have to know about.
-            Divider()
             Button(action: onOpenSettings) {
                 Label("Settings", systemImage: "gearshape")
                     .frame(maxWidth: .infinity, alignment: .leading)

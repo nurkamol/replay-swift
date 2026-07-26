@@ -9,6 +9,16 @@ import SwiftUI
 /// than a SwiftUI `App` so the status item, the window, and the tracker's lifetime are all
 /// explicit; a menu-bar app whose window can be closed and reopened is fiddly to express in
 /// the SwiftUI lifecycle and trivial here.
+/// A window that can take the keyboard.
+///
+/// `NSWindow` refuses to become key when it is borderless, and a borderless window is what a
+/// screensaver has to be. Without this the overlay came up, said "Press Esc to exit" across
+/// the bottom, and then ignored Esc — every keystroke went to whatever was behind it.
+final class ScreensaverWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = AppModel()
@@ -33,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
     private var settingsWindow: NSWindow?
+    private var screensaverWindow: NSWindow?
     /// Kept so its title can say what it will do rather than what it is.
     private var sidebarMenuItem: NSMenuItem?
     private var menuRefresh: Timer?
@@ -203,6 +214,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewMenu.addItem(
             withTitle: "Canvas", action: #selector(openCanvas), keyEquivalent: ""
         ).target = self
+        viewMenu.addItem(.separator())
+        let saverItem = viewMenu.addItem(
+            withTitle: "Screensaver", action: #selector(openScreensaver), keyEquivalent: "s"
+        )
+        saverItem.keyEquivalentModifierMask = [.command, .shift]
+        saverItem.target = self
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
 
@@ -278,7 +295,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 relationships: relationships,
                 museum: museum,
                 canvas: canvas,
-                onOpenSettings: { [weak self] in self?.openSettings() }
+                onOpenSettings: { [weak self] in self?.openSettings() },
+                onOpenScreensaver: { [weak self] in self?.openScreensaver() }
             )
         )
         let window = NSWindow(contentViewController: hosting)
@@ -306,6 +324,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.reload()
         navigation.show(.today)
         showWindow()
+    }
+
+    /// Raise the screensaver over everything, on the screen the window is on.
+    ///
+    /// A borderless window at the screen-saver level rather than a sheet or a full-screen
+    /// space: it should cover the menu bar and the Dock the way a real screensaver does, and
+    /// it should not take the main window into a space you then have to come back out of.
+    /// Deliberately *not* started on a timer — the reference offers that, but a thing that
+    /// takes over the screen on its own is the sort of surprise this app should not spring.
+    @objc private func openScreensaver() {
+        if let screensaverWindow {
+            screensaverWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        // `NSScreen.main` is the screen with keyboard focus, which is where the person is
+        // looking. `window?.screen` was tried first and put the overlay on whichever display
+        // the main window's restored frame happened to sit on — the wrong one, silently.
+        // Loaded before the view exists: the screensaver measures its own column to know
+        // how far to drift, so everything it will show has to be in hand first.
+        if !memories.loaded { memories.load() }
+        let screen = NSScreen.main ?? window?.screen ?? NSScreen.screens.first
+        let hosting = NSHostingController(
+            rootView: ScreensaverView(
+                model: model,
+                memories: memories,
+                preferences: preferences,
+                onExit: { [weak self] in self?.closeScreensaver() }
+            )
+            .preferredColorScheme(.dark)
+        )
+        // Without this the SwiftUI content drives the window's size, and this content is a
+        // deliberately very tall column — the first version produced a 1728x2888 window.
+        hosting.sizingOptions = []
+        let saver = ScreensaverWindow(contentViewController: hosting)
+        saver.styleMask = [.borderless]
+        saver.level = .screenSaver
+        saver.isOpaque = true
+        saver.backgroundColor = .black
+        saver.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        saver.isReleasedWhenClosed = false
+        if let frame = screen?.frame { saver.setFrame(frame, display: true) }
+        saver.makeKeyAndOrderFront(nil)
+        // Again after ordering front: a borderless window can be nudged as it is shown.
+        if let frame = screen?.frame { saver.setFrame(frame, display: true) }
+        NSApp.activate(ignoringOtherApps: true)
+        screensaverWindow = saver
+    }
+
+    private func closeScreensaver() {
+        screensaverWindow?.orderOut(nil)
+        screensaverWindow = nil
+        window?.makeKeyAndOrderFront(nil)
     }
 
     @objc private func openCanvas() {
