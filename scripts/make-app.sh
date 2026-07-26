@@ -1,12 +1,14 @@
 #!/bin/bash
-# Assemble a runnable Replay.app from the SPM build — no Xcode required.
+# Assemble a runnable Replay.app from the SPM build.
 #
 # Swift Package Manager produces a bare executable; macOS wants a bundle with an
 # Info.plist. This wraps one around it so the app can be launched, appear in the Dock,
-# and run as a menu-bar app. Enough for local development.
+# and run as a menu-bar app — a faster development loop than a full Xcode build, and it
+# works with Command Line Tools alone.
 #
-# It is NOT enough to distribute: that needs a Developer ID signature and notarisation,
-# which need full Xcode. See docs/PORTING-MAP.md.
+# The ad-hoc signature below is NOT enough to distribute: that needs a Developer ID
+# signature and notarisation, and a stable Xcode rather than the beta. See
+# docs/PORTING-MAP.md.
 #
 #   ./scripts/make-app.sh [debug|release]
 

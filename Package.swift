@@ -3,14 +3,17 @@ import PackageDescription
 
 // Zero external dependencies on purpose.
 //
-// SQLite comes from the system (`import SQLite3`), the tracker from AppKit, and the
-// UI from SwiftUI — so the package builds with Command Line Tools alone, with no
-// package resolution step and nothing to vendor. GRDB would be pleasant but the
-// queries here are hand-written SQL that must stay identical to the Glaze app's,
-// which a query builder would only obscure.
+// SQLite comes from the system (`import SQLite3`), the tracker from AppKit, and the UI
+// from SwiftUI — so there is no package resolution step and nothing to vendor. GRDB
+// would be pleasant but the queries here are hand-written SQL that has to stay readable
+// against the Glaze app's SQL, which a query builder would only obscure.
 //
-// Full Xcode is needed later for notarisation and any App Store submission; it is
-// not needed to build or test the core.
+// Xcode 27 beta lives at /Applications/Xcode-beta.app but is not the selected developer
+// directory, so `swift test` needs it pointed out:
+//
+//     DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer swift test
+//
+// `swift build` and `swift run replay-parity` work either way. See README.md.
 let package = Package(
     name: "Replay",
     platforms: [.macOS(.v14)],
@@ -23,15 +26,12 @@ let package = Package(
         .target(name: "ReplayCore"),
         .executableTarget(name: "ReplayApp", dependencies: ["ReplayCore"]),
 
-        // The parity check is an executable, not a test target, on purpose: both
-        // swift-testing and XCTest ship with Xcode, and this has to be runnable with
-        // Command Line Tools alone —
-        //
-        //     swift run replay-parity
-        //
-        // It reads `spec/` directly, so the generated contract has exactly one copy.
-        // Once full Xcode is installed, wrap it in a .testTarget as well if you want
-        // it inside `swift test`.
-        .executableTarget(name: "ReplayParity", dependencies: ["ReplayCore"]),
+        // The parity suite lives in its own library so it can run two ways from one
+        // implementation: through swift-testing (`swift test`, needs Xcode) and as a
+        // plain executable (`swift run replay-parity`, needs nothing). It reads `spec/`
+        // from the repo, so the generated contract has exactly one copy.
+        .target(name: "ParityKit", dependencies: ["ReplayCore"]),
+        .executableTarget(name: "ReplayParity", dependencies: ["ParityKit"]),
+        .testTarget(name: "ReplayCoreTests", dependencies: ["ParityKit", "ReplayCore"]),
     ]
 )

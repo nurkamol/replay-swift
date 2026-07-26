@@ -12,23 +12,39 @@ so it cannot trail it *silently*.
 ```bash
 cd ~/coding/replay
 
-swift build                     # builds ReplayCore + the parity checker
+swift build                     # ReplayCore + the parity suite
 node tools/sync-spec.mjs        # re-read the Glaze sources into spec/
-swift run replay-parity         # check this port against them
+swift test                      # the parity suite, via swift-testing
+```
+
+`swift test` needs Xcode pointed out, because Xcode 27 beta is installed but is not the
+selected developer directory:
+
+```bash
+export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
+```
+
+Put that in your shell profile, or run `sudo xcode-select -s /Applications/Xcode-beta.app`
+once to make it the default. Without it, use the same suite as an executable — it needs
+no Xcode at all:
+
+```bash
+swift run replay-parity
 ```
 
 Expected, when the two agree:
 
 ```
 Checking this port against Glaze 2.3.1 (9dcd1bb)
-── constants
-── category table (order matters — first match wins, and it names the session)
-── schema
-── session derivation
+
+✓ constants — 11 checks
+✓ category table — 7 checks
+✓ schema — 1 checks
+✓ session derivation
    ✓ one-session-two-apps — Consecutive rows with no gap form a single session…
    ✓ away-row-splits-session — A measured idle row is a break, and splits the run…
    … 8 scenarios …
-── store round-trip
+✓ store round-trip — 7 checks
 
 PARITY OK — 188 checks against Glaze 2.3.1
 ```
@@ -41,8 +57,10 @@ Sources/ReplayCore/
   ActivityStore.swift    SQLite: storage, headlines, deletion, compaction
   SessionBuilder.swift   the derivation — rows → named sessions and breaks
   ActivityTracker.swift  NSWorkspace + idle time → recorded sessions
-Sources/ReplayParity/    `swift run replay-parity` — measures this port against Glaze
+Sources/ParityKit/       the parity suite — 188 checks against the reference
+Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
 Sources/ReplayApp/       placeholder; the UI is not started
+Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
 spec/                    GENERATED contract — never hand-edit
 tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
 docs/                    read these
@@ -86,9 +104,12 @@ override with `GLAZE_SRC=…`.
 
 ## Toolchain
 
-Swift 6.2.3 via Command Line Tools is enough to build and verify everything here. Full
-Xcode is needed for `XCTest`/`swift-testing`, a `.xcodeproj`, notarisation, and any App
-Store submission — see the toolchain section of
+**Xcode 27 beta** (`/Applications/Xcode-beta.app`, Swift 6.4) — set `DEVELOPER_DIR` as
+above, or select it with `xcode-select`. That gives `swift test`, a real test target, and
+the notarisation and App Store paths.
+
+Command Line Tools alone (Swift 6.2.3) still builds everything and runs
+`swift run replay-parity`; only `swift test` needs Xcode. See the toolchain section of
 [docs/PORTING-MAP.md](docs/PORTING-MAP.md).
 
 No external dependencies, on purpose: SQLite from the system, AppKit for the tracker,

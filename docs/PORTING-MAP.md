@@ -62,20 +62,28 @@ Canvas → Museum/Autobiography → Screensaver. They are the delightful surface
 nobody installs for them first, and Canvas (infinite pan/zoom with a synced timeline) is
 a project of its own.
 
-## Toolchain reality
+## Toolchain
 
-This machine has **Swift 6.2.3 via Command Line Tools, no full Xcode.** That is enough
-to build and check everything in `Sources/`:
+**Xcode 27 beta** at `/Applications/Xcode-beta.app` (Swift 6.4) — installed, but *not*
+the selected developer directory, so anything test-related needs it named:
 
 ```bash
-swift build
-swift run replay-parity        # 188 checks against the Glaze app
+export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
+swift test                     # 188 checks, via swift-testing
 ```
 
-It is *not* enough for: `XCTest` or `swift-testing` (both ship with Xcode — which is why
-the parity check is an executable, not a test target), a `.xcodeproj`, notarisation, or
-any App Store submission. `scripts/make-app.sh` assembles a runnable `.app` by hand for
-local use. **Install Xcode before the first real build you intend to distribute.**
+Command Line Tools alone (Swift 6.2.3) still builds every target and runs the same suite
+as an executable — `swift run replay-parity` — which is why the checks live in `ParityKit`
+rather than only in a test target. Keep that property: it makes the suite runnable in CI
+or over SSH with no Xcode present.
+
+Everything needed for distribution is now available: a `.xcodeproj` can be generated when
+wanted, and notarisation works. `scripts/make-app.sh` still assembles a runnable `.app`
+by hand for the development loop, which is faster than a full Xcode build.
+
+One caveat with a *beta* Xcode: its SDK is macOS 27 and notarising against a beta SDK is
+not something to ship on. Build releases with a stable Xcode when there is a release to
+build.
 
 ## The two risks worth prototyping early
 

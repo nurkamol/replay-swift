@@ -16,18 +16,23 @@ version ships today and is the reference implementation** — it lives at
 ## Commands
 
 ```bash
-swift build                     # ReplayCore + the parity checker
-swift run replay-parity         # 188 checks against the Glaze app — run before every commit
+# Xcode 27 beta is installed but not selected, so point at it for anything test-related:
+export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
+
+swift build                     # ReplayCore + the parity suite
+swift test                      # 188 checks against the Glaze app — run before every commit
+swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
-./scripts/make-app.sh           # assemble a runnable .app (no Xcode needed)
+./scripts/make-app.sh           # assemble a runnable .app
 ```
 
 ## Rules for working here
 
 - **`spec/` is generated. Never hand-edit it.** Change behaviour in the Glaze app, run
   `node tools/sync-spec.mjs`, and the resulting `git diff spec/` is the porting work.
-- **Run `swift run replay-parity` before committing.** If it fails, either this port has
-  not caught up or `spec/` is stale. Do not "fix" it by editing the spec.
+- **Run the parity suite before committing** (`swift test`, or `swift run replay-parity`
+  without Xcode). If it fails, either this port has not caught up or `spec/` is stale. Do
+  not "fix" it by editing the spec.
 - **Commit `spec/` together with the Swift change** that matches it, so every commit says
   which upstream version it corresponds to.
 - **No external dependencies.** SQLite from the system (`import SQLite3`), AppKit,
@@ -37,13 +42,14 @@ node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 - **The app must request no permissions.** No Accessibility, no Automation, no Screen
   Recording. If a feature seems to need one, it is the wrong feature — that property is
   the product.
-- **Toolchain:** Swift 6.2.3 via Command Line Tools, **no full Xcode**. So no `XCTest`,
-  no `swift-testing`, no `.xcodeproj`, no notarisation. That is why the parity check is
-  an executable target rather than a test target. Do not add a `.testTarget` until Xcode
-  is installed — it will not compile.
+- **Toolchain:** Xcode 27 beta at `/Applications/Xcode-beta.app` (Swift 6.4), but it is
+  **not** the selected developer directory — `swift test` fails with "no such module
+  'Testing'" unless `DEVELOPER_DIR` points at it. The suite lives in `ParityKit` so it
+  runs both through swift-testing and as an executable; keep it that way, so the checks
+  stay runnable on a machine with only Command Line Tools.
 
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app. **The UI has not been started.** `Sources/ReplayApp/main.swift` is a
-placeholder. See `docs/PARITY.md` for the ledger and the next three things worth doing.
+Glaze app — 188 checks. **The UI has not been started.** `Sources/ReplayApp/main.swift` is
+a placeholder. See `docs/PARITY.md` for the ledger and the next three things worth doing.

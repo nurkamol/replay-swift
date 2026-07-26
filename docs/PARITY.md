@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.1 (`9dcd1bb`) · **Verified by:** `swift run replay-parity`, 188 checks
+**Level with:** Glaze 2.3.1 (`9dcd1bb`) · **Verified by:** `swift test` (or `swift run replay-parity`), 188 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -64,8 +64,10 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
   The parity check is what keeps the two copies equal.
 - **Different container.** The native app cannot read the Glaze app's live database.
   Migration is via the backup JSON, not the file.
-- **No tests, only the parity check.** Until Xcode is installed there is no `XCTest`. The
-  parity executable covers the core; anything beyond it is unverified.
+- **The parity suite is the only test coverage.** It runs both as `swift test`
+  (swift-testing, needs `DEVELOPER_DIR` set to the Xcode beta) and as
+  `swift run replay-parity` (no Xcode). It covers the core thoroughly and everything else
+  not at all — the tracker's timing behaviour and anything in the UI are unverified.
 
 ## Next three things
 

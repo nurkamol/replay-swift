@@ -42,7 +42,9 @@ A clean diff means nothing behavioural moved: ship the Glaze change and carry on
 non-empty diff is a precise, reviewable statement of what changed. Then:
 
 ```bash
-swift run replay-parity         # 188 checks against the regenerated contract
+swift test                      # 188 checks against the regenerated contract
+# or, with no Xcode available:
+swift run replay-parity
 ```
 
 If it fails, the port has not caught up yet. Fix `Sources/ReplayCore`, re-run, commit
@@ -81,7 +83,7 @@ derivation, thresholds. It says nothing about:
   while its first event exists. Those are the rules a port gets wrong at the *design*
   level, and no fixture catches them.
 - **The Glaze app's own tests.** Six suites live in that repo's scratchpad workflow;
-  they check the store, not the port.
+  they check the reference implementation's store, not this port.
 
 When you change one of those invariants in Glaze, the diff to `spec/` may be empty and
 the parity check may still pass. Read [SPEC.md](SPEC.md) and update it by hand.

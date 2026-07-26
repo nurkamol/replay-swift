@@ -1,0 +1,295 @@
+import Foundation
+import ReplayCore
+
+/// The parity checks, as data — so the same suite can run two ways.
+///
+/// `swift test` runs it through swift-testing, which needs Xcode. `swift run
+/// replay-parity` runs it as a plain executable, which does not. Both call
+/// ``ParityKit/runAllChecks(specRoot:)`` and get identical results, so there is no
+/// second implementation to keep in step.
+///
+/// Everything is measured against `spec/`, generated from the Glaze app by
+/// `tools/sync-spec.mjs`. See docs/SYNC.md.
+public enum ParityKit {
+
+    // ── the generated contract ────────────────────────────────────────────────
+
+    public struct Fixture: Decodable, Sendable {
+        public struct Event: Decodable, Sendable {
+            public let id: Int64
+            public let type: String
+            public let applicationName: String
+            public let bundleIdentifier: String?
+            public let appPath: String?
+            public let startedAt: Int64
+            public let endedAt: Int64?
+            public let duration: Int
+        }
+        public struct App: Decodable, Sendable {
+            public let applicationName: String
+            public let bundleIdentifier: String?
+            public let seconds: Int
+            public let switches: Int
+            public let share: Double
+        }
+        public struct Item: Decodable, Sendable {
+            public let kind: String
+            public let title: String?
+            public let category: String?
+            public let spanSeconds: Int?
+            public let activeSeconds: Int?
+            public let switches: Int?
+            public let eventIds: [Int64]?
+            public let apps: [App]?
+            public let reason: String?
+            public let applicationName: String?
+            public let startedAt: Int64
+            public let endedAt: Int64
+            public let seconds: Int?
+        }
+        public let name: String
+        public let description: String
+        public let now: Int64
+        public let events: [Event]
+        public let expected: [Item]
+    }
+
+    public struct Constants: Decodable, Sendable {
+        public struct Tracker: Decodable, Sendable {
+            public let awayAfterSeconds: Int
+            public let idlePollMs: Int
+            public let pointEventDedupeMs: Int
+            public let ignoredBundleIds: [String]
+        }
+        public struct Store: Decodable, Sendable {
+            public let idleStretchSeconds: Int
+            public let compactMinFreeRatio: Double
+            public let compactMinFreePages: Int
+            public let deleteChunk: Int
+        }
+        public struct CategoryPattern: Decodable, Sendable {
+            public let category: String
+            public let pattern: String
+        }
+        public struct Derivation: Decodable, Sendable {
+            public let idleBreakSeconds: Int
+            public let recordingGapSeconds: Int
+            public let minSessionSeconds: Int
+            public let categoryPatterns: [CategoryPattern]
+        }
+        public let glazeVersion: String
+        public let glazeCommit: String
+        public let tracker: Tracker
+        public let store: Store
+        public let derivation: Derivation
+    }
+
+    // ── results ───────────────────────────────────────────────────────────────
+
+    /// One assertion, with enough context to be actionable on its own — these are read
+    /// in a terminal as often as in a test report.
+    public struct Check: Sendable {
+        public let group: String
+        public let what: String
+        public let passed: Bool
+        public let detail: String?
+    }
+
+    public struct Report: Sendable {
+        public let glazeVersion: String
+        public let glazeCommit: String
+        public let specRoot: String
+        public let checks: [Check]
+        /// Fixture name → whether every check for it passed, in spec order.
+        public let fixtureResults: [(name: String, description: String, passed: Bool)]
+
+        public var failures: [Check] { checks.filter { !$0.passed } }
+        public var passed: Bool { failures.isEmpty }
+    }
+
+    // ── locating spec/ ────────────────────────────────────────────────────────
+
+    /// `spec/` sits beside the package rather than in the build products, so it is found
+    /// relative to this source file unless a path is given (for CI).
+    public static func defaultSpecRoot(file: String = #filePath) -> URL {
+        var root = URL(fileURLWithPath: file)
+        for _ in 0..<3 { root.deleteLastPathComponent() }   // Sources/ParityKit/ParityKit.swift
+        return root.appendingPathComponent("spec")
+    }
+
+    static func load<T: Decodable>(_ type: T.Type, _ relative: String, from root: URL) throws -> T {
+        try JSONDecoder().decode(type, from: Data(contentsOf: root.appendingPathComponent(relative)))
+    }
+
+    static func event(_ raw: Fixture.Event) -> ActivityEvent {
+        ActivityEvent(
+            id: raw.id,
+            type: EventType(rawValue: raw.type) ?? .activated,
+            applicationName: raw.applicationName,
+            bundleIdentifier: raw.bundleIdentifier,
+            appPath: raw.appPath,
+            startedAt: raw.startedAt,
+            endedAt: raw.endedAt,
+            duration: raw.duration
+        )
+    }
+
+    // ── the suite ─────────────────────────────────────────────────────────────
+
+    public static func runAllChecks(specRoot: URL? = nil) throws -> Report {
+        let root = specRoot ?? defaultSpecRoot()
+        let constants = try load(Constants.self, "constants.json", from: root)
+
+        var checks: [Check] = []
+        func check(_ group: String, _ what: String, _ passed: Bool, _ detail: String? = nil) {
+            checks.append(Check(group: group, what: what, passed: passed, detail: detail))
+        }
+        func equal<T: Equatable>(_ group: String, _ what: String, _ actual: T, _ expected: T) {
+            checks.append(Check(
+                group: group,
+                what: what,
+                passed: actual == expected,
+                detail: actual == expected ? nil : "got \(actual), want \(expected)"
+            ))
+        }
+
+        // constants — Rules in Model.swift is a second copy of these on purpose (the
+        // shipping app should not parse JSON), so this is what keeps the copies equal.
+        let g1 = "constants"
+        equal(g1, "awayAfterSeconds", Rules.awayAfterSeconds, constants.tracker.awayAfterSeconds)
+        equal(g1, "idlePollMs", Int(Rules.idlePollSeconds * 1000), constants.tracker.idlePollMs)
+        equal(g1, "pointEventDedupeMs",
+              Int(Rules.pointEventDedupeSeconds * 1000), constants.tracker.pointEventDedupeMs)
+        equal(g1, "ignoredBundleIDs",
+              Rules.ignoredBundleIDs.sorted(), constants.tracker.ignoredBundleIds.sorted())
+        equal(g1, "idleStretchSeconds", Rules.idleStretchSeconds, constants.store.idleStretchSeconds)
+        equal(g1, "compactMinFreeRatio", Rules.compactMinFreeRatio, constants.store.compactMinFreeRatio)
+        equal(g1, "compactMinFreePages", Rules.compactMinFreePages, constants.store.compactMinFreePages)
+        equal(g1, "deleteChunk", Rules.deleteChunk, constants.store.deleteChunk)
+        equal(g1, "idleBreakSeconds", Rules.idleBreakSeconds, constants.derivation.idleBreakSeconds)
+        equal(g1, "recordingGapSeconds",
+              Rules.recordingGapSeconds, constants.derivation.recordingGapSeconds)
+        equal(g1, "minSessionSeconds", Rules.minSessionSeconds, constants.derivation.minSessionSeconds)
+
+        // the category table — order-sensitive, because first match wins and it names
+        // the session.
+        let g2 = "category table"
+        for entry in constants.derivation.categoryPatterns {
+            let probe = entry.pattern
+                .split(separator: "|").first
+                .map {
+                    String($0)
+                        .replacingOccurrences(of: "^", with: "")
+                        .replacingOccurrences(of: "$", with: "")
+                } ?? ""
+            guard !probe.isEmpty else { continue }
+            equal(g2, "categorizeApp(\"\(probe)\")", categorizeApp(probe).rawValue, entry.category)
+        }
+
+        // schema — a database written by either implementation must be readable by the
+        // other, so this is compared statement for statement.
+        let generatedSchema = try String(
+            contentsOf: root.appendingPathComponent("schema.sql"),
+            encoding: .utf8
+        )
+        func normalise(_ sql: String) -> String {
+            sql.split(separator: "\n")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty && !$0.hasPrefix("--") }
+                .joined(separator: " ")
+        }
+        equal("schema", "ActivityStore.schema matches spec/schema.sql",
+              normalise(ActivityStore.schemaForParityCheck), normalise(generatedSchema))
+
+        // session derivation — against the output the Glaze code actually produced.
+        struct Index: Decodable { let fixtures: [String] }
+        let index = try load(Index.self, "fixtures/index.json", from: root)
+        var fixtureResults: [(name: String, description: String, passed: Bool)] = []
+
+        for name in index.fixtures {
+            let fixture = try load(Fixture.self, "fixtures/\(name).json", from: root)
+            let before = checks.count
+            let produced = buildTimeline(fixture.events.map(event), now: fixture.now)
+            let group = "derivation/\(name)"
+
+            equal(group, "number of items", produced.count, fixture.expected.count)
+            if produced.count == fixture.expected.count {
+                for (offset, expected) in fixture.expected.enumerated() {
+                    switch produced[offset] {
+                    case .session(let session):
+                        equal(group, "[\(offset)] kind", "session", expected.kind)
+                        equal(group, "[\(offset)] title", session.title, expected.title ?? "")
+                        equal(group, "[\(offset)] category",
+                              session.category.rawValue, expected.category ?? "")
+                        equal(group, "[\(offset)] startedAt", session.startedAt, expected.startedAt)
+                        equal(group, "[\(offset)] endedAt", session.endedAt, expected.endedAt)
+                        equal(group, "[\(offset)] spanSeconds",
+                              session.spanSeconds, expected.spanSeconds ?? -1)
+                        equal(group, "[\(offset)] activeSeconds",
+                              session.activeSeconds, expected.activeSeconds ?? -1)
+                        equal(group, "[\(offset)] switches", session.switches, expected.switches ?? -1)
+                        equal(group, "[\(offset)] rows the session is made of",
+                              session.events.map(\.id), expected.eventIds ?? [])
+                        equal(group, "[\(offset)] app order",
+                              session.apps.map(\.applicationName),
+                              (expected.apps ?? []).map(\.applicationName))
+                        for (app, expectedApp) in zip(session.apps, expected.apps ?? []) {
+                            equal(group, "\(app.applicationName) seconds",
+                                  app.seconds, expectedApp.seconds)
+                            equal(group, "\(app.applicationName) switches",
+                                  app.switches, expectedApp.switches)
+                            check(group, "\(app.applicationName) share",
+                                  abs(app.share - expectedApp.share) < 0.000_01,
+                                  "got \(app.share), want \(expectedApp.share)")
+                        }
+
+                    case .breakItem(let gap):
+                        equal(group, "[\(offset)] kind", "break", expected.kind)
+                        equal(group, "[\(offset)] reason", gap.reason.rawValue, expected.reason ?? "")
+                        equal(group, "[\(offset)] startedAt", gap.startedAt, expected.startedAt)
+                        equal(group, "[\(offset)] endedAt", gap.endedAt, expected.endedAt)
+                        equal(group, "[\(offset)] seconds", gap.seconds, expected.seconds ?? -1)
+                        equal(group, "[\(offset)] applicationName",
+                              gap.applicationName, expected.applicationName)
+                    }
+                }
+            }
+            let stillPassing = checks[before...].allSatisfy(\.passed)
+            fixtureResults.append((name, fixture.description, stillPassing))
+        }
+
+        // the store, end to end against a real SQLite file.
+        let group = "store round-trip"
+        let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("replay-parity-\(UUID().uuidString).db")
+        let store = ActivityStore(path: tmp.path)
+        try store.open()
+        let t0 = Int64(1_770_000_000_000)
+        let id = try store.openSession(
+            name: "Code", bundleID: "com.microsoft.VSCode", appPath: nil, startedAt: t0
+        )
+        try store.closeSession(id: id, endedAt: t0 + 600_000)
+        try store.recordAway(startedAt: t0 + 600_000, endedAt: t0 + 1_200_000)
+        equal(group, "two rows written", try store.countRows(), 2)
+        let read = try store.sessions(
+            from: startOfLocalDay(t0), to: startOfLocalDay(t0) + dayMillis
+        )
+        equal(group, "both rows read back", read.count, 2)
+        equal(group, "duration computed by SQL, in seconds", read.first?.duration, 600)
+        equal(group, "a fresh database has nothing to reclaim", try store.reclaimableBytes(), 0)
+        check(group, "integrity check passes", store.integrityCheck().ok)
+        let deleted = try store.deleteEvents(ids: [id])
+        equal(group, "delete by id removes one row", deleted.removed, 1)
+        equal(group, "and reports the day it fell on", deleted.dayStarts, [startOfLocalDay(t0)])
+        store.close()
+        try? FileManager.default.removeItem(at: tmp)
+
+        return Report(
+            glazeVersion: constants.glazeVersion,
+            glazeCommit: constants.glazeCommit,
+            specRoot: root.path,
+            checks: checks,
+            fixtureResults: fixtureResults
+        )
+    }
+}
