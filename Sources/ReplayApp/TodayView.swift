@@ -133,7 +133,10 @@ private struct HeadlineCard: View {
 }
 
 /// One run of work: its apps, its name, its length — expandable to the breakdown.
-private struct SessionCard: View {
+///
+/// Shared by Today, the Timeline, and a reopened day: a session reads the same wherever it
+/// is found, which is the whole point of building it from the same derivation.
+struct SessionCard: View {
     let session: ActivitySession
     let onDelete: () -> Void
     @State private var expanded = false
@@ -234,7 +237,7 @@ private struct AppShareRow: View {
 }
 
 /// A gap in the day, named for what it was — away, idle, or not recorded.
-private struct BreakRow: View {
+struct BreakRow: View {
     let gap: ActivityBreak
 
     private var label: String {

@@ -97,3 +97,39 @@ practical effect is nil. It was left alone deliberately: making the identity str
 risk re-importing genuine duplicates, which is the worse failure. But it means **"lossless"
 is the wrong word for the round trip**, and the honest claim is "loses nothing any view
 reads".
+
+---
+
+## A session can render as ending before it began — and the port reproduces it
+
+**Date:** 2026-07-26 · **Reproduce:** the query below · **Verdict:** faithful, leave it
+
+Building the Timeline surfaced a card reading `12:58 – 12:56 PM`. An end before its start
+looked like a porting mistake in `formatRange`, so it was worth chasing down before
+shipping the view that exposed it.
+
+**It is in the data, not the formatting.** The imported history contains an `activated` row
+whose `ended_at` precedes its `started_at`:
+
+```sql
+SELECT id, application_name,
+       datetime(started_at/1000,'unixepoch','localtime') AS started,
+       datetime(ended_at/1000,'unixepoch','localtime')   AS ended
+FROM events WHERE ended_at < started_at;
+-- 1214 | Replay | 2026-07-25 13:04:32 | 2026-07-25 12:56:48
+```
+
+`12:56:48` is exactly the `started_at` of the two `idle`/Away rows either side of it (1210,
+1211). The mechanism: an away stretch is detected *retroactively* — `awayStart` is `now`
+minus the measured idle time — and the open session is then closed at `awayStart`. When the
+session opened *after* that computed instant, it is closed at a time before it began.
+
+**Why the port shows it too.** The derivation is line-for-line the reference's: the session's
+end is `pendingEnd`, taken from the last row in the run (`SessionBuilder.swift:259`,
+`sessions.ts:367`), so a backwards row makes a backwards session in both implementations.
+`spanSeconds` clamps with `max(0, …)`; the *displayed* range does not.
+
+Left alone deliberately. Clamping the display would diverge from the reference for a
+cosmetic gain, and the honest fix belongs upstream in Glaze's away handling — `closeSession`
+should not accept an `endedAt` earlier than the session's `started_at`. Worth raising there;
+until it is, this is inherited, not introduced.

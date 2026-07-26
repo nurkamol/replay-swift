@@ -54,6 +54,6 @@ node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 281 checks. **The UI is under way**: a menu bar item and Today are built;
-the Timeline, Settings, a session's annotations, and export are not. See `docs/PARITY.md`
-for the ledger and the next three things worth doing.
+Glaze app — 281 checks. **The UI is under way**: a menu bar item, Today, the Timeline, and
+a reopened past day are built; Settings, a session's annotations, and export are not. See
+`docs/PARITY.md` for the ledger and the next three things worth doing.

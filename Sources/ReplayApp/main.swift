@@ -12,6 +12,8 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = AppModel()
+    private lazy var history = HistoryModel(model: model)
+    private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
     private var menuRefresh: Timer?
@@ -72,7 +74,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let hosting = NSHostingController(rootView: TodayView(model: model))
+        let hosting = NSHostingController(
+            rootView: RootView(model: model, history: history, navigation: navigation)
+        )
         let window = NSWindow(contentViewController: hosting)
         window.title = "Replay"
         window.setContentSize(NSSize(width: 680, height: 760))
@@ -89,6 +93,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openToday() {
         model.reload()
+        navigation.show(.today)
+        showWindow()
+    }
+
+    @objc private func openTimeline() {
+        history.reload()
+        navigation.show(.timeline)
         showWindow()
     }
 
@@ -134,6 +145,8 @@ extension AppDelegate: NSMenuDelegate {
 
         menu.addItem(.separator())
         menu.addItem(withTitle: "Open Today", action: #selector(openToday), keyEquivalent: "")
+            .target = self
+        menu.addItem(withTitle: "Open Timeline", action: #selector(openTimeline), keyEquivalent: "")
             .target = self
         menu.addItem(
             withTitle: model.isRecording ? "Pause Recording" : "Resume Recording",
