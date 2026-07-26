@@ -122,6 +122,9 @@ SwiftUI for the UI. Nothing to resolve, nothing to vendor.
 
 ## Licence
 
-[Apache License 2.0](LICENSE) — Copyright © 2026 Nurkamol Vakhidov. Same terms as the Glaze
-implementation. The licence covers the code, not the name: §6 grants no trademark rights, so
-a derivative should not present itself as Replay. See [NOTICE](NOTICE).
+[MIT](LICENSE) — Copyright © 2026 Nurkamol Vakhidov.
+
+Note the Glaze implementation is Apache 2.0 rather than MIT. Both are mine to license, so
+the split is deliberate: this port is the more permissive of the two. MIT grants no
+trademark rights either way — "Replay" is the product's name, not part of what is licensed,
+so please don't ship a fork calling itself Replay.
