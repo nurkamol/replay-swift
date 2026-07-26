@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.1 + the import fix (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 188 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 188 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -37,12 +37,12 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 | capability | status | notes |
 |---|---|---|
-| Menu bar item | todo | `NSStatusItem`; current app + pause |
-| Today | todo | v1 |
+| Menu bar item | done | current app, today's total, pause/resume, Open Today, Quit |
+| Today | partial | headline, top app, sessions, breaks, expandable cards. No reflection or focus-goal card yet |
 | Timeline (days, dividers, ⋯ menus) | todo | v1 |
 | A past day, reopened | todo | v1 — **must filter to runs that began that day** (SPEC §5) |
 | Settings | todo | v1: General, Privacy, Data/Storage, Guide, About |
-| Session card (expand, apps, note) | todo | v1 |
+| Session card (expand, apps, note) | partial | expands to the app breakdown with a ⋯ delete. Notes, tags and bookmarks not yet |
 | Export a day / a session | todo | Markdown, CSV, JSON first; PDF/HTML later |
 | Dock badge | later | |
 | Memories / Today in History | later | |
@@ -72,13 +72,17 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Menu bar item + Today**, the smallest thing that is recognisably Replay. Real data is
-   available now: `swift run replay-import <backup.json> /tmp/dev.db`.
-2. **Timeline**, with the session card and its ⋯ menu.
-3. **A past day**, reopened — remembering it must filter to runs that *began* that day
-   (SPEC §5).
+1. **Timeline** — days with dividers and the per-day ⋯ menu. The session card is already
+   built and reusable.
+2. **A past day**, reopened — remembering it must filter to runs that *began* that day
+   (SPEC §5); `AppModel.reload` already does this for Today and is the pattern to follow.
+3. **Notes, tags and bookmarks** on a session — the `annotations` table and its orphan
+   pruning already exist, so this is read/write plus UI.
 
 Done and no longer blocking:
-- ~~Prototype the icon API under App Sandbox~~ — works with no entitlement.
+- ~~Menu bar item + Today~~ — running against real data; every headline figure matches the
+  reference implementation on 3,097 imported rows.
+- ~~Prototype the icon API under App Sandbox~~ — works with no entitlement, and real icons
+  now render in the timeline.
 - ~~Backup import~~ — verified against a real 3,084-row export; found and fixed a Glaze bug
   that was dropping away time. Both in [FINDINGS.md](FINDINGS.md).

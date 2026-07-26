@@ -35,6 +35,19 @@
       "duration": 600
     }
   ],
+  "summary": {
+    "activeSeconds": 900,
+    "activeLabel": "15m",
+    "appsUsed": 1,
+    "sessionCount": 2,
+    "switches": 2,
+    "focus": null,
+    "mostUsed": {
+      "applicationName": "Code",
+      "seconds": 900
+    },
+    "longestSessionSeconds": 600
+  },
   "expected": [
     {
       "kind": "session",

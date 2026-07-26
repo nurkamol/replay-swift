@@ -47,11 +47,32 @@ public enum ParityKit {
             public let endedAt: Int64
             public let seconds: Int?
         }
+        /// What `computeDaySummary` produced for the same input — the figures Today
+        /// leads with, so a drift here is visible on the first screen of the app.
+        public struct Summary: Decodable, Sendable {
+            public struct Focus: Decodable, Sendable {
+                public let averageStretchSeconds: Int
+                public let quality: String
+            }
+            public struct TopApp: Decodable, Sendable {
+                public let applicationName: String
+                public let seconds: Int
+            }
+            public let activeSeconds: Int
+            public let activeLabel: String
+            public let appsUsed: Int
+            public let sessionCount: Int
+            public let switches: Int
+            public let focus: Focus?
+            public let mostUsed: TopApp?
+            public let longestSessionSeconds: Int?
+        }
         public let name: String
         public let description: String
         public let now: Int64
         public let events: [Event]
         public let expected: [Item]
+        public let summary: Summary
     }
 
     public struct Constants: Decodable, Sendable {
@@ -260,6 +281,27 @@ public enum ParityKit {
                     }
                 }
             }
+            // The day's headline, from the same rows.
+            let events = fixture.events.map(event)
+            let summary = computeDaySummary(
+                events: events, timeline: produced,
+                dayStart: startOfLocalDay(fixture.events.first?.startedAt ?? fixture.now),
+                now: fixture.now
+            )
+            let sg = "summary/\(name)"
+            equal(sg, "activeSeconds", summary.activeSeconds, fixture.summary.activeSeconds)
+            equal(sg, "activeLabel", formatDurationShort(summary.activeSeconds), fixture.summary.activeLabel)
+            equal(sg, "appsUsed", summary.appsUsed, fixture.summary.appsUsed)
+            equal(sg, "sessionCount", summary.sessionCount, fixture.summary.sessionCount)
+            equal(sg, "switches", summary.switches, fixture.summary.switches)
+            equal(sg, "focus stretch", summary.focus?.averageStretchSeconds,
+                  fixture.summary.focus?.averageStretchSeconds)
+            equal(sg, "focus quality", summary.focus?.quality.rawValue, fixture.summary.focus?.quality)
+            equal(sg, "top app", summary.mostUsed?.applicationName, fixture.summary.mostUsed?.applicationName)
+            equal(sg, "top app seconds", summary.mostUsed?.seconds, fixture.summary.mostUsed?.seconds)
+            equal(sg, "longest session", summary.longestSession?.activeSeconds,
+                  fixture.summary.longestSessionSeconds)
+
             let stillPassing = checks[before...].allSatisfy(\.passed)
             fixtureResults.append((name, fixture.description, stillPassing))
         }

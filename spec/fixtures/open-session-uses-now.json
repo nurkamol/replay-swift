@@ -15,5 +15,15 @@
       "duration": 0
     }
   ],
+  "summary": {
+    "activeSeconds": 0,
+    "activeLabel": "<1m",
+    "appsUsed": 0,
+    "sessionCount": 0,
+    "switches": 0,
+    "focus": null,
+    "mostUsed": null,
+    "longestSessionSeconds": null
+  },
   "expected": []
 }

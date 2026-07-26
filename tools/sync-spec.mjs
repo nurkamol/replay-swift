@@ -307,13 +307,27 @@ function buildFixtures() {
     const runner = join(tmp, "run.mjs");
     writeFileSync(
       runner,
-      `import { buildTimeline } from ${JSON.stringify(bundle)};
+      `import { buildTimeline, computeDaySummary } from ${JSON.stringify(bundle)};
        const scenarios = JSON.parse(process.argv[2]);
        const out = scenarios.map((s) => ({
          name: s.name,
          description: s.description,
          now: s.now,
          events: s.events,
+         summary: (() => {
+           const tl = buildTimeline(s.events, s.now);
+           const d = computeDaySummary(s.events, tl, s.now);
+           return {
+             activeSeconds: d.activeSeconds,
+             activeLabel: d.activeLabel,
+             appsUsed: d.appsUsed,
+             sessionCount: d.sessionCount,
+             switches: d.switches,
+             focus: d.focus ? { averageStretchSeconds: d.focus.averageStretchSeconds, quality: d.focus.quality } : null,
+             mostUsed: d.mostUsed ? { applicationName: d.mostUsed.applicationName, seconds: d.mostUsed.seconds } : null,
+             longestSessionSeconds: d.longestSession ? d.longestSession.seconds : null,
+           };
+         })(),
          expected: buildTimeline(s.events, s.now).map((item) =>
            item.kind === "session"
              ? {
