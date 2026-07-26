@@ -9,6 +9,7 @@ import SwiftUI
 struct TimelineView: View {
     let history: HistoryModel
     let annotations: AnnotationsModel
+    let export: ExportModel
     /// Given so a day can be opened from its ⋯ menu.
     let onOpenDay: (Int64) -> Void
 
@@ -25,6 +26,7 @@ struct TimelineView: View {
                             day: day,
                             history: history,
                             annotations: annotations,
+                            export: export,
                             onOpenDay: onOpenDay
                         )
                     }
@@ -86,6 +88,7 @@ private struct DaySection: View {
     let day: TimelineDay
     let history: HistoryModel
     let annotations: AnnotationsModel
+    let export: ExportModel
     let onOpenDay: (Int64) -> Void
 
     @State private var confirmingDelete = false
@@ -151,6 +154,17 @@ private struct DaySection: View {
             // rarely wanted.
             Menu {
                 Button("Open This Day") { onOpenDay(day.dayStart) }
+                Menu("Export This Day") {
+                    ForEach(Report.Format.allCases, id: \.self) { format in
+                        Button(format.label) {
+                            // Named by its date, not by "Today": a file called "Replay
+                            // Today" stops being true tomorrow.
+                            export.exportReport(
+                                format, label: fullDayLabel(day.dayStart), sessions: day.sessions
+                            )
+                        }
+                    }
+                }
                 Divider()
                 Button("Delete This Day…", role: .destructive) { confirmingDelete = true }
             } label: {
@@ -203,7 +217,10 @@ private struct PartDivider: View {
 struct DayView: View {
     let day: TimelineDay
     let headline: DailySummary?
+    let reflection: Reflection
     let annotations: AnnotationsModel
+    let export: ExportModel
+    let onReflect: (String) -> Void
     let onDeleteSession: (ActivitySession) -> Void
     let onBack: () -> Void
 
@@ -212,15 +229,42 @@ struct DayView: View {
             VStack(alignment: .leading, spacing: 20) {
                 header
 
+                // Offered even on a day whose rows were pruned: what you wrote about a day
+                // outlives the activity behind it, and is often the only thing left.
+                ReflectionCard(
+                    dayStart: day.dayStart,
+                    reflection: reflection,
+                    prompt: "What do you want to remember about this day?",
+                    onCommit: onReflect
+                )
+
                 if day.items.isEmpty {
                     pruned
                 } else {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("\(day.sessions.count) \(day.sessions.count == 1 ? "session" : "sessions")")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .textCase(.uppercase)
-                            .kerning(0.6)
+                        HStack {
+                            Text("\(day.sessions.count) \(day.sessions.count == 1 ? "session" : "sessions")")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .textCase(.uppercase)
+                                .kerning(0.6)
+                            Spacer()
+                            Menu("Export…") {
+                                ForEach(Report.Format.allCases, id: \.self) { format in
+                                    Button(format.label) {
+                                        export.exportReport(
+                                            format,
+                                            label: fullDayLabel(day.dayStart),
+                                            sessions: day.sessions
+                                        )
+                                    }
+                                }
+                            }
+                            .menuStyle(.button)
+                            .buttonStyle(.borderless)
+                            .font(.caption)
+                            .fixedSize()
+                        }
 
                         ForEach(Array(day.items.enumerated()), id: \.offset) { _, item in
                             switch item {

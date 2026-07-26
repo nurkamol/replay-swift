@@ -36,10 +36,11 @@ struct RootView: View {
     let history: HistoryModel
     @Bindable var navigation: Navigation
     let preferences: Preferences
+    let export: ExportModel
 
     /// The opened day, built when it is opened rather than while the body runs — deriving a
     /// day loads its annotations, and a view body must not be what mutates them.
-    @State private var opened: (day: TimelineDay, headline: DailySummary?)?
+    @State private var opened: (day: TimelineDay, headline: DailySummary?, reflection: Reflection)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,7 +48,13 @@ struct RootView: View {
                 DayView(
                     day: opened.day,
                     headline: opened.headline,
+                    reflection: opened.reflection,
                     annotations: model.annotations,
+                    export: export,
+                    onReflect: { text in
+                        history.setReflection(opened.day.dayStart, text)
+                        reloadOpenDay()
+                    },
                     onDeleteSession: { history.deleteSession($0) },
                     onBack: { navigation.openDay = nil }
                 )
@@ -61,6 +68,7 @@ struct RootView: View {
                     TimelineView(
                         history: history,
                         annotations: model.annotations,
+                        export: export,
                         onOpenDay: { navigation.openDay = $0 }
                     )
                 }
@@ -71,10 +79,16 @@ struct RootView: View {
             // it reloads when it is shown rather than on every recorded event.
             if new == .timeline { history.reload() }
         }
-        .onChange(of: navigation.openDay, initial: true) { _, day in
-            opened = day.map { (history.day($0), history.headline($0)) }
-        }
+        .onChange(of: navigation.openDay, initial: true) { _, _ in reloadOpenDay() }
         .preferredColorScheme(preferences.appearance.colorScheme)
+    }
+
+    /// Rebuild the opened day outside the body — deriving it loads annotations, and a view
+    /// body must not be what mutates them.
+    private func reloadOpenDay() {
+        opened = navigation.openDay.map {
+            (history.day($0), history.headline($0), history.reflection($0))
+        }
     }
 
     private var picker: some View {

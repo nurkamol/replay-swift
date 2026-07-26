@@ -9,6 +9,7 @@ import SwiftUI
 struct SettingsView: View {
     let model: AppModel
     let settings: SettingsModel
+    let export: ExportModel
     @Bindable var preferences: Preferences
 
     var body: some View {
@@ -17,7 +18,7 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "gearshape") }
             PrivacyTab(model: model, settings: settings, preferences: preferences)
                 .tabItem { Label("Privacy", systemImage: "hand.raised") }
-            DataTab(settings: settings, preferences: preferences)
+            DataTab(settings: settings, export: export, preferences: preferences)
                 .tabItem { Label("Data", systemImage: "internaldrive") }
             GuideTab()
                 .tabItem { Label("Guide", systemImage: "questionmark.circle") }
@@ -113,6 +114,26 @@ private struct StatusLine: View {
     }
 }
 
+/// The same, for the export model — which owns its own outcome because it runs a file
+/// dialog the settings model knows nothing about.
+private struct ExportStatusLine: View {
+    let export: ExportModel
+
+    var body: some View {
+        if let error = export.errorMessage {
+            Text(error)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .fixedSize(horizontal: false, vertical: true)
+        } else if let status = export.status {
+            Text(status)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
 // ── general ───────────────────────────────────────────────────────────────────
 
 private struct GeneralTab: View {
@@ -138,6 +159,22 @@ private struct GeneralTab: View {
                         ForEach(LaunchSurface.allCases) { Text($0.label).tag($0) }
                     }
                     .labelsHidden()
+                }
+
+                Row(
+                    label: "Menu bar only",
+                    description: "Hide the Dock icon and live in the menu bar. Replay keeps "
+                        + "recording either way."
+                ) {
+                    Toggle("", isOn: $preferences.menuBarOnly)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .onChange(of: preferences.menuBarOnly) { _, on in
+                            // Applied immediately: a setting that needs a restart to mean
+                            // anything is a setting the user cannot trust.
+                            NSApp.setActivationPolicy(on ? .accessory : .regular)
+                            if !on { NSApp.activate(ignoringOtherApps: true) }
+                        }
                 }
             }
 
@@ -367,12 +404,31 @@ private struct ExclusionsSheet: View {
 
 private struct DataTab: View {
     let settings: SettingsModel
+    let export: ExportModel
     @Bindable var preferences: Preferences
 
     @State private var confirmingClear = false
 
     var body: some View {
         TabScroll {
+            Section(
+                title: "Your data",
+                description: "Your timeline is yours. Take a copy, or bring one back."
+            ) {
+                Row(
+                    label: "Full backup",
+                    description: "Every row as readable JSON — the format Replay can restore "
+                        + "from. Importing merges; it never overwrites what is already here."
+                ) {
+                    HStack(spacing: 8) {
+                        Button("Export…") { export.exportBackup() }
+                        Button("Import…") { export.importBackup() }
+                    }
+                }
+            }
+
+            Divider()
+
             Section(
                 title: "Storage",
                 description: "Replay records no video and no screenshots — only which app was in "
@@ -418,6 +474,7 @@ private struct DataTab: View {
             }
 
             StatusLine(settings: settings)
+            ExportStatusLine(export: export)
         }
         .alert("Clear activity history?", isPresented: $confirmingClear) {
             Button("Clear History", role: .destructive) { settings.clearHistory() }

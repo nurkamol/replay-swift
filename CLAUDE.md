@@ -20,7 +20,7 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 310 checks against the Glaze app — run before every commit
+swift test                      # 330 checks against the Glaze app — run before every commit
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
@@ -54,7 +54,8 @@ node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 310 checks. **The UI is under way**: a menu bar item, Today, the Timeline, a
-reopened past day, a session's notes, tags and bookmarks, and Settings are built; export
-and reflections are not. See `docs/PARITY.md` for the ledger and the next three things
-worth doing.
+Glaze app — 330 checks. **The UI is under way**: a menu bar item, Today, the Timeline, a
+reopened past day with its reflection, a session's notes/tags/bookmarks, Settings, and
+export (a day as Markdown/CSV/JSON, plus full backups) are built. What is left is mostly
+the memory subsystems and a focus goal. See `docs/PARITY.md` for the ledger and the next
+three things worth doing.

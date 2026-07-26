@@ -421,6 +421,85 @@ public enum ParityKit {
               try store.deleteByBundleIDs(["com.sublimetext.4"]), 1)
         equal(mg, "and leaves the rest alone", try store.countRows(), rowsBefore - 1)
 
+        // reflections — the same empty-row rule annotations follow.
+        let rg = "reflections"
+        let day = startOfLocalDay(t0)
+        equal(rg, "a day with nothing written reads back empty",
+              try store.reflection(dayStart: day), Reflection(dayStart: day))
+        _ = try store.setReflection(dayStart: day, text: "  a good day  ", now: t0)
+        let written = try store.reflection(dayStart: day)
+        equal(rg, "the text is stored as written, not trimmed", written.text, "  a good day  ")
+        equal(rg, "and carries when it was written", written.updatedAt, t0)
+        equal(rg, "a range finds it", try store.reflections(from: day, to: day + dayMillis).count, 1)
+        _ = try store.setReflection(dayStart: day, text: "   ", now: t0)
+        equal(rg, "cleared back to blank, it leaves no row",
+              try store.reflections(from: day, to: day + dayMillis).count, 0)
+
+        // reports — what an export writes. Serialising is the whole feature, so the shapes
+        // are checked rather than just the call not throwing.
+        let xg = "report export"
+        // Derived rather than hand-built, so what is serialised is what the app would
+        // actually show — the same `buildTimeline` every surface reads.
+        let reportEvents = [
+            ActivityEvent(
+                id: 1, type: .activated, applicationName: "Code",
+                bundleIdentifier: "com.microsoft.VSCode", appPath: nil,
+                startedAt: t0, endedAt: t0 + 600_000, duration: 600
+            ),
+            ActivityEvent(
+                id: 2, type: .activated, applicationName: "Safari",
+                bundleIdentifier: "com.apple.Safari", appPath: nil,
+                startedAt: t0 + 600_000, endedAt: t0 + 900_000, duration: 300
+            ),
+        ]
+        guard case .session(let reportSession)? = buildTimeline(reportEvents, now: t0 + 900_000).first
+        else {
+            check(xg, "a sample session could be derived", false, "buildTimeline produced no session")
+            return Report(
+                glazeVersion: constants.glazeVersion, glazeCommit: constants.glazeCommit,
+                specRoot: root.path, checks: checks, fixtureResults: fixtureResults
+            )
+        }
+        let sample = ReplayCore.Report.Entry(
+            session: reportSession,
+            annotation: SessionAnnotation(
+                sessionStart: t0, note: "shipped it", bookmarked: true, tags: ["deep work"],
+                updatedAt: t0
+            )
+        )
+
+        let markdown = ReplayCore.Report.build(.markdown, label: "Today", entries: [sample])
+        check(xg, "markdown leads with the scope it covers", markdown.hasPrefix("# Replay — Today"))
+        check(xg, "a bookmarked session is starred", markdown.contains("\(reportSession.title) ⭐"))
+        check(xg, "the note is quoted", markdown.contains("> shipped it"))
+        check(xg, "tags carry their hash", markdown.contains("Tags: #deep work"))
+        check(xg, "an empty export says so rather than being blank",
+              ReplayCore.Report.build(.markdown, label: "Today", entries: []).contains("Nothing to export"))
+
+        let csvText = ReplayCore.Report.build(.csv, label: "Today", entries: [sample])
+        equal(xg, "csv has a header and a row per session", csvText.split(separator: "\n").count, 2)
+        check(xg, "csv marks a bookmark", csvText.contains(",yes,"))
+        equal(xg, "a cell with a comma is quoted", ReplayCore.Report.csvCell("a, b"), "\"a, b\"")
+        equal(xg, "a quote inside a cell is doubled", ReplayCore.Report.csvCell("say \"hi\""), "\"say \"\"hi\"\"\"")
+        equal(xg, "a plain cell is left alone", ReplayCore.Report.csvCell("plain"), "plain")
+
+        let jsonText = ReplayCore.Report.build(.json, label: "Today", entries: [sample])
+        let parsedReport = try? JSONSerialization.jsonObject(with: Data(jsonText.utf8)) as? [String: Any]
+        equal(xg, "json reports how many sessions it holds",
+              (parsedReport?["sessionCount"] as? Int), 1)
+        check(xg, "json carries the annotation",
+              ((parsedReport?["sessions"] as? [[String: Any]])?.first?["note"] as? String) == "shipped it")
+
+        // A backup round-trips through its own reader — the check that matters, because a
+        // backup nobody can restore is not a backup.
+        let backupRows = try store.rowsForBackup()
+        let encoded = Backup.encode(rows: backupRows, appVersion: "test")
+        let reread = try Backup.read(encoded)
+        equal(xg, "a written backup reads back with every row", reread.rows.count, backupRows.count)
+        equal(xg, "and its rows survive intact", reread.rows, backupRows)
+        equal(xg, "the count it declares matches what it holds",
+              reread.declaredCount, backupRows.count)
+
         // Clearing history means what it says: no rows, and no headline left behind.
         try store.upsertSummary(dayStart: startOfLocalDay(t0), now: t0)
         _ = try store.setBookmarked(sessionStart: t0, bookmarked: true, now: t0)

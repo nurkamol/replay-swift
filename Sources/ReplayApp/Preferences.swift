@@ -61,6 +61,10 @@ final class Preferences {
     var excludedApps: [ExcludedApp] {
         didSet { writeJSON(excludedApps, "excludedApps") }
     }
+    /// Live in the menu bar with no Dock icon. Off by default, as upstream.
+    var menuBarOnly: Bool {
+        didSet { write(menuBarOnly, "menuBarOnly") }
+    }
 
     /// The retention windows offered, from `spec/constants.json`.
     static let retentionOptions: [Int] = [0, 365, 180, 90]
@@ -84,6 +88,7 @@ final class Preferences {
         retentionDays = defaults.integer(forKey: "retentionDays")
         excludedApps = (defaults.data(forKey: "excludedApps"))
             .flatMap { try? JSONDecoder().decode([ExcludedApp].self, from: $0) } ?? []
+        menuBarOnly = defaults.bool(forKey: "menuBarOnly")
     }
 
     var excludedBundleIDs: Set<String> { Set(excludedApps.map(\.bundleID)) }

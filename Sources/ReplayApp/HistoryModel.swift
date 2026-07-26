@@ -140,6 +140,22 @@ final class HistoryModel {
         )
     }
 
+    /// What was written about a day, or an empty reflection.
+    func reflection(_ dayStart: Int64) -> Reflection {
+        (try? store.reflection(dayStart: dayStart)) ?? Reflection(dayStart: dayStart)
+    }
+
+    func setReflection(_ dayStart: Int64, _ text: String) {
+        do {
+            _ = try store.setReflection(
+                dayStart: dayStart, text: text,
+                now: Int64(Date().timeIntervalSince1970 * 1000)
+            )
+        } catch {
+            errorMessage = "\(error)"
+        }
+    }
+
     /// The durable headline for a day, which outlives the rows behind it.
     ///
     /// What tells "nothing was recorded" apart from "this day is older than the kept

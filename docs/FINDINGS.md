@@ -133,3 +133,45 @@ Left alone deliberately. Clamping the display would diverge from the reference f
 cosmetic gain, and the honest fix belongs upstream in Glaze's away handling — `closeSession`
 should not accept an `endedAt` earlier than the session's `started_at`. Worth raising there;
 until it is, this is inherited, not introduced.
+
+---
+
+## A backup this app wrote, this app could not read
+
+**Date:** 2026-07-26 · **Reproduce:** `swift run replay-parity` (report export) · **Verdict:** fixed
+
+Writing backups was the last half of the migration path — the reader has worked since the
+import landed, and was checked against a real 3,084-row Glaze export. The writer was added
+against the same `Backup.Row` type, and the first version of it produced files this app's
+own reader parsed as **zero events**, without erroring.
+
+**The cause.** `Backup.read` expects the keys SQLite produced: `application_name`,
+`started_at`, `bundle_identifier`. The reference exports rows straight out of the database
+(`events: rows.map(({ id: _id, ...rest }) => rest)`), so a real backup carries column names.
+Writing from a Swift struct, the obvious thing is to name the keys after the *properties* —
+`applicationName`, `startedAt` — which is what the first version did. Every row then failed
+the reader's `guard` and was counted as skipped rather than rejected loudly.
+
+**Why it was silent.** The reader is deliberately lenient about individual rows, so that one
+bad row cannot lose the other 40,000. That is the right call for a file a user may have
+hand-edited, and it is exactly what hid this: a file where *every* row is malformed reads as
+a valid backup containing nothing.
+
+**What caught it.** A round-trip check — encode, then read back, and compare the rows — not
+a check that the writer produced plausible JSON. The two-line difference between those two
+tests is the whole finding:
+
+```swift
+let encoded = Backup.encode(rows: try store.rowsForBackup(), appVersion: "test")
+let reread = try Backup.read(encoded)
+equal(xg, "and its rows survive intact", reread.rows, backupRows)
+```
+
+Verified afterwards on real data: 3,149 rows exported, re-imported, and all 3,149 recognised
+as already present — nothing duplicated, nothing lost, including the 57 `idle` rows whose
+loss upstream is the subject of the finding above.
+
+**The general lesson, since this port will grow more serialisers.** A format's writer must be
+tested against its own reader, never against a human reading the output. And a lenient
+parser needs a caller that notices when leniency swallowed everything — `declaredCount`
+exists for exactly that comparison and should be checked on import, not just recorded.

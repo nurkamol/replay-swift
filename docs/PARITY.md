@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 310 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 330 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -29,10 +29,10 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Orphaned-annotation pruning | done | reachability, not by application |
 | Compaction + thresholds | done | `reclaimableBytes` documented as a lower bound |
 | Compaction safety (copy, verify) | done | `compactSafely` — copy, VACUUM, verify by integrity check **and** row count; a failed verify leaves the copy and names it |
-| Reflections | todo | table exists; no read/write yet |
+| Reflections | done | read/write, keyed by day; shown on a reopened day, including one whose rows were pruned |
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
-| Backup export | todo | writing a backup, for the other direction |
+| Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
 
 ## App — the surfaces
 
@@ -40,11 +40,11 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 |---|---|---|
 | Menu bar item | done | current app, today's total, pause/resume, Open Today, Quit |
 | Today | partial | headline, top app, sessions, breaks, expandable cards. No reflection or focus-goal card yet |
-| Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, delete). No layers, filters, or per-day export |
-| A past day, reopened | partial | filters to runs that began that day (SPEC §5); says so when a day's rows are pruned but its headline survives. No reflection, story, or chapter context |
-| Settings | partial | General, Privacy, Data, Guide, About in their own window. No Shortcuts tab (no custom shortcuts yet), no focus goal, no digests |
+| Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
+| A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
+| Settings | partial | General, Privacy, Data, Guide, About in their own window, with backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no focus goal, no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
-| Export a day / a session | todo | Markdown, CSV, JSON first; PDF/HTML later |
+| Export a day / a session | partial | a day as Markdown, CSV or JSON, carrying notes and tags. PDF/HTML later; no session-level or multi-day scopes yet |
 | Dock badge | later | |
 | Memories / Today in History | later | |
 | Search | later | |
@@ -88,17 +88,22 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Export** — a day, a session, and a full backup. The last big gap in "your timeline is
-   yours": import exists (`replay-import`) and Settings offers no way out. Markdown, CSV,
-   JSON first.
-2. **Reflections** — the day's written memory. The table exists; it is the same read/write
-   shape as annotations, keyed by day rather than by session, and it is what a reopened day
-   is most obviously missing.
-3. **Menu-bar-only mode** — the reference's `menuBarMode`. `main.swift` still forces
-   `.regular` with a note saying a Dock icon is convenient while the UI is being built; the
-   UI is now built enough that this should become the setting it is upstream.
+1. **A focus goal, and the Today reflection card.** The two things Today is still missing
+   against the reference. The goal is the app's one evaluative surface, so it has to arrive
+   with its rules intact: off by default, never red, never scolding a quiet day (SPEC §8).
+   `spec/constants.json` already carries its presets and bounds.
+2. **Export scopes beyond one day** — this week, this month, bookmarks, notes, and a single
+   session. The formats and the save panel exist; what is missing is choosing what to cover,
+   which is the `ExportScope` list upstream.
+3. **A real Settings shortcut and app menu.** `Settings…` is reachable only from the menu
+   bar item; there is no application menu, so ⌘, does not work from the window and neither
+   does ⌘W. That is the most obviously un-Mac-like thing left.
 
 Done and no longer blocking:
+- ~~Export, reflections, menu-bar-only mode~~ — a day exports as Markdown/CSV/JSON carrying
+  its notes and tags; a full backup round-tripped through this app's own reader (3,149 rows
+  out, 3,149 recognised as already present on re-import); menu-bar-only flips the activation
+  policy live, `Foreground` → `UIElement`, with no restart.
 - ~~Settings~~ — General, Privacy, Data, Guide, About, in their own window. Excluded
   applications is persisted and applied live, retention prunes on change, and Compact runs
   the SPEC §7 sequence. Verified against the real database: reclaimed 12 KB with 3,144 rows

@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var settings = SettingsModel(
         model: model, history: history, preferences: preferences
     )
+    private lazy var export = ExportModel(model: model)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -29,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // never recorded in the gap between launching and looking.
         model.applyExclusions(preferences.excludedBundleIDs)
         navigation.surface = preferences.launchSurface == .timeline ? .timeline : .today
+        if preferences.menuBarOnly { NSApp.setActivationPolicy(.accessory) }
         installStatusItem()
         showWindow()
 
@@ -85,7 +87,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let hosting = NSHostingController(
             rootView: RootView(
-                model: model, history: history, navigation: navigation, preferences: preferences
+                model: model, history: history, navigation: navigation,
+                preferences: preferences, export: export
             )
         )
         let window = NSWindow(contentViewController: hosting)
@@ -123,7 +126,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         let hosting = NSHostingController(
-            rootView: SettingsView(model: model, settings: settings, preferences: preferences)
+            rootView: SettingsView(
+                model: model, settings: settings, export: export, preferences: preferences
+            )
         )
         let window = NSWindow(contentViewController: hosting)
         window.title = "Replay Settings"
