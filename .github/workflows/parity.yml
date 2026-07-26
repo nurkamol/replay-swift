@@ -1,0 +1,72 @@
+# The parity suite, on every push and pull request.
+#
+# What this can and cannot check
+# ------------------------------
+# It runs the committed `spec/` against the Swift port. It does **not** regenerate
+# `spec/` — `tools/sync-spec.mjs` reads the Glaze app's sources, which live in a
+# private container on a developer's Mac and are not in this repository. So CI
+# answers "does the port still match the contract?" and never "is the contract
+# still current?". That second question is what `node tools/port-queue.mjs`
+# answers, at a desk, with the reference app present.
+#
+# `swift run replay-parity` is the authoritative check: it needs no Xcode
+# selection and no test framework, which is exactly why the suite was built to run
+# that way. `swift test` runs the same checks through swift-testing and is kept
+# because it is what a developer runs locally — if it breaks here, it breaks there.
+
+name: parity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  parity:
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          xcode-select -p
+          swift --version
+
+      # A half-committed regeneration is easy to miss by eye: a new scenario file
+      # without its index entry, or an index entry whose file never got added.
+      # The suite would silently skip the first and throw on the second.
+      - name: Fixture index matches the fixture files
+        run: |
+          listed=$(python3 -c "import json;print('\n'.join(sorted(json.load(open('spec/fixtures/index.json'))['fixtures'])))")
+          present=$(ls spec/fixtures/*.json | xargs -n1 basename | sed 's/\.json$//' | grep -v '^index$' | sort)
+          if [ "$listed" != "$present" ]; then
+            echo "spec/fixtures/index.json disagrees with the files on disk."
+            diff <(echo "$listed") <(echo "$present") || true
+            exit 1
+          fi
+          echo "$(echo "$listed" | wc -l | tr -d ' ') fixtures, all indexed"
+
+      - name: Build
+        run: swift build
+
+      # Session titles are named after the *local* day part, so the suite is only
+      # meaningful if it passes away from the timezone its fixtures were generated
+      # in. It did not, once — see docs/FINDINGS.md — and this is the guard.
+      - name: Parity suite, across timezones
+        run: |
+          status=0
+          for zone in UTC America/New_York Asia/Tokyo Australia/Lord_Howe; do
+            echo "── $zone ─────────────────────────────────────────"
+            TZ="$zone" swift run replay-parity || status=1
+          done
+          exit $status
+
+      - name: Parity suite through swift-testing
+        run: swift test

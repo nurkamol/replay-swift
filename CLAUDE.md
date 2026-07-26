@@ -35,7 +35,9 @@ node tools/port-queue.mjs      # what changed in Glaze that this port still owes
   `node tools/sync-spec.mjs`, and the resulting `git diff spec/` is the porting work.
 - **Run the parity suite before committing** (`swift test`, or `swift run replay-parity`
   without Xcode). If it fails, either this port has not caught up or `spec/` is stale. Do
-  not "fix" it by editing the spec.
+  not "fix" it by editing the spec. CI runs the same suite on every push and pull request,
+  in four timezones — but only against `spec/` as committed. Whether the *contract* is
+  current is what `node tools/port-queue.mjs` answers, and only with the Glaze app present.
 - **Commit `spec/` together with the Swift change** that matches it, so every commit says
   which upstream version it corresponds to.
 - **No external dependencies.** SQLite from the system (`import SQLite3`), AppKit,

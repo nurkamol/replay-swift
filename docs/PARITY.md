@@ -98,11 +98,15 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
    checked against the reference; what is missing is choosing what a report covers.
 2. **Search**, the smallest door into the half of the app still marked `later` — Memories,
    Collections, Story Mode, Canvas — and the one most useful on its own.
-3. **A CI run.** The suite is now timezone-portable and needs no Xcode
-   (`swift run replay-parity`), which was the blocker. Nothing currently runs it but a human
-   remembering to.
+3. **Sign and notarise a build.** `scripts/make-app.sh` signs ad-hoc, which is enough to run
+   it here and not enough to hand to anyone. That is the gap between "it works" and "it is
+   an app", and it needs a Developer ID and a stable Xcode.
 
 Done and no longer blocking:
+- ~~Nothing runs the suite but a human remembering to~~ — `.github/workflows/parity.yml`
+  runs it on every push and pull request, in four timezones. It cannot check whether `spec/`
+  is *current* — that needs the Glaze sources, which are not in this repository — only that
+  the port still matches the contract as committed.
 - ~~`groupByDay` and the report serialisers verified only by reading~~ — both now run against
   output the reference actually produced, generated under a pinned clock, timezone and
   locale. Finding five real divergences in the process, and one latent bug in the suite
