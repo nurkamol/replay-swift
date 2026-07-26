@@ -65,6 +65,13 @@ final class Preferences {
     var menuBarOnly: Bool {
         didSet { write(menuBarOnly, "menuBarOnly") }
     }
+    /// A daily focus target in minutes, or `nil` for none.
+    ///
+    /// Off by default and opt-in on purpose: Replay describes the day, it does not set
+    /// quotas — a goal exists only because its owner asked for one (SPEC §8).
+    var focusGoalMinutes: Int? {
+        didSet { write(focusGoalMinutes ?? 0, "focusGoalMinutes") }
+    }
 
     /// The retention windows offered, from `spec/constants.json`.
     static let retentionOptions: [Int] = [0, 365, 180, 90]
@@ -89,6 +96,9 @@ final class Preferences {
         excludedApps = (defaults.data(forKey: "excludedApps"))
             .flatMap { try? JSONDecoder().decode([ExcludedApp].self, from: $0) } ?? []
         menuBarOnly = defaults.bool(forKey: "menuBarOnly")
+        // Zero and absent both mean "no goal", so an unset default reads as off.
+        let goal = defaults.integer(forKey: "focusGoalMinutes")
+        focusGoalMinutes = goal > 0 ? goal : nil
     }
 
     var excludedBundleIDs: Set<String> { Set(excludedApps.map(\.bundleID)) }

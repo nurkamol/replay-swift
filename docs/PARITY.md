@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 330 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 349 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -38,11 +38,12 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 | capability | status | notes |
 |---|---|---|
-| Menu bar item | done | current app, today's total, pause/resume, Open Today, Quit |
-| Today | partial | headline, top app, sessions, breaks, expandable cards. No reflection or focus-goal card yet |
+| Menu bar item | done | current app, today's total, pause/resume, Open Today/Timeline, Settings, Quit |
+| Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
+| Today | done | headline, top app, focus-goal card, reflection, sessions and breaks |
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
-| Settings | partial | General, Privacy, Data, Guide, About in their own window, with backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no focus goal, no digests |
+| Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | partial | a day as Markdown, CSV or JSON, carrying notes and tags. PDF/HTML later; no session-level or multi-day scopes yet |
 | Dock badge | later | |
@@ -88,18 +89,21 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **A focus goal, and the Today reflection card.** The two things Today is still missing
-   against the reference. The goal is the app's one evaluative surface, so it has to arrive
-   with its rules intact: off by default, never red, never scolding a quiet day (SPEC §8).
-   `spec/constants.json` already carries its presets and bounds.
-2. **Export scopes beyond one day** — this week, this month, bookmarks, notes, and a single
-   session. The formats and the save panel exist; what is missing is choosing what to cover,
-   which is the `ExportScope` list upstream.
-3. **A real Settings shortcut and app menu.** `Settings…` is reachable only from the menu
-   bar item; there is no application menu, so ⌘, does not work from the window and neither
-   does ⌘W. That is the most obviously un-Mac-like thing left.
+1. **Export scopes beyond one day** — this week, this month, bookmarks, notes, and a single
+   session. The formats, the entry-building and the save panel all exist; what is missing is
+   choosing what a report covers, which is the `ExportScope` list upstream.
+2. **Fixtures for what the suite still cannot see.** `groupByDay` and the three report
+   serialisers are verified by reading the reference and by running the app, not by the
+   contract. Teaching `tools/sync-spec.mjs` to emit scenarios for them is the one change
+   that shrinks the "verified by reading" list rather than growing it.
+3. **Search**, or the first of the memory subsystems. Everything the reference calls
+   Memories, Collections, Story Mode and Canvas is still `later`; Search is the smallest
+   door into that half of the app and the one most useful on its own.
 
 Done and no longer blocking:
+- ~~The application menu, the focus goal, and Today's reflection~~ — ⌘, ⌘W and ⌘C/⌘V now
+  work; the goal card was watched met (green ring, 3-day streak verified against the stored
+  headlines) and unmet (96%, "21m to go", no flame, no red).
 - ~~Export, reflections, menu-bar-only mode~~ — a day exports as Markdown/CSV/JSON carrying
   its notes and tags; a full backup round-tripped through this app's own reader (3,149 rows
   out, 3,149 recognised as already present on re-import); menu-bar-only flips the activation

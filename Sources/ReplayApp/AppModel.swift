@@ -18,6 +18,9 @@ final class AppModel {
     private(set) var errorMessage: String?
     /// Ticks so views that show a live duration redraw.
     private(set) var now: Int64 = Int64(Date().timeIntervalSince1970 * 1000)
+    /// Today's reflection, and the headlines behind a focus streak.
+    private(set) var reflection = Reflection(dayStart: 0)
+    private(set) var recentSummaries: [DailySummary] = []
 
     let store: ActivityStore
     /// Shared with every surface, so a bookmark set in the Timeline is already true here.
@@ -100,6 +103,10 @@ final class AppModel {
             timeline = buildTimeline(events, now: now)
             summary = computeDaySummary(events: events, timeline: timeline, dayStart: dayStart, now: now)
             annotations.load(from: dayStart, to: dayStart + dayMillis)
+            reflection = try store.reflection(dayStart: dayStart)
+            // A year is enough to draw any streak anyone will have, and stays one indexed
+            // range scan rather than a walk back through all of history.
+            recentSummaries = try store.dailySummaries(from: dayStart - 366 * dayMillis, to: dayStart)
             errorMessage = nil
         } catch {
             errorMessage = "\(error)"
@@ -124,6 +131,16 @@ final class AppModel {
         if enabled { tracker.start() } else { tracker.stop() }
         isRecording = tracker.isRecording
         reload()
+    }
+
+    func setReflection(_ text: String) {
+        do {
+            reflection = try store.setReflection(
+                dayStart: startOfLocalDay(now), text: text, now: now
+            )
+        } catch {
+            errorMessage = "\(error)"
+        }
     }
 
     func deleteSession(_ session: ActivitySession) {

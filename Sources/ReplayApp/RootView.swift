@@ -63,7 +63,9 @@ struct RootView: View {
                 Divider()
                 switch navigation.surface {
                 case .today:
-                    TodayView(model: model, annotations: model.annotations)
+                    TodayView(
+                        model: model, annotations: model.annotations, preferences: preferences
+                    )
                 case .timeline:
                     TimelineView(
                         history: history,

@@ -8,6 +8,7 @@ import SwiftUI
 struct TodayView: View {
     let model: AppModel
     let annotations: AnnotationsModel
+    @Bindable var preferences: Preferences
 
     var body: some View {
         ScrollView {
@@ -16,6 +17,24 @@ struct TodayView: View {
 
                 if let summary = model.summary, summary.switches > 0 {
                     HeadlineCard(summary: summary)
+                    // Only when one has been asked for. No goal means no card, not an
+                    // invitation to set one — the app does not push a target on anybody.
+                    if let goal = preferences.focusGoalMinutes {
+                        FocusGoalCard(
+                            progress: Goals.progress(
+                                activeSeconds: summary.activeSeconds, goalMinutes: goal
+                            ),
+                            streak: Goals.streak(
+                                summaries: model.recentSummaries,
+                                todayStart: startOfLocalDay(model.now),
+                                todayActiveSeconds: summary.activeSeconds,
+                                goalMinutes: goal
+                            ),
+                            goalMinutes: goal,
+                            onSetGoal: { preferences.focusGoalMinutes = $0 }
+                        )
+                    }
+                    reflection
                     sessionList
                 } else {
                     quietDay
@@ -46,6 +65,15 @@ struct TodayView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 40)
+    }
+
+    private var reflection: some View {
+        ReflectionCard(
+            dayStart: startOfLocalDay(model.now),
+            reflection: model.reflection,
+            prompt: "What do you want to remember about today?",
+            onCommit: { model.setReflection($0) }
+        )
     }
 
     private var sessionList: some View {

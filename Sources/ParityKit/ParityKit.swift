@@ -107,6 +107,11 @@ public enum ParityKit {
             public let maxTagLength: Int
             public let maxTags: Int
         }
+        public struct FocusGoal: Decodable, Sendable {
+            public let presetMinutes: [Int]
+            public let minCustomMinutes: Int
+            public let maxCustomMinutes: Int
+        }
         public let glazeVersion: String
         public let glazeCommit: String
         public let tracker: Tracker
@@ -114,6 +119,7 @@ public enum ParityKit {
         public let derivation: Derivation
         public let backup: BackupInfo
         public let annotations: Annotations
+        public let focusGoal: FocusGoal
     }
 
     // ── results ───────────────────────────────────────────────────────────────
@@ -204,6 +210,9 @@ public enum ParityKit {
         equal(g1, "minSessionSeconds", Rules.minSessionSeconds, constants.derivation.minSessionSeconds)
         equal(g1, "maxTagLength", Rules.maxTagLength, constants.annotations.maxTagLength)
         equal(g1, "maxTags", Rules.maxTags, constants.annotations.maxTags)
+        equal(g1, "focus goal presets", Goals.presetMinutes, constants.focusGoal.presetMinutes)
+        equal(g1, "minCustomGoalMinutes", Goals.minCustomMinutes, constants.focusGoal.minCustomMinutes)
+        equal(g1, "maxCustomGoalMinutes", Goals.maxCustomMinutes, constants.focusGoal.maxCustomMinutes)
 
         // the category table — order-sensitive, because first match wins and it names
         // the session.
@@ -434,6 +443,47 @@ public enum ParityKit {
         _ = try store.setReflection(dayStart: day, text: "   ", now: t0)
         equal(rg, "cleared back to blank, it leaves no row",
               try store.reflections(from: day, to: day + dayMillis).count, 0)
+
+        // focus goals — the app's one evaluative surface, so its rules are checked rather
+        // than trusted. The streak rule is the subtle one: an unfinished today must not
+        // break a run, or every streak reads as broken every morning.
+        let gg = "focus goal"
+        equal(gg, "a goal under an hour reads as minutes", Goals.format(45), "45m")
+        equal(gg, "a round hour reads in words", Goals.format(60), "1 hour")
+        equal(gg, "more than one hour pluralises", Goals.format(120), "2 hours")
+        equal(gg, "a mixed goal keeps both parts", Goals.format(330), "5h 30m")
+        check(gg, "a preset is not custom", !Goals.isCustom(240))
+        check(gg, "an off-grid target is", Goals.isCustom(45))
+
+        let halfway = Goals.progress(activeSeconds: 1800, goalMinutes: 60)
+        equal(gg, "progress is a fraction of the goal", halfway.fraction, 0.5)
+        equal(gg, "and reports what is left", halfway.remainingSeconds, 1800)
+        check(gg, "an unmet goal is not met", !halfway.met)
+        let overshot = Goals.progress(activeSeconds: 7200, goalMinutes: 60)
+        equal(gg, "overshooting clamps the ring rather than exceeding it", overshot.fraction, 1)
+        equal(gg, "and leaves nothing to go", overshot.remainingSeconds, 0)
+        check(gg, "a met goal is met", overshot.met)
+
+        let yesterday = startOfLocalDay(t0) - dayMillis
+        let dayBefore = yesterday - dayMillis
+        let history = [
+            DailySummary(dayStart: yesterday, activeSeconds: 7200, topBundleID: nil,
+                         topAppName: nil, topSeconds: 0),
+            DailySummary(dayStart: dayBefore, activeSeconds: 7200, topBundleID: nil,
+                         topAppName: nil, topSeconds: 0),
+        ]
+        equal(gg, "an unfinished today keeps the run that ended yesterday",
+              Goals.streak(summaries: history, todayStart: startOfLocalDay(t0),
+                           todayActiveSeconds: 60, goalMinutes: 60), 2)
+        equal(gg, "and today joins the run once it is met",
+              Goals.streak(summaries: history, todayStart: startOfLocalDay(t0),
+                           todayActiveSeconds: 7200, goalMinutes: 60), 3)
+        equal(gg, "a missed day ends the run",
+              Goals.streak(summaries: [history[0]], todayStart: startOfLocalDay(t0),
+                           todayActiveSeconds: 60, goalMinutes: 60), 1)
+        equal(gg, "no goal is no streak",
+              Goals.streak(summaries: history, todayStart: startOfLocalDay(t0),
+                           todayActiveSeconds: 7200, goalMinutes: 0), 0)
 
         // reports — what an export writes. Serialising is the whole feature, so the shapes
         // are checked rather than just the call not throwing.

@@ -31,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.applyExclusions(preferences.excludedBundleIDs)
         navigation.surface = preferences.launchSurface == .timeline ? .timeline : .today
         if preferences.menuBarOnly { NSApp.setActivationPolicy(.accessory) }
+        installApplicationMenu()
         installStatusItem()
         showWindow()
 
@@ -48,6 +49,97 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Closing the window must not quit: Replay keeps recording, and the menu bar is where
     /// it lives.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+
+    // ── the application menu ──────────────────────────────────────────────────
+
+    /// The menu bar every Mac app has, which this one was missing.
+    ///
+    /// Built by hand because there is no nib: an app started from top-level code gets no
+    /// main menu at all, and without one ⌘, ⌘W and ⌘Q do nothing, the window cannot be
+    /// closed from the keyboard, and — the part that actually bites — **⌘C and ⌘V do not
+    /// work in a note or a tag field**, because those are menu-driven on macOS rather than
+    /// built into the text system.
+    private func installApplicationMenu() {
+        let main = NSMenu()
+
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "About Replay", action: #selector(openAbout), keyEquivalent: "")
+            .target = self
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+            .target = self
+        appMenu.addItem(.separator())
+        appMenu.addItem(
+            withTitle: "Hide Replay",
+            action: #selector(NSApplication.hide(_:)),
+            keyEquivalent: "h"
+        )
+        let hideOthers = appMenu.addItem(
+            withTitle: "Hide Others",
+            action: #selector(NSApplication.hideOtherApplications(_:)),
+            keyEquivalent: "h"
+        )
+        hideOthers.keyEquivalentModifierMask = [.command, .option]
+        appMenu.addItem(
+            withTitle: "Show All",
+            action: #selector(NSApplication.unhideAllApplications(_:)),
+            keyEquivalent: ""
+        )
+        appMenu.addItem(.separator())
+        appMenu.addItem(withTitle: "Quit Replay", action: #selector(quit), keyEquivalent: "q")
+            .target = self
+        appItem.submenu = appMenu
+        main.addItem(appItem)
+
+        // Edit exists for the text fields rather than for its own sake — a note field with
+        // no Paste is broken in a way users notice immediately.
+        let editItem = NSMenuItem()
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(
+            withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"
+        )
+        editItem.submenu = editMenu
+        main.addItem(editItem)
+
+        let viewItem = NSMenuItem()
+        let viewMenu = NSMenu(title: "View")
+        viewMenu.addItem(withTitle: "Today", action: #selector(openToday), keyEquivalent: "1")
+            .target = self
+        viewMenu.addItem(withTitle: "Timeline", action: #selector(openTimeline), keyEquivalent: "2")
+            .target = self
+        viewItem.submenu = viewMenu
+        main.addItem(viewItem)
+
+        let windowItem = NSMenuItem()
+        let windowMenu = NSMenu(title: "Window")
+        windowMenu.addItem(
+            withTitle: "Minimize",
+            action: #selector(NSWindow.performMiniaturize(_:)),
+            keyEquivalent: "m"
+        )
+        windowMenu.addItem(
+            withTitle: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"
+        )
+        windowMenu.addItem(withTitle: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
+        windowItem.submenu = windowMenu
+        main.addItem(windowItem)
+
+        NSApp.mainMenu = main
+        NSApp.windowsMenu = windowMenu
+    }
+
+    @objc private func openAbout() {
+        NSApp.orderFrontStandardAboutPanel(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
 
     // ── menu bar ──────────────────────────────────────────────────────────────
 

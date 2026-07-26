@@ -140,6 +140,27 @@ private struct GeneralTab: View {
     let model: AppModel
     @Bindable var preferences: Preferences
 
+    /// Zero is how "no goal" is spelled in the picker; `nil` is how it is stored.
+    private var goalSelection: Binding<Int> {
+        Binding(
+            get: { preferences.focusGoalMinutes ?? 0 },
+            set: { preferences.focusGoalMinutes = $0 == 0 ? nil : $0 }
+        )
+    }
+
+    /// Clamped on the way in, so a typed target cannot be set outside the bounds the
+    /// reference enforces — 4 minutes or 40 hours is not a daily focus goal.
+    private var customMinutes: Binding<Int> {
+        Binding(
+            get: { preferences.focusGoalMinutes ?? Goals.customDefaultMinutes },
+            set: {
+                preferences.focusGoalMinutes = min(
+                    Goals.maxCustomMinutes, max(Goals.minCustomMinutes, $0)
+                )
+            }
+        )
+    }
+
     var body: some View {
         TabScroll {
             Section(title: "Appearance") {
@@ -175,6 +196,45 @@ private struct GeneralTab: View {
                             NSApp.setActivationPolicy(on ? .accessory : .regular)
                             if !on { NSApp.activate(ignoringOtherApps: true) }
                         }
+                }
+            }
+
+            Divider()
+
+            Section(
+                title: "Focus goal",
+                description: "A daily target you set for yourself. Off unless you ask for one — "
+                    + "Replay describes your day, it doesn't set quotas, and a goal you miss is "
+                    + "never held against you."
+            ) {
+                Row(label: "Daily goal") {
+                    Picker("Daily goal", selection: goalSelection) {
+                        Text("No goal").tag(0)
+                        ForEach(Goals.presetMinutes, id: \.self) {
+                            Text(Goals.format($0)).tag($0)
+                        }
+                        // A hand-set target stays selectable rather than snapping to the
+                        // nearest preset the moment this list is opened.
+                        if let goal = preferences.focusGoalMinutes, Goals.isCustom(goal) {
+                            Text("\(Goals.format(goal)) (custom)").tag(goal)
+                        }
+                    }
+                    .labelsHidden()
+                }
+
+                Row(
+                    label: "Custom target",
+                    description: "Anything from \(Goals.format(Goals.minCustomMinutes)) to "
+                        + "\(Goals.format(Goals.maxCustomMinutes)), for a target that isn't a "
+                        + "round hour."
+                ) {
+                    HStack(spacing: 6) {
+                        TextField("", value: customMinutes, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 60)
+                            .multilineTextAlignment(.trailing)
+                        Text("min").font(.caption).foregroundStyle(.secondary)
+                    }
                 }
             }
 

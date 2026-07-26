@@ -171,6 +171,20 @@ public struct DailySummary: Equatable, Sendable {
     public var topBundleID: String?
     public var topAppName: String?
     public var topSeconds: Int
+
+    public init(
+        dayStart: Int64,
+        activeSeconds: Int,
+        topBundleID: String? = nil,
+        topAppName: String? = nil,
+        topSeconds: Int = 0
+    ) {
+        self.dayStart = dayStart
+        self.activeSeconds = activeSeconds
+        self.topBundleID = topBundleID
+        self.topAppName = topAppName
+        self.topSeconds = topSeconds
+    }
 }
 
 /// Local midnight for a timestamp — the app's single definition of "which day".
