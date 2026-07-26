@@ -243,6 +243,53 @@ public enum ParityKit {
             public let allSessionStarts: [Int64]
             public let expected: [String: [Int64]]
         }
+        public struct WeekCase: Decodable, Sendable {
+            public struct Expected: Decodable, Sendable {
+                public struct Day: Decodable, Sendable {
+                    public let dayStart: Int64
+                    public let weekdayShort: String
+                    public let dayOfMonth: Int
+                    public let activeSeconds: Double
+                    public let sessionCount: Int
+                    public let arc: [Double]
+                    public let isToday: Bool
+                    public let isEmpty: Bool
+                }
+                public struct App: Decodable, Sendable {
+                    public let applicationName: String
+                    public let bundleIdentifier: String?
+                    public let seconds: Int
+                    public let share: Double
+                    public let daysUsed: Int
+                }
+                public struct Peak: Decodable, Sendable {
+                    public let weekday: Int
+                    public let hour: Int
+                    public let seconds: Double
+                }
+                public let days: [Day]
+                public let activeSeconds: Int
+                public let activeLabel: String
+                public let sessionCount: Int
+                public let appsUsed: Int
+                public let apps: [App]
+                public let rhythm: [[Double]]
+                public let peak: Peak?
+                public let peakLabel: String?
+            }
+            public struct PeakCase: Decodable, Sendable {
+                public let weekday: Int
+                public let hour: Int
+                public let seconds: Int
+                public let label: String
+            }
+            public let events: [Fixture.Event]
+            public let dayStarts: [Int64]
+            public let now: Int64
+            public let expected: Expected
+            public let peakCases: [PeakCase]
+        }
+
         public struct BreakCase: Decodable, Sendable {
             public let reason: String
             public let seconds: Int
@@ -257,6 +304,8 @@ public enum ParityKit {
         /// What each kind of gap is called, straight from the reference's own
         /// `describeBreak`. Pure copy, and copy is where a port drifts silently.
         public let breaks: [BreakCase]
+        /// A whole week, straight from the reference's `computeWeekSummary`.
+        public let week: WeekCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -687,6 +736,55 @@ public enum ParityKit {
                   described.title, expected.title)
             equal(bg, "and explained the same",
                   described.detail, expected.detail)
+        }
+
+        // A week — the figures, the seven days, the rhythm grid, and the plain-language
+        // read of its busiest cell.
+        let wg = "week summary"
+        let week = computeWeekSummary(
+            events: fixture.week.events.map(event),
+            dayStarts: fixture.week.dayStarts,
+            now: fixture.week.now,
+            calendar: calendar
+        )
+        let wex = fixture.week.expected
+        equal(wg, "the week's active total", week.activeSeconds, wex.activeSeconds)
+        equal(wg, "and how it reads", week.activeLabel, wex.activeLabel)
+        equal(wg, "sessions across the week", week.sessionCount, wex.sessionCount)
+        equal(wg, "distinct applications", week.appsUsed, wex.appsUsed)
+        equal(wg, "seven days, oldest first", week.days.map(\.dayStart), wex.days.map(\.dayStart))
+        equal(wg, "each named by its weekday", week.days.map(\.weekdayShort), wex.days.map(\.weekdayShort))
+        equal(wg, "and its date", week.days.map(\.dayOfMonth), wex.days.map(\.dayOfMonth))
+        equal(wg, "each day's active seconds",
+              week.days.map(\.activeSeconds), wex.days.map { Int($0.activeSeconds) })
+        equal(wg, "and its session count",
+              week.days.map(\.sessionCount), wex.days.map(\.sessionCount))
+        equal(wg, "a day with nothing recorded is rest, not a gap",
+              week.days.map(\.isEmpty), wex.days.map(\.isEmpty))
+        equal(wg, "today is marked", week.days.map(\.isToday), wex.days.map(\.isToday))
+        equal(wg, "each day's hourly arc",
+              week.days.map(\.arc), wex.days.map { $0.arc.map(Int.init) })
+        equal(wg, "applications ordered by time, ties holding their first-seen order",
+              week.apps.map(\.applicationName), wex.apps.map(\.applicationName))
+        equal(wg, "with the same totals", week.apps.map(\.seconds), wex.apps.map(\.seconds))
+        equal(wg, "and the same days-used counts",
+              week.apps.map(\.daysUsed), wex.apps.map(\.daysUsed))
+        check(wg, "and shares that match to four places",
+              zip(week.apps, wex.apps).allSatisfy { abs($0.share - $1.share) < 0.0001 })
+        equal(wg, "the rhythm grid, weekday by hour",
+              week.rhythm, wex.rhythm.map { $0.map(Int.init) })
+        equal(wg, "the busiest cell's weekday", week.peak?.weekday, wex.peak?.weekday)
+        equal(wg, "and its hour", week.peak?.hour, wex.peak?.hour)
+        equal(wg, "and how long was spent there",
+              week.peak?.seconds, wex.peak.map { Int($0.seconds) })
+        equal(wg, "read back in plain language",
+              week.peak.map(describePeak), wex.peakLabel)
+        for expected in fixture.week.peakCases {
+            equal(wg, "hour \(expected.hour) on weekday \(expected.weekday) reads the same",
+                  describePeak(WeekSummary.Peak(
+                      weekday: expected.weekday, hour: expected.hour, seconds: expected.seconds
+                  )),
+                  expected.label)
         }
 
         let rg2 = "report text"

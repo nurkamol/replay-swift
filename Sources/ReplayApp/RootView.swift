@@ -14,7 +14,7 @@ import SwiftUI
 @Observable
 final class Navigation {
     enum Surface: String, CaseIterable, Identifiable, Hashable {
-        case today = "Today", timeline = "Timeline", search = "Search"
+        case today = "Today", week = "This Week", timeline = "Timeline", search = "Search"
         case memories = "Memories", collections = "Collections"
 
         var id: String { rawValue }
@@ -25,6 +25,7 @@ final class Navigation {
         var symbol: String {
             switch self {
             case .today: "sun.max"
+            case .week: "chart.bar"
             case .timeline: "calendar.day.timeline.left"
             case .search: "magnifyingglass"
             case .memories: "clock.arrow.circlepath"
@@ -37,6 +38,7 @@ final class Navigation {
         var purpose: String {
             switch self {
             case .today: "What today has been so far"
+            case .week: "The last seven days, and when you were here"
             case .timeline: "Your recent days, newest first"
             case .search: "Find a session by name, note, tag or app"
             case .memories: "What you were doing on this date before"
@@ -93,6 +95,7 @@ struct RootView: View {
     let search: SearchModel
     let memories: MemoriesModel
     let collections: CollectionsModel
+    let week: WeekModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -135,6 +138,7 @@ struct RootView: View {
             case .search: search.load()
             case .memories: memories.load()
             case .collections: collections.load()
+            case .week: week.load()
             case .today: break
             }
         }
@@ -196,6 +200,8 @@ struct RootView: View {
                 export: export, memories: memories, preferences: preferences,
                 onOpenDay: { navigation.open(day: $0) }
             )
+        case .week:
+            WeekView(week: week)
         case .timeline:
             TimelineView(
                 history: history,

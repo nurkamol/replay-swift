@@ -73,6 +73,8 @@ enum Design {
 
     enum Radius {
         /// A tag, a badge, an icon tile.
+        /// A bar in a rhythm strip — enough to take the sharp edge off, no more.
+        static let hair: CGFloat = 1.5
         static let small: CGFloat = 6
         /// A control, a well, a compact row.
         static let control: CGFloat = 8
@@ -227,6 +229,14 @@ enum Design {
         /// How far a bookmarked border is warmed, and a streak's background tinted.
         static let markedOpacity: Double = 0.45
         static let streakOpacity: Double = 0.12
+
+        /// A rhythm bar's weight. The busiest hour is solid and the quietest still shows,
+        /// so the strip reads as a shape rather than as a row of on/off cells.
+        static let arcFloorOpacity: Double = 0.45
+        static let arcRangeOpacity: Double = 0.55
+        static let arcQuietOpacity: Double = 0.60
+        /// A day with nothing recorded, dimmed as a whole — rest, not absence.
+        static let arcRestOpacity: Double = 0.50
         static let markedBorder = AnyShapeStyle(Color.yellow.opacity(0.45))
         /// A goal that was reached. The app's only approving colour.
         static let met = Color.green
@@ -355,6 +365,24 @@ enum Design {
         static let ringThickness: CGFloat = 4
         /// The row a progress bar is laid out in.
         static let barRow: CGFloat = 12
+        /// A weekday's name and date, so the seven rhythm rows align.
+        static let weekdayColumn: CGFloat = 44
+        /// A day's rhythm strip, and the pieces of it.
+        static let arcHeight: CGFloat = 28
+        /// A quiet hour still draws, so the shape of a day stays legible.
+        static let arcBaseline: CGFloat = 2
+        /// And an hour with anything in it is never thinner than this.
+        static let arcMinBar: CGFloat = 3.4
+        /// A bar is measured against a sixth of the busiest day…
+        static let arcCeilingDivisor: Double = 6
+        /// …but never against less than ten minutes, or a week of short days draws full.
+        static let arcCeilingFloorSeconds: Double = 600
+        /// The widest a rhythm strip is allowed to get. Twenty-four bars stretched across
+        /// a full-screen window stop being a strip and become a row of blocks; capped, the
+        /// shape of a day stays legible at any window size.
+        static let arcMaxWidth: CGFloat = 560
+        /// The hour scale under the seven rows.
+        static let axisHeight: CGFloat = 12
         /// A small numeric field in Settings.
         static let numberField: CGFloat = 60
         /// A tag entry field, sized to a tag rather than to the row.

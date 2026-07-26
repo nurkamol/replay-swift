@@ -470,7 +470,7 @@ function buildExportFixtures() {
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
        export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
-       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
+       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
        // sessionMatches is module-private in the view, so the predicate is
        // re-declared here character for character. If it drifts upstream this
        // fixture keeps asserting the old rule — the one risk in extracting it,
@@ -507,6 +507,7 @@ function buildExportFixtures() {
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories, describeBreak,
+               computeWeekSummary, describePeak,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
@@ -523,6 +524,17 @@ function buildExportFixtures() {
        // anything failing: the words are the product (SPEC §8), and nothing else
        // in this contract covers them.
        const breaks = input.breakCases.map((c) => ({ ...c, ...describeBreak(c) }));
+
+       // A week: seven days of figures, a weekday x hour rhythm grid, and the
+       // plain-language read of its busiest cell.
+       const weekSummary = computeWeekSummary(input.weekEvents, input.weekDayStarts, input.weekNow);
+       const week = {
+         ...weekSummary,
+         peakLabel: weekSummary.peak ? describePeak(weekSummary.peak) : null,
+       };
+       // Every branch of describePeak, so the boundary hours are pinned rather
+       // than sampled by whatever the week fixture happened to land on.
+       const peakLabels = input.peakCases.map((p) => ({ ...p, label: describePeak(p) }));
 
        const sessions = buildTimeline(input.reportEvents, input.reportNow)
          .filter((item) => item.kind === "session");
@@ -608,6 +620,8 @@ function buildExportFixtures() {
          history,
          grouping,
          breaks,
+         week,
+         peakLabels,
          reports,
          sessionCount: sessions.length,
          searchResults,
@@ -809,9 +823,52 @@ function buildExportFixtures() {
       { kind: "break", reason: "idle", seconds: 5_400, startedAt: 0, endedAt: 0 },
     ];
 
+    /*
+     * A week with something to say in every field: two days with real work, one
+     * empty (rest is a legitimate day, not a hole), an app used across several
+     * days so `daysUsed` is not just 1, two apps tied on seconds so the stable
+     * sort is pinned, and a stretch crossing an hour boundary so the rhythm
+     * grid has to split it rather than drop it in one cell.
+     */
+    const weekDayStart = 1_769_990_400_000; // a local midnight under the pinned TZ
+    const weekDayStarts = Array.from({ length: 7 }, (_, i) => weekDayStart + i * DAY);
+    const wd = (day, h, m = 0) => weekDayStarts[day] + h * 3_600_000 + m * 60_000;
+    const weekEvents = [
+      ev(400, "Code", "com.microsoft.VSCode", wd(0, 9), 1200),
+      ev(401, "Safari", "com.apple.Safari", wd(0, 9, 20), 600),
+      // Starts 20 minutes before the hour and runs 25, so it lands in two rhythm
+      // cells. Kept under idleStretchSeconds (1800) or the derivation drops it as
+      // absence and the case silently tests nothing.
+      ev(402, "Code", "com.microsoft.VSCode", wd(1, 10, 40), 1500),
+      ev(403, "Terminal", "com.apple.Terminal", wd(3, 14), 900),
+      // Ties with Terminal on seconds; whichever was seen first must sort first.
+      ev(404, "Mail", "com.apple.mail", wd(3, 15), 900),
+      ev(405, "Code", "com.microsoft.VSCode", wd(5, 21), 1500),
+      // Day 6 is deliberately empty.
+    ];
+    const weekNow = wd(6, 12);
+
+    /** The hour boundaries in `describePeak`, from each side. */
+    const peakCases = [
+      { weekday: 0, hour: 0, seconds: 1 },
+      { weekday: 1, hour: 4, seconds: 1 },
+      { weekday: 2, hour: 5, seconds: 1 },
+      { weekday: 3, hour: 11, seconds: 1 },
+      { weekday: 4, hour: 12, seconds: 1 },
+      { weekday: 5, hour: 16, seconds: 1 },
+      { weekday: 6, hour: 17, seconds: 1 },
+      { weekday: 0, hour: 21, seconds: 1 },
+      { weekday: 1, hour: 22, seconds: 1 },
+      { weekday: 2, hour: 23, seconds: 1 },
+    ];
+
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        weekEvents,
+        weekDayStarts,
+        weekNow,
+        peakCases,
         breakCases,
         groupingEvents,
         reportEvents,
@@ -847,6 +904,13 @@ function buildExportFixtures() {
       exportedAtMillis: FIXTURE_NOW,
       grouping: { events: groupingEvents, expected: result.grouping },
       breaks: result.breaks,
+      week: {
+        events: weekEvents,
+        dayStarts: weekDayStarts,
+        now: weekNow,
+        expected: result.week,
+        peakCases: result.peakLabels,
+      },
       search: { queries: input_searchQueries, expected: result.searchResults },
       history: { summaries: historySummaries, cases: result.history },
       stories: { cases: storyCases, expected: result.stories },

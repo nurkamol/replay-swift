@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var search = SearchModel(model: model)
     private lazy var memories = MemoriesModel(model: model)
     private lazy var collections = CollectionsModel(model: model)
+    private lazy var week = WeekModel(model: model)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -168,17 +169,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewMenu.addItem(.separator())
         viewMenu.addItem(withTitle: "Today", action: #selector(openToday), keyEquivalent: "1")
             .target = self
-        viewMenu.addItem(withTitle: "Timeline", action: #selector(openTimeline), keyEquivalent: "2")
+        viewMenu.addItem(withTitle: "This Week", action: #selector(openWeek), keyEquivalent: "2")
+            .target = self
+        viewMenu.addItem(withTitle: "Timeline", action: #selector(openTimeline), keyEquivalent: "3")
             .target = self
         // Numbered in sidebar order. Search is ⌘3 rather than ⌘F: ⌘F is Find, and
         // `.searchable` binds it to focus the field — a menu item that stole it switched
         // surfaces and then swallowed the keystrokes meant for the search box.
-        viewMenu.addItem(withTitle: "Search", action: #selector(openSearch), keyEquivalent: "3")
+        viewMenu.addItem(withTitle: "Search", action: #selector(openSearch), keyEquivalent: "4")
             .target = self
-        viewMenu.addItem(withTitle: "Memories", action: #selector(openMemories), keyEquivalent: "4")
+        viewMenu.addItem(withTitle: "Memories", action: #selector(openMemories), keyEquivalent: "5")
             .target = self
         viewMenu.addItem(
-            withTitle: "Collections", action: #selector(openCollections), keyEquivalent: "5"
+            withTitle: "Collections", action: #selector(openCollections), keyEquivalent: "6"
         ).target = self
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
@@ -247,6 +250,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 model: model, history: history, navigation: navigation,
                 preferences: preferences, export: export, search: search, memories: memories,
                 collections: collections,
+                week: week,
                 onOpenSettings: { [weak self] in self?.openSettings() }
             )
         )
@@ -274,6 +278,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openToday() {
         model.reload()
         navigation.show(.today)
+        showWindow()
+    }
+
+    @objc private func openWeek() {
+        week.load()
+        navigation.show(.week)
         showWindow()
     }
 

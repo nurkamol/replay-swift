@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 458 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 489 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| Week summary | done | `computeWeekSummary` — seven days, per-day arcs, app shares and days-used, the weekday × hour rhythm grid and its peak. 31 checks against the reference's own output |
 
 ### Break copy, now covered
 
@@ -52,6 +53,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, reflection, sessions and breaks |
+| This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
 | Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
@@ -136,10 +138,18 @@ function now and live in `ReplayCore` where the suite can reach them.
    into a library is the unlock, and it is the largest quiet risk left.
 2. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
    machine has no Developer ID at all. A decision, not a task. See `docs/ROADMAP.md`.
-3. **Projects**, the last of the small derived subsystems. Needs detection logic that has no
-   equivalent here yet.
+3. **Workflows** — recurring application combinations across a week, which the reference
+   shows on its Week view under the rhythm strip. `detectWorkflows` has no equivalent here
+   yet; This Week ships without the section rather than with an empty one.
 
 Done and no longer blocking:
+- ~~This Week was missing entirely~~ — a whole reference surface the ledger had never
+  recorded. `computeWeekSummary` is ported and generated into the contract (31 checks): the
+  seven days, each day's hourly arc, application shares with how many days each appeared on,
+  the weekday × hour rhythm grid and its busiest cell. The tie-break was the trap, as it
+  always is — two applications level on seconds must hold the order they were first seen in,
+  which JavaScript's stable sort gives free and Swift's does not. Verified by flipping it and
+  watching the check fail.
 - ~~Hard-coded values scattered through the views~~ — one design system, every view reading
   from it, and an audit in CI that fails the build if one drifts back. Changing
   `Radius.card` once visibly re-rounds every card in the app; that was checked by doing it.
