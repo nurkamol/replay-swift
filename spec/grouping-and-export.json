@@ -68,6 +68,513 @@
       }
     ]
   },
+  "scopes": {
+    "events": [
+      {
+        "id": 100,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770120000000,
+        "endedAt": 1770120900000,
+        "duration": 900
+      },
+      {
+        "id": 101,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770120900000,
+        "endedAt": 1770121500000,
+        "duration": 600
+      },
+      {
+        "id": 102,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770033600000,
+        "endedAt": 1770034500000,
+        "duration": 900
+      },
+      {
+        "id": 103,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770034500000,
+        "endedAt": 1770035100000,
+        "duration": 600
+      },
+      {
+        "id": 104,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769947200000,
+        "endedAt": 1769948100000,
+        "duration": 900
+      },
+      {
+        "id": 105,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769948100000,
+        "endedAt": 1769948700000,
+        "duration": 600
+      },
+      {
+        "id": 106,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769860800000,
+        "endedAt": 1769861700000,
+        "duration": 900
+      },
+      {
+        "id": 107,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769861700000,
+        "endedAt": 1769862300000,
+        "duration": 600
+      },
+      {
+        "id": 108,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769774400000,
+        "endedAt": 1769775300000,
+        "duration": 900
+      },
+      {
+        "id": 109,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769775300000,
+        "endedAt": 1769775900000,
+        "duration": 600
+      },
+      {
+        "id": 110,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769688000000,
+        "endedAt": 1769688900000,
+        "duration": 900
+      },
+      {
+        "id": 111,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769688900000,
+        "endedAt": 1769689500000,
+        "duration": 600
+      },
+      {
+        "id": 112,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769601600000,
+        "endedAt": 1769602500000,
+        "duration": 900
+      },
+      {
+        "id": 113,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769602500000,
+        "endedAt": 1769603100000,
+        "duration": 600
+      },
+      {
+        "id": 114,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769515200000,
+        "endedAt": 1769516100000,
+        "duration": 900
+      },
+      {
+        "id": 115,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769516100000,
+        "endedAt": 1769516700000,
+        "duration": 600
+      },
+      {
+        "id": 116,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769428800000,
+        "endedAt": 1769429700000,
+        "duration": 900
+      },
+      {
+        "id": 117,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769429700000,
+        "endedAt": 1769430300000,
+        "duration": 600
+      },
+      {
+        "id": 118,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769342400000,
+        "endedAt": 1769343300000,
+        "duration": 900
+      },
+      {
+        "id": 119,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769343300000,
+        "endedAt": 1769343900000,
+        "duration": 600
+      },
+      {
+        "id": 120,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769256000000,
+        "endedAt": 1769256900000,
+        "duration": 900
+      },
+      {
+        "id": 121,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769256900000,
+        "endedAt": 1769257500000,
+        "duration": 600
+      },
+      {
+        "id": 122,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769169600000,
+        "endedAt": 1769170500000,
+        "duration": 900
+      },
+      {
+        "id": 123,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769170500000,
+        "endedAt": 1769171100000,
+        "duration": 600
+      },
+      {
+        "id": 124,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1769083200000,
+        "endedAt": 1769084100000,
+        "duration": 900
+      },
+      {
+        "id": 125,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1769084100000,
+        "endedAt": 1769084700000,
+        "duration": 600
+      },
+      {
+        "id": 126,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1768996800000,
+        "endedAt": 1768997700000,
+        "duration": 900
+      },
+      {
+        "id": 127,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1768997700000,
+        "endedAt": 1768998300000,
+        "duration": 600
+      },
+      {
+        "id": 128,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1768910400000,
+        "endedAt": 1768911300000,
+        "duration": 900
+      },
+      {
+        "id": 129,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1768911300000,
+        "endedAt": 1768911900000,
+        "duration": 600
+      },
+      {
+        "id": 130,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1768824000000,
+        "endedAt": 1768824900000,
+        "duration": 900
+      },
+      {
+        "id": 131,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1768824900000,
+        "endedAt": 1768825500000,
+        "duration": 600
+      },
+      {
+        "id": 132,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1768737600000,
+        "endedAt": 1768738500000,
+        "duration": 900
+      },
+      {
+        "id": 133,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1768738500000,
+        "endedAt": 1768739100000,
+        "duration": 600
+      },
+      {
+        "id": 134,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1768651200000,
+        "endedAt": 1768652100000,
+        "duration": 900
+      },
+      {
+        "id": 135,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1768652100000,
+        "endedAt": 1768652700000,
+        "duration": 600
+      },
+      {
+        "id": 136,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1768564800000,
+        "endedAt": 1768565700000,
+        "duration": 900
+      },
+      {
+        "id": 137,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1768565700000,
+        "endedAt": 1768566300000,
+        "duration": 600
+      },
+      {
+        "id": 138,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1768478400000,
+        "endedAt": 1768479300000,
+        "duration": 900
+      },
+      {
+        "id": 139,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1768479300000,
+        "endedAt": 1768479900000,
+        "duration": 600
+      }
+    ],
+    "now": 1770123600000,
+    "todayStart": 1770076800000,
+    "annotations": [
+      {
+        "sessionStart": 1770120000000,
+        "note": "",
+        "bookmarked": true,
+        "tags": []
+      },
+      {
+        "sessionStart": 1769428800000,
+        "note": "worth remembering",
+        "bookmarked": false,
+        "tags": []
+      },
+      {
+        "sessionStart": 1768824000000,
+        "note": "both",
+        "bookmarked": true,
+        "tags": [
+          "deep work"
+        ]
+      },
+      {
+        "sessionStart": 1769860800000,
+        "note": "   ",
+        "bookmarked": false,
+        "tags": []
+      }
+    ],
+    "offered": [
+      "today",
+      "week",
+      "month",
+      "bookmarks",
+      "notes"
+    ],
+    "allSessionStarts": [
+      1770120000000,
+      1770033600000,
+      1769947200000,
+      1769860800000,
+      1769774400000,
+      1769688000000,
+      1769601600000,
+      1769515200000,
+      1769428800000,
+      1769342400000,
+      1769256000000,
+      1769169600000,
+      1769083200000,
+      1768996800000,
+      1768910400000,
+      1768824000000,
+      1768737600000,
+      1768651200000,
+      1768564800000,
+      1768478400000
+    ],
+    "expected": {
+      "today": [
+        1770120000000
+      ],
+      "week": [
+        1770120000000,
+        1770033600000,
+        1769947200000,
+        1769860800000,
+        1769774400000,
+        1769688000000,
+        1769601600000
+      ],
+      "month": [
+        1770120000000,
+        1770033600000,
+        1769947200000,
+        1769860800000,
+        1769774400000,
+        1769688000000,
+        1769601600000,
+        1769515200000,
+        1769428800000,
+        1769342400000,
+        1769256000000,
+        1769169600000,
+        1769083200000,
+        1768996800000,
+        1768910400000,
+        1768824000000,
+        1768737600000,
+        1768651200000,
+        1768564800000,
+        1768478400000
+      ],
+      "bookmarks": [
+        1770120000000,
+        1768824000000
+      ],
+      "notes": [
+        1769428800000,
+        1768824000000
+      ]
+    }
+  },
   "report": {
     "label": "This Week",
     "now": 1770000000000,

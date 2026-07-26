@@ -154,11 +154,23 @@ public enum ParityKit {
             public let annotations: [Annotation]
             public let expected: Reports
         }
+        public struct Scopes: Decodable, Sendable {
+            public let events: [Fixture.Event]
+            public let now: Int64
+            public let todayStart: Int64
+            public let annotations: [Annotation]
+            /// Every scope the reference offers, so one added upstream shows up as a key
+            /// this port does not handle rather than as silence.
+            public let offered: [String]
+            public let allSessionStarts: [Int64]
+            public let expected: [String: [Int64]]
+        }
         public let timeZone: String
         public let locale: String
         public let exportedAtMillis: Int64
         public let grouping: Grouping
         public let report: ReportCase
+        public let scopes: Scopes
     }
 
     // ── results ───────────────────────────────────────────────────────────────
@@ -630,6 +642,48 @@ public enum ParityKit {
                       ourSession["tags"] as? [String], theirSession["tags"] as? [String])
             }
         }
+
+        // Export scopes — which sessions a report covers.
+        let sg = "export scopes"
+        equal(sg, "the port offers every scope the reference does",
+              ReplayCore.Report.Scope.allCases.map(\.rawValue).sorted(),
+              fixture.scopes.offered.sorted())
+
+        let scopeSessions = ReplayCore.Report.sessions(
+            in: fixture.scopes.events.map(event), now: fixture.scopes.now, calendar: calendar
+        )
+        equal(sg, "the same sessions derive from a month of events",
+              scopeSessions.map(\.startedAt), fixture.scopes.allSessionStarts)
+
+        var scopeAnnotations: [Int64: SessionAnnotation] = [:]
+        for annotation in fixture.scopes.annotations {
+            scopeAnnotations[annotation.sessionStart] = SessionAnnotation(
+                sessionStart: annotation.sessionStart,
+                note: annotation.note,
+                bookmarked: annotation.bookmarked,
+                tags: annotation.tags
+            )
+        }
+
+        for scope in ReplayCore.Report.Scope.allCases {
+            guard let expected = fixture.scopes.expected[scope.rawValue] else {
+                check(sg, "\(scope.rawValue) is covered by the fixture", false, "no expectation recorded")
+                continue
+            }
+            let selected = ReplayCore.Report.select(
+                scope,
+                sessions: scopeSessions,
+                annotations: scopeAnnotations,
+                todayStart: fixture.scopes.todayStart
+            )
+            equal(sg, "\(scope.rawValue) selects the same sessions",
+                  selected.map(\.session.startedAt), expected)
+        }
+        // Stated separately because it is the rule most easily lost: a note of only
+        // whitespace is not a note, and must not put a session in that scope.
+        check(sg, "a whitespace-only note does not count as a note",
+              (fixture.scopes.expected["notes"] ?? []).count
+                  < fixture.scopes.annotations.filter { !$0.note.isEmpty }.count)
 
         // focus goals — the app's one evaluative surface, so its rules are checked rather
         // than trusted. The streak rule is the subtle one: an unfinished today must not

@@ -64,7 +64,8 @@ struct RootView: View {
                 switch navigation.surface {
                 case .today:
                     TodayView(
-                        model: model, annotations: model.annotations, preferences: preferences
+                        model: model, annotations: model.annotations,
+                        export: export, preferences: preferences
                     )
                 case .timeline:
                     TimelineView(

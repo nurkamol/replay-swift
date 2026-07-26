@@ -109,6 +109,7 @@ private struct DaySection: View {
                     SessionCard(
                         session: session,
                         annotations: annotations,
+                        export: export,
                         onDelete: { history.deleteSession(session) }
                     )
                 case .breakItem(let gap):
@@ -272,6 +273,7 @@ struct DayView: View {
                                 SessionCard(
                                     session: session,
                                     annotations: annotations,
+                                    export: export,
                                     onDelete: { onDeleteSession(session) }
                                 )
                             case .breakItem(let gap):

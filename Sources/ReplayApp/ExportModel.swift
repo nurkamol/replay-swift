@@ -28,12 +28,54 @@ final class ExportModel {
         }
     }
 
-    /// Save a report of these sessions.
+    /// How many sessions a scope would export right now, for the dialog to say so before
+    /// anyone picks a file. An export that turns out to be empty after the save panel is a
+    /// wasted trip.
+    func count(_ scope: Report.Scope) -> Int {
+        selection(scope).count
+    }
+
+    /// Export a named slice of history rather than one day.
+    func exportScope(_ format: Report.Format, scope: Report.Scope) {
+        exportReport(format, label: scope.label, entries: selection(scope))
+    }
+
+    /// The sessions a scope covers, derived from one fetch wide enough for any of them.
+    private func selection(_ scope: Report.Scope) -> [Report.Entry] {
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        let todayStart = startOfLocalDay(now)
+        let from = todayStart - Int64(Report.fetchDays - 1) * dayMillis
+        let to = todayStart + dayMillis
+
+        do {
+            // The store's range query reaches back on purpose, so runs that began before the
+            // window are dropped here — the same rule every day-scoped view follows (SPEC §5).
+            let events = try model.store.sessions(from: from, to: to)
+                .filter { $0.startedAt >= from }
+            let sessions = Report.sessions(in: events, now: now)
+            let annotations = Dictionary(
+                uniqueKeysWithValues: try model.store.annotations(from: from, to: to)
+                    .map { ($0.sessionStart, $0) }
+            )
+            return Report.select(
+                scope, sessions: sessions, annotations: annotations, todayStart: todayStart
+            )
+        } catch {
+            errorMessage = "\(error)"
+            return []
+        }
+    }
+
+    /// Save a report of these sessions, pairing each with what was written on it.
+    func exportReport(_ format: Report.Format, label: String, sessions: [ActivitySession]) {
+        exportReport(format, label: label, entries: entries(for: sessions))
+    }
+
+    /// Save a report of entries that are already paired.
     ///
     /// Refuses an empty selection rather than writing an empty file: a report of nothing is
     /// a file you find later and cannot explain.
-    func exportReport(_ format: Report.Format, label: String, sessions: [ActivitySession]) {
-        let entries = entries(for: sessions)
+    func exportReport(_ format: Report.Format, label: String, entries: [Report.Entry]) {
         guard !entries.isEmpty else {
             errorMessage = "There's nothing recorded here to export"
             return

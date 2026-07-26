@@ -59,6 +59,74 @@ public enum Report {
         }
     }
 
+    /// What slice of history a report covers.
+    ///
+    /// These filter *within the window the caller fetched* rather than fetching their own —
+    /// which is why `month` keeps everything it is given. A caller that hands this a week of
+    /// events and asks for `month` gets a week, and is the one that got it wrong. Callers
+    /// use ``Report/fetchDays`` so there is one answer to how much to ask for.
+    public enum Scope: String, CaseIterable, Sendable {
+        case today, week, month, bookmarks, notes
+
+        public var label: String {
+            switch self {
+            case .today: "Today"
+            case .week: "This Week"
+            case .month: "This Month"
+            case .bookmarks: "Bookmarks"
+            case .notes: "Notes"
+            }
+        }
+    }
+
+    /// Days of history every scope needs fetched — the widest any of them looks.
+    public static let fetchDays = 30
+
+    /// Every session in a set of events, newest first.
+    ///
+    /// Built per day, like everywhere else, so a run never straddles midnight (SPEC §5).
+    public static func sessions(
+        in events: [ActivityEvent], now: Int64, calendar: Calendar = .current
+    ) -> [ActivitySession] {
+        groupByDay(events, calendar: calendar)
+            .flatMap { group in
+                buildTimeline(group.events, now: now, calendar: calendar).compactMap {
+                    if case .session(let session) = $0 { return session } else { return nil }
+                }
+            }
+            .sorted { $0.startedAt > $1.startedAt }
+    }
+
+    /// Pick the sessions a scope covers, pairing each with what was written on it.
+    ///
+    /// `bookmarks` and `notes` cut across time rather than bounding it: they are "everything
+    /// I marked", which is the reason to keep a mark at all.
+    public static func select(
+        _ scope: Scope,
+        sessions: [ActivitySession],
+        annotations: [Int64: SessionAnnotation],
+        todayStart: Int64
+    ) -> [Entry] {
+        func paired(_ session: ActivitySession) -> Entry {
+            Entry(session: session, annotation: annotations[session.startedAt])
+        }
+
+        switch scope {
+        case .today:
+            return sessions.filter { $0.startedAt >= todayStart }.map(paired)
+        case .week:
+            return sessions.filter { $0.startedAt >= todayStart - 6 * dayMillis }.map(paired)
+        case .month:
+            return sessions.map(paired)
+        case .bookmarks:
+            return sessions.map(paired).filter { $0.annotation?.bookmarked == true }
+        case .notes:
+            return sessions.map(paired).filter {
+                !($0.annotation?.note.trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+            }
+        }
+    }
+
     /// The default filename for an export.
     ///
     /// Named for the date it covers rather than how it was reached: a file called

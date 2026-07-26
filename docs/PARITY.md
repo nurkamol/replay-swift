@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 379 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 387 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -45,7 +45,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
 | Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
-| Export a day / a session | partial | a day as Markdown, CSV or JSON, carrying notes and tags — text checked against the reference's own output. PDF/HTML later; no session-level or multi-day scopes yet |
+| Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV or JSON, carrying notes and tags. Scope selection and report text both checked against the reference's own output. PDF and HTML later |
 | Dock badge | later | |
 | Memories / Today in History | later | |
 | Search | later | |
@@ -93,16 +93,21 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Export scopes beyond one day** — this week, this month, bookmarks, notes, and a single
-   session. The formats, the entry-building and the save panel all exist, and the text is now
-   checked against the reference; what is missing is choosing what a report covers.
-2. **Search**, the smallest door into the half of the app still marked `later` — Memories,
+1. **Search**, the smallest door into the half of the app still marked `later` — Memories,
    Collections, Story Mode, Canvas — and the one most useful on its own.
-3. **Sign and notarise a build.** `scripts/make-app.sh` signs ad-hoc, which is enough to run
+2. **Sign and notarise a build.** `scripts/make-app.sh` signs ad-hoc, which is enough to run
    it here and not enough to hand to anyone. That is the gap between "it works" and "it is
    an app", and it needs a Developer ID and a stable Xcode.
+3. **PDF and HTML exports.** The reference offers five formats; this port offers three. The
+   two missing ones are the ones you would send someone, and they need a rendering step
+   rather than a serialiser.
 
 Done and no longer blocking:
+- ~~Export covered only one day~~ — today, this week, this month, bookmarks, notes, and a
+  single session, each checked against the sessions the reference's own `selectScope` picked.
+  Verified on real data: the count shown before the save panel (68) matched the exported
+  file, and its per-day split (20/39/9) matched what Today and the day view report
+  independently.
 - ~~Nothing runs the suite but a human remembering to~~ — `.github/workflows/parity.yml`
   runs it on every push and pull request, in four timezones. It cannot check whether `spec/`
   is *current* — that needs the Glaze sources, which are not in this repository — only that

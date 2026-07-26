@@ -468,6 +468,11 @@ private struct DataTab: View {
     @Bindable var preferences: Preferences
 
     @State private var confirmingClear = false
+    @State private var scope: Report.Scope = .week
+    @State private var format: Report.Format = .markdown
+
+    /// Recomputed as the scope changes, so the count on screen is about the scope on screen.
+    private var matching: Int { export.count(scope) }
 
     var body: some View {
         TabScroll {
@@ -475,6 +480,41 @@ private struct DataTab: View {
                 title: "Your data",
                 description: "Your timeline is yours. Take a copy, or bring one back."
             ) {
+                Row(
+                    label: "Export report",
+                    description: "Today, this week, this month, or everything you bookmarked or "
+                        + "wrote a note on — as Markdown, CSV or JSON."
+                ) {
+                    VStack(alignment: .trailing, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Picker("Scope", selection: $scope) {
+                                ForEach(Report.Scope.allCases, id: \.self) {
+                                    Text($0.label).tag($0)
+                                }
+                            }
+                            .labelsHidden()
+                            .fixedSize()
+
+                            Picker("Format", selection: $format) {
+                                ForEach(Report.Format.allCases, id: \.self) {
+                                    Text($0.label).tag($0)
+                                }
+                            }
+                            .labelsHidden()
+                            .fixedSize()
+
+                            Button("Export…") { export.exportScope(format, scope: scope) }
+                                .disabled(matching == 0)
+                        }
+                        // Said before the save panel rather than after: an export that turns
+                        // out to be empty is a wasted trip through a file dialog.
+                        Text(matching == 1 ? "1 session" : "\(matching) sessions")
+                            .font(.caption)
+                            .foregroundStyle(matching == 0 ? .secondary : .tertiary)
+                            .monospacedDigit()
+                    }
+                }
+
                 Row(
                     label: "Full backup",
                     description: "Every row as readable JSON — the format Replay can restore "

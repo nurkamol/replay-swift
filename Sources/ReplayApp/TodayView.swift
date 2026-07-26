@@ -8,6 +8,7 @@ import SwiftUI
 struct TodayView: View {
     let model: AppModel
     let annotations: AnnotationsModel
+    let export: ExportModel
     @Bindable var preferences: Preferences
 
     var body: some View {
@@ -90,6 +91,7 @@ struct TodayView: View {
                     SessionCard(
                         session: session,
                         annotations: annotations,
+                        export: export,
                         onDelete: { model.deleteSession(session) }
                     )
                 case .breakItem(let gap):
@@ -172,6 +174,7 @@ private struct HeadlineCard: View {
 struct SessionCard: View {
     let session: ActivitySession
     let annotations: AnnotationsModel
+    let export: ExportModel
     let onDelete: () -> Void
     @State private var expanded = false
 
@@ -239,6 +242,17 @@ struct SessionCard: View {
                     Menu {
                         Button(annotation.bookmarked ? "Remove Bookmark" : "Bookmark") {
                             annotations.setBookmarked(session.startedAt, !annotation.bookmarked)
+                        }
+                        Menu("Export Session") {
+                            ForEach(Report.Format.allCases, id: \.self) { format in
+                                Button(format.label) {
+                                    // Named for the session, not the day it sits in: one
+                                    // session's file should say which session.
+                                    export.exportReport(
+                                        format, label: session.title, sessions: [session]
+                                    )
+                                }
+                            }
                         }
                         Divider()
                         Button("Delete Session…", role: .destructive, action: onDelete)

@@ -430,8 +430,8 @@ function buildExportFixtures() {
     writeFileSync(
       entry,
       `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
-       export { buildExport } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
-       export { buildTimeline } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};`,
+       export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
+       export { buildTimeline, groupSessionsForWeek } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};`,
     );
     execFileSync(
       "npx",
@@ -452,7 +452,8 @@ function buildExportFixtures() {
        }
        globalThis.Date = FrozenDate;
 
-       const { groupByDay, buildExport, buildTimeline } = await import(${JSON.stringify(bundle)});
+       const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline, groupSessionsForWeek } =
+         await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
 
        // Day grouping: record the bucketing only. The label is a locale rendering
@@ -475,7 +476,28 @@ function buildExportFixtures() {
          reports[format] = buildExport(format, { label: input.label }, entries).content;
        }
 
-       process.stdout.write(JSON.stringify({ grouping, reports, sessionCount: sessions.length }));`,
+       // Scope selection, over a month of events with marks scattered through it.
+       // Recorded as the session starts each scope picks: the identity that survives,
+       // and the one an annotation is keyed to.
+       const scopeSessions = groupSessionsForWeek(input.scopeEvents, input.scopeNow)
+         .sort((a, b) => b.startedAt - a.startedAt);
+       const scopeAnnotations = new Map(
+         input.scopeAnnotations.map((a) => [a.sessionStart, a]),
+       );
+       const scopes = {};
+       for (const { value } of EXPORT_SCOPES) {
+         scopes[value] = selectScope(scopeSessions, scopeAnnotations, value, input.todayStart)
+           .map((entry) => entry.session.startedAt);
+       }
+
+       process.stdout.write(JSON.stringify({
+         grouping,
+         reports,
+         sessionCount: sessions.length,
+         scopes,
+         scopeSessionStarts: scopeSessions.map((s) => s.startedAt),
+         scopeLabels: EXPORT_SCOPES,
+       }));`,
     );
 
     // Events either side of two local midnights, plus one out of order, so the
@@ -511,6 +533,33 @@ function buildExportFixtures() {
       },
     ];
 
+    /*
+     * A month of history for the scopes: one run a day at noon, going back far
+     * enough that `month` holds days `week` does not. Marks are scattered rather
+     * than clustered, so `bookmarks` and `notes` cannot accidentally agree with a
+     * date range — the whole point of those two is that they cut across time.
+     */
+    const todayStart = 1_770_076_800_000; // 2026-02-03T00:00:00Z, a local midnight in UTC
+    const scopeNow = todayStart + min(13 * 60);
+    const scopeEvents = [];
+    for (let dayBack = 0; dayBack < 20; dayBack += 1) {
+      const start = todayStart - dayBack * DAY + min(12 * 60);
+      scopeEvents.push(
+        ev(100 + dayBack * 2, "Code", "com.microsoft.VSCode", start, 900),
+        ev(101 + dayBack * 2, "Safari", "com.apple.Safari", start + min(15), 600),
+      );
+    }
+    const scopeAnnotations = [
+      // Today: bookmarked, no note.
+      { sessionStart: todayStart + min(12 * 60), note: "", bookmarked: true, tags: [] },
+      // Eight days back — outside the week, inside the month — with a note only.
+      { sessionStart: todayStart - 8 * DAY + min(12 * 60), note: "worth remembering", bookmarked: false, tags: [] },
+      // Fifteen days back, carrying both.
+      { sessionStart: todayStart - 15 * DAY + min(12 * 60), note: "both", bookmarked: true, tags: ["deep work"] },
+      // A note that is only whitespace must not count as a note.
+      { sessionStart: todayStart - 3 * DAY + min(12 * 60), note: "   ", bookmarked: false, tags: [] },
+    ];
+
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
@@ -519,6 +568,10 @@ function buildExportFixtures() {
         reportNow,
         annotations,
         label: "This Week",
+        scopeEvents,
+        scopeNow,
+        scopeAnnotations,
+        todayStart,
       })],
       {
         cwd: GLAZE,
@@ -537,6 +590,17 @@ function buildExportFixtures() {
       locale: FIXTURE_LOCALE,
       exportedAtMillis: FIXTURE_NOW,
       grouping: { events: groupingEvents, expected: result.grouping },
+      scopes: {
+        events: scopeEvents,
+        now: scopeNow,
+        todayStart,
+        annotations: scopeAnnotations,
+        // Every scope the reference offers, so a new one upstream shows up as a
+        // key this port does not handle rather than as silence.
+        offered: result.scopeLabels.map((s) => s.value),
+        allSessionStarts: result.scopeSessionStarts,
+        expected: result.scopes,
+      },
       report: {
         label: "This Week",
         now: reportNow,
