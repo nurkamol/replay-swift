@@ -40,13 +40,14 @@ public enum Report {
     }
 
     public enum Format: String, CaseIterable, Sendable {
-        case markdown, csv, json
+        case markdown, csv, json, html
 
         public var label: String {
             switch self {
             case .markdown: "Markdown"
             case .csv: "CSV"
             case .json: "JSON"
+            case .html: "HTML"
             }
         }
 
@@ -55,8 +56,14 @@ public enum Report {
             case .markdown: "md"
             case .csv: "csv"
             case .json: "json"
+            case .html: "html"
             }
         }
+
+        /// Whether the format is a document to look at rather than data to read or parse.
+        /// HTML carries the app icons and needs them resolved, so callers route it
+        /// differently even though it is still text.
+        public var isDocument: Bool { self == .html }
     }
 
     /// What slice of history a report covers.
@@ -136,6 +143,8 @@ public enum Report {
         return "Replay \(label) \(stamp).\(format.fileExtension)"
     }
 
+    /// The text formats. Documents go through ``html(label:entries:now:environment:icon:)``
+    /// and its printable twin, because they need icons resolved and — for PDF — rendering.
     public static func build(
         _ format: Format,
         label: String,
@@ -147,6 +156,7 @@ public enum Report {
         case .markdown: markdown(label: label, entries: entries, now: now, environment: environment)
         case .csv: csv(entries, environment: environment)
         case .json: json(label: label, entries: entries, now: now)
+        case .html: html(label: label, entries: entries, now: now, environment: environment)
         }
     }
 

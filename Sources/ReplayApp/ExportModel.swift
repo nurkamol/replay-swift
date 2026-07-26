@@ -71,6 +71,41 @@ final class ExportModel {
         exportReport(format, label: label, entries: entries(for: sessions))
     }
 
+    /// Resolve an app icon to a data URI, so a shared document carries its own images.
+    ///
+    /// Redrawn into a 64×64 bitmap rather than handed straight to `tiffRepresentation`.
+    /// Setting `NSImage.size` changes the *point* size and nothing about the pixels: the
+    /// representation handed back is still the largest one in the iconset, a 1024px master.
+    /// Sixty-nine sessions across a week of apps produced an **89 MB** HTML file that way —
+    /// full-resolution art for tiles drawn eighteen points wide. At 64px the same report is
+    /// a few hundred kilobytes and looks identical.
+    private func iconDataURI(_ appPath: String?) -> String? {
+        guard let appPath, FileManager.default.fileExists(atPath: appPath) else { return nil }
+        let source = NSWorkspace.shared.icon(forFile: appPath)
+
+        let side = 64
+        guard let bitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: side, pixelsHigh: side,
+            bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0, bitsPerPixel: 0
+        ) else { return nil }
+        bitmap.size = NSSize(width: side, height: side)
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
+        source.draw(
+            in: NSRect(x: 0, y: 0, width: side, height: side),
+            from: .zero, operation: .sourceOver, fraction: 1
+        )
+        NSGraphicsContext.restoreGraphicsState()
+
+        guard let png = bitmap.representation(using: .png, properties: [:]) else { return nil }
+        return "data:image/png;base64,\(png.base64EncodedString())"
+    }
+
     /// Save a report of entries that are already paired.
     ///
     /// Refuses an empty selection rather than writing an empty file: a report of nothing is
@@ -87,11 +122,21 @@ final class ExportModel {
         panel.isExtensionHidden = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
+        let written = "Exported \(entries.count) \(entries.count == 1 ? "session" : "sessions") "
+            + "to \(url.lastPathComponent)"
+
         do {
-            let content = Report.build(format, label: label, entries: entries)
-            try content.write(to: url, atomically: true, encoding: .utf8)
-            status = "Exported \(entries.count) \(entries.count == 1 ? "session" : "sessions") "
-                + "to \(url.lastPathComponent)"
+            switch format {
+            case .html:
+                let document = Report.html(
+                    label: label, entries: entries, icon: { [self] in iconDataURI($0) }
+                )
+                try document.write(to: url, atomically: true, encoding: .utf8)
+            case .markdown, .csv, .json:
+                try Report.build(format, label: label, entries: entries)
+                    .write(to: url, atomically: true, encoding: .utf8)
+            }
+            status = written
             errorMessage = nil
         } catch {
             errorMessage = "Couldn't write that file: \(error.localizedDescription)"

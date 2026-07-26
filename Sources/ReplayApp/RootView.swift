@@ -11,7 +11,7 @@ import SwiftUI
 @Observable
 final class Navigation {
     enum Surface: String, CaseIterable, Identifiable {
-        case today = "Today", timeline = "Timeline"
+        case today = "Today", timeline = "Timeline", search = "Search"
         var id: String { rawValue }
     }
 
@@ -37,6 +37,7 @@ struct RootView: View {
     @Bindable var navigation: Navigation
     let preferences: Preferences
     let export: ExportModel
+    let search: SearchModel
 
     /// The opened day, built when it is opened rather than while the body runs — deriving a
     /// day loads its annotations, and a view body must not be what mutates them.
@@ -74,6 +75,13 @@ struct RootView: View {
                         export: export,
                         onOpenDay: { navigation.openDay = $0 }
                     )
+                case .search:
+                    SearchView(
+                        search: search,
+                        annotations: model.annotations,
+                        export: export,
+                        onDeleteSession: { history.deleteSession($0); search.load() }
+                    )
                 }
             }
         }
@@ -81,6 +89,9 @@ struct RootView: View {
             // The Timeline reads the store directly rather than following the tracker, so
             // it reloads when it is shown rather than on every recorded event.
             if new == .timeline { history.reload() }
+            // Search holds a month in memory; reload it when shown so a session deleted
+            // elsewhere does not linger as a result that opens onto nothing.
+            if new == .search { search.load() }
         }
         .onChange(of: navigation.openDay, initial: true) { _, _ in reloadOpenDay() }
         .preferredColorScheme(preferences.appearance.colorScheme)

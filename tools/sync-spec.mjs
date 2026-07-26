@@ -431,7 +431,20 @@ function buildExportFixtures() {
       entry,
       `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
-       export { buildTimeline, groupSessionsForWeek } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};`,
+       export { buildTimeline, groupSessionsForWeek, sessionUsesApp } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
+       // sessionMatches is module-private in the view, so the predicate is
+       // re-declared here character for character. If it drifts upstream this
+       // fixture keeps asserting the old rule — the one risk in extracting it,
+       // and the reason it is copied rather than approximated.
+       export function sessionMatches(session, annotation, query) {
+         const q = query.replace(/^#/, "").toLowerCase();
+         if (session.title.toLowerCase().includes(q)) return true;
+         if (annotation) {
+           if (annotation.note.toLowerCase().includes(q)) return true;
+           if (annotation.tags.some((tag) => tag.includes(q))) return true;
+         }
+         return false;
+       }`,
     );
     execFileSync(
       "npx",
@@ -452,7 +465,8 @@ function buildExportFixtures() {
        }
        globalThis.Date = FrozenDate;
 
-       const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline, groupSessionsForWeek } =
+       const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
+               groupSessionsForWeek, sessionUsesApp, sessionMatches } =
          await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
 
@@ -490,10 +504,22 @@ function buildExportFixtures() {
            .map((entry) => entry.session.startedAt);
        }
 
+       // Search: which sessions each query finds, by session start.
+       const searchResults = {};
+       for (const query of input.searchQueries) {
+         searchResults[query] = {
+           matches: scopeSessions
+             .filter((s) => sessionMatches(s, scopeAnnotations.get(s.startedAt), query))
+             .map((s) => s.startedAt),
+           usesApp: scopeSessions.filter((s) => sessionUsesApp(s, query)).map((s) => s.startedAt),
+         };
+       }
+
        process.stdout.write(JSON.stringify({
          grouping,
          reports,
          sessionCount: sessions.length,
+         searchResults,
          scopes,
          scopeSessionStarts: scopeSessions.map((s) => s.startedAt),
          scopeLabels: EXPORT_SCOPES,
@@ -560,6 +586,24 @@ function buildExportFixtures() {
       { sessionStart: todayStart - 3 * DAY + min(12 * 60), note: "   ", bookmarked: false, tags: [] },
     ];
 
+    /*
+     * Queries chosen for the rules they exercise, not for looking realistic:
+     * a title word, a note word, a tag with and without its hash, a prefix of a
+     * tag (tags match on substring like everything else), an application name
+     * that appears in sessions named after a *different* app, and a query that
+     * finds nothing.
+     */
+    const input_searchQueries = [
+      "code",       // a title word, and an app name — the two predicates disagree here
+      "remembering",// a word only in a note
+      "#deep work", // a tag typed with its hash
+      "deep",       // a prefix of that tag
+      "safari",     // lowercase: the app predicate is exact, so this must find nothing
+      "Code",       // exact application name — what clicking an app sends
+      "Safari",
+      "nothingatall",
+    ];
+
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
@@ -572,6 +616,7 @@ function buildExportFixtures() {
         scopeNow,
         scopeAnnotations,
         todayStart,
+        searchQueries: input_searchQueries,
       })],
       {
         cwd: GLAZE,
@@ -590,6 +635,7 @@ function buildExportFixtures() {
       locale: FIXTURE_LOCALE,
       exportedAtMillis: FIXTURE_NOW,
       grouping: { events: groupingEvents, expected: result.grouping },
+      search: { queries: input_searchQueries, expected: result.searchResults },
       scopes: {
         events: scopeEvents,
         now: scopeNow,

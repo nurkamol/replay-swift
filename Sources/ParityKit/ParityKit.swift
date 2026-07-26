@@ -154,6 +154,14 @@ public enum ParityKit {
             public let annotations: [Annotation]
             public let expected: Reports
         }
+        public struct SearchCase: Decodable, Sendable {
+            public struct Result: Decodable, Sendable {
+                public let matches: [Int64]
+                public let usesApp: [Int64]
+            }
+            public let queries: [String]
+            public let expected: [String: Result]
+        }
         public struct Scopes: Decodable, Sendable {
             public let events: [Fixture.Event]
             public let now: Int64
@@ -170,6 +178,7 @@ public enum ParityKit {
         public let exportedAtMillis: Int64
         public let grouping: Grouping
         public let report: ReportCase
+        public let search: SearchCase
         public let scopes: Scopes
     }
 
@@ -684,6 +693,36 @@ public enum ParityKit {
         check(sg, "a whitespace-only note does not count as a note",
               (fixture.scopes.expected["notes"] ?? []).count
                   < fixture.scopes.annotations.filter { !$0.note.isEmpty }.count)
+
+        // Search — the predicates that decide whether a session is findable.
+        let hg = "search"
+        for query in fixture.search.queries {
+            guard let expected = fixture.search.expected[query] else {
+                check(hg, "\(query) is covered by the fixture", false, "no expectation recorded")
+                continue
+            }
+            equal(hg, "\"\(query)\" matches the same sessions",
+                  scopeSessions.filter {
+                      ReplayCore.Search.matches(
+                          session: $0, annotation: scopeAnnotations[$0.startedAt], query: query
+                      )
+                  }.map(\.startedAt),
+                  expected.matches)
+            equal(hg, "\"\(query)\" finds the same sessions by application",
+                  scopeSessions.filter {
+                      ReplayCore.Search.usesApp(session: $0, applicationName: query)
+                  }.map(\.startedAt),
+                  expected.usesApp)
+        }
+        // Stated on its own because it is the distinction most easily collapsed: the
+        // application predicate is exact, so a lowercase name finds nothing while the
+        // exact one finds everything. Substring discovery is a different function.
+        check(hg, "the application predicate is exact, not a substring",
+              (fixture.search.expected["safari"]?.usesApp ?? []).isEmpty
+                  && !(fixture.search.expected["Safari"]?.usesApp ?? []).isEmpty)
+        equal(hg, "substring discovery is what finds an app by a lowercase name",
+              ReplayCore.Search.apps(matching: "safari", in: scopeSessions).map(\.applicationName),
+              ["Safari"])
 
         // focus goals — the app's one evaluative surface, so its rules are checked rather
         // than trusted. The streak rule is the subtle one: an unfinished today must not

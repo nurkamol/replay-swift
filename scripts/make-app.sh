@@ -52,7 +52,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleVersion</key>           <string>$VERSION</string>
   <key>CFBundleIconFile</key>          <string>AppIcon</string>
-  <key>NSHumanReadableCopyright</key>  <string>Copyright © 2026 Nurkamol Vakhidov. Apache License 2.0.</string>
+  <key>NSHumanReadableCopyright</key>  <string>Copyright © 2026 Nurkamol Vakhidov. MIT License.</string>
   <key>LSMinimumSystemVersion</key>    <string>14.0</string>
   <!-- Replay records only which app is frontmost, so it needs no usage
        descriptions: no camera, microphone, location, or screen recording. If a

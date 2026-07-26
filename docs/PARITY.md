@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 387 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 405 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -45,10 +45,10 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
 | Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
-| Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV or JSON, carrying notes and tags. Scope selection and report text both checked against the reference's own output. PDF and HTML later |
+| Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
 | Dock badge | later | |
 | Memories / Today in History | later | |
-| Search | later | |
+| Search | done | by session name, note or tag; by application; and a few phrases ("morning", "longest", "bookmarked") that go straight to a slice — checked against the reference's own predicates |
 | Collections / Projects | later | |
 | Story Mode / Autobiography | later | |
 | Canvas | later | a project of its own |
@@ -81,6 +81,13 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
   under (`UTC`) and the checks derive under that calendar rather than the machine's. Without
   it the suite passes only where the fixtures were made — see [FINDINGS.md](FINDINGS.md).
   Verified in UTC, America/New_York and Asia/Tokyo.
+- **There is no PDF export, and that is a decision rather than an omission.** The reference
+  offers one; two attempts at it here failed in WebKit — an unattached `WKWebView` never
+  finishes loading, and once attached, `createPDF` hung with no timeout available on the
+  call itself. The reference's own PDF is capped at a single page and tells the reader to
+  use HTML for anything longer, so HTML is the format that actually carries a month. If PDF
+  returns, the route worth trying is an `NSPrintOperation` on a real window rather than
+  WebKit's PDF API. Until then the gap is stated here rather than half-built.
 - **Report text is compared with one deliberate fold.** Foundation and Node disagree on the
   space before a meridiem (U+202F vs U+0020) because they bundle different ICU versions.
   The comparison folds non-breaking spaces onto plain ones and nothing else.
@@ -93,16 +100,20 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Search**, the smallest door into the half of the app still marked `later` — Memories,
-   Collections, Story Mode, Canvas — and the one most useful on its own.
-2. **Sign and notarise a build.** `scripts/make-app.sh` signs ad-hoc, which is enough to run
-   it here and not enough to hand to anyone. That is the gap between "it works" and "it is
-   an app", and it needs a Developer ID and a stable Xcode.
-3. **PDF and HTML exports.** The reference offers five formats; this port offers three. The
-   two missing ones are the ones you would send someone, and they need a rendering step
-   rather than a serialiser.
+1. **Sign and notarise a build.** `scripts/make-app.sh` signs ad-hoc, which runs here and
+   cannot be handed to anyone. **Blocked on a certificate, not on code**: this machine has no
+   Developer ID (`security find-identity -v -p codesigning` reports none), so the script is
+   ready for one and can go no further without an Apple Developer account.
+2. **The memory subsystems** — Memories, Collections, Story Mode, Canvas. Search was the
+   door into this half of the reference; these are the rooms behind it, and Canvas is a
+   project of its own.
+3. **PDF export**, if it is wanted — see the divergence above for what to try next.
 
 Done and no longer blocking:
+- ~~Search~~ — by name, note, tag, application, and a handful of phrases; the two application
+  predicates kept apart (exact for a chosen app, substring for discovery), which the fixture
+  caught the port getting wrong.
+- ~~HTML export~~ — the reference's document, self-contained, with real app icons.
 - ~~Export covered only one day~~ — today, this week, this month, bookmarks, notes, and a
   single session, each checked against the sessions the reference's own `selectScope` picked.
   Verified on real data: the count shown before the save panel (68) matched the exported

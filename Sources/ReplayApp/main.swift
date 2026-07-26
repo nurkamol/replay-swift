@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model: model, history: history, preferences: preferences
     )
     private lazy var export = ExportModel(model: model)
+    private lazy var search = SearchModel(model: model)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -115,6 +116,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .target = self
         viewMenu.addItem(withTitle: "Timeline", action: #selector(openTimeline), keyEquivalent: "2")
             .target = self
+        viewMenu.addItem(withTitle: "Search", action: #selector(openSearch), keyEquivalent: "f")
+            .target = self
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
 
@@ -180,7 +183,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let hosting = NSHostingController(
             rootView: RootView(
                 model: model, history: history, navigation: navigation,
-                preferences: preferences, export: export
+                preferences: preferences, export: export, search: search
             )
         )
         let window = NSWindow(contentViewController: hosting)
@@ -206,6 +209,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openTimeline() {
         history.reload()
         navigation.show(.timeline)
+        showWindow()
+    }
+
+    @objc private func openSearch() {
+        search.load()
+        navigation.show(.search)
         showWindow()
     }
 
