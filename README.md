@@ -3,9 +3,10 @@
 A native Swift port of Replay, a private timeline of the apps you use. Everything stays
 on the Mac: no cloud, no account, no network code, and no permissions requested.
 
-The [Glaze version](#relationship-to-the-glaze-app) ships today and is the reference
-implementation. This repo trails it deliberately, with a generated contract between them
-so it cannot trail it *silently*.
+The [Glaze version](https://github.com/nurkamol/replay-glaze) ships today and is the
+reference implementation — [get it on the Glaze Store](https://www.glaze.app/app/replay-4fgahp).
+This repo trails it deliberately, with a generated contract between them so it cannot trail
+it *silently*.
 
 ## Quickstart
 
@@ -103,9 +104,11 @@ derivation — so `spec/fixtures/` holds not a description of the expected outpu
 output the shipping implementation actually produced. A clean `git diff spec/` after
 regenerating means there is nothing to port. See [docs/SYNC.md](docs/SYNC.md).
 
-Glaze sources default to
-`~/Library/Application Support/app.glaze.macos.main/apps/replay-local-25gyn8jy/.glaze-sources`;
-override with `GLAZE_SRC=…`.
+The tooling reads the Glaze app's source from a local Glaze install — it defaults to
+`~/Library/Application Support/app.glaze.macos.main/apps/replay-local-25gyn8jy/.glaze-sources`
+and can be pointed elsewhere with `GLAZE_SRC=…`. The same source is published at
+[nurkamol/replay-glaze](https://github.com/nurkamol/replay-glaze), though note a bare clone
+of it cannot be built without a Glaze install.
 
 ## Toolchain
 
