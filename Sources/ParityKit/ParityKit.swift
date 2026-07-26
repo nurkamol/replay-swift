@@ -290,6 +290,31 @@ public enum ParityKit {
             public let peakCases: [PeakCase]
         }
 
+        public struct MomentsCase: Decodable, Sendable {
+            public struct Seed: Decodable, Sendable {
+                public struct FirstSeen: Decodable, Sendable {
+                    public let applicationName: String
+                    public let bundleIdentifier: String
+                    public let firstAt: Int64
+                }
+                public let firstEventAt: Int64?
+                public let appCount: Int
+                public let appFirstSeen: [FirstSeen]
+            }
+            public struct Expected: Decodable, Sendable {
+                public let kind: String
+                public let key: String
+                public let title: String
+                public let detail: String
+                public let dayStart: Int64?
+            }
+            public let events: [Fixture.Event]
+            public let now: Int64
+            public let seed: Seed
+            public let expected: [Expected]
+            public let quoteKey: String?
+        }
+
         public struct RelationshipsCase: Decodable, Sendable {
             public struct Partner: Decodable, Sendable {
                 public let applicationName: String
@@ -523,6 +548,8 @@ public enum ParityKit {
         public let legacy: LegacyCase
         /// How two applications are used together.
         public let relationships: RelationshipsCase
+        /// The memories worth rediscovering.
+        public let moments: MomentsCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -1122,6 +1149,40 @@ public enum ParityKit {
         }
         check(lg, "no history is no archive, rather than an empty one",
               computeLegacy([], calendar: calendar) == nil)
+
+        // Moments — prose again, so compared as text. Each kind has a threshold and the
+        // fixture crosses every one it can, including a first-time-in app inside the seven
+        // days that make it notable and one outside that must not appear.
+        let mog = "moments"
+        let seed = MomentSeed(
+            firstEventAt: fixture.moments.seed.firstEventAt,
+            appCount: fixture.moments.seed.appCount,
+            appFirstSeen: fixture.moments.seed.appFirstSeen.map {
+                MomentSeed.FirstSeen(
+                    applicationName: $0.applicationName,
+                    bundleIdentifier: $0.bundleIdentifier,
+                    appPath: nil, firstAt: $0.firstAt
+                )
+            }
+        )
+        let moments = detectMoments(
+            seed: seed, summaries: summaries,
+            events: fixture.moments.events.map(event),
+            now: fixture.moments.now,
+            calendar: calendar, locale: environment.locale
+        )
+        let mex = fixture.moments.expected
+        equal(mog, "the same moments, in the order they deserve attention",
+              moments.map(\.kind.rawValue), mex.map(\.kind))
+        equal(mog, "each keyed the same", moments.map(\.key), mex.map(\.key))
+        equal(mog, "titled the same", moments.map(\.title), mex.map(\.title))
+        equal(mog, "and told word for word", moments.map(\.detail), mex.map(\.detail))
+        equal(mog, "each opening the right day", moments.map(\.dayStart), mex.map(\.dayStart))
+        check(mog, "an application first seen more than a week ago is not news",
+              !moments.contains { $0.key == "new-com.apple.Music" })
+        equal(mog, "the day's featured moment is chosen from the day itself",
+              pickDailyQuote(moments, now: fixture.moments.now, calendar: calendar)?.key,
+              fixture.moments.quoteKey)
 
         // Rituals — the quiet patterns in a run of days. A part of the day only counts once
         // the same app has led it more than once, which is the guard against a single

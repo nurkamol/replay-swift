@@ -473,6 +473,7 @@ function buildExportFixtures() {
        export { detectRituals } from ${JSON.stringify(join(GLAZE, "renderer/lib/rituals.ts"))};
        export { detectChapters, chapterDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/chapters.ts"))};
        export { listPeriods, summarizePeriod } from ${JSON.stringify(join(GLAZE, "renderer/lib/autobiography.ts"))};
+       export { detectMoments, pickDailyQuote } from ${JSON.stringify(join(GLAZE, "renderer/lib/moments.ts"))};
        export { historyTargets, findMemories, relativeDayLabel, shortDateLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
        export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen, excludeIdleStretches } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
@@ -550,6 +551,7 @@ function buildExportFixtures() {
                projectDefaultName, relativeDayLabel, shortDateLabel, detectRituals,
                detectChapters, chapterDefaultName, listPeriods, summarizePeriod,
                computeLegacy, computeWorkflowPartners, computeRelationship,
+               detectMoments, pickDailyQuote,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -651,6 +653,12 @@ function buildExportFixtures() {
        }));
 
        const legacy = computeLegacy(input.chapterSummaries, new Map());
+
+       // The memories worth rediscovering. Prose again, so compared as text.
+       const moments = detectMoments(
+         input.momentSeed, input.chapterSummaries, input.momentEvents, input.momentNow,
+       );
+       const quote = pickDailyQuote(moments, input.momentNow);
 
        // How two applications are used together. The anchor is the app that appears in
        // every session of the workflow fixture, so partners exist to be ranked at all.
@@ -756,6 +764,8 @@ function buildExportFixtures() {
          chapters,
          autobiography,
          legacy,
+         moments,
+         quoteKey: quote ? quote.key : null,
          partners,
          relationship: relationship && {
            ...relationship,
@@ -1089,6 +1099,41 @@ function buildExportFixtures() {
     ];
 
     /*
+     * Moments. Each kind has a threshold, and the fixture crosses every one it can with
+     * a single day of rows: a stretch past twenty minutes, eight distinct applications,
+     * and something at 2 AM. The streak and the peak day come from the chapter summaries
+     * this shares, which already hold a run of consecutive days.
+     */
+    const momentDay = 1_770_076_800_000;
+    const mt = (h, m = 0) => momentDay + h * 3_600_000 + m * 60_000;
+    const momentEvents = [
+      // 25 minutes on one app: past the twenty-minute bar for a longest focus.
+      ev(900, "Code", "com.microsoft.VSCode", mt(9), 1500),
+      ev(901, "Terminal", "com.apple.Terminal", mt(9, 25), 300),
+      // Eight distinct bundles in the day, for the busiest mix.
+      ev(902, "Safari", "com.apple.Safari", mt(11), 300),
+      ev(903, "Mail", "com.apple.mail", mt(11, 10), 300),
+      ev(904, "Slack", "com.tinyspeck.slackmacgap", mt(11, 20), 300),
+      ev(905, "Notes", "com.apple.Notes", mt(11, 30), 300),
+      ev(906, "Music", "com.apple.Music", mt(11, 40), 300),
+      ev(907, "Finder", "com.apple.finder", mt(11, 50), 300),
+      // 2:14 AM the next day: inside the 1–5 window, so a late night.
+      ev(908, "Code", "com.microsoft.VSCode", mt(26, 14), 600),
+    ];
+    const momentNow = mt(30);
+    const momentSeed = {
+      // Well past the three days that make a newly-tried app notable.
+      firstEventAt: momentDay - 40 * DAY,
+      appCount: 8,
+      appFirstSeen: [
+        // Inside seven days: a first-time-in moment.
+        { applicationName: "Notes", bundleIdentifier: "com.apple.Notes", appPath: null, firstAt: momentDay - 2 * DAY },
+        // Outside it: must not appear.
+        { applicationName: "Music", bundleIdentifier: "com.apple.Music", appPath: null, firstAt: momentDay - 30 * DAY },
+      ],
+    };
+
+    /*
      * Chapters, from daily headlines rather than from rows. Four runs, each testing one
      * rule: a character change splits, a gap longer than 16 days splits even when the
      * character is unchanged, a day under five minutes is too quiet to anchor anything,
@@ -1172,6 +1217,9 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        momentEvents,
+        momentNow,
+        momentSeed,
         // Terminal is in both editor sessions; Code is the other half of that pair.
         anchorKey: "com.apple.Terminal",
         partnerKey: "com.microsoft.VSCode",
@@ -1249,6 +1297,13 @@ function buildExportFixtures() {
         expected: result.autobiography,
       },
       legacy: { expected: result.legacy },
+      moments: {
+        events: momentEvents,
+        now: momentNow,
+        seed: momentSeed,
+        expected: result.moments,
+        quoteKey: result.quoteKey,
+      },
       relationships: {
         anchorKey: "com.apple.Terminal",
         partnerKey: "com.microsoft.VSCode",

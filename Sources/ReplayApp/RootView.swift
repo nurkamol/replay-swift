@@ -76,7 +76,9 @@ final class Navigation {
     struct ProjectTarget: Hashable { var id: String }
 
     /// One of the narrative surfaces behind Story.
-    enum StoryTarget: Hashable { case autobiography, chapters, chapter(String), legacy }
+    enum StoryTarget: Hashable {
+        case autobiography, chapters, chapter(String), legacy, museum
+    }
 
     /// Two applications, and how they are used together.
     struct Pair: Hashable { var a: String; var b: String }
@@ -131,6 +133,7 @@ struct RootView: View {
     let projects: ProjectsModel
     let story: StoryModel
     let relationships: RelationshipsModel
+    let museum: MuseumModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -245,6 +248,15 @@ struct RootView: View {
         case .chapter(let id):
             ChapterDetailView(
                 id: id, story: story, onOpenDay: { navigation.open(day: $0) }
+            )
+        case .museum:
+            MuseumView(
+                museum: museum,
+                annotations: model.annotations,
+                export: export,
+                onOpenDay: { navigation.open(day: $0) },
+                onOpenProject: { navigation.open(project: $0) },
+                onDeleteSession: { history.deleteSession($0) }
             )
         case .legacy:
             LegacyView(

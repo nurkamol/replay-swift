@@ -41,6 +41,11 @@ struct StoryView: View {
                         "Your history divided into the eras it naturally fell into.",
                         .chapters
                     )
+                    hub(
+                        "Museum", "building.columns",
+                        "A quiet walk through the parts worth coming back to.",
+                        .museum
+                    )
                 }
                 .settlesIntoView(reduced: motion.reduced)
 

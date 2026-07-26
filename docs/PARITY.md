@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 600 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 607 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| Moments | done | `detectMoments` + `pickDailyQuote` — seven kinds, each with a threshold, compared as text. 7 checks |
 | The archive | done | `computeLegacy` — first day, active days, years, and the applications behind all of it. 9 checks. Its figures live inside a view upstream, so the fixture re-declares them, as `sessionMatches` does |
 | App relationships | done | `computeWorkflowPartners` + `computeRelationship` — switches, shared sessions, direction and average length. A pair must have been switched between twice to count. 11 checks |
 | Rituals | done | `detectRituals` — the app that leads each part of the day and the one a day begins with, each needing more than one day to count. 6 checks |
@@ -63,6 +64,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| Museum | done | the day's featured moment, the milestones, the deepest stretches, what was bookmarked, what was written, and the work that took the most |
 | My Story | done | the archive at a glance: how long, how much, which years, and the applications that ran through it |
 | App relationships | done | reached from an application's "works alongside" list — which way the switching runs, and every session the two shared |
 | Story | done | a hub over the narrative surfaces, plus the rituals a run of days settles into |
@@ -111,6 +113,12 @@ function now and live in `ReplayCore` where the suite can reach them.
   application came to the front — so Firefox reads "575 sessions" for a week in which Today
   would call the same span three. Inherited: the reference uses the same word for the same
   number. Left alone for the same reason as the workflow titles.
+- **Narrow no-break space before AM/PM.** Current macOS formats "2:14 AM" with U+202F;
+  the ICU the reference runs against emits an ordinary space. The two strings look identical
+  in a terminal and the fixture caught them differing. `Moments.clockLabel` folds U+202F to a
+  space, which is the smaller wrong: it keeps both apps saying the same thing, and the
+  difference is a runtime's ICU version rather than a decision either app made. Any other
+  formatter that prints a time is a candidate for the same fold.
 - **`Text` group-separates an `Int`.** `Text("\(year)")` renders 2026 as "2,026" — the
   interpolation is a `LocalizedStringKey`'s, and it formats numbers. Concatenating with `+`
   first makes it a plain `String` and avoids it, which is why most counts in this app were

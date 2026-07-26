@@ -1540,6 +1540,172 @@
       ]
     }
   },
+  "moments": {
+    "events": [
+      {
+        "id": 900,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770109200000,
+        "endedAt": 1770110700000,
+        "duration": 1500
+      },
+      {
+        "id": 901,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770110700000,
+        "endedAt": 1770111000000,
+        "duration": 300
+      },
+      {
+        "id": 902,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770116400000,
+        "endedAt": 1770116700000,
+        "duration": 300
+      },
+      {
+        "id": 903,
+        "type": "activated",
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "startedAt": 1770117000000,
+        "endedAt": 1770117300000,
+        "duration": 300
+      },
+      {
+        "id": 904,
+        "type": "activated",
+        "applicationName": "Slack",
+        "bundleIdentifier": "com.tinyspeck.slackmacgap",
+        "appPath": null,
+        "startedAt": 1770117600000,
+        "endedAt": 1770117900000,
+        "duration": 300
+      },
+      {
+        "id": 905,
+        "type": "activated",
+        "applicationName": "Notes",
+        "bundleIdentifier": "com.apple.Notes",
+        "appPath": null,
+        "startedAt": 1770118200000,
+        "endedAt": 1770118500000,
+        "duration": 300
+      },
+      {
+        "id": 906,
+        "type": "activated",
+        "applicationName": "Music",
+        "bundleIdentifier": "com.apple.Music",
+        "appPath": null,
+        "startedAt": 1770118800000,
+        "endedAt": 1770119100000,
+        "duration": 300
+      },
+      {
+        "id": 907,
+        "type": "activated",
+        "applicationName": "Finder",
+        "bundleIdentifier": "com.apple.finder",
+        "appPath": null,
+        "startedAt": 1770119400000,
+        "endedAt": 1770119700000,
+        "duration": 300
+      },
+      {
+        "id": 908,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770171240000,
+        "endedAt": 1770171840000,
+        "duration": 600
+      }
+    ],
+    "now": 1770184800000,
+    "seed": {
+      "firstEventAt": 1766620800000,
+      "appCount": 8,
+      "appFirstSeen": [
+        {
+          "applicationName": "Notes",
+          "bundleIdentifier": "com.apple.Notes",
+          "appPath": null,
+          "firstAt": 1769904000000
+        },
+        {
+          "applicationName": "Music",
+          "bundleIdentifier": "com.apple.Music",
+          "appPath": null,
+          "firstAt": 1767484800000
+        }
+      ]
+    },
+    "expected": [
+      {
+        "kind": "longest-focus",
+        "key": "longest-1770109200000",
+        "title": "Your longest focus",
+        "detail": "30m without switching away, in Code — yesterday.",
+        "dayStart": 1770076800000
+      },
+      {
+        "kind": "peak-day",
+        "key": "peak-1767312000000",
+        "title": "Your most active day",
+        "detail": "2h active on Friday, January 2, 2026, mostly in Code.",
+        "dayStart": 1767312000000
+      },
+      {
+        "kind": "busy-mix",
+        "key": "mix-1770076800000",
+        "title": "Your busiest mix",
+        "detail": "8 different apps in a single day — yesterday.",
+        "dayStart": 1770076800000
+      },
+      {
+        "kind": "night-owl",
+        "key": "night-1770163200000",
+        "title": "A late night",
+        "detail": "You were still going at 2:14 AM — today.",
+        "dayStart": 1770163200000
+      },
+      {
+        "kind": "streak",
+        "key": "streak-1767744000000",
+        "title": "A steady stretch",
+        "detail": "You were active 7 days in a row, ending on Wednesday, January 7, 2026.",
+        "dayStart": 1767744000000
+      },
+      {
+        "kind": "new-app",
+        "key": "new-com.apple.Notes",
+        "title": "First time in Notes",
+        "detail": "You opened Notes for the first time 3 days ago.",
+        "appPath": null,
+        "dayStart": 1769904000000
+      },
+      {
+        "kind": "origin",
+        "key": "origin",
+        "title": "Where it began",
+        "detail": "You've been building this memory for 41 days — since Thursday, December 25, 2025.",
+        "dayStart": 1766620800000
+      }
+    ],
+    "quoteKey": "origin"
+  },
   "relationships": {
     "anchorKey": "com.apple.Terminal",
     "partnerKey": "com.microsoft.VSCode",
