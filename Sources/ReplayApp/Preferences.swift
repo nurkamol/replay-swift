@@ -95,6 +95,22 @@ final class Preferences {
         }
     }
 
+    /// Applications kept at the top of the Apps surface, in the order they were pinned.
+    ///
+    /// Bundle identifiers rather than names, so pinning survives a rename and two apps with
+    /// the same display name stay apart.
+    var pinnedApps: [String] {
+        didSet { writeJSON(pinnedApps, "pinnedApps") }
+    }
+
+    func togglePinned(_ bundleID: String) {
+        if let index = pinnedApps.firstIndex(of: bundleID) {
+            pinnedApps.remove(at: index)
+        } else {
+            pinnedApps.append(bundleID)
+        }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -105,6 +121,8 @@ final class Preferences {
         excludedApps = (defaults.data(forKey: "excludedApps"))
             .flatMap { try? JSONDecoder().decode([ExcludedApp].self, from: $0) } ?? []
         menuBarOnly = defaults.bool(forKey: "menuBarOnly")
+        pinnedApps = (defaults.data(forKey: "pinnedApps"))
+            .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
         lastSurface = defaults.string(forKey: "lastSurface") ?? ""
         // Zero and absent both mean "no goal", so an unset default reads as off.
         let goal = defaults.integer(forKey: "focusGoalMinutes")

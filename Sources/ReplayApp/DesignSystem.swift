@@ -315,6 +315,10 @@ enum Design {
         static let ring: CGFloat = 38
         /// A category glyph's column in a collection row, so labels align down the list.
         static let glyphColumn: CGFloat = 26
+        /// An application at the head of its own history page.
+        static let appHeader: CGFloat = 64
+        /// An application's own icon in the Apps list, where it is the row's subject.
+        static let appRow: CGFloat = 36
         /// The app you are being offered to return to, on the resume card.
         static let resume: CGFloat = 48
         /// The app's own icon, in About.
@@ -361,6 +365,12 @@ enum Design {
 
         /// A progress bar's thickness.
         static let barThickness: CGFloat = 4
+        /// A thinner one, under a row that already carries its own figures.
+        static let barThin: CGFloat = 3
+        /// The least of a bar that ever draws, so a sliver of time is still visible.
+        static let barMinFraction: Double = 0.04
+        /// A segmented control, kept to its content rather than stretched down the page.
+        static let segmentedWidth: CGFloat = 320
         /// A rule between sections.
         static let hairline: CGFloat = 1
         /// The prominent search field at the head of the Search surface.

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 522 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 529 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| Application totals | done | `computeAppStats` — most-used first, idle stretches excluded, an open row measured against `now`, ties holding first-seen order. 7 checks |
 | Resume target | done | `findResumeTarget` + `formatWhen` — the last session you actually stepped away from, never the one you are in. 25 checks, including both sides of the three-minute in-progress window |
 | Workflows (recurring app combinations) | done | `detectWorkflows` — signature grouping, recurring-only, ranked by time. 8 checks. Projects and app-to-app relationships from the same module are **not** ported |
 | Week summary | done | `computeWeekSummary` — seven days, per-day arcs, app shares and days-used, the weekday × hour rhythm grid and its peak. 31 checks against the reference's own output |
@@ -55,6 +56,8 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| Apps | done | ranked by time, with a Today/This Week/This Month window, pinned favourites, and a row leading into that application's own history |
+| An application's history | partial | header, the four figures, which collections it appears in, and its recent sessions. No "works alongside" — `computeWorkflowPartners` is not ported |
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
@@ -82,6 +85,17 @@ function now and live in `ReplayCore` where the suite can reach them.
   list beneath. Inherited, not introduced: the reference does the same, and the titles are
   contract-checked. Left alone deliberately. If it is ever changed, change it in the Glaze
   app first and let `spec/` carry it here.
+- **A pushed screen had no way back.** A toolbar declared on the root view, or on the
+  `NavigationStack` around it, vanishes the moment a destination is pushed: the innermost
+  view's toolbar wins and a pushed screen has none. This window hosts SwiftUI inside an
+  `NSWindow` rather than being a `WindowGroup`, so no automatic back button appeared to
+  replace it — a reopened day or an application's history could only be left by clicking a
+  sidebar item, and ⌘[ did nothing. The chrome is applied to every screen now. Worth keeping
+  in mind before attaching any other toolbar here.
+- **"Sessions" means two things.** On Apps, `sessionCount` counts *rows* — how many times an
+  application came to the front — so Firefox reads "575 sessions" for a week in which Today
+  would call the same span three. Inherited: the reference uses the same word for the same
+  number. Left alone for the same reason as the workflow titles.
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
   `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, `detectWorkflows`,
   `computeWeekSummary`, and both orderings in `Collections.compute`. Fixtures cover each — the collections one is built so two
@@ -144,7 +158,14 @@ function now and live in `ReplayCore` where the suite can reach them.
 2. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
    `SettingsModel` and `CollectionsModel` have none, and the tracker's own live-state
    handling is still only exercised by using the app.
-3. **Projects** — the same signature grouping as workflows, but keeping the whole span so a
+3. **The port has 8 of the reference's 20 routes.** Counted, not estimated: `/apps` and
+   `/app/$bundleId` landed here, leaving `/autobiography`, `/canvas`, `/chapters`,
+   `/chapter/$id`, `/legacy`, `/museum`, `/projects`, `/project/$id`,
+   `/relationship/$a/$b` and `/story` as a surface of its own. Four of those are in the
+   reference's own sidebar, which is the honest measure of what a user would miss: Canvas,
+   Story and Projects. Next, and in that order.
+
+Also open: **Projects** — the same signature grouping as workflows, but keeping the whole span so a
    combination gets a page of its own with a first-seen date and every session under it.
    `detectProjects`, `computeWorkflowPartners` and `computeRelationship` are all in the
    reference's `workflows.ts` and none is ported.

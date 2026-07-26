@@ -720,6 +720,133 @@
       }
     ]
   },
+  "appStats": {
+    "events": [
+      {
+        "id": 700,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770022800000,
+        "endedAt": 1770023700000,
+        "duration": 900
+      },
+      {
+        "id": 701,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770023700000,
+        "endedAt": 1770024300000,
+        "duration": 600
+      },
+      {
+        "id": 702,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770026400000,
+        "endedAt": 1770026700000,
+        "duration": 300
+      },
+      {
+        "id": 703,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770030000000,
+        "endedAt": 1770031200000,
+        "duration": 1200
+      },
+      {
+        "id": 704,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770033600000,
+        "endedAt": 1770034200000,
+        "duration": 600
+      },
+      {
+        "id": 705,
+        "type": "activated",
+        "applicationName": "Some Script",
+        "bundleIdentifier": null,
+        "appPath": null,
+        "startedAt": 1770037200000,
+        "endedAt": 1770037600000,
+        "duration": 400
+      },
+      {
+        "id": 706,
+        "type": "activated",
+        "applicationName": "Preview",
+        "bundleIdentifier": "com.apple.Preview",
+        "appPath": null,
+        "startedAt": 1770040800000,
+        "endedAt": 1770044800000,
+        "duration": 4000
+      },
+      {
+        "id": 707,
+        "type": "activated",
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "startedAt": 1770048000000,
+        "endedAt": null,
+        "duration": 0
+      }
+    ],
+    "now": 1770048300000,
+    "expected": [
+      {
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "totalSeconds": 1200,
+        "sessionCount": 2,
+        "lastUsedAt": 1770026400000
+      },
+      {
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "totalSeconds": 1200,
+        "sessionCount": 2,
+        "lastUsedAt": 1770033600000
+      },
+      {
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "totalSeconds": 1200,
+        "sessionCount": 1,
+        "lastUsedAt": 1770030000000
+      },
+      {
+        "applicationName": "Some Script",
+        "bundleIdentifier": null,
+        "appPath": null,
+        "totalSeconds": 400,
+        "sessionCount": 1,
+        "lastUsedAt": 1770037200000
+      },
+      {
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "totalSeconds": 300,
+        "sessionCount": 1,
+        "lastUsedAt": 1770048000000
+      }
+    ]
+  },
   "resume": {
     "cases": [
       {

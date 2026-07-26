@@ -14,7 +14,7 @@ import SwiftUI
 @Observable
 final class Navigation {
     enum Surface: String, CaseIterable, Identifiable, Hashable {
-        case today = "Today", week = "This Week", timeline = "Timeline", search = "Search"
+        case today = "Today", apps = "Apps", week = "This Week", timeline = "Timeline", search = "Search"
         case memories = "Memories", collections = "Collections"
 
         var id: String { rawValue }
@@ -25,6 +25,7 @@ final class Navigation {
         var symbol: String {
             switch self {
             case .today: "sun.max"
+            case .apps: "square.grid.2x2"
             case .week: "chart.bar"
             case .timeline: "calendar.day.timeline.left"
             case .search: "magnifyingglass"
@@ -38,6 +39,7 @@ final class Navigation {
         var purpose: String {
             switch self {
             case .today: "What today has been so far"
+            case .apps: "Where your time went, by application"
             case .week: "The last seven days, and when you were here"
             case .timeline: "Your recent days, newest first"
             case .search: "Find a session by name, note, tag or app"
@@ -58,6 +60,14 @@ final class Navigation {
     }
 
     func open(day: Int64) { path.append(day) }
+
+    func back() { if !path.isEmpty { path.removeLast() } }
+
+    /// An application's own history, pushed over whatever surface asked for it. A distinct
+    /// type from a day so the stack can tell the two destinations apart.
+    struct AppHistory: Hashable { var bundleID: String }
+
+    func open(app bundleID: String) { path.append(AppHistory(bundleID: bundleID)) }
 
     /// Bumped when something asks for the search field.
     ///
@@ -96,6 +106,8 @@ struct RootView: View {
     let memories: MemoriesModel
     let collections: CollectionsModel
     let week: WeekModel
+    let apps: AppsModel
+    let appHistory: AppHistoryModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -115,17 +127,27 @@ struct RootView: View {
             sidebar
         } detail: {
             NavigationStack(path: $navigation.path) {
-                surface
+                chrome(surface)
                     .navigationDestination(for: Int64.self) { dayStart in
-                        DayScreen(
-                            dayStart: dayStart,
-                            history: history,
-                            annotations: model.annotations,
-                            export: export
+                        chrome(
+                            DayScreen(
+                                dayStart: dayStart,
+                                history: history,
+                                annotations: model.annotations,
+                                export: export
+                            )
                         )
                     }
-                    .toolbar {
-                        ToolbarItem(placement: .navigation) { sidebarToggle }
+                    .navigationDestination(for: Navigation.AppHistory.self) { target in
+                        chrome(
+                            AppHistoryView(
+                                bundleID: target.bundleID,
+                                history: appHistory,
+                                annotations: model.annotations,
+                                export: export,
+                                onDeleteSession: { history.deleteSession($0) }
+                            )
+                        )
                     }
             }
         }
@@ -139,6 +161,7 @@ struct RootView: View {
             case .memories: memories.load()
             case .collections: collections.load()
             case .week: week.load()
+            case .apps: apps.load()
             case .today: break
             }
         }
@@ -157,6 +180,42 @@ struct RootView: View {
         }
         .help(navigation.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar")
         .accessibilityLabel(navigation.sidebarCollapsed ? "Show sidebar" : "Hide sidebar")
+    }
+
+    /// The window's own controls, which have to be attached to *every* screen.
+    ///
+    /// A toolbar declared on the root view — or on the stack around it — vanishes the moment
+    /// a destination is pushed, because the innermost view's toolbar wins and a pushed
+    /// screen has none. And this window hosts SwiftUI inside an `NSWindow` rather than being
+    /// a `WindowGroup`, so no automatic back button appears to replace it. The result was a
+    /// pushed screen with no way out and no sidebar toggle: the only route back was clicking
+    /// a sidebar item, and ⌘[ did nothing. Found by opening an application's history and
+    /// looking for the way back.
+    private func chrome<Content: View>(_ content: Content) -> some View {
+        content.toolbar {
+            ToolbarItem(placement: .navigation) { sidebarToggle }
+            if !navigation.path.isEmpty {
+                ToolbarItem(placement: .navigation) { backButton }
+            }
+        }
+    }
+
+    /// Back, one step.
+    ///
+    /// Hand-written because the automatic one does not appear in this hosting
+    /// configuration. ⌘[ is bound here too — it is what every Mac app uses for back, and it
+    /// was doing nothing.
+    private var backButton: some View {
+        Button {
+            withAnimation(motion.animation(Design.Motion.settle)) {
+                navigation.back()
+            }
+        } label: {
+            Image(systemName: "chevron.backward")
+        }
+        .keyboardShortcut("[", modifiers: .command)
+        .help("Back")
+        .accessibilityLabel("Back")
     }
 
     private var sidebar: some View {
@@ -199,6 +258,11 @@ struct RootView: View {
                 model: model, annotations: model.annotations,
                 export: export, memories: memories, preferences: preferences,
                 onOpenDay: { navigation.open(day: $0) }
+            )
+        case .apps:
+            AppsView(
+                apps: apps, preferences: preferences,
+                onOpenApp: { navigation.open(app: $0) }
             )
         case .week:
             WeekView(week: week)

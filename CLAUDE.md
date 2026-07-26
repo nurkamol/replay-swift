@@ -20,7 +20,7 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 522 parity checks + 9 model behaviour cases
+swift test                      # 529 parity checks + 9 model behaviour cases
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
@@ -65,8 +65,10 @@ node tools/design-audit.mjs     # fails if any view hard-codes a value instead o
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 522 checks. **The UI is largely built**: an application menu, a menu bar item,
+Glaze app — 529 checks. **The UI is largely built**: an application menu, a menu bar item,
 Today (headline, focus goal, reflection), the Timeline, a reopened past day, Search, Memories, Collections, a
 session's notes/tags/bookmarks, Settings, and export — reports as Markdown, CSV, JSON or
-HTML, plus full backups. What is left is Projects, Canvas, PDF export, and signing — which is blocked on a Developer ID rather
-than on code. See `docs/PARITY.md` for the ledger and what is next.
+HTML, plus full backups. Counted against the reference's own router, this port has **8 of its 20 routes**: what is
+left is Canvas, Story as a surface, Projects, an autobiography, a museum, chapters, a legacy
+view and app-to-app relationships — plus PDF export, and signing, which is blocked on a
+Developer ID rather than on code. See `docs/PARITY.md` for the ledger and what is next.

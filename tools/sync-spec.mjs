@@ -465,13 +465,13 @@ function buildExportFixtures() {
     const entry = join(tmp, "entry.ts");
     writeFileSync(
       entry,
-      `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
+      `export { groupByDay, computeAppStats } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
        export { buildDayStory } from ${JSON.stringify(join(GLAZE, "renderer/lib/day-story.ts"))};
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
        export { detectWorkflows } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
        export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
-       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
+       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen, excludeIdleStretches } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
        // sessionMatches is module-private in the view, so the predicate is
        // re-declared here character for character. If it drifts upstream this
        // fixture keeps asserting the old rule — the one risk in extracting it,
@@ -509,7 +509,7 @@ function buildExportFixtures() {
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories, describeBreak,
                computeWeekSummary, describePeak, detectWorkflows,
-               findResumeTarget, formatWhen,
+               findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
@@ -534,6 +534,13 @@ function buildExportFixtures() {
          ...weekSummary,
          peakLabel: weekSummary.peak ? describePeak(weekSummary.peak) : null,
        };
+       // Per-application usage. Idle stretches are excluded first, as at every call
+       // site upstream — "how long in this app" means time at the keyboard.
+       const appStats = computeAppStats(
+         excludeIdleStretches(input.appStatEvents, input.appStatNow),
+         input.appStatNow,
+       );
+
        // Recurring application combinations.
        const workflowSessions = groupSessionsForWeek(input.workflowEvents, input.workflowNow);
        const workflows = detectWorkflows(workflowSessions);
@@ -648,6 +655,7 @@ function buildExportFixtures() {
          workflowSessionCount: workflowSessions.length,
          resume,
          whenLabels,
+         appStats,
          reports,
          sessionCount: sessions.length,
          searchResults,
@@ -901,6 +909,30 @@ function buildExportFixtures() {
     const workflowNow = wf(4, 12);
 
     /*
+     * Per-application totals. Two apps are built to tie on seconds so the stable sort is
+     * pinned, one row is left open so `effectiveDuration` has to measure it against `now`,
+     * one app has no bundle identifier so the fallback key is exercised, and one row is
+     * long enough to be dropped as absence rather than counted as use.
+     */
+    const appStatDay = 1_769_990_400_000;
+    const as = (h, m = 0) => appStatDay + h * 3_600_000 + m * 60_000;
+    const appStatEvents = [
+      ev(700, "Code", "com.microsoft.VSCode", as(9), 900),
+      ev(701, "Safari", "com.apple.Safari", as(9, 15), 600),
+      ev(702, "Code", "com.microsoft.VSCode", as(10), 300),
+      // Ties with Safari at 1200s total once its second row lands.
+      ev(703, "Terminal", "com.apple.Terminal", as(11), 1200),
+      ev(704, "Safari", "com.apple.Safari", as(12), 600),
+      // No bundle identifier: counted under its name instead.
+      { ...ev(705, "Some Script", null, as(13), 400), bundleIdentifier: null },
+      // Longer than idleStretchSeconds: absence, not use, and excluded before counting.
+      ev(706, "Preview", "com.apple.Preview", as(14), 4000),
+      // Still open, so its length is measured against `now` rather than read off the row.
+      { ...ev(707, "Mail", "com.apple.mail", as(16), 0), endedAt: null, duration: 0 },
+    ];
+    const appStatNow = as(16, 5);
+
+    /*
      * Resume: the point is that the session you are *in* is not the one to offer, so the
      * cases turn on where `now` sits relative to the last row's end. The 180-second
      * in-progress window is the hinge, tested from both sides.
@@ -961,6 +993,8 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        appStatEvents,
+        appStatNow,
         resumeCases,
         whenCases,
         workflowEvents,
@@ -1010,6 +1044,11 @@ function buildExportFixtures() {
         now: weekNow,
         expected: result.week,
         peakCases: result.peakLabels,
+      },
+      appStats: {
+        events: appStatEvents,
+        now: appStatNow,
+        expected: result.appStats,
       },
       resume: {
         cases: resumeCases,

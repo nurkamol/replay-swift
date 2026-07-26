@@ -290,6 +290,19 @@ public enum ParityKit {
             public let peakCases: [PeakCase]
         }
 
+        public struct AppStatsCase: Decodable, Sendable {
+            public struct Expected: Decodable, Sendable {
+                public let applicationName: String
+                public let bundleIdentifier: String?
+                public let totalSeconds: Int
+                public let sessionCount: Int
+                public let lastUsedAt: Int64
+            }
+            public let events: [Fixture.Event]
+            public let now: Int64
+            public let expected: [Expected]
+        }
+
         public struct ResumeCase: Decodable, Sendable {
             public struct Input: Decodable, Sendable {
                 public let name: String
@@ -356,6 +369,8 @@ public enum ParityKit {
         public let workflows: WorkflowCase
         /// What to offer picking back up, and how a moment reads in words.
         public let resume: ResumeCase
+        /// Per-application totals, from the reference's `computeAppStats`.
+        public let appStats: AppStatsCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -863,6 +878,29 @@ public enum ParityKit {
         equal(fg, "with the same totals", detected.map(\.totalSeconds), wfx.map(\.totalSeconds))
         equal(fg, "across the same number of sessions",
               detected.map(\.sessionCount), wfx.map(\.sessionCount))
+
+        // Per-application totals. Idle stretches are excluded first, as at every call site
+        // upstream: "how long in this app" means time at the keyboard, not a Mac left open
+        // with the app in front.
+        let apg = "application totals"
+        let stats = computeAppStats(
+            excludeIdleStretches(fixture.appStats.events.map(event), now: fixture.appStats.now),
+            now: fixture.appStats.now
+        )
+        let asx = fixture.appStats.expected
+        equal(apg, "most-used first, ties holding their first-seen order",
+              stats.map(\.applicationName), asx.map(\.applicationName))
+        equal(apg, "with the same totals", stats.map(\.totalSeconds), asx.map(\.totalSeconds))
+        equal(apg, "counting how many times each came to the front",
+              stats.map(\.sessionCount), asx.map(\.sessionCount))
+        equal(apg, "and when each was last used",
+              stats.map(\.lastUsedAt), asx.map(\.lastUsedAt))
+        equal(apg, "an app with no bundle identifier is counted under its name",
+              stats.map { $0.bundleIdentifier ?? "" }, asx.map { $0.bundleIdentifier ?? "" })
+        check(apg, "a stretch too long to be use is not counted as use",
+              !stats.contains { $0.applicationName == "Preview" })
+        check(apg, "and a row still open is measured against now",
+              stats.contains { $0.applicationName == "Mail" && $0.totalSeconds == 300 })
 
         // Resume — which session to offer, and how the moment reads. The point of the
         // feature is that the session you are *in* is not the one to offer, so the checks
