@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 432 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 443 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -51,7 +51,8 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Search | done | by session name, note or tag; by application; and a few phrases ("morning", "longest", "bookmarked") that go straight to a slice — checked against the reference's own predicates |
 | Collections | done | derived from the session category — no table, nothing to file. Both orderings tie-broken, with the fixture built so both ties occur |
 | Projects | later | needs detection logic with no equivalent here yet |
-| Story Mode / Autobiography | later | |
+| Story Mode | done | a reopened day, narrated in a few sentences; five day shapes fixture-checked as text |
+| Autobiography | later | |
 | Canvas | later | a project of its own |
 | Screensaver / Ambient | later | |
 | Replay Movie | later | |
@@ -113,17 +114,19 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 
 ## Next three things
 
-1. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
-   machine has no Developer ID at all, so the next move is a decision about an Apple
-   Developer account. See `docs/ROADMAP.md`.
-2. **Story Mode** — a day narrated back in a few plain sentences, built only from sessions
-   already on screen. Small, and the place the app's voice (SPEC §8) does the most work: a
-   sentence that overclaims is worse than no sentence.
-3. **A harness for the interface.** Every surface in this port was verified by running it
-   and looking, which has now been true eight times running. `spec/` cannot express a view;
-   closing that gap needs a different kind of test, and it is the largest quiet risk here.
+1. **A harness for the interface.** Every surface in this port was verified by running it
+   and looking — now nine times running. `spec/` cannot express a view, so closing this
+   needs a different kind of test than the contract provides. It is the largest quiet risk
+   here and it grows with each feature.
+2. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
+   machine has no Developer ID at all. A decision about an Apple Developer account, not a
+   task. See `docs/ROADMAP.md`.
+3. **Projects**, the last of the small derived subsystems. Needs detection logic that has no
+   equivalent here yet, which is why it trails Collections rather than shipping beside it.
 
 Done and no longer blocking:
+- ~~Story Mode~~ — every clause filled from recorded activity, and a day too thin to narrate
+  gets no story rather than a padded one. Compared as text, because the text is the claim.
 - ~~Collections~~ — sessions gathered by the kind of work they were, derived rather than
   filed. `Admin` is shown as "Utilities", and `Other` is deliberately not a collection.
 - ~~Memories~~ — the first of the deferred subsystems, and the one that needed no new table:

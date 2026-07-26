@@ -881,6 +881,198 @@
       }
     ]
   },
+  "stories": {
+    "cases": [
+      {
+        "name": "a full day",
+        "now": 1770159600000,
+        "events": [
+          {
+            "id": 300,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770109200000,
+            "endedAt": 1770110100000,
+            "duration": 900
+          },
+          {
+            "id": 301,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770110100000,
+            "endedAt": 1770110700000,
+            "duration": 600
+          },
+          {
+            "id": 302,
+            "type": "activated",
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "startedAt": 1770123600000,
+            "endedAt": 1770125100000,
+            "duration": 1500
+          },
+          {
+            "id": 303,
+            "type": "activated",
+            "applicationName": "Slack",
+            "bundleIdentifier": "com.tinyspeck.slackmacgap",
+            "appPath": null,
+            "startedAt": 1770134400000,
+            "endedAt": 1770135300000,
+            "duration": 900
+          },
+          {
+            "id": 304,
+            "type": "activated",
+            "applicationName": "Mail",
+            "bundleIdentifier": "com.apple.mail",
+            "appPath": null,
+            "startedAt": 1770148800000,
+            "endedAt": 1770149400000,
+            "duration": 600
+          }
+        ]
+      },
+      {
+        "name": "two stretches tie for longest",
+        "now": 1770159600000,
+        "events": [
+          {
+            "id": 310,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770109200000,
+            "endedAt": 1770109800000,
+            "duration": 600
+          },
+          {
+            "id": 311,
+            "type": "activated",
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "startedAt": 1770123600000,
+            "endedAt": 1770125100000,
+            "duration": 1500
+          },
+          {
+            "id": 312,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770138000000,
+            "endedAt": 1770139500000,
+            "duration": 1500
+          }
+        ]
+      },
+      {
+        "name": "one short session, nothing to narrate beyond the opening",
+        "now": 1770120000000,
+        "events": [
+          {
+            "id": 320,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770109200000,
+            "endedAt": 1770109500000,
+            "duration": 300
+          },
+          {
+            "id": 321,
+            "type": "activated",
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "startedAt": 1770109500000,
+            "endedAt": 1770109700000,
+            "duration": 200
+          }
+        ]
+      },
+      {
+        "name": "a day that never left the morning",
+        "now": 1770120000000,
+        "events": [
+          {
+            "id": 330,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770105600000,
+            "endedAt": 1770107100000,
+            "duration": 1500
+          },
+          {
+            "id": 331,
+            "type": "activated",
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "startedAt": 1770112800000,
+            "endedAt": 1770113700000,
+            "duration": 900
+          }
+        ]
+      },
+      {
+        "name": "nothing at all",
+        "now": 1770120000000,
+        "events": []
+      }
+    ],
+    "expected": [
+      {
+        "name": "a full day",
+        "sessionCount": 4,
+        "sentences": [
+          "You began the morning in Code.",
+          "In all you moved through 5 apps across 4 sessions.",
+          "The day wound down in Mail."
+        ]
+      },
+      {
+        "name": "two stretches tie for longest",
+        "sessionCount": 3,
+        "sentences": [
+          "You began the morning in Code.",
+          "Your longest focus was 25m in Safari that afternoon.",
+          "The day wound down in Terminal."
+        ]
+      },
+      {
+        "name": "one short session, nothing to narrate beyond the opening",
+        "sessionCount": 1,
+        "sentences": [
+          "You began the morning in Code."
+        ]
+      },
+      {
+        "name": "a day that never left the morning",
+        "sessionCount": 2,
+        "sentences": [
+          "You began the morning in Code."
+        ]
+      },
+      {
+        "name": "nothing at all",
+        "sessionCount": 0,
+        "sentences": []
+      }
+    ]
+  },
   "collections": {
     "events": [
       {

@@ -225,10 +225,31 @@ struct DayView: View {
     let onDeleteSession: (ActivitySession) -> Void
     let onBack: () -> Void
 
+    private var story: [String] { DayStory.build(day.sessions) }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
+
+                // The day in a few sentences, when it can support them. A thin day gets
+                // none rather than a padded one — see DayStory.
+                if !story.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("The story of this day")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                            .kerning(0.6)
+                            .textCase(.uppercase)
+                        Text(story.joined(separator: " "))
+                            .font(.system(size: 15))
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
+                }
 
                 // Offered even on a day whose rows were pruned: what you wrote about a day
                 // outlives the activity behind it, and is often the only thing left.

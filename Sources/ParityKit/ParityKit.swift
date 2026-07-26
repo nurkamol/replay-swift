@@ -154,6 +154,20 @@ public enum ParityKit {
             public let annotations: [Annotation]
             public let expected: Reports
         }
+        public struct Stories: Decodable, Sendable {
+            public struct Case: Decodable, Sendable {
+                public let name: String
+                public let now: Int64
+                public let events: [Fixture.Event]
+            }
+            public struct Expected: Decodable, Sendable {
+                public let name: String
+                public let sessionCount: Int
+                public let sentences: [String]
+            }
+            public let cases: [Case]
+            public let expected: [Expected]
+        }
         public struct CollectionsCase: Decodable, Sendable {
             public struct Definition: Decodable, Sendable {
                 public let category: String
@@ -227,6 +241,7 @@ public enum ParityKit {
         public let search: SearchCase
         public let history: History
         public let collections: CollectionsCase
+        public let stories: Stories
         public let scopes: Scopes
     }
 
@@ -771,6 +786,28 @@ public enum ParityKit {
         equal(hg, "substring discovery is what finds an app by a lowercase name",
               ReplayCore.Search.apps(matching: "safari", in: scopeSessions).map(\.applicationName),
               ["Safari"])
+
+        // Story Mode — a day told back in sentences.
+        //
+        // Compared as text, because the text *is* the feature: every clause is a claim
+        // about the day, and a wrong word is a wrong claim. The cases are chosen so each
+        // rule fires or is suppressed, including a day whose two longest stretches tie —
+        // the reference keeps the first, Swift's `max(by:)` would keep the last and
+        // narrate a different application.
+        let stg = "story mode"
+        for (index, storyCase) in fixture.stories.cases.enumerated() {
+            guard index < fixture.stories.expected.count else { break }
+            let expected = fixture.stories.expected[index]
+            let sessions = buildTimeline(
+                storyCase.events.map(event), now: storyCase.now, calendar: calendar
+            ).compactMap { if case .session(let s) = $0 { return s } else { return nil } }
+            equal(stg, "\(storyCase.name): the same sessions derive",
+                  sessions.count, expected.sessionCount)
+            equal(stg, "\(storyCase.name): the same story",
+                  DayStory.build(sessions, calendar: calendar), expected.sentences)
+        }
+        check(stg, "a day with nothing on it gets no story",
+              DayStory.build([], calendar: calendar).isEmpty)
 
         // Collections — sessions gathered by the kind of work they were.
         //

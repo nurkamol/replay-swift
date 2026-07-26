@@ -430,6 +430,7 @@ function buildExportFixtures() {
     writeFileSync(
       entry,
       `export { groupByDay } from ${JSON.stringify(join(GLAZE, "renderer/lib/activity.ts"))};
+       export { buildDayStory } from ${JSON.stringify(join(GLAZE, "renderer/lib/day-story.ts"))};
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
        export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
@@ -470,7 +471,8 @@ function buildExportFixtures() {
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories,
-               computeCollections, COLLECTION_CATEGORIES } = await import(${JSON.stringify(bundle)});
+               computeCollections, COLLECTION_CATEGORIES,
+               buildDayStory } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
 
        // Day grouping: record the bucketing only. The label is a locale rendering
@@ -544,7 +546,19 @@ function buildExportFixtures() {
          apps: c.apps.map((a) => ({ applicationName: a.applicationName, seconds: a.seconds })),
        }));
 
+       // Story Mode, over several day shapes — including one whose two longest
+       // stretches tie, and one too thin to narrate at all.
+       const stories = input.storyCases.map((c) => {
+         const sessions = buildTimeline(c.events, c.now).filter((i) => i.kind === "session");
+         return {
+           name: c.name,
+           sessionCount: sessions.length,
+           sentences: buildDayStory(sessions),
+         };
+       });
+
        process.stdout.write(JSON.stringify({
+         stories,
          collections: {
            definitions: COLLECTION_CATEGORIES,
            sessionCount: collectionSessions.length,
@@ -690,6 +704,57 @@ function buildExportFixtures() {
       ev(205, "SomeUnknownApp", "com.example.unknown", collectionBase + min(140), 1200),
     ];
 
+    /*
+     * Story Mode is prose assembled from thresholds, so each case exists to make
+     * one clause appear or not appear. The tie case matters most: the reference
+     * picks the *first* of two equally long stretches (its reduce keeps `best`),
+     * while Swift's `max(by:)` would pick the last and narrate a different app.
+     */
+    const storyDay = 1_770_076_800_000; // a local midnight in UTC
+    const hour = (h) => storyDay + h * 3_600_000;
+    // Every row is kept under idleBreakSeconds (1800): a stretch that long is
+    // absence rather than focus and is dropped from the timeline entirely, which
+    // silently emptied the first version of these cases.
+    const storyCases = [
+      {
+        name: "a full day",
+        now: hour(23),
+        events: [
+          ev(300, "Code", "com.microsoft.VSCode", hour(9), 900),
+          ev(301, "Terminal", "com.apple.Terminal", hour(9) + 900_000, 600),
+          ev(302, "Safari", "com.apple.Safari", hour(13), 1500),
+          ev(303, "Slack", "com.tinyspeck.slackmacgap", hour(16), 900),
+          ev(304, "Mail", "com.apple.mail", hour(20), 600),
+        ],
+      },
+      {
+        name: "two stretches tie for longest",
+        now: hour(23),
+        events: [
+          ev(310, "Code", "com.microsoft.VSCode", hour(9), 600),
+          ev(311, "Safari", "com.apple.Safari", hour(13), 1500),
+          ev(312, "Terminal", "com.apple.Terminal", hour(17), 1500),
+        ],
+      },
+      {
+        name: "one short session, nothing to narrate beyond the opening",
+        now: hour(12),
+        events: [
+          ev(320, "Code", "com.microsoft.VSCode", hour(9), 300),
+          ev(321, "Safari", "com.apple.Safari", hour(9) + 300_000, 200),
+        ],
+      },
+      {
+        name: "a day that never left the morning",
+        now: hour(12),
+        events: [
+          ev(330, "Code", "com.microsoft.VSCode", hour(8), 1500),
+          ev(331, "Safari", "com.apple.Safari", hour(10), 900),
+        ],
+      },
+      { name: "nothing at all", now: hour(12), events: [] },
+    ];
+
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
@@ -707,6 +772,7 @@ function buildExportFixtures() {
         historySummaries,
         collectionEvents,
         collectionNow,
+        storyCases,
       })],
       {
         cwd: GLAZE,
@@ -727,6 +793,7 @@ function buildExportFixtures() {
       grouping: { events: groupingEvents, expected: result.grouping },
       search: { queries: input_searchQueries, expected: result.searchResults },
       history: { summaries: historySummaries, cases: result.history },
+      stories: { cases: storyCases, expected: result.stories },
       collections: {
         events: collectionEvents,
         now: collectionNow,
