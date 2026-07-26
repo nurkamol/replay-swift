@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var apps = AppsModel(model: model)
     private lazy var appHistory = AppHistoryModel(model: model)
     private lazy var projects = ProjectsModel(model: model, preferences: preferences)
+    private lazy var story = StoryModel(model: model, preferences: preferences)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -191,6 +192,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewMenu.addItem(
             withTitle: "Projects", action: #selector(openProjects), keyEquivalent: "8"
         ).target = self
+        viewMenu.addItem(
+            withTitle: "Story", action: #selector(openStory), keyEquivalent: "9"
+        ).target = self
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
 
@@ -262,6 +266,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 apps: apps,
                 appHistory: appHistory,
                 projects: projects,
+                story: story,
                 onOpenSettings: { [weak self] in self?.openSettings() }
             )
         )
@@ -289,6 +294,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openToday() {
         model.reload()
         navigation.show(.today)
+        showWindow()
+    }
+
+    @objc private func openStory() {
+        story.load()
+        navigation.show(.story)
         showWindow()
     }
 

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 555 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 580 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,9 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| Rituals | done | `detectRituals` — the app that leads each part of the day and the one a day begins with, each needing more than one day to count. 6 checks |
+| Chapters | done | `detectChapters` — eras from the durable headlines, split on character change or a gap over 16 days. 10 checks |
+| Autobiography | done | `listPeriods` + `summarizePeriod` — the history as sentences, compared word for word. 9 checks |
 | Projects | done | `detectProjects` — the same signature grouping as workflows but keeping the whole span, apps aggregated across every session, most recently active first. 10 checks. Names are the only thing stored |
 | Relative day labels | done | `relativeDayLabel` and `shortDateLabel`, both locale renderings and both recorded rather than assumed |
 | Application totals | done | `computeAppStats` — most-used first, idle stretches excluded, an open row measured against `now`, ties holding first-seen order. 7 checks |
@@ -58,6 +61,9 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| Story | done | a hub over the narrative surfaces, plus the rituals a run of days settles into |
+| Chapters | done | the eras, and a page for each: what it held, what led its days, and every day in it. Renameable |
+| Autobiography | done | a period picker over every week, month and year the history touches, and the paragraph for it |
 | Projects | done | a grid of what keeps coming back, and a page for each: how it grew, the apps that make it up, and every session under it. Renameable, with an empty name falling back to Replay's own description |
 | Apps | done | ranked by time, with a Today/This Week/This Month window, pinned favourites, and a row leading into that application's own history |
 | An application's history | partial | header, the four figures, which collections it appears in, and its recent sessions. No "works alongside" — `computeWorkflowPartners` is not ported |

@@ -120,6 +120,11 @@ final class Preferences {
         didSet { writeJSON(projectNames, "projectNames") }
     }
 
+    /// The names given to chapters, keyed by their first day.
+    var chapterNames: [String: String] {
+        didSet { writeJSON(chapterNames, "chapterNames") }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -133,6 +138,8 @@ final class Preferences {
         pinnedApps = (defaults.data(forKey: "pinnedApps"))
             .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
         projectNames = (defaults.data(forKey: "projectNames"))
+            .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
+        chapterNames = (defaults.data(forKey: "chapterNames"))
             .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
         lastSurface = defaults.string(forKey: "lastSurface") ?? ""
         // Zero and absent both mean "no goal", so an unset default reads as off.

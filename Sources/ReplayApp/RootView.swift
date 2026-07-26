@@ -16,6 +16,7 @@ final class Navigation {
     enum Surface: String, CaseIterable, Identifiable, Hashable {
         case today = "Today", apps = "Apps", week = "This Week", timeline = "Timeline", search = "Search"
         case memories = "Memories", collections = "Collections", projects = "Projects"
+        case story = "Story"
 
         var id: String { rawValue }
 
@@ -32,6 +33,7 @@ final class Navigation {
             case .memories: "clock.arrow.circlepath"
             case .collections: "square.stack"
             case .projects: "shippingbox"
+            case .story: "book.closed"
             }
         }
 
@@ -47,6 +49,7 @@ final class Navigation {
             case .memories: "What you were doing on this date before"
             case .collections: "Sessions gathered by the kind of work"
             case .projects: "The applications that keep coming back together"
+            case .story: "The long view — eras, rituals, and your history told back"
             }
         }
     }
@@ -72,9 +75,14 @@ final class Navigation {
     /// A project, by signature.
     struct ProjectTarget: Hashable { var id: String }
 
+    /// One of the narrative surfaces behind Story.
+    enum StoryTarget: Hashable { case autobiography, chapters, chapter(String) }
+
     func open(app bundleID: String) { path.append(AppHistory(bundleID: bundleID)) }
 
     func open(project id: String) { path.append(ProjectTarget(id: id)) }
+
+    func open(story target: StoryTarget) { path.append(target) }
 
     /// Bumped when something asks for the search field.
     ///
@@ -116,6 +124,7 @@ struct RootView: View {
     let apps: AppsModel
     let appHistory: AppHistoryModel
     let projects: ProjectsModel
+    let story: StoryModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -145,6 +154,9 @@ struct RootView: View {
                                 export: export
                             )
                         )
+                    }
+                    .navigationDestination(for: Navigation.StoryTarget.self) { target in
+                        chrome(storyDestination(target))
                     }
                     .navigationDestination(for: Navigation.ProjectTarget.self) { target in
                         chrome(
@@ -184,6 +196,7 @@ struct RootView: View {
             case .week: week.load()
             case .apps: apps.load()
             case .projects: projects.load()
+            case .story: story.load()
             case .today: break
             }
         }
@@ -202,6 +215,20 @@ struct RootView: View {
         }
         .help(navigation.sidebarCollapsed ? "Show Sidebar" : "Hide Sidebar")
         .accessibilityLabel(navigation.sidebarCollapsed ? "Show sidebar" : "Hide sidebar")
+    }
+
+    @ViewBuilder
+    private func storyDestination(_ target: Navigation.StoryTarget) -> some View {
+        switch target {
+        case .autobiography:
+            AutobiographyView(story: story)
+        case .chapters:
+            ChaptersView(story: story, onOpen: { navigation.open(story: .chapter($0)) })
+        case .chapter(let id):
+            ChapterDetailView(
+                id: id, story: story, onOpenDay: { navigation.open(day: $0) }
+            )
+        }
     }
 
     /// The window's own controls, which have to be attached to *every* screen.
@@ -286,6 +313,8 @@ struct RootView: View {
                 apps: apps, preferences: preferences,
                 onOpenApp: { navigation.open(app: $0) }
             )
+        case .story:
+            StoryView(story: story, onOpen: { navigation.open(story: $0) })
         case .projects:
             ProjectsView(projects: projects, onOpen: { navigation.open(project: $0) })
         case .week:

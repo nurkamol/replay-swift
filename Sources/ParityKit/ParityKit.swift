@@ -290,6 +290,81 @@ public enum ParityKit {
             public let peakCases: [PeakCase]
         }
 
+        public struct AutobiographyCase: Decodable, Sendable {
+            public struct Expected: Decodable, Sendable {
+                public struct App: Decodable, Sendable {
+                    public let applicationName: String
+                    public let days: Int
+                }
+                public struct BusiestDay: Decodable, Sendable {
+                    public let day: Int64
+                    public let activeSeconds: Int
+                }
+                public let key: String
+                public let kind: String
+                public let start: Int64
+                public let end: Int64
+                public let label: String
+                public let activeDays: Int
+                public let totalActiveSeconds: Int
+                public let dominantCategory: String?
+                public let topApps: [App]
+                public let busiestDay: BusiestDay?
+                public let reflectionCount: Int
+                public let sentences: [String]
+            }
+            public let expected: [Expected]
+        }
+
+        public struct ChaptersCase: Decodable, Sendable {
+            public struct Summary: Decodable, Sendable {
+                public let dayStart: Int64
+                public let activeSeconds: Int
+                public let topBundleId: String?
+                public let topAppName: String?
+                public let topSeconds: Int
+            }
+            public struct Expected: Decodable, Sendable {
+                public struct App: Decodable, Sendable {
+                    public let applicationName: String
+                    public let days: Int
+                    public let activeSeconds: Int
+                }
+                public let id: String
+                public let startDay: Int64
+                public let endDay: Int64
+                public let category: String
+                public let dayCount: Int
+                public let totalActiveSeconds: Int
+                public let apps: [App]
+                public let representativeDay: Int64
+                public let days: [Int64]
+                public let defaultName: String
+            }
+            public let summaries: [Summary]
+            public let expected: [Expected]
+        }
+
+        public struct RitualsCase: Decodable, Sendable {
+            public struct App: Decodable, Sendable {
+                public let applicationName: String
+                public let bundleIdentifier: String?
+                public let days: Int
+            }
+            public struct Slot: Decodable, Sendable {
+                public let part: String
+                public let applicationName: String
+                public let days: Int
+            }
+            public struct Expected: Decodable, Sendable {
+                public let slots: [Slot]
+                public let firstApp: App?
+            }
+            public let events: [Fixture.Event]
+            public let now: Int64
+            public let expected: Expected
+        }
+
         public struct AppStatsCase: Decodable, Sendable {
             public struct Expected: Decodable, Sendable {
                 public let applicationName: String
@@ -396,6 +471,12 @@ public enum ParityKit {
         public let resume: ResumeCase
         /// Per-application totals, from the reference's `computeAppStats`.
         public let appStats: AppStatsCase
+        /// The shape a run of days settles into.
+        public let rituals: RitualsCase
+        /// Eras, read from the durable daily headlines.
+        public let chapters: ChaptersCase
+        /// The history told back, a period at a time.
+        public let autobiography: AutobiographyCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -903,6 +984,102 @@ public enum ParityKit {
         equal(fg, "with the same totals", detected.map(\.totalSeconds), wfx.map(\.totalSeconds))
         equal(fg, "across the same number of sessions",
               detected.map(\.sessionCount), wfx.map(\.sessionCount))
+
+        // Chapters — eras, read from the headlines rather than the rows, which is why they
+        // outlive a retention prune. Each rule has a case: a character change splits, a long
+        // gap splits even when the character does not, and a day too quiet to anchor one is
+        // dropped without breaking the run around it.
+        let chg = "chapters"
+        let chapters = detectChapters(
+            fixture.chapters.summaries.map {
+                DailySummary(
+                    dayStart: $0.dayStart, activeSeconds: $0.activeSeconds,
+                    topBundleID: $0.topBundleId, topAppName: $0.topAppName,
+                    topSeconds: $0.topSeconds
+                )
+            },
+            calendar: calendar
+        )
+        let cex = fixture.chapters.expected
+        equal(chg, "the same eras, newest first", chapters.map(\.id), cex.map(\.id))
+        equal(chg, "named descriptively until someone types a name",
+              chapters.map { chapterDefaultName($0, calendar: calendar) }, cex.map(\.defaultName))
+        equal(chg, "each with the character its days shared",
+              chapters.map(\.category.rawValue), cex.map(\.category))
+        equal(chg, "spanning the same days", chapters.map(\.dayCount), cex.map(\.dayCount))
+        equal(chg, "between the same bounds",
+              chapters.map { [$0.startDay, $0.endDay] }, cex.map { [$0.startDay, $0.endDay] })
+        equal(chg, "holding the same active time",
+              chapters.map(\.totalActiveSeconds), cex.map(\.totalActiveSeconds))
+        equal(chg, "led by the same applications, most days first",
+              chapters.map { $0.apps.map(\.applicationName) },
+              cex.map { $0.apps.map(\.applicationName) })
+        equal(chg, "each leading the same number of days",
+              chapters.map { $0.apps.map(\.days) }, cex.map { $0.apps.map(\.days) })
+        equal(chg, "represented by the same fullest day",
+              chapters.map(\.representativeDay), cex.map(\.representativeDay))
+        equal(chg, "and listing the same days, newest first",
+              chapters.map(\.days), cex.map(\.days))
+
+        // The autobiography. Prose is the whole feature, so the sentences are compared as
+        // text: a paragraph that is *nearly* right is wrong, and only the words show it.
+        let abg = "autobiography"
+        let summaries = fixture.chapters.summaries.map {
+            DailySummary(
+                dayStart: $0.dayStart, activeSeconds: $0.activeSeconds,
+                topBundleID: $0.topBundleId, topAppName: $0.topAppName,
+                topSeconds: $0.topSeconds
+            )
+        }
+        let reflectionCounts = ["m-2026-0": 3, "y-2026": 1]
+        let periods = listPeriods(summaries, calendar: calendar, locale: environment.locale)
+        let abx = fixture.autobiography.expected
+        equal(abg, "the weeks, months and years the history touches, newest first",
+              periods.map(\.key), abx.map(\.key))
+        equal(abg, "each labelled the same", periods.map(\.label), abx.map(\.label))
+        equal(abg, "and spanning the same days",
+              periods.map { [$0.start, $0.end] }, abx.map { [$0.start, $0.end] })
+        let told = periods.map { period in
+            summarizePeriod(
+                period, summaries: summaries,
+                reflectionCount: reflectionCounts[period.key] ?? 0,
+                calendar: calendar, locale: environment.locale
+            )
+        }
+        equal(abg, "active days", told.map(\.activeDays), abx.map(\.activeDays))
+        equal(abg, "total time", told.map(\.totalActiveSeconds), abx.map(\.totalActiveSeconds))
+        equal(abg, "the kind of work that led",
+              told.map { $0.dominantCategory?.rawValue }, abx.map(\.dominantCategory))
+        equal(abg, "the tools reached for, most days first",
+              told.map { $0.topApps.map(\.applicationName) },
+              abx.map { $0.topApps.map(\.applicationName) })
+        equal(abg, "the fullest day", told.map { $0.busiestDay?.day }, abx.map { $0.busiestDay?.day })
+        equal(abg, "and every sentence, word for word",
+              told.map(\.sentences), abx.map(\.sentences))
+
+        // Rituals — the quiet patterns in a run of days. A part of the day only counts once
+        // the same app has led it more than once, which is the guard against a single
+        // sitting reading as a habit.
+        let rtg = "rituals"
+        let ritualEvents = fixture.rituals.events.map(event)
+        let rituals = detectRituals(
+            sessions: sessionsForWeek(ritualEvents, now: fixture.rituals.now, calendar: calendar),
+            events: ritualEvents,
+            calendar: calendar
+        )
+        let rex = fixture.rituals.expected
+        equal(rtg, "the parts of the day that have settled into one, in day order",
+              rituals.slots.map(\.part), rex.slots.map(\.part))
+        equal(rtg, "each led by the same application",
+              rituals.slots.map(\.app.applicationName), rex.slots.map(\.applicationName))
+        equal(rtg, "on the same number of distinct days",
+              rituals.slots.map(\.app.days), rex.slots.map(\.days))
+        equal(rtg, "the application a day most often begins with",
+              rituals.firstApp?.applicationName, rex.firstApp?.applicationName)
+        equal(rtg, "and how many days it began",
+              rituals.firstApp?.days, rex.firstApp?.days)
+        check(rtg, "a part led on a single day is not a ritual",
+              !rituals.slots.contains { $0.part == "Afternoon" })
 
         // Per-application totals. Idle stretches are excluded first, as at every call site
         // upstream: "how long in this app" means time at the keyboard, not a Mac left open

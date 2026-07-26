@@ -1142,6 +1142,757 @@
       }
     ]
   },
+  "autobiography": {
+    "expected": [
+      {
+        "key": "w-1772409600000",
+        "kind": "week",
+        "start": 1772409600000,
+        "end": 1772928000000,
+        "label": "Week of Mar 2",
+        "period": {
+          "kind": "week",
+          "start": 1772409600000,
+          "end": 1772928000000,
+          "label": "Week of Mar 2",
+          "key": "w-1772409600000"
+        },
+        "activeDays": 1,
+        "totalActiveSeconds": 3600,
+        "dominantCategory": "Development",
+        "topApps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 1
+          }
+        ],
+        "busiestDay": {
+          "day": 1772582400000,
+          "activeSeconds": 3600
+        },
+        "reflectionCount": 0,
+        "sentences": [
+          "In the week of Mar 2, you were active on 1 day, for 1h in all.",
+          "Your time leaned toward development.",
+          "You reached most often for Code."
+        ]
+      },
+      {
+        "key": "m-2026-2",
+        "kind": "month",
+        "start": 1772323200000,
+        "end": 1774915200000,
+        "label": "March 2026",
+        "period": {
+          "kind": "month",
+          "start": 1772323200000,
+          "end": 1774915200000,
+          "label": "March 2026",
+          "key": "m-2026-2"
+        },
+        "activeDays": 2,
+        "totalActiveSeconds": 7200,
+        "dominantCategory": "Development",
+        "topApps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 2
+          }
+        ],
+        "busiestDay": {
+          "day": 1772323200000,
+          "activeSeconds": 3600
+        },
+        "reflectionCount": 0,
+        "sentences": [
+          "In March 2026, you were active on 2 days, for 2h in all.",
+          "Your time leaned toward development.",
+          "You reached most often for Code.",
+          "Your fullest day was Sunday, March 1, 2026, with 1h."
+        ]
+      },
+      {
+        "key": "w-1771804800000",
+        "kind": "week",
+        "start": 1771804800000,
+        "end": 1772323200000,
+        "label": "Week of Feb 23",
+        "period": {
+          "kind": "week",
+          "start": 1771804800000,
+          "end": 1772323200000,
+          "label": "Week of Feb 23",
+          "key": "w-1771804800000"
+        },
+        "activeDays": 2,
+        "totalActiveSeconds": 7200,
+        "dominantCategory": "Development",
+        "topApps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 2
+          }
+        ],
+        "busiestDay": {
+          "day": 1772236800000,
+          "activeSeconds": 3600
+        },
+        "reflectionCount": 0,
+        "sentences": [
+          "In the week of Feb 23, you were active on 2 days, for 2h in all.",
+          "Your time leaned toward development.",
+          "You reached most often for Code.",
+          "Your fullest day was Saturday, February 28, 2026, with 1h."
+        ]
+      },
+      {
+        "key": "m-2026-1",
+        "kind": "month",
+        "start": 1769904000000,
+        "end": 1772236800000,
+        "label": "February 2026",
+        "period": {
+          "kind": "month",
+          "start": 1769904000000,
+          "end": 1772236800000,
+          "label": "February 2026",
+          "key": "m-2026-1"
+        },
+        "activeDays": 1,
+        "totalActiveSeconds": 3600,
+        "dominantCategory": "Development",
+        "topApps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 1
+          }
+        ],
+        "busiestDay": {
+          "day": 1772236800000,
+          "activeSeconds": 3600
+        },
+        "reflectionCount": 0,
+        "sentences": [
+          "In February 2026, you were active on 1 day, for 1h in all.",
+          "Your time leaned toward development.",
+          "You reached most often for Code."
+        ]
+      },
+      {
+        "key": "w-1769385600000",
+        "kind": "week",
+        "start": 1769385600000,
+        "end": 1769904000000,
+        "label": "Week of Jan 26",
+        "period": {
+          "kind": "week",
+          "start": 1769385600000,
+          "end": 1769904000000,
+          "label": "Week of Jan 26",
+          "key": "w-1769385600000"
+        },
+        "activeDays": 2,
+        "totalActiveSeconds": 7200,
+        "dominantCategory": "Research",
+        "topApps": [
+          {
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "days": 2
+          }
+        ],
+        "busiestDay": {
+          "day": 1769644800000,
+          "activeSeconds": 3600
+        },
+        "reflectionCount": 0,
+        "sentences": [
+          "In the week of Jan 26, you were active on 2 days, for 2h in all.",
+          "Your time leaned toward research.",
+          "You reached most often for Safari.",
+          "Your fullest day was Thursday, January 29, 2026, with 1h."
+        ]
+      },
+      {
+        "key": "w-1767571200000",
+        "kind": "week",
+        "start": 1767571200000,
+        "end": 1768089600000,
+        "label": "Week of Jan 5",
+        "period": {
+          "kind": "week",
+          "start": 1767571200000,
+          "end": 1768089600000,
+          "label": "Week of Jan 5",
+          "key": "w-1767571200000"
+        },
+        "activeDays": 5,
+        "totalActiveSeconds": 16260,
+        "dominantCategory": "Research",
+        "topApps": [
+          {
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "days": 4
+          },
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 1
+          }
+        ],
+        "busiestDay": {
+          "day": 1767744000000,
+          "activeSeconds": 5400
+        },
+        "reflectionCount": 0,
+        "sentences": [
+          "In the week of Jan 5, you were active on 5 days, for 4h 31m in all.",
+          "Your time leaned toward research.",
+          "You reached most often for Safari and Code.",
+          "Your fullest day was Wednesday, January 7, 2026, with 1h 30m."
+        ]
+      },
+      {
+        "key": "m-2026-0",
+        "kind": "month",
+        "start": 1767225600000,
+        "end": 1769817600000,
+        "label": "January 2026",
+        "period": {
+          "kind": "month",
+          "start": 1767225600000,
+          "end": 1769817600000,
+          "label": "January 2026",
+          "key": "m-2026-0"
+        },
+        "activeDays": 11,
+        "totalActiveSeconds": 39660,
+        "dominantCategory": "Research",
+        "topApps": [
+          {
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "days": 6
+          },
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 4
+          },
+          {
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "days": 1
+          }
+        ],
+        "busiestDay": {
+          "day": 1767312000000,
+          "activeSeconds": 7200
+        },
+        "reflectionCount": 3,
+        "sentences": [
+          "In January 2026, you were active on 11 days, for 11h 1m in all.",
+          "Your time leaned toward research.",
+          "You reached most often for Safari, Code and Terminal.",
+          "Your fullest day was Friday, January 2, 2026, with 2h.",
+          "You wrote 3 reflections this month."
+        ]
+      },
+      {
+        "key": "y-2026",
+        "kind": "year",
+        "start": 1767225600000,
+        "end": 1798675200000,
+        "label": "2026",
+        "period": {
+          "kind": "year",
+          "start": 1767225600000,
+          "end": 1798675200000,
+          "label": "2026",
+          "key": "y-2026"
+        },
+        "activeDays": 14,
+        "totalActiveSeconds": 50460,
+        "dominantCategory": "Development",
+        "topApps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 7
+          },
+          {
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "days": 6
+          },
+          {
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "days": 1
+          }
+        ],
+        "busiestDay": {
+          "day": 1767312000000,
+          "activeSeconds": 7200
+        },
+        "reflectionCount": 1,
+        "sentences": [
+          "In 2026, you were active on 14 days, for 14h 1m in all.",
+          "Your time leaned toward development.",
+          "You reached most often for Code, Safari and Terminal.",
+          "Your fullest day was Friday, January 2, 2026, with 2h.",
+          "You wrote 1 reflection this year."
+        ]
+      },
+      {
+        "key": "w-1766966400000",
+        "kind": "week",
+        "start": 1766966400000,
+        "end": 1767484800000,
+        "label": "Week of Dec 29",
+        "period": {
+          "kind": "week",
+          "start": 1766966400000,
+          "end": 1767484800000,
+          "label": "Week of Dec 29",
+          "key": "w-1766966400000"
+        },
+        "activeDays": 4,
+        "totalActiveSeconds": 16200,
+        "dominantCategory": "Development",
+        "topApps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "days": 3
+          },
+          {
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "days": 1
+          }
+        ],
+        "busiestDay": {
+          "day": 1767312000000,
+          "activeSeconds": 7200
+        },
+        "reflectionCount": 0,
+        "sentences": [
+          "In the week of Dec 29, you were active on 4 days, for 4h 30m in all.",
+          "Your time leaned toward development.",
+          "You reached most often for Code and Terminal.",
+          "Your fullest day was Friday, January 2, 2026, with 2h."
+        ]
+      }
+    ]
+  },
+  "chapters": {
+    "summaries": [
+      {
+        "dayStart": 1767225600000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1767312000000,
+        "activeSeconds": 7200,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 7200
+      },
+      {
+        "dayStart": 1767398400000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.apple.Terminal",
+        "topAppName": "Terminal",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1767484800000,
+        "activeSeconds": 1800,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 1800
+      },
+      {
+        "dayStart": 1767571200000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1767657600000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.apple.Safari",
+        "topAppName": "Safari",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1767744000000,
+        "activeSeconds": 5400,
+        "topBundleId": "com.apple.Safari",
+        "topAppName": "Safari",
+        "topSeconds": 5400
+      },
+      {
+        "dayStart": 1767830400000,
+        "activeSeconds": 60,
+        "topBundleId": "com.apple.Safari",
+        "topAppName": "Safari",
+        "topSeconds": 60
+      },
+      {
+        "dayStart": 1767916800000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.apple.Safari",
+        "topAppName": "Safari",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1769644800000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.apple.Safari",
+        "topAppName": "Safari",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1769731200000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.apple.Safari",
+        "topAppName": "Safari",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1772236800000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1772323200000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 3600
+      },
+      {
+        "dayStart": 1772582400000,
+        "activeSeconds": 3600,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 3600
+      }
+    ],
+    "expected": [
+      {
+        "id": "1772236800000",
+        "startDay": 1772236800000,
+        "endDay": 1772582400000,
+        "category": "Development",
+        "dayCount": 3,
+        "totalActiveSeconds": 10800,
+        "apps": [
+          {
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "applicationName": "Code",
+            "appPath": null,
+            "days": 3,
+            "activeSeconds": 10800
+          }
+        ],
+        "representativeDay": 1772236800000,
+        "days": [
+          1772582400000,
+          1772323200000,
+          1772236800000
+        ],
+        "defaultName": "Development · Feb–Mar 2026"
+      },
+      {
+        "id": "1769644800000",
+        "startDay": 1769644800000,
+        "endDay": 1769731200000,
+        "category": "Research",
+        "dayCount": 2,
+        "totalActiveSeconds": 7200,
+        "apps": [
+          {
+            "bundleIdentifier": "com.apple.Safari",
+            "applicationName": "Safari",
+            "appPath": null,
+            "days": 2,
+            "activeSeconds": 7200
+          }
+        ],
+        "representativeDay": 1769644800000,
+        "days": [
+          1769731200000,
+          1769644800000
+        ],
+        "defaultName": "Research · Jan 2026"
+      },
+      {
+        "id": "1767657600000",
+        "startDay": 1767657600000,
+        "endDay": 1767916800000,
+        "category": "Research",
+        "dayCount": 3,
+        "totalActiveSeconds": 12600,
+        "apps": [
+          {
+            "bundleIdentifier": "com.apple.Safari",
+            "applicationName": "Safari",
+            "appPath": null,
+            "days": 3,
+            "activeSeconds": 12600
+          }
+        ],
+        "representativeDay": 1767744000000,
+        "days": [
+          1767916800000,
+          1767744000000,
+          1767657600000
+        ],
+        "defaultName": "Research · Jan 2026"
+      },
+      {
+        "id": "1767225600000",
+        "startDay": 1767225600000,
+        "endDay": 1767571200000,
+        "category": "Development",
+        "dayCount": 5,
+        "totalActiveSeconds": 19800,
+        "apps": [
+          {
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "applicationName": "Code",
+            "appPath": null,
+            "days": 4,
+            "activeSeconds": 16200
+          },
+          {
+            "bundleIdentifier": "com.apple.Terminal",
+            "applicationName": "Terminal",
+            "appPath": null,
+            "days": 1,
+            "activeSeconds": 3600
+          }
+        ],
+        "representativeDay": 1767312000000,
+        "days": [
+          1767571200000,
+          1767484800000,
+          1767398400000,
+          1767312000000,
+          1767225600000
+        ],
+        "defaultName": "Development · Jan 2026"
+      }
+    ]
+  },
+  "rituals": {
+    "events": [
+      {
+        "id": 800,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770022800000,
+        "endedAt": 1770023700000,
+        "duration": 900
+      },
+      {
+        "id": 801,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770023700000,
+        "endedAt": 1770024000000,
+        "duration": 300
+      },
+      {
+        "id": 802,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770109200000,
+        "endedAt": 1770110100000,
+        "duration": 900
+      },
+      {
+        "id": 803,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770110100000,
+        "endedAt": 1770110400000,
+        "duration": 300
+      },
+      {
+        "id": 804,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770195600000,
+        "endedAt": 1770196500000,
+        "duration": 900
+      },
+      {
+        "id": 805,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770196500000,
+        "endedAt": 1770196800000,
+        "duration": 300
+      },
+      {
+        "id": 806,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770040800000,
+        "endedAt": 1770041700000,
+        "duration": 900
+      },
+      {
+        "id": 807,
+        "type": "activated",
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "startedAt": 1770041700000,
+        "endedAt": 1770042000000,
+        "duration": 300
+      },
+      {
+        "id": 808,
+        "type": "activated",
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "startedAt": 1770145200000,
+        "endedAt": 1770146100000,
+        "duration": 900
+      },
+      {
+        "id": 809,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770146100000,
+        "endedAt": 1770146400000,
+        "duration": 300
+      },
+      {
+        "id": 810,
+        "type": "activated",
+        "applicationName": "Mail",
+        "bundleIdentifier": "com.apple.mail",
+        "appPath": null,
+        "startedAt": 1770231600000,
+        "endedAt": 1770232500000,
+        "duration": 900
+      },
+      {
+        "id": 811,
+        "type": "activated",
+        "applicationName": "Safari",
+        "bundleIdentifier": "com.apple.Safari",
+        "appPath": null,
+        "startedAt": 1770232500000,
+        "endedAt": 1770232800000,
+        "duration": 300
+      },
+      {
+        "id": 812,
+        "type": "activated",
+        "applicationName": "Music",
+        "bundleIdentifier": "com.apple.Music",
+        "appPath": null,
+        "startedAt": 1770274800000,
+        "endedAt": 1770275400000,
+        "duration": 600
+      },
+      {
+        "id": 813,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770282000000,
+        "endedAt": 1770282900000,
+        "duration": 900
+      },
+      {
+        "id": 814,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770282900000,
+        "endedAt": 1770283200000,
+        "duration": 300
+      }
+    ],
+    "now": 1770379200000,
+    "expected": {
+      "slots": [
+        {
+          "part": "Morning",
+          "applicationName": "Code",
+          "bundleIdentifier": "com.microsoft.VSCode",
+          "appPath": null,
+          "days": 4
+        },
+        {
+          "part": "Evening",
+          "applicationName": "Mail",
+          "bundleIdentifier": "com.apple.mail",
+          "appPath": null,
+          "days": 2
+        }
+      ],
+      "firstApp": {
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "days": 3
+      }
+    }
+  },
   "workflows": {
     "events": [
       {

@@ -470,6 +470,9 @@ function buildExportFixtures() {
        export { computeCollections, COLLECTION_CATEGORIES } from ${JSON.stringify(join(GLAZE, "renderer/lib/collections.ts"))};
        export { detectWorkflows, detectProjects } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
        export { projectDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/projects.ts"))};
+       export { detectRituals } from ${JSON.stringify(join(GLAZE, "renderer/lib/rituals.ts"))};
+       export { detectChapters, chapterDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/chapters.ts"))};
+       export { listPeriods, summarizePeriod } from ${JSON.stringify(join(GLAZE, "renderer/lib/autobiography.ts"))};
        export { historyTargets, findMemories, relativeDayLabel, shortDateLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
        export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen, excludeIdleStretches } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
@@ -510,7 +513,8 @@ function buildExportFixtures() {
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories, describeBreak,
                computeWeekSummary, describePeak, detectWorkflows, detectProjects,
-               projectDefaultName, relativeDayLabel, shortDateLabel,
+               projectDefaultName, relativeDayLabel, shortDateLabel, detectRituals,
+               detectChapters, chapterDefaultName, listPeriods, summarizePeriod,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -585,6 +589,30 @@ function buildExportFixtures() {
          lastActive: p.lastActive,
          sessionStarts: p.sessions.map((s) => s.startedAt),
          defaultName: projectDefaultName(p),
+       }));
+
+       // The shape a run of days settles into.
+       const rituals = detectRituals(
+         groupSessionsForWeek(input.ritualEvents, input.ritualNow),
+         input.ritualEvents,
+       );
+
+       // Eras, read from the durable daily headlines.
+       const chapters = detectChapters(input.chapterSummaries, new Map()).map((c) => ({
+         ...c,
+         defaultName: chapterDefaultName(c),
+       }));
+
+       // The history told back, a period at a time. Prose is the whole feature, so the
+       // sentences are compared as text.
+       const periods = listPeriods(input.chapterSummaries);
+       const autobiography = periods.map((period) => ({
+         key: period.key,
+         kind: period.kind,
+         start: period.start,
+         end: period.end,
+         label: period.label,
+         ...summarizePeriod(period, input.chapterSummaries, new Map(), input.reflectionCounts[period.key] ?? 0),
        }));
 
        // Every branch of describePeak, so the boundary hours are pinned rather
@@ -679,6 +707,9 @@ function buildExportFixtures() {
          peakLabels,
          workflows,
          projects,
+         rituals,
+         chapters,
+         autobiography,
          workflowSessionCount: workflowSessions.length,
          resume,
          whenLabels,
@@ -1004,6 +1035,73 @@ function buildExportFixtures() {
       { at: resumeDay + 12 * 3_600_000, now: resumeDay + 5 * DAY },
     ];
 
+    /*
+     * Chapters, from daily headlines rather than from rows. Four runs, each testing one
+     * rule: a character change splits, a gap longer than 16 days splits even when the
+     * character is unchanged, a day under five minutes is too quiet to anchor anything,
+     * and a run crossing a month boundary must name itself with a range.
+     */
+    const chapterDay = 1_767_225_600_000; // a local midnight, New Year's Day 2026
+    const summary = (dayOffset, app, bundle, seconds, topSeconds) => ({
+      dayStart: chapterDay + dayOffset * DAY,
+      activeSeconds: seconds,
+      topBundleId: bundle,
+      topAppName: app,
+      topSeconds: topSeconds ?? seconds,
+    });
+    const chapterSummaries = [
+      // Five development days, then one that leans elsewhere: a split on character.
+      summary(0, "Code", "com.microsoft.VSCode", 3600),
+      summary(1, "Code", "com.microsoft.VSCode", 7200),
+      summary(2, "Terminal", "com.apple.Terminal", 3600),
+      summary(3, "Code", "com.microsoft.VSCode", 1800),
+      summary(4, "Code", "com.microsoft.VSCode", 3600),
+      summary(5, "Safari", "com.apple.Safari", 3600),
+      summary(6, "Safari", "com.apple.Safari", 5400),
+      // Too quiet to anchor anything, and it must not split the run either.
+      summary(7, "Safari", "com.apple.Safari", 60),
+      summary(8, "Safari", "com.apple.Safari", 3600),
+      // A twenty-day gap: same character, new chapter.
+      summary(28, "Safari", "com.apple.Safari", 3600),
+      summary(29, "Safari", "com.apple.Safari", 3600),
+      // And a run that crosses into the next month, so the name has to be a range.
+      summary(58, "Code", "com.microsoft.VSCode", 3600),
+      summary(59, "Code", "com.microsoft.VSCode", 3600),
+      summary(62, "Code", "com.microsoft.VSCode", 3600),
+    ];
+
+    /*
+     * Rituals: a part of the day only counts once the same app has led it on more than
+     * one day. Three mornings led by the same app clears that; one afternoon does not,
+     * and must produce no slot at all. The first app of each day is tallied separately
+     * from the leaders, so one day starts on something that leads nothing.
+     */
+    const ritualDay = 1_769_990_400_000;
+    const rt2 = (day, h, m = 0) => ritualDay + day * DAY + h * 3_600_000 + m * 60_000;
+    const ritualEvents = [
+      // Three mornings led by Code — a ritual.
+      ev(800, "Code", "com.microsoft.VSCode", rt2(0, 9), 900),
+      ev(801, "Terminal", "com.apple.Terminal", rt2(0, 9, 15), 300),
+      ev(802, "Code", "com.microsoft.VSCode", rt2(1, 9), 900),
+      ev(803, "Terminal", "com.apple.Terminal", rt2(1, 9, 15), 300),
+      ev(804, "Code", "com.microsoft.VSCode", rt2(2, 9), 900),
+      ev(805, "Terminal", "com.apple.Terminal", rt2(2, 9, 15), 300),
+      // One afternoon led by Safari — not enough days to be a ritual.
+      ev(806, "Safari", "com.apple.Safari", rt2(0, 14), 900),
+      ev(807, "Mail", "com.apple.mail", rt2(0, 14, 15), 300),
+      // Two evenings led by Mail — a ritual, and a different app from the mornings'.
+      ev(808, "Mail", "com.apple.mail", rt2(1, 19), 900),
+      ev(809, "Safari", "com.apple.Safari", rt2(1, 19, 15), 300),
+      ev(810, "Mail", "com.apple.mail", rt2(2, 19), 900),
+      ev(811, "Safari", "com.apple.Safari", rt2(2, 19, 15), 300),
+      // A fourth day that begins on something else entirely, so the first-app tally and
+      // the part leaders cannot be the same computation by accident.
+      ev(812, "Music", "com.apple.Music", rt2(3, 7), 600),
+      ev(813, "Code", "com.microsoft.VSCode", rt2(3, 9), 900),
+      ev(814, "Terminal", "com.apple.Terminal", rt2(3, 9, 15), 300),
+    ];
+    const ritualNow = rt2(4, 12);
+
     /** The hour boundaries in `describePeak`, from each side. */
     const peakCases = [
       { weekday: 0, hour: 0, seconds: 1 },
@@ -1021,6 +1119,13 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        chapterSummaries,
+        // Reflections live in their own table, so the count is supplied. Two periods get
+        // one, so the singular and the plural are both exercised, and the rest get none
+        // so the sentence has to be absent rather than say "0 reflections".
+        reflectionCounts: { "m-2026-0": 3, "y-2026": 1 },
+        ritualEvents,
+        ritualNow,
         appStatEvents,
         appStatNow,
         resumeCases,
@@ -1083,6 +1188,18 @@ function buildExportFixtures() {
         expected: result.resume,
         whenCases: result.whenLabels,
         dayLabels: result.dayLabels,
+      },
+      autobiography: {
+        expected: result.autobiography,
+      },
+      chapters: {
+        summaries: chapterSummaries,
+        expected: result.chapters,
+      },
+      rituals: {
+        events: ritualEvents,
+        now: ritualNow,
+        expected: result.rituals,
       },
       workflows: {
         events: workflowEvents,
