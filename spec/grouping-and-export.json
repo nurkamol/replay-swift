@@ -720,6 +720,251 @@
       }
     ]
   },
+  "resume": {
+    "cases": [
+      {
+        "name": "the newest session is still running",
+        "events": [
+          {
+            "id": 600,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770022800000,
+            "endedAt": 1770023700000,
+            "duration": 900
+          },
+          {
+            "id": 601,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770023700000,
+            "endedAt": 1770024000000,
+            "duration": 300
+          },
+          {
+            "id": 602,
+            "type": "activated",
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "startedAt": 1770040800000,
+            "endedAt": 1770041400000,
+            "duration": 600
+          },
+          {
+            "id": 603,
+            "type": "activated",
+            "applicationName": "Mail",
+            "bundleIdentifier": "com.apple.mail",
+            "appPath": null,
+            "startedAt": 1770041400000,
+            "endedAt": 1770041700000,
+            "duration": 300
+          }
+        ],
+        "now": 1770041760000
+      },
+      {
+        "name": "stepped away from the newest",
+        "events": [
+          {
+            "id": 600,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770022800000,
+            "endedAt": 1770023700000,
+            "duration": 900
+          },
+          {
+            "id": 601,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770023700000,
+            "endedAt": 1770024000000,
+            "duration": 300
+          },
+          {
+            "id": 602,
+            "type": "activated",
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "startedAt": 1770040800000,
+            "endedAt": 1770041400000,
+            "duration": 600
+          },
+          {
+            "id": 603,
+            "type": "activated",
+            "applicationName": "Mail",
+            "bundleIdentifier": "com.apple.mail",
+            "appPath": null,
+            "startedAt": 1770041400000,
+            "endedAt": 1770041700000,
+            "duration": 300
+          }
+        ],
+        "now": 1770044400000
+      },
+      {
+        "name": "the next morning",
+        "events": [
+          {
+            "id": 600,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770022800000,
+            "endedAt": 1770023700000,
+            "duration": 900
+          },
+          {
+            "id": 601,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770023700000,
+            "endedAt": 1770024000000,
+            "duration": 300
+          },
+          {
+            "id": 602,
+            "type": "activated",
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "startedAt": 1770040800000,
+            "endedAt": 1770041400000,
+            "duration": 600
+          },
+          {
+            "id": 603,
+            "type": "activated",
+            "applicationName": "Mail",
+            "bundleIdentifier": "com.apple.mail",
+            "appPath": null,
+            "startedAt": 1770041400000,
+            "endedAt": 1770041700000,
+            "duration": 300
+          }
+        ],
+        "now": 1770109200000
+      },
+      {
+        "name": "only one session, still in it",
+        "events": [
+          {
+            "id": 610,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770022800000,
+            "endedAt": 1770023700000,
+            "duration": 900
+          }
+        ],
+        "now": 1770023760000
+      },
+      {
+        "name": "nothing recorded",
+        "events": [],
+        "now": 1770033600000
+      }
+    ],
+    "expected": [
+      {
+        "name": "the newest session is still running",
+        "target": {
+          "sessionStart": 1770022800000,
+          "sessionTitle": "Morning in Code",
+          "applicationName": "Code",
+          "isEarlierDay": false,
+          "when": "Today at 9:20 AM"
+        }
+      },
+      {
+        "name": "stepped away from the newest",
+        "target": {
+          "sessionStart": 1770040800000,
+          "sessionTitle": "Afternoon in Safari",
+          "applicationName": "Safari",
+          "isEarlierDay": false,
+          "when": "Today at 2:15 PM"
+        }
+      },
+      {
+        "name": "the next morning",
+        "target": {
+          "sessionStart": 1770040800000,
+          "sessionTitle": "Afternoon in Safari",
+          "applicationName": "Safari",
+          "isEarlierDay": true,
+          "when": "Yesterday at 2:15 PM"
+        }
+      },
+      {
+        "name": "only one session, still in it",
+        "target": null
+      },
+      {
+        "name": "nothing recorded",
+        "target": null
+      }
+    ],
+    "whenCases": [
+      {
+        "at": 1770849900000,
+        "now": 1770857100000,
+        "label": "Yesterday at 10:45 PM"
+      },
+      {
+        "at": 1770770700000,
+        "now": 1770857100000,
+        "label": "Yesterday at 12:45 AM"
+      },
+      {
+        "at": 1770597900000,
+        "now": 1770857100000,
+        "label": "Monday at 12:45 AM"
+      },
+      {
+        "at": 1770338700000,
+        "now": 1770857100000,
+        "label": "Friday at 12:45 AM"
+      },
+      {
+        "at": 1770252300000,
+        "now": 1770857100000,
+        "label": "February 5 at 12:45 AM"
+      },
+      {
+        "at": 1767401100000,
+        "now": 1770857100000,
+        "label": "January 3 at 12:45 AM"
+      },
+      {
+        "at": 1769990400000,
+        "now": 1770422400000,
+        "label": "Monday at 12:00 AM"
+      },
+      {
+        "at": 1770033600000,
+        "now": 1770422400000,
+        "label": "Monday at 12:00 PM"
+      }
+    ]
+  },
   "workflows": {
     "events": [
       {

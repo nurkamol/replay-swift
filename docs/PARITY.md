@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 497 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 522 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -33,6 +33,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Annotations (notes, bookmarks, tags) | done | read/write, tag normalisation, empty rows deleted rather than kept — 15 checks |
 | Backup import | done | `swift run replay-import` — real 3,084-row export verified, see FINDINGS.md |
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
+| Resume target | done | `findResumeTarget` + `formatWhen` — the last session you actually stepped away from, never the one you are in. 25 checks, including both sides of the three-minute in-progress window |
 | Workflows (recurring app combinations) | done | `detectWorkflows` — signature grouping, recurring-only, ranked by time. 8 checks. Projects and app-to-app relationships from the same module are **not** ported |
 | Week summary | done | `computeWeekSummary` — seven days, per-day arcs, app shares and days-used, the weekday × hour rhythm grid and its peak. 31 checks against the reference's own output |
 
@@ -53,7 +54,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Menu bar item | done | current app, today's total, pause/resume, Open Today/Timeline, Settings, Quit |
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
-| Today | done | headline, top app, focus-goal card, reflection, sessions and breaks |
+| Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |

@@ -290,6 +290,33 @@ public enum ParityKit {
             public let peakCases: [PeakCase]
         }
 
+        public struct ResumeCase: Decodable, Sendable {
+            public struct Input: Decodable, Sendable {
+                public let name: String
+                public let events: [Fixture.Event]
+                public let now: Int64
+            }
+            public struct Target: Decodable, Sendable {
+                public let sessionStart: Int64
+                public let sessionTitle: String
+                public let applicationName: String
+                public let isEarlierDay: Bool
+                public let when: String
+            }
+            public struct Expected: Decodable, Sendable {
+                public let name: String
+                public let target: Target?
+            }
+            public struct WhenCase: Decodable, Sendable {
+                public let at: Int64
+                public let now: Int64
+                public let label: String
+            }
+            public let cases: [Input]
+            public let expected: [Expected]
+            public let whenCases: [WhenCase]
+        }
+
         public struct WorkflowCase: Decodable, Sendable {
             public struct Expected: Decodable, Sendable {
                 public struct App: Decodable, Sendable {
@@ -327,6 +354,8 @@ public enum ParityKit {
         public let week: WeekCase
         /// Recurring application combinations, from the reference's `detectWorkflows`.
         public let workflows: WorkflowCase
+        /// What to offer picking back up, and how a moment reads in words.
+        public let resume: ResumeCase
         public let report: ReportCase
         public let search: SearchCase
         public let history: History
@@ -834,6 +863,44 @@ public enum ParityKit {
         equal(fg, "with the same totals", detected.map(\.totalSeconds), wfx.map(\.totalSeconds))
         equal(fg, "across the same number of sessions",
               detected.map(\.sessionCount), wfx.map(\.sessionCount))
+
+        // Resume — which session to offer, and how the moment reads. The point of the
+        // feature is that the session you are *in* is not the one to offer, so the checks
+        // turn on where `now` sits relative to the last row's end.
+        let rsg = "resume"
+        for (input, expected) in zip(fixture.resume.cases, fixture.resume.expected) {
+            let target = findResumeTarget(
+                buildTimeline(input.events.map(event), now: input.now, calendar: calendar),
+                now: input.now,
+                calendar: calendar
+            )
+            guard let wanted = expected.target else {
+                check(rsg, "\(expected.name): nothing to offer", target == nil)
+                continue
+            }
+            guard let target else {
+                check(rsg, "\(expected.name): a session is offered", false)
+                continue
+            }
+            equal(rsg, "\(expected.name): the right session",
+                  target.session.startedAt, wanted.sessionStart)
+            equal(rsg, "\(expected.name): named the same",
+                  target.session.title, wanted.sessionTitle)
+            equal(rsg, "\(expected.name): resuming the right application",
+                  target.app.applicationName, wanted.applicationName)
+            equal(rsg, "\(expected.name): and knowing whether it was another day",
+                  target.isEarlierDay, wanted.isEarlierDay)
+            equal(rsg, "\(expected.name): read back in words",
+                  formatWhen(target.session.endedAt, now: input.now,
+                             calendar: calendar, locale: environment.locale),
+                  wanted.when)
+        }
+        for expected in fixture.resume.whenCases {
+            equal(rsg, "a moment \(expected.now - expected.at)ms ago reads the same",
+                  formatWhen(expected.at, now: expected.now,
+                             calendar: calendar, locale: environment.locale),
+                  expected.label)
+        }
 
         let rg2 = "report text"
         let reportSessions = buildTimeline(

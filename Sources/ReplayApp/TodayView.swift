@@ -37,6 +37,12 @@ struct TodayView: View {
                             onSetGoal: { preferences.focusGoalMinutes = $0 }
                         )
                     }
+                    // Above the reflection: this is the one card that leads somewhere
+                    // other than into the app, and burying it under a text field would
+                    // make it a footnote to the day rather than an offer about it.
+                    if let target = findResumeTarget(model.timeline, now: model.now) {
+                        ResumeCard(target: target, now: model.now)
+                    }
                     reflection
                     // The nearest one only, and only when there is one. Today is about
                     // today; a gallery of the past belongs on its own surface.
@@ -461,5 +467,90 @@ final class IconCache {
         let image = NSWorkspace.shared.icon(forFile: path)
         cache[key] = image
         return image
+    }
+}
+
+/// "Pick up where you left off" — the last piece of work you stepped away from.
+///
+/// Deliberately not the session you are in: while you are working, the newest session is
+/// the one already on screen, and offering to resume it is noise.
+///
+/// What it claims is limited to what Replay actually knows. The app and the session, never
+/// a document or a project it has no way to see — that would need permissions this app
+/// does not ask for, and inventing the detail would be worse than omitting it.
+struct ResumeCard: View {
+    let target: ResumeTarget
+    let now: Int64
+
+    @Environment(\.motion) private var motion
+    @State private var failure: String?
+
+    var body: some View {
+        HStack(spacing: Design.Space.section) {
+            AppIcon(
+                bundleID: target.app.bundleIdentifier,
+                appPath: target.app.appPath,
+                size: Design.Icon.resume
+            )
+            VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                Text(target.isEarlierDay ? "Continue where you left off" : "Pick up where you left off")
+                    .cardLabelStyle()
+                Text(target.session.title)
+                    .font(Design.Text.itemTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Text(detail)
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            Spacer(minLength: Design.Space.inline)
+            Button("Open \(target.app.applicationName)", action: open)
+                .buttonStyle(.borderedProminent)
+                // Nothing to open without a bundle identifier, and a button that cannot
+                // work should say so by being unavailable rather than by failing.
+                .disabled(target.app.bundleIdentifier == nil)
+                .help(
+                    target.app.bundleIdentifier == nil
+                        ? "Replay doesn't know where \(target.app.applicationName) lives"
+                        : "Brings \(target.app.applicationName) to the front"
+                )
+        }
+        .padding(Design.Space.section)
+        .card(border: Design.Colour.border)
+        .accessibilityElement(children: .contain)
+        .alert("Couldn't open \(target.app.applicationName)", isPresented: showingFailure) {
+            Button("OK", role: .cancel) { failure = nil }
+        } message: {
+            Text(failure ?? "")
+        }
+    }
+
+    private var detail: String {
+        "\(target.app.applicationName) · \(formatWhen(target.session.endedAt, now: now)) · "
+            + formatDurationShort(target.session.activeSeconds)
+    }
+
+    private var showingFailure: Binding<Bool> {
+        Binding(get: { failure != nil }, set: { if !$0 { failure = nil } })
+    }
+
+    /// Bring the app to the front.
+    ///
+    /// `NSWorkspace` needs no permission for this — it is the same thing Launchpad does.
+    private func open() {
+        guard let bundleID = target.app.bundleIdentifier,
+              let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        else {
+            failure = "It is not installed, or it has moved."
+            return
+        }
+        NSWorkspace.shared.openApplication(at: url, configuration: .init()) { _, error in
+            if let error {
+                Task { @MainActor in failure = error.localizedDescription }
+            }
+        }
     }
 }

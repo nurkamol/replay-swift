@@ -471,7 +471,7 @@ function buildExportFixtures() {
        export { detectWorkflows } from ${JSON.stringify(join(GLAZE, "renderer/lib/workflows.ts"))};
        export { historyTargets, findMemories } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
-       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
+       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
        // sessionMatches is module-private in the view, so the predicate is
        // re-declared here character for character. If it drifts upstream this
        // fixture keeps asserting the old rule — the one risk in extracting it,
@@ -509,6 +509,7 @@ function buildExportFixtures() {
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories, describeBreak,
                computeWeekSummary, describePeak, detectWorkflows,
+               findResumeTarget, formatWhen,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
        const input = JSON.parse(process.argv[2]);
@@ -536,6 +537,22 @@ function buildExportFixtures() {
        // Recurring application combinations.
        const workflowSessions = groupSessionsForWeek(input.workflowEvents, input.workflowNow);
        const workflows = detectWorkflows(workflowSessions);
+
+       // What to offer picking back up, and how each case reads.
+       const resume = input.resumeCases.map((c) => {
+         const target = findResumeTarget(buildTimeline(c.events, c.now), c.now);
+         return {
+           name: c.name,
+           target: target && {
+             sessionStart: target.session.startedAt,
+             sessionTitle: target.session.title,
+             applicationName: target.app.applicationName,
+             isEarlierDay: target.isEarlierDay,
+             when: formatWhen(target.session.endedAt, c.now),
+           },
+         };
+       });
+       const whenLabels = input.whenCases.map((c) => ({ ...c, label: formatWhen(c.at, c.now) }));
 
        // Every branch of describePeak, so the boundary hours are pinned rather
        // than sampled by whatever the week fixture happened to land on.
@@ -629,6 +646,8 @@ function buildExportFixtures() {
          peakLabels,
          workflows,
          workflowSessionCount: workflowSessions.length,
+         resume,
+         whenLabels,
          reports,
          sessionCount: sessions.length,
          searchResults,
@@ -881,6 +900,50 @@ function buildExportFixtures() {
     ];
     const workflowNow = wf(4, 12);
 
+    /*
+     * Resume: the point is that the session you are *in* is not the one to offer, so the
+     * cases turn on where `now` sits relative to the last row's end. The 180-second
+     * in-progress window is the hinge, tested from both sides.
+     */
+    const resumeDay = 1_769_990_400_000;
+    const rt = (h, m = 0) => resumeDay + h * 3_600_000 + m * 60_000;
+    const resumeEvents = [
+      ev(600, "Code", "com.microsoft.VSCode", rt(9), 900),
+      ev(601, "Terminal", "com.apple.Terminal", rt(9, 15), 300),
+      // A gap, then a second session.
+      ev(602, "Safari", "com.apple.Safari", rt(14), 600),
+      ev(603, "Mail", "com.apple.mail", rt(14, 10), 300),
+    ];
+    const resumeCases = [
+      // Still in the afternoon session: offer the morning's, not the one in progress.
+      { name: "the newest session is still running", events: resumeEvents, now: rt(14, 16) },
+      // Stepped away: the afternoon session is now the thing to pick up.
+      { name: "stepped away from the newest", events: resumeEvents, now: rt(15) },
+      // Tomorrow morning: yesterday's last session, and it knows it was another day.
+      { name: "the next morning", events: resumeEvents, now: rt(33) },
+      // One session, and it is live: nothing to offer rather than the current one.
+      {
+        name: "only one session, still in it",
+        events: [ev(610, "Code", "com.microsoft.VSCode", rt(9), 900)],
+        now: rt(9, 16),
+      },
+      { name: "nothing recorded", events: [], now: rt(12) },
+    ];
+
+    /** Every branch of formatWhen, including the seven-day edge from both sides. */
+    const whenNow = rt(240) + 45 * 60_000; // ten days on, at a fixed time of day
+    const whenCases = [
+      { at: whenNow - 2 * 3_600_000, now: whenNow },
+      { at: whenNow - DAY, now: whenNow },
+      { at: whenNow - 3 * DAY, now: whenNow },
+      { at: whenNow - 6 * DAY, now: whenNow },
+      { at: whenNow - 7 * DAY, now: whenNow },
+      { at: whenNow - 40 * DAY, now: whenNow },
+      // Midnight and noon, where the twelve-hour clock wraps.
+      { at: resumeDay, now: resumeDay + 5 * DAY },
+      { at: resumeDay + 12 * 3_600_000, now: resumeDay + 5 * DAY },
+    ];
+
     /** The hour boundaries in `describePeak`, from each side. */
     const peakCases = [
       { weekday: 0, hour: 0, seconds: 1 },
@@ -898,6 +961,8 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        resumeCases,
+        whenCases,
         workflowEvents,
         workflowNow,
         weekEvents,
@@ -945,6 +1010,11 @@ function buildExportFixtures() {
         now: weekNow,
         expected: result.week,
         peakCases: result.peakLabels,
+      },
+      resume: {
+        cases: resumeCases,
+        expected: result.resume,
+        whenCases: result.whenLabels,
       },
       workflows: {
         events: workflowEvents,
