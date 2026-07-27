@@ -94,7 +94,10 @@ struct SettingsView: View {
                 switch pane {
                 case .general: GeneralTab(model: model, preferences: preferences, contextual: contextual, notifications: notifications)
                 case .privacy:
-                    PrivacyTab(model: model, settings: settings, preferences: preferences)
+                    PrivacyTab(
+                        model: model, settings: settings, preferences: preferences,
+                        notifications: notifications
+                    )
                 case .data: DataTab(settings: settings, export: export, preferences: preferences)
                 case .shortcuts: ShortcutsTab()
                 case .guide: GuideTab()
@@ -501,6 +504,7 @@ private struct GeneralTab: View {
                         + "and never looks inside your windows."
                 )
             }
+
         }
     }
 }
@@ -511,8 +515,35 @@ private struct PrivacyTab: View {
     let model: AppModel
     let settings: SettingsModel
     @Bindable var preferences: Preferences
+    /// The one permission Replay ever asks for, so Privacy can state where it stands.
+    let notifications: NotificationsModel
 
     @State private var managingExclusions = false
+
+    private var notificationState: String {
+        switch notifications.permission {
+        case .granted: "Allowed"
+        case .denied: "Not allowed"
+        case .unknown: "Not asked yet"
+        }
+    }
+
+    private var notificationGlyph: String {
+        switch notifications.permission {
+        case .granted: "checkmark.circle.fill"
+        case .denied: "exclamationmark.triangle.fill"
+        case .unknown: "circle.dashed"
+        }
+    }
+
+    private var notificationTint: Color {
+        switch notifications.permission {
+        case .granted: Design.Colour.assurance
+        case .denied: .orange
+        case .unknown: .secondary
+        }
+    }
+
 
     var body: some View {
         PaneForm {
@@ -537,6 +568,42 @@ private struct PrivacyTab: View {
                         .font(.title2)
                 }
             }
+
+            // Notifications: the only permission Replay ever asks for, and the only one worth
+            // a row. Everything above this section works without asking anybody anything —
+            // that is the product, not a feature — so a "Permissions" list would be one real
+            // entry padded out with reassurances, and would imply the app is waiting on
+            // something it is not. A denied state is otherwise invisible: the recaps simply
+            // never arrive and nothing says why.
+            Section {
+                LabeledContent("Notifications") {
+                    HStack(spacing: Design.Space.snug) {
+                        Image(systemName: notificationGlyph)
+                            .foregroundStyle(notificationTint)
+                        Text(notificationState)
+                            .foregroundStyle(.secondary)
+                        if notifications.permission == .denied {
+                            Button("Open Settings…") {
+                                NSWorkspace.shared.open(
+                                    URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!
+                                )
+                            }
+                            .buttonStyle(.link)
+                        }
+                    }
+                }
+            } header: {
+                Text("Permission")
+            } footer: {
+                Footnote(
+                    notifications.permission == .denied
+                        ? "The daily and weekly recaps need this. Everything else in Replay "
+                            + "works without it."
+                        : "Only the recaps use this. Replay records, remembers and shows your "
+                            + "history whether or not it is granted."
+                )
+            }
+            .task { await notifications.refreshPermission() }
 
             if let info = settings.info {
                 Section {

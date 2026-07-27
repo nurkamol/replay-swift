@@ -210,10 +210,14 @@ struct WelcomeView: View {
                 .font(Design.Text.micro)
                 .foregroundStyle(.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
+                // Two panes, not three. "Privacy & Security" was the parent category of the
+                // other two and opened the same place less precisely — and a third button
+                // under a green tick reads as a third thing you ought to be doing, which
+                // argues against the sentence directly above it. These two name specific
+                // panes somebody on a managed Mac might genuinely be sent to.
                 HStack(spacing: Design.Space.inline) {
                     settingsLink("Accessibility", "Privacy_Accessibility")
                     settingsLink("App Management", "Privacy_AppBundles")
-                    settingsLink("Privacy & Security", "Privacy")
                 }
             }
             .padding(Design.Space.section)
