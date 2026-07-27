@@ -133,7 +133,7 @@ struct TodayView: View {
                         export: export,
                         onDelete: { model.deleteSession(session) }
                     )
-                    .settlesIntoView(reduced: motion.reduced)
+                    .settlesIn(0)
                 case .breakItem(let gap):
                     BreakRow(gap: gap)
                 }
@@ -652,7 +652,7 @@ struct ContextualMemoryCard: View {
         .onTapGesture { if memory.dayStart != nil { onOpen() } }
         .onHover { hovering = $0 }
         .card(border: Design.Colour.markedBorder)
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label). \(memory.headline) \(memory.detail ?? "")")
         .accessibilityHint(memory.dayStart != nil ? "Opens that day" : "")
@@ -733,7 +733,7 @@ struct MorningBriefingCard: View {
         }
         .padding(Design.Space.page)
         .card(border: Design.Colour.border)
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     /// Named for the time of day, because that is what a greeting is for.

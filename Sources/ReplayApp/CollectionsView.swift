@@ -123,7 +123,7 @@ struct CollectionsView: View {
                         export: export,
                         onDelete: { onDeleteSession(session) }
                     )
-                    .settlesIntoView(reduced: motion.reduced)
+                    .settlesIn(0)
                 }
             }
         }

@@ -58,7 +58,7 @@ struct LegacyView: View {
         .frame(maxWidth: Design.Layout.readableWidth, alignment: .leading)
         .padding(Design.Space.page)
         .card(border: Design.Colour.border)
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
         .accessibilityElement(children: .combine)
     }
 
@@ -78,7 +78,7 @@ struct LegacyView: View {
                 relativeDayLabel(legacy.lastDay, now: Int64(Date().timeIntervalSince1970 * 1000))
             )
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private func tile(_ label: String, _ value: String) -> some View {
@@ -114,7 +114,7 @@ struct LegacyView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     private func favourites(_ legacy: Legacy) -> some View {
@@ -156,7 +156,7 @@ struct LegacyView: View {
             .padding(Design.Space.snug)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(3)
     }
 
     private var empty: some View {

@@ -62,7 +62,7 @@ struct ProjectDetailView: View {
                 renaming = true
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
     }
 
     private func tiles(_ project: Project) -> some View {
@@ -73,7 +73,7 @@ struct ProjectDetailView: View {
             tile(project.sessionCount == 1 ? "Session" : "Sessions", "\(project.sessionCount)")
             tile("Total", formatDurationShort(project.totalSeconds))
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private func tile(_ label: String, _ value: String) -> some View {
@@ -113,7 +113,7 @@ struct ProjectDetailView: View {
                 .padding(Design.Space.snug)
                 .card(border: Design.Colour.borderQuiet)
             }
-            .settlesIntoView(reduced: motion.reduced)
+            .settlesIn(2)
         }
     }
 
@@ -182,7 +182,7 @@ struct ProjectDetailView: View {
             .padding(Design.Space.snug)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(3)
     }
 
     private func sessions(_ project: Project) -> some View {

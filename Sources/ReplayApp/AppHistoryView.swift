@@ -50,7 +50,7 @@ struct AppHistoryView: View {
                 .monospacedDigit()
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
         .accessibilityElement(children: .combine)
     }
 
@@ -61,7 +61,7 @@ struct AppHistoryView: View {
             tile("Last 7 days", history.figures.lastWeek)
             tile("Avg. visit", history.figures.averageVisit)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private func tile(_ label: String, _ seconds: Int) -> some View {
@@ -96,7 +96,7 @@ struct AppHistoryView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     /// The applications this one is most entwined with.
@@ -149,7 +149,7 @@ struct AppHistoryView: View {
             .padding(Design.Space.snug)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(3)
     }
 
     private var recent: some View {

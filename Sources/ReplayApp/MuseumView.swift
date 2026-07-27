@@ -57,7 +57,7 @@ struct MuseumView: View {
         .frame(maxWidth: Design.Layout.readableWidth, alignment: .leading)
         .padding(Design.Space.page)
         .card(border: Design.Colour.border)
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
         .accessibilityElement(children: .combine)
     }
 
@@ -104,7 +104,7 @@ struct MuseumView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private func sessions(_ title: String, _ list: [ActivitySession]) -> some View {
@@ -148,7 +148,7 @@ struct MuseumView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     private var projects: some View {
@@ -190,7 +190,7 @@ struct MuseumView: View {
             .padding(Design.Space.snug)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(3)
     }
 
     private func glyph(for kind: Moment.Kind) -> String {

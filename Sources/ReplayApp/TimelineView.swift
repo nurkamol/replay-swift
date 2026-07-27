@@ -154,7 +154,7 @@ struct TimelineView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
     }
 
     private func chip(_ label: String, on: Bool, toggle: @escaping () -> Void) -> some View {
@@ -340,7 +340,7 @@ private struct DaySection: View {
                         export: export,
                         onDelete: { history.deleteSession(session) }
                     )
-                    .settlesIntoView(reduced: motion.reduced)
+                    .settlesIn(1)
                 case .breakItem(let gap):
                     BreakRow(gap: gap)
                 }
@@ -526,7 +526,7 @@ struct DayView: View {
                                     export: export,
                                     onDelete: { onDeleteSession(session) }
                                 )
-                    .settlesIntoView(reduced: motion.reduced)
+                    .settlesIn(2)
                             case .breakItem(let gap):
                                 BreakRow(gap: gap)
                             }

@@ -49,7 +49,7 @@ struct WeekView: View {
                 summary.appsUsed == 1 ? "application" : "applications"
             )
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
     }
 
     private func figure(_ value: String, _ label: String) -> some View {
@@ -81,7 +81,7 @@ struct WeekView: View {
                 }
                 HourAxis()
             }
-            .settlesIntoView(reduced: motion.reduced)
+            .settlesIn(1)
             if let peak = summary.peak {
                 // A statement of when, not a recommendation about when.
                 Text("Most often here on \(describePeak(peak)).")
@@ -108,7 +108,7 @@ struct WeekView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     // ── the applications ──────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ struct WeekView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(3)
     }
 
     private var empty: some View {

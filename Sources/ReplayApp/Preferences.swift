@@ -155,11 +155,19 @@ final class Preferences {
         didSet { writeJSON(dismissedBriefings, "dismissedBriefings") }
     }
 
+    /// What every surface is made of.
+    var surfaceStyle: SurfaceStyle {
+        didSet { write(surfaceStyle.rawValue, "surfaceStyle") }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         appearance = (defaults.string(forKey: "appearance").flatMap(Appearance.init)) ?? .system
+        // Glass by default, because that is what the system does now.
+        surfaceStyle = (defaults.string(forKey: "surfaceStyle")
+            .flatMap(SurfaceStyle.init)) ?? .glass
         launchSurface = (defaults.string(forKey: "launchSurface").flatMap(LaunchSurface.init)) ?? .today
         retentionDays = defaults.integer(forKey: "retentionDays")
         excludedApps = (defaults.data(forKey: "excludedApps"))

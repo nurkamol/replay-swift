@@ -28,7 +28,7 @@ struct StoryView: View {
                         + "and everything it holds.",
                     .legacy
                 )
-                .settlesIntoView(reduced: motion.reduced)
+                .settlesIn(0)
 
                 LazyVGrid(columns: columns, spacing: Design.Space.row) {
                     hub(
@@ -47,7 +47,7 @@ struct StoryView: View {
                         .museum
                     )
                 }
-                .settlesIntoView(reduced: motion.reduced)
+                .settlesIn(1)
 
                 if !story.rituals.slots.isEmpty || story.rituals.firstApp != nil {
                     rituals
@@ -113,7 +113,7 @@ struct StoryView: View {
             .padding(Design.Space.snug)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     private func ritual(_ glyph: String, _ label: String, _ app: Rituals.App) -> some View {

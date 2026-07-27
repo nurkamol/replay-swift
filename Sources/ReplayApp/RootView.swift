@@ -184,6 +184,7 @@ struct RootView: View {
                 reload(new)
             }
             .preferredColorScheme(preferences.appearance.colorScheme)
+            .environment(\.surfaceStyle, preferences.surfaceStyle)
     }
 
     /// The window itself. Split out of `body` because the two together were more than the

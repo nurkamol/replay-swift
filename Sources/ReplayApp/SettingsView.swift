@@ -194,6 +194,12 @@ private struct GeneralTab: View {
                 .pickerStyle(.inline)
                 .horizontalRadioGroupLayout()
 
+                // Named rather than shown as a switch: three genuinely different looks, and
+                // "off" would imply glass is the app and the rest is its absence.
+                Picker("Surfaces", selection: $preferences.surfaceStyle) {
+                    ForEach(SurfaceStyle.allCases) { Text($0.label).tag($0) }
+                }
+
                 Picker("Open on", selection: $preferences.launchSurface) {
                     ForEach(LaunchSurface.allCases) { Text($0.label).tag($0) }
                 }
@@ -206,7 +212,12 @@ private struct GeneralTab: View {
                         if !on { NSApp.activate(ignoringOtherApps: true) }
                     }
             } footer: {
-                Footnote("Menu bar only hides the Dock icon. Replay keeps recording either way.")
+                Footnote(
+                    preferences.surfaceStyle.detail
+                        + " Reduce Transparency in System Settings overrides this and makes "
+                        + "every surface solid. Menu bar only hides the Dock icon; Replay "
+                        + "keeps recording either way."
+                )
             }
 
             Section {

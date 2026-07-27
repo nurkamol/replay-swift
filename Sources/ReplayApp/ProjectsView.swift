@@ -28,7 +28,7 @@ struct ProjectsView: View {
                             ProjectCard(named: project, onOpen: { onOpen(project.id) })
                         }
                     }
-                    .settlesIntoView(reduced: motion.reduced)
+                    .settlesIn(0)
                 }
             }
             .pageContent()

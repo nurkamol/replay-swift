@@ -49,7 +49,7 @@ struct AutobiographyView: View {
         }
         .labelsHidden()
         .frame(maxWidth: Design.Layout.segmentedWidth)
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
     }
 
     private func told(_ story: Autobiography) -> some View {
@@ -100,7 +100,7 @@ struct AutobiographyView: View {
                 .font(Design.Text.detail)
                 .foregroundStyle(.tertiary)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private var empty: some View {

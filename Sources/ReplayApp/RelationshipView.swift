@@ -65,7 +65,7 @@ struct RelationshipView: View {
             }
             Spacer(minLength: 0)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
         .accessibilityElement(children: .combine)
     }
 
@@ -75,7 +75,7 @@ struct RelationshipView: View {
             tile("Shared sessions", String(pair.sharedSessions))
             tile("Average together", formatDurationShort(pair.averageTogetherSeconds))
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private func tile(_ label: String, _ value: String) -> some View {
@@ -126,7 +126,7 @@ struct RelationshipView: View {
             .padding(Design.Space.card)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     private func sessions(_ pair: Relationship) -> some View {

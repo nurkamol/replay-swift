@@ -197,6 +197,12 @@ enum Design {
         /// playfulness the content does not have.
         static let settle = Animation.spring(duration: 0.42, bounce: 0)
 
+        /// A section arriving. Slightly longer than a settle and with the faintest bounce,
+        /// because it is coming from somewhere rather than responding to a press.
+        static let enter = Animation.spring(duration: 0.46, bounce: 0.05)
+        /// How far it rises. Small enough to read as arrival rather than as a slide.
+        static let enterRise: CGFloat = 8
+
         /// How long two clicks may be apart and still be one double-click. The system's own
         /// interval would be better, but it is not reachable from inside a `Canvas` gesture,
         /// and this is the same default.
@@ -560,19 +566,7 @@ extension View {
         background: AnyShapeStyle = Design.Colour.surfaceQuiet,
         border: AnyShapeStyle? = Design.Colour.border
     ) -> some View {
-        self
-            .background(background, in: RoundedRectangle(cornerRadius: radius))
-            .overlay {
-                if let border {
-                    RoundedRectangle(cornerRadius: radius)
-                        .strokeBorder(border, lineWidth: Design.Layout.hairline)
-                }
-            }
-            .shadow(
-                color: .black.opacity(elevation.shadowOpacity),
-                radius: elevation.shadowRadius,
-                y: elevation.shadowOffsetY
-            )
+        modifier(Card(radius: radius, elevation: elevation, background: background, border: border))
     }
 
     /// An uppercase section label — the app's one piece of typographic furniture.
@@ -601,12 +595,24 @@ extension View {
     /// scrolling. Nothing moves — only opacity and a fraction of a point of scale, which
     /// reads as depth rather than as animation.
     func settlesIntoView(reduced: Bool) -> some View {
-        scrollTransition(.interactive, axis: .vertical) { content, phase in
-            content
-                .opacity(reduced ? 1 : (phase.isIdentity ? 1 : 0.6))
-                .scaleEffect(reduced ? 1 : (phase.isIdentity ? 1 : 0.985))
-        }
+        modifier(SettlesIn(index: 0))
     }
+
+    /// A section arriving, and then behaving as it scrolls.
+    ///
+    /// Two things at once, because they are the same idea at different moments. On open the
+    /// section rises a little and fades in, staggered by its position so a screen assembles
+    /// top-down rather than appearing whole — which is what makes a surface feel *entered*
+    /// rather than switched to. As it scrolls, the same content dims slightly at the edges.
+    ///
+    /// The stagger is capped, so a long page finishes arriving rather than trickling in for
+    /// seconds, and Reduce Motion skips the whole thing: someone who asked the system to
+    /// stop moving things did not ask for a shorter movement.
+    func settlesIn(_ index: Int = 0) -> some View {
+        modifier(SettlesIn(index: index))
+    }
+
+
 
     /// Content that should sit in the middle of whatever room it has, rather than at the
     /// left edge of a measure that is narrower than the window.
@@ -628,5 +634,109 @@ extension View {
             .padding(Design.Space.page)
             .frame(maxWidth: Design.Layout.readableWidth, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+}
+
+/// What a card is made of.
+///
+/// The choice is the user's because it is a matter of taste and of legibility, and the two do
+/// not always agree: glass is lovely over a photograph and can be tiring over a dense list.
+/// The default is glass, since that is what the system does now, but a flat surface is a
+/// first-class option rather than a fallback.
+private struct Card: ViewModifier {
+    let radius: CGFloat
+    let elevation: Design.Elevation
+    let background: AnyShapeStyle
+    let border: AnyShapeStyle?
+
+    @Environment(\.surfaceStyle) private var style
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        // Reduce Transparency is not a preference to weigh against the setting — it is a
+        // statement that blur is a problem, so it wins outright.
+        let resolved: SurfaceStyle = reduceTransparency ? .solid : style
+        return Group {
+            switch resolved {
+            case .solid:
+                content.background(background, in: shape)
+            case .frosted:
+                content.background(.regularMaterial, in: shape)
+            case .glass:
+                content.glassEffect(.regular, in: shape)
+            }
+        }
+        .overlay {
+            if let border {
+                // Glass carries its own edge; a drawn border on top of it reads as a box
+                // around a pane rather than as the pane itself.
+                if resolved != .glass {
+                    shape.strokeBorder(border, lineWidth: Design.Layout.hairline)
+                }
+            }
+        }
+        .shadow(
+            color: .black.opacity(elevation.shadowOpacity),
+            radius: elevation.shadowRadius,
+            y: elevation.shadowOffsetY
+        )
+    }
+}
+
+/// How every surface in the app is drawn.
+enum SurfaceStyle: String, CaseIterable, Identifiable, Sendable {
+    /// A plain tinted fill. Cheapest to draw and the easiest to read over.
+    case solid
+    /// The system's blur. Depth without the specular edge.
+    case frosted
+    /// The system's own glass — the current macOS material.
+    case glass
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .solid: "Solid"
+        case .frosted: "Frosted"
+        case .glass: "Glass"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .solid: "A flat surface. The quietest, and the easiest to read over."
+        case .frosted: "Blurred, with depth but no shine."
+        case .glass: "The system's own material, with its edge and its light."
+        }
+    }
+}
+
+extension EnvironmentValues {
+    /// Set once at the root from the preference, so every card reads the same answer.
+    @Entry var surfaceStyle: SurfaceStyle = .glass
+}
+
+private struct SettlesIn: ViewModifier {
+    let index: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduced
+    @State private var arrived = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(reduced || arrived ? 1 : 0)
+            .offset(y: reduced || arrived ? 0 : Design.Motion.enterRise)
+            .onAppear {
+                guard !reduced else { return }
+                withAnimation(Design.Motion.enter.delay(Design.Motion.enterDelay(index))) {
+                    arrived = true
+                }
+            }
+            .scrollTransition(.interactive, axis: .vertical) { content, phase in
+                content
+                    .opacity(reduced ? 1 : (phase.isIdentity ? 1 : 0.6))
+                    .scaleEffect(reduced ? 1 : (phase.isIdentity ? 1 : 0.985))
+            }
     }
 }

@@ -159,7 +159,7 @@ struct ChapterDetailView: View {
                 renaming = true
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
     }
 
     private func tiles(_ chapter: Chapter) -> some View {
@@ -169,7 +169,7 @@ struct ChapterDetailView: View {
             tile("Character", Collections.label(for: chapter.category))
             tile("Fullest day", shortDateLabel(chapter.representativeDay))
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private func tile(_ label: String, _ value: String) -> some View {
@@ -215,7 +215,7 @@ struct ChapterDetailView: View {
             .padding(Design.Space.snug)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(2)
     }
 
     private func days(_ chapter: Chapter) -> some View {

@@ -60,7 +60,7 @@ struct AppsView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(0)
     }
 
     private func figure(_ value: String, _ label: String) -> some View {
@@ -98,7 +98,7 @@ struct AppsView: View {
                 }
             }
         }
-        .settlesIntoView(reduced: motion.reduced)
+        .settlesIn(1)
     }
 
     private var empty: some View {
