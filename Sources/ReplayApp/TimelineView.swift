@@ -462,6 +462,12 @@ struct DayView: View {
     let onReflect: (String) -> Void
     let onDeleteSession: (ActivitySession) -> Void
     let onReplayDay: ([ActivitySession], String) -> Void
+    /// Where this day sits in the long view, once it is old enough to have a place in one.
+    let context: ChapterContext?
+    /// Resolved by the caller, which is where the chosen names live.
+    let chapterName: String
+    let onOpenChapter: (String) -> Void
+    let onOpenDay: (Int64) -> Void
 
     private var story: [String] { DayStory.build(day.sessions) }
 
@@ -488,6 +494,8 @@ struct DayView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Design.Colour.surface, in: RoundedRectangle(cornerRadius: Design.Radius.card))
                 }
+
+                if let context { chapterCard(context) }
 
                 // Offered even on a day whose rows were pruned: what you wrote about a day
                 // outlives the activity behind it, and is often the only thing left.
@@ -595,6 +603,65 @@ struct DayView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// The chapter this day belonged to, and the days either side of it.
+    ///
+    /// Only past a week old. A day still inside the chapter it is part of has no distance to
+    /// be seen from, and being told which era you are currently living through is not
+    /// context — it is the app narrating your Tuesday back at you.
+    private func chapterCard(_ context: ChapterContext) -> some View {
+        VStack(alignment: .leading, spacing: Design.Space.card) {
+            Button {
+                onOpenChapter(context.chapter.id)
+            } label: {
+                HStack(spacing: Design.Space.row) {
+                    Image(systemName: "book.closed")
+                        .font(Design.Text.prose)
+                        .foregroundStyle(.tint)
+                        .frame(width: Design.Icon.listItem)
+                    VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                        Text("Part of the chapter").cardLabelStyle()
+                        Text(chapterName)
+                            .font(Design.Text.itemTitle)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    Spacer(minLength: Design.Space.inline)
+                    Image(systemName: "chevron.right")
+                        .font(Design.Text.micro)
+                        .foregroundStyle(.quaternary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if !context.nearbyDays.isEmpty {
+                Divider()
+                VStack(alignment: .leading, spacing: Design.Space.snug) {
+                    Text("Around this time").cardLabelStyle()
+                    FlowRow(spacing: Design.Space.snug) {
+                        ForEach(context.nearbyDays, id: \.self) { day in
+                            Button { onOpenDay(day) } label: {
+                                Text(dayChipLabel(day))
+                                    .font(Design.Text.detail)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, Design.Pill.leadingRoomy)
+                                    .padding(.vertical, Design.Pill.countVertical)
+                                    .background(Design.Colour.surfaceQuiet, in: Capsule())
+                                    .overlay(Capsule().strokeBorder(Design.Colour.borderQuiet))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Opens that day")
+                        }
+                    }
+                }
+            }
+        }
+        .padding(Design.Space.section)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(border: Design.Colour.borderQuiet)
+        .settlesIn(1)
     }
 
     private var pruned: some View {

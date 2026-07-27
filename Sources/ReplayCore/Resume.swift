@@ -105,6 +105,13 @@ public func relativeDayLabel(
     return shortLabel(timestamp, template: "MMMd", calendar: calendar, locale: locale)
 }
 
+/// "Jul 25" — a day named without its year, for a chip among days from the same stretch.
+public func dayChipLabel(
+    _ timestamp: Int64, calendar: Calendar = .current, locale: Locale = .current
+) -> String {
+    shortLabel(timestamp, template: "MMMd", calendar: calendar, locale: locale)
+}
+
 /// "Jul 25, 2024" — a short absolute date, for a first-seen line where the year matters.
 public func shortDateLabel(
     _ timestamp: Int64, calendar: Calendar = .current, locale: Locale = .current

@@ -232,9 +232,12 @@ struct RootView: View {
                                 history: history,
                                 annotations: model.annotations,
                                 export: export,
+                                story: story,
                                 onReplayDay: {
                                     replaying = Playback.Day(sessions: $0, label: $1)
-                                }
+                                },
+                                onOpenChapter: { navigation.open(story: .chapter($0)) },
+                                onOpenDay: { navigation.open(day: $0) }
                             )
                         )
                     }
@@ -513,7 +516,11 @@ struct RootView: View {
                 onOpenApp: { navigation.open(app: $0) }
             )
         case .canvas:
-            CanvasView(canvas: canvas, onOpen: openCanvasNode)
+            CanvasView(
+                canvas: canvas,
+                onOpen: openCanvasNode,
+                onOpenDay: { navigation.open(day: $0) }
+            )
         case .story:
             StoryView(story: story, onOpen: { navigation.open(story: $0) })
         case .projects:
@@ -568,7 +575,10 @@ private struct DayScreen: View {
     let history: HistoryModel
     let annotations: AnnotationsModel
     let export: ExportModel
+    let story: StoryModel
     let onReplayDay: ([ActivitySession], String) -> Void
+    let onOpenChapter: (String) -> Void
+    let onOpenDay: (Int64) -> Void
 
     @State private var day: TimelineDay?
     @State private var headline: DailySummary?
@@ -588,7 +598,14 @@ private struct DayScreen: View {
                         load()
                     },
                     onDeleteSession: { history.deleteSession($0); load() },
-                    onReplayDay: onReplayDay
+                    onReplayDay: onReplayDay,
+                    context: context,
+                    chapterName: context.map { chapter in
+                        story.chapters.first { $0.id == chapter.chapter.id }?.name
+                            ?? chapterDefaultName(chapter.chapter)
+                    } ?? "",
+                    onOpenChapter: onOpenChapter,
+                    onOpenDay: onOpenDay
                 )
             } else {
                 // Never seen in practice — the load is synchronous — but a destination has
@@ -601,9 +618,21 @@ private struct DayScreen: View {
         .task(id: dayStart) { load() }
     }
 
+    /// Where this day sits in the long view. Read from the chapters Story already built —
+    /// there is one set of them, and a second detection here could disagree with the screen
+    /// the card links to.
+    private var context: ChapterContext? {
+        chapterContext(
+            for: dayStart,
+            now: Int64(Date().timeIntervalSince1970 * 1000),
+            chapters: story.chapters.map(\.chapter)
+        )
+    }
+
     private func load() {
         day = history.day(dayStart)
         headline = history.headline(dayStart)
         reflection = history.reflection(dayStart)
+        if !story.loaded { story.load() }
     }
 }

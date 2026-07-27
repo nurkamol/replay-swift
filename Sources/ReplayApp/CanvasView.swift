@@ -14,6 +14,8 @@ import SwiftUI
 struct CanvasView: View {
     let canvas: CanvasModel
     let onOpen: (CanvasGraph.Node) -> Void
+    /// Given so a session in the side panel can lead into the day it happened on.
+    let onOpenDay: (Int64) -> Void
 
     @Environment(\.motion) private var motion
     @State private var offset = CGSize.zero
@@ -21,6 +23,15 @@ struct CanvasView: View {
     @State private var zoom: CGFloat = 1
     @State private var pinch: CGFloat = 1
     @State private var selected: CanvasGraph.Node?
+    /// What the selected node is joined to, held rather than recomputed: the field redraws
+    /// sixty times a second while it moves and this changes only when the selection does.
+    @State private var neighbourhood: Set<String> = []
+    /// Whether the field is *focused* on the selection — everything unconnected pulled back
+    /// so one memory and its surroundings are what is left. On by default, because a
+    /// selection that changes nothing about the picture is not a selection.
+    @State private var focusMode = true
+    /// Whether the timeline beside the field is showing.
+    @State private var panelOpen = false
     @State private var dragging = false
     /// When the last click landed, so a second one soon after is a double.
     @State private var lastClick: (id: String, at: Date)?
@@ -93,7 +104,7 @@ struct CanvasView: View {
             return
         }
         lastClick = hit.map { ($0.id, now) }
-        withAnimation(motion.animation(Design.Motion.settle)) { selected = hit }
+        withAnimation(motion.animation(Design.Motion.settle)) { select(hit) }
     }
 
     /// Bring one node to the middle and move in on it. What a double-click should do: the
@@ -105,19 +116,44 @@ struct CanvasView: View {
         withAnimation(motion.animation(Design.Motion.settle)) {
             zoom = target
             offset = CGSize(width: -point.x * target, height: -point.y * target)
-            selected = node
+            select(node)
         }
     }
 
+    private func select(_ node: CanvasGraph.Node?) {
+        selected = node
+        neighbourhood = node.map { canvas.graph.neighbours(of: $0.id) } ?? []
+    }
+
+    /// How strongly a node reads right now.
+    ///
+    /// Focus is a *dimming*, not a hiding: the rest of the field stays visible so the thing
+    /// you focused is still somewhere, rather than alone on an empty page. Everything at
+    /// full weight when nothing is selected, which is the ordinary state.
+    private func emphasis(_ id: String) -> Double {
+        guard focusMode, selected != nil else { return 1 }
+        return neighbourhood.contains(id) ? 1 : Design.Colour.canvasUnfocused
+    }
+
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            if canvas.loaded && canvas.graph.nodes.isEmpty {
-                empty.centredInPage()
-            } else {
-                field
-                if let selected { preview(selected) }
+        HStack(spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                if canvas.loaded && canvas.graph.nodes.isEmpty {
+                    empty.centredInPage()
+                } else {
+                    field
+                    if let selected { preview(selected) }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            if panelOpen {
+                Divider()
+                timelinePanel
+                    .transition(motion.transition(.move(edge: .trailing)))
             }
         }
+        .animation(motion.animation(Design.Motion.settle), value: panelOpen)
         .background(.background)
         .navigationTitle("Canvas")
         .navigationSubtitle("Your history as a landscape")
@@ -147,6 +183,25 @@ struct CanvasView: View {
         }
         .toolbar {
             ToolbarItemGroup {
+                Toggle(isOn: $focusMode) {
+                    Image(systemName: focusMode
+                        ? "circle.dashed.inset.filled" : "circle.dashed")
+                }
+                .toggleStyle(.button)
+                .help(focusMode
+                    ? "Stop pulling back everything unconnected"
+                    : "Pull back everything not connected to the selection")
+                .accessibilityLabel("Focus on the selection")
+
+                Toggle(isOn: $panelOpen) {
+                    Image(systemName: "sidebar.right")
+                }
+                .toggleStyle(.button)
+                .help("Show the sessions behind the selection")
+                .accessibilityLabel("Timeline panel")
+
+                Divider()
+
                 Button { zoom(by: 1 / Design.Layout.canvasZoomStep) } label: {
                     Image(systemName: "minus.magnifyingglass")
                 }
@@ -176,7 +231,7 @@ struct CanvasView: View {
                         offset = .zero
                         dragged = .zero
                         zoom = 1
-                        selected = nil
+                        select(nil)
                     }
                 } label: {
                     Image(systemName: "scope")
@@ -328,8 +383,12 @@ struct CanvasView: View {
                     let strength = edge.kind == .appApp && canvas.graph.maxAppWeight > 0
                         ? Double(edge.weight) / Double(canvas.graph.maxAppWeight)
                         : Design.Colour.canvasEdgeBase
+                    // An edge is only lit when it touches the focus. A line between two
+                    // dimmed nodes that stayed bright would draw the eye to the part of the
+                    // field focus is meant to push back.
+                    let lit = min(emphasis(edge.a), emphasis(edge.b))
                     let weight: Double = (Design.Colour.canvasEdgeFloor
-                        + strength * Design.Colour.canvasEdgeRange) * Double(progress)
+                        + strength * Design.Colour.canvasEdgeRange) * Double(progress) * lit
                     context.stroke(
                         path,
                         with: .color(.secondary.opacity(weight)),
@@ -343,6 +402,7 @@ struct CanvasView: View {
                     if grown <= 0.001 { continue }
                     let at = place(point)
                     let radius = self.radius(for: node) * scale * grown
+                    context.opacity = emphasis(node.id)
                     let box = CGRect(
                         x: at.x - radius, y: at.y - radius, width: radius * 2, height: radius * 2
                     )
@@ -405,6 +465,7 @@ struct CanvasView: View {
                             lineWidth: Design.Layout.canvasSelectionWidth
                         )
                     }
+                    context.opacity = 1
                 }
 
                 // Labels last, and placed greedily: walk the nodes in descending
@@ -440,7 +501,9 @@ struct CanvasView: View {
                     let isSelected = node.id == selected?.id
                     if !isSelected && placed.contains(where: { $0.intersects(box) }) { continue }
                     placed.append(box)
+                    context.opacity = emphasis(node.id)
                     context.draw(text, at: origin, anchor: .topLeading)
+                    context.opacity = 1
                 }
             } symbols: {
                 // Declared once at a fixed size and resolved per frame from the cache, so
@@ -469,6 +532,97 @@ struct CanvasView: View {
                         .tag("badge:\(name)")
                 }
         }
+    }
+
+    /// The timeline beside the field: the sessions behind whatever is selected.
+    ///
+    /// The other half of the same view rather than a second surface — selecting a memory on
+    /// the canvas fills this in, and a session here opens the day it happened on. Kept to
+    /// ``CanvasGraph/focusSessionLimit``, because this is the timeline behind *one* memory.
+    private var timelinePanel: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                Text("Timeline").cardLabelStyle()
+                Text(selected?.label ?? "Nothing selected")
+                    .font(Design.Text.itemTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Design.Space.section)
+
+            Divider()
+
+            if selected == nil {
+                panelNote("Select a memory on the canvas to see the sessions behind it here.")
+            } else if panelSessions.isEmpty {
+                panelNote("No sessions in the kept window for this memory.")
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        ForEach(panelSessions, id: \.startedAt) { session in
+                            panelRow(session)
+                        }
+                    }
+                    .padding(Design.Space.inline)
+                }
+            }
+        }
+        .frame(width: Design.Layout.canvasPanelWidth)
+        .background(Design.Colour.surfaceQuiet)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Sessions behind the selection")
+    }
+
+    private var panelSessions: [ActivitySession] {
+        guard let selected else { return [] }
+        return canvas.graph.sessions(
+            behind: selected,
+            in: canvas.sessions,
+            projectSessions: canvas.projectSessions,
+            chapterDays: canvas.chapterDays
+        )
+    }
+
+    private func panelNote(_ text: String) -> some View {
+        Text(text)
+            .font(Design.Text.detail)
+            .foregroundStyle(.tertiary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(Design.Space.page)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func panelRow(_ session: ActivitySession) -> some View {
+        Button {
+            onOpenDay(startOfLocalDay(session.startedAt))
+        } label: {
+            HStack(spacing: Design.Space.inline) {
+                VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                    Text(session.title)
+                        .font(Design.Text.detail.weight(.medium))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text(
+                        "\(formatRange(session.startedAt, session.endedAt)) · "
+                            + formatDurationShort(session.activeSeconds)
+                    )
+                    .font(Design.Text.micro)
+                    .foregroundStyle(.tertiary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                }
+                Spacer(minLength: Design.Space.tight)
+                Image(systemName: "chevron.right")
+                    .font(Design.Text.micro)
+                    .foregroundStyle(.quaternary)
+            }
+            .padding(Design.Space.inline)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens the day this happened on")
     }
 
     /// The preview for whatever is selected, and the way into it.

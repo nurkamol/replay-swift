@@ -312,6 +312,10 @@ enum Design {
         static let canvasEdgeFloor: Double = 0.10
         static let canvasEdgeRange: Double = 0.25
         static let canvasEdgeBase: Double = 0.35
+        /// How far back the field falls when something is focused. Pulled back rather than
+        /// hidden — a focus that empties the page loses the thing focus is *for*, which is
+        /// seeing where one memory sits among the rest.
+        static let canvasUnfocused: Double = 0.14
         static let canvasProjectOpacity: Double = 0.65
         static let canvasChapterOpacity: Double = 0.70
         static let canvasMomentOpacity: Double = 0.80
@@ -748,6 +752,9 @@ enum Design {
         static let canvasMinZoom: CGFloat = 0.4
         static let canvasMaxZoom: CGFloat = 3
         static let canvasPreviewWidth: CGFloat = 300
+        /// The timeline beside the canvas. Wide enough for a session's name and its hours
+        /// on one line each, and no wider — it is a companion to the field, not a rival.
+        static let canvasPanelWidth: CGFloat = 300
         /// The command palette: wide enough for a sentence of a subtitle, tall enough for a
         /// handful of results without becoming a window of its own.
         static let paletteWidth: CGFloat = 560

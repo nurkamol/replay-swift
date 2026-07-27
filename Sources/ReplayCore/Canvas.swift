@@ -265,3 +265,76 @@ public func buildCanvas(
 
     return CanvasGraph(nodes: nodes, edges: edges, maxAppWeight: constellation.maxWeight)
 }
+
+// ── focus ─────────────────────────────────────────────────────────────────────
+
+extension CanvasGraph {
+    /// How many sessions the panel beside a focused node will list. The reference's cap:
+    /// this is the timeline *behind* one memory, not a second Timeline surface.
+    public static let focusSessionLimit = 60
+
+    /// Everything one node is joined to, by id.
+    ///
+    /// Used to dim the rest of the field when something is focused. Built per call rather
+    /// than cached because it is asked for once per selection, not once per frame — and a
+    /// cache keyed on a graph that is rebuilt whenever the window opens is a cache that is
+    /// wrong more often than it is useful.
+    public func neighbours(of id: String) -> Set<String> {
+        var found: Set<String> = [id]
+        for edge in edges {
+            if edge.a == id { found.insert(edge.b) }
+            if edge.b == id { found.insert(edge.a) }
+        }
+        return found
+    }
+
+    /// The sessions a node stands for, newest first.
+    ///
+    /// Each kind answers a different question, which is why this is a switch rather than one
+    /// predicate: a project owns its sessions outright, an application is matched inside
+    /// them, a collection is a category, and a chapter and a moment are both really *days*.
+    /// A node whose day is unknown — a moment with no date — has no sessions rather than all
+    /// of them, which is the distinction that matters.
+    public func sessions(
+        behind node: Node,
+        in sessions: [ActivitySession],
+        projectSessions: [String: [ActivitySession]] = [:],
+        chapterDays: [String: Set<Int64>] = [:],
+        calendar: Calendar = .current
+    ) -> [ActivitySession] {
+        let matched: [ActivitySession]
+        switch node.type {
+        case .project:
+            matched = projectSessions[node.ref] ?? []
+        case .app:
+            matched = sessions.filter { session in
+                session.apps.contains {
+                    ($0.bundleIdentifier ?? $0.applicationName) == node.ref
+                }
+            }
+        case .collection:
+            matched = sessions.filter { $0.category.rawValue == node.ref }
+        case .chapter:
+            let days = chapterDays[node.ref] ?? []
+            matched = sessions.filter {
+                days.contains(startOfLocalDay($0.startedAt, calendar: calendar))
+            }
+        case .moment:
+            guard let day = Int64(node.ref) else { return [] }
+            matched = sessions.filter {
+                startOfLocalDay($0.startedAt, calendar: calendar) == day
+            }
+        }
+        // Sorted on (start, title) rather than start alone: Swift's sort is not stable, and
+        // two sessions that begin in the same millisecond would otherwise swap between
+        // selections of the same node.
+        return Array(
+            matched.sorted {
+                $0.startedAt != $1.startedAt
+                    ? $0.startedAt > $1.startedAt
+                    : $0.title < $1.title
+            }
+            .prefix(CanvasGraph.focusSessionLimit)
+        )
+    }
+}

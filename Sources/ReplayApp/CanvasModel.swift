@@ -16,6 +16,17 @@ final class CanvasModel {
     private(set) var positions: [String: CGPoint] = [:]
     private(set) var loaded = false
 
+    /// The sessions the field was built from, kept so the panel beside a focused node can
+    /// answer without going back to the database. They are already in memory and already
+    /// derived; re-deriving them per selection would be the expensive half of loading the
+    /// surface, repeated on every click.
+    private(set) var sessions: [ActivitySession] = []
+    /// A project's own sessions, by signature — a project owns them outright rather than
+    /// matching them, so this is looked up rather than filtered.
+    private(set) var projectSessions: [String: [ActivitySession]] = [:]
+    /// The days each chapter covers, which is what a chapter really is.
+    private(set) var chapterDays: [String: Set<Int64>] = [:]
+
     private let model: AppModel
     private let projects: ProjectsModel
     private let story: StoryModel
@@ -64,6 +75,16 @@ final class CanvasModel {
             moments: moments
         )
         positions = Self.layout(graph)
+        self.sessions = sessions
+        projectSessions = Dictionary(
+            projects.projects.map { ($0.id, $0.project.sessions) },
+            // A repeated signature keeps the first, matching how the field itself is built.
+            uniquingKeysWith: { first, _ in first }
+        )
+        chapterDays = Dictionary(
+            story.chapters.map { ($0.id, Set($0.chapter.days)) },
+            uniquingKeysWith: { first, _ in first }
+        )
         loaded = true
     }
 

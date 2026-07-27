@@ -179,3 +179,51 @@ public func resolveChapterName(
     let custom = names[chapter.id]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     return custom.isEmpty ? chapterDefaultName(chapter, calendar: calendar) : custom
 }
+
+// ── a day's place in the story ────────────────────────────────────────────────
+
+/// Where a past day sits: the chapter it belonged to, and the days around it.
+public struct ChapterContext: Equatable, Sendable {
+    public var chapter: Chapter
+    /// The nearest other days in the same chapter, newest first.
+    public var nearbyDays: [Int64]
+}
+
+/// How old a day has to be before it is given its context.
+///
+/// A day grows richer as it ages: a chapter is a stretch of weeks, so a day from this week
+/// has no distance to be seen from and would be told it belongs to the chapter it is still
+/// in the middle of. The reference's week, kept.
+public let chapterContextMinimumAge = 7 * dayMillis
+
+/// How many neighbouring days are offered. A handful either side, not the whole chapter —
+/// there is a chapter screen for that.
+public let chapterContextNearbyLimit = 4
+
+/// The chapter a day belonged to, once the day is old enough to have one.
+public func chapterContext(
+    for dayStart: Int64, now: Int64, chapters: [Chapter]
+) -> ChapterContext? {
+    guard now - dayStart >= chapterContextMinimumAge else { return nil }
+    guard let chapter = chapters.first(where: {
+        dayStart >= $0.startDay && dayStart <= $0.endDay
+    }) else { return nil }
+
+    // Nearest first, then read back in order. Sorted on (distance, position) rather than
+    // distance alone: a day the same number of days before and after ties exactly, and
+    // Swift's sort is not stable where JavaScript's is — without the tie-break the two apps
+    // would offer different neighbours for a day in the middle of a chapter.
+    let nearby = chapter.days
+        .filter { $0 != dayStart }
+        .enumerated()
+        .sorted {
+            let left = abs($0.element - dayStart)
+            let right = abs($1.element - dayStart)
+            return left != right ? left < right : $0.offset < $1.offset
+        }
+        .prefix(chapterContextNearbyLimit)
+        .map(\.element)
+        .sorted(by: >)
+
+    return ChapterContext(chapter: chapter, nearbyDays: nearby)
+}
