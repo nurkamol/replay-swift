@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 692 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 694 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -41,7 +41,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Anniversaries | done | exact dates only — a year to the day, or the six-month mark. 3 checks |
 | Forgotten | done | old bookmarks, projects stepped away from, reflections worth rereading, each archivable. 5 checks |
 | Morning briefing | done | `buildMorningBriefing` — yesterday's figures, the longest stretch, a thread worth continuing, a month ago, the oldest bookmark still waiting. 19 checks, including the two cases where it says nothing |
-| Surprise me | todo | |
+| Surprise me | done | `surprisePool` — the moments, the fuller days and the marked sessions, never today. 2 checks, and the order is pinned as well as the membership |
 | Moments | done | `detectMoments` + `pickDailyQuote` — seven kinds, each with a threshold, compared as text. 7 checks |
 | The archive | done | `computeLegacy` — first day, active days, years, and the applications behind all of it. 9 checks. Its figures live inside a view upstream, so the fixture re-declares them, as `sessionMatches` does |
 | App relationships | done | `computeWorkflowPartners` + `computeRelationship` — switches, shared sessions, direction and average length. A pair must have been switched between twice to count. 11 checks |
@@ -206,26 +206,22 @@ platform work the brief asks for and the one thing blocked on paperwork.
 1. **Four Timeline layers.** Projects, Reflections, Moments and Memories are overlay *rows*
    among the days rather than filters over them — a different mechanism from the five that
    are built. This is the largest visible gap against the reference's own screenshots.
-2. **Memories is three features short**: Surprise me, the Moments list, and the
-   browse-by-date heatmap.
-3. **`surprise.ts`** — the last of the seven memory modules; the other six are ported and
-   under contract.
-4. **Settings**: no Shortcuts tab, no notification digests, no Dock badge, no welcome
+2. **Settings**: no Shortcuts tab, no notification digests, no Dock badge, no welcome
    screen, and none of the screensaver's auto-start or exit-condition options.
-5. **Whole surfaces the reference has and this does not**: the Welcome/onboarding flow,
+3. **Whole surfaces the reference has and this does not**: the Welcome/onboarding flow,
    What's New, and Replay Day (a day played back as a short film).
-6. **Canvas** has no synced timeline side panel and no focus mode.
-7. **Search** has no saved searches, no time-range chips, and does not highlight matches.
-8. **A past day** has no story or chapter context.
-9. **PDF export** — dropped deliberately after WebKit failed twice; the route worth trying
+4. **Canvas** has no synced timeline side panel and no focus mode.
+5. **Search** has no saved searches, no time-range chips, and does not highlight matches.
+6. **A past day** has no story or chapter context.
+7. **PDF export** — dropped deliberately after WebKit failed twice; the route worth trying
    next is `NSPrintOperation` on a real window.
-10. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
+8. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
     `SettingsModel` and `CollectionsModel` have none, and the tracker's live-state handling
     is still only exercised by using the app.
-11. **The brief's platform integrations, none started**: App Intents, Widgets, Spotlight,
+9. **The brief's platform integrations, none started**: App Intents, Widgets, Spotlight,
     Quick Look, Handoff/`NSUserActivity`, multiple windows and tabs, Services, sound and
     haptics.
-12. **Sign and notarise.** Blocked on a certificate rather than on code — this machine has
+10. **Sign and notarise.** Blocked on a certificate rather than on code — this machine has
     no Developer ID at all. A decision, not a task.
 
 Done and no longer blocking:

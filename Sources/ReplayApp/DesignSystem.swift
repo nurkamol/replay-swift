@@ -296,6 +296,9 @@ enum Design {
         /// panel a quaternary wash is almost invisible, and the whole point of the row is
         /// that you can see which one it is without looking for it.
         static let paletteHighlight = AnyShapeStyle(Color.accentColor.opacity(0.30))
+        /// A day in the heatmap. Floored so a day with anything in it is visibly not empty.
+        static let heatFloor: Double = 0.25
+        static let heatRange: Double = 0.70
 
         /// The screensaver. Everything is white at a chosen weight rather than a palette:
         /// the room it plays in is dark, and colour would be the thing asking for attention.
@@ -508,6 +511,10 @@ enum Design {
         static let paletteShadowRadius: CGFloat = 30
         static let paletteShadowOffset: CGFloat = 12
         static let paletteTopInset: CGFloat = 120
+        /// A year of days as a grid: how many weeks, how big a square, how far apart.
+        static let heatmapWeeks = 53
+        static let heatmapSquare: CGFloat = 11
+        static let heatmapGap: CGFloat = 3
         /// One press of zoom in or out. A ratio rather than a step, so each press feels the
         /// same however far in you already are.
         static let canvasZoomStep: CGFloat = 1.35

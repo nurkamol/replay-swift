@@ -482,6 +482,25 @@ function buildExportFixtures() {
        export { detectEcho } from ${JSON.stringify(join(GLAZE, "renderer/lib/echoes.ts"))};
        export { detectAnniversaries } from ${JSON.stringify(join(GLAZE, "renderer/lib/anniversaries.ts"))};
        export { detectForgotten } from ${JSON.stringify(join(GLAZE, "renderer/lib/forgotten.ts"))};
+       // The pool is built inside a hook upstream, so its body is re-declared here, as
+       // sessionMatches and computeLegacy and the briefing are. Fourth time; each is on
+       // the ledger. (No backticks in this comment: it is inside a template literal.)
+       export function surprisePool(moments, summaries, bookmarkStarts, now) {
+         const startOfLocalDay = (ts) => { const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); };
+         const today = startOfLocalDay(now);
+         const pool = new Set();
+         for (const moment of moments) {
+           if (moment.dayStart !== undefined && moment.dayStart !== today) pool.add(moment.dayStart);
+         }
+         for (const summary of summaries) {
+           if (summary.activeSeconds >= 20 * 60 && summary.dayStart !== today) pool.add(summary.dayStart);
+         }
+         for (const start of bookmarkStarts) {
+           const day = startOfLocalDay(start);
+           if (day !== today) pool.add(day);
+         }
+         return [...pool];
+       }
        // The briefing is assembled inside a hook upstream, so like sessionMatches and
        // computeLegacy above, its body is re-declared here character for character. Same
        // known risk, same reason: nothing would check it otherwise.
@@ -598,7 +617,7 @@ function buildExportFixtures() {
                clamp01, ramp, freshness, blendConfidence, daysBetween, sessionMeaning,
                projectMeaning, eligibleMemories, selectLivingMemory,
                confidenceThresholdLabel, detectRightTime, detectThreadUpdate, detectEcho,
-               detectAnniversaries, detectForgotten,
+               detectAnniversaries, detectForgotten, surprisePool,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -775,6 +794,11 @@ function buildExportFixtures() {
          input.momentSeed, input.chapterSummaries, input.momentEvents, input.momentNow,
        );
        const quote = pickDailyQuote(moments, input.momentNow);
+       // The days worth arriving on, from the moments, the fuller days and the marks.
+       const surprise = surprisePool(
+         moments, input.chapterSummaries, input.memoryBookmarks.map((b) => b.sessionStart),
+         input.momentNow,
+       );
 
        // The graph behind the canvas, over the workflow fixture's sessions — small
        // enough to record in full, and it already has two projects and repeated
@@ -902,6 +926,7 @@ function buildExportFixtures() {
          producers,
          anniversaries,
          forgotten,
+         surprise,
          briefings,
          moments,
          quoteKey: quote ? quote.key : null,
@@ -1650,6 +1675,7 @@ function buildExportFixtures() {
         anniversarySeed,
         bookmarks: memoryBookmarks,
         reflections: memoryReflections,
+        surprise: result.surprise,
         anniversaries: result.anniversaries,
         forgotten: result.forgotten,
       },

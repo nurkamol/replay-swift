@@ -463,6 +463,7 @@ public enum ParityKit {
             public let anniversarySeed: MomentsCase.Seed
             public let bookmarks: [Bookmark]
             public let reflections: [Reflection]
+            public let surprise: [Int64]
             public let anniversaries: [Produced]
             public let forgotten: [Produced]
 
@@ -1607,6 +1608,22 @@ public enum ParityKit {
             equal(fcg, "a \(mapped.category) session filters as \(mapped.bucket)",
                   sessionFilterCategory(session).rawValue, mapped.bucket)
         }
+
+        // The pool a surprise is drawn from. The order matters as much as the membership:
+        // it is what makes a seeded pick land on the same day twice.
+        equal(mog, "the days worth arriving on, in the same order",
+              surprisePool(
+                  moments: moments, summaries: summaries,
+                  bookmarkStarts: mc.bookmarks.map(\.sessionStart),
+                  now: fixture.moments.now, calendar: calendar
+              ),
+              mc.surprise)
+        check(mog, "and today is never one of them",
+              !surprisePool(
+                  moments: moments, summaries: summaries,
+                  bookmarkStarts: mc.bookmarks.map(\.sessionStart),
+                  now: fixture.moments.now, calendar: calendar
+              ).contains(startOfLocalDay(fixture.moments.now, calendar: calendar)))
 
         // The morning briefing, including the cases where it says nothing: after noon, and
         // when yesterday holds nothing to reflect on.
