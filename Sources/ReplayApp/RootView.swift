@@ -149,8 +149,9 @@ struct RootView: View {
     let onOpenScreensaver: () -> Void
 
     @Environment(\.motion) private var motion
-    /// The day being watched, if one is. Held here because it fills the window.
-    @State private var replaying: [ActivitySession]?
+    /// The day being watched, if one is: its sessions and what to call it on screen. Held
+    /// here because it fills the window.
+    @State private var replaying: Playback.Day?
 
     private var columnVisibility: Binding<NavigationSplitViewVisibility> {
         Binding(
@@ -170,7 +171,7 @@ struct RootView: View {
             // behind a sheet. A first run is the whole window.
             if let replaying {
                 ReplayDayView(
-                    sessions: replaying, label: "Today",
+                    sessions: replaying.sessions, label: replaying.label,
                     onClose: { self.replaying = nil }
                 )
                 .transition(motion.transition(.opacity))
@@ -230,7 +231,10 @@ struct RootView: View {
                                 dayStart: dayStart,
                                 history: history,
                                 annotations: model.annotations,
-                                export: export
+                                export: export,
+                                onReplayDay: {
+                                    replaying = Playback.Day(sessions: $0, label: $1)
+                                }
                             )
                         )
                     }
@@ -501,7 +505,7 @@ struct RootView: View {
                 export: export, memories: memories, contextual: contextual,
                 preferences: preferences,
                 onOpenDay: { navigation.open(day: $0) },
-                onReplayDay: { replaying = $0 }
+                onReplayDay: { replaying = Playback.Day(sessions: $0, label: "Today") }
             )
         case .apps:
             AppsView(
@@ -522,7 +526,8 @@ struct RootView: View {
                 overlays: timelineLayers,
                 annotations: model.annotations,
                 export: export,
-                onOpenDay: { navigation.open(day: $0) }
+                onOpenDay: { navigation.open(day: $0) },
+                onReplayDay: { replaying = Playback.Day(sessions: $0, label: $1) }
             )
         case .search:
             SearchView(
@@ -563,6 +568,7 @@ private struct DayScreen: View {
     let history: HistoryModel
     let annotations: AnnotationsModel
     let export: ExportModel
+    let onReplayDay: ([ActivitySession], String) -> Void
 
     @State private var day: TimelineDay?
     @State private var headline: DailySummary?
@@ -581,7 +587,8 @@ private struct DayScreen: View {
                         history.setReflection(dayStart, text)
                         load()
                     },
-                    onDeleteSession: { history.deleteSession($0); load() }
+                    onDeleteSession: { history.deleteSession($0); load() },
+                    onReplayDay: onReplayDay
                 )
             } else {
                 // Never seen in practice — the load is synchronous — but a destination has

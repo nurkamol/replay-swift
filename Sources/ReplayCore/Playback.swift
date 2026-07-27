@@ -15,6 +15,22 @@ public enum Playback {
     /// The speeds offered. A day at five times is a flick through rather than a watch.
     public static let speeds = [1, 2, 5]
 
+    /// A day queued up to watch: the sessions, and what to call it while it plays.
+    ///
+    /// The label travels with the sessions rather than being decided by the screen showing
+    /// them. It was hard-coded to "Today" when today was the only day you could watch, and
+    /// that is exactly the kind of assumption that survives a feature it stopped being true
+    /// for — a Tuesday in April played back under the word "Today".
+    public struct Day: Equatable, Sendable {
+        public var sessions: [ActivitySession]
+        public var label: String
+
+        public init(sessions: [ActivitySession], label: String) {
+            self.sessions = sessions
+            self.label = label
+        }
+    }
+
     /// The span a set of sessions covers: from the first start to the last end.
     public static func span(_ sessions: [ActivitySession]) -> (start: Int64, end: Int64) {
         guard let start = sessions.first?.startedAt else { return (0, 1) }

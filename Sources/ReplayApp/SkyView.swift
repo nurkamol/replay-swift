@@ -3,14 +3,20 @@ import SwiftUI
 
 /// The sky at a given hour.
 ///
-/// A day has a shape, and it is not the same shape at four in the morning as at four in the
-/// afternoon. This gives a surface that reads back a moment somewhere to *be* — late night is
-/// deep and cold, dawn warms at the horizon, midday is open, evening closes again.
+/// A day has a shape, and it is not the same shape at four in the morning as at eight in the
+/// evening. This gives a surface that reads back a moment somewhere to *be* — night is deep
+/// and cold, dawn warms at the horizon, midday is open, sunset is the warmest the app ever
+/// gets, dusk closes it again.
 ///
 /// It is not decoration for its own sake: on Replay Day it follows the playhead, so watching
-/// a day back visibly passes through it, and on Today it follows the actual hour, so the
-/// headline sits in the part of the day it is describing. Everything here is derived from the
-/// clock and nothing from the data — the app has no opinion about the hours themselves.
+/// a day back visibly passes through its own light, and on Today it follows the actual hour,
+/// so the headline sits in the part of the day it is describing. Everything is derived from
+/// the clock and nothing from the data — the app has no opinion about the hours themselves.
+///
+/// The colours live in ``Design/Sky``, anchored to the boundaries `dayPart(of:)` already
+/// uses. That is deliberate: real sunset would need to know where this Mac is, and the app
+/// asks for nothing. Agreeing with the label printed over it is the honest version, and it
+/// is also the one that reads right — a screen saying EVENING over a black frame does not.
 struct Sky: View {
     /// The instant to draw. Interpolated between the anchor hours rather than switched at
     /// them, so nothing ever jumps between two adjacent minutes.
@@ -24,63 +30,85 @@ struct Sky: View {
     var body: some View {
         // Reduce Transparency means "stop putting things behind my content"; a shifting
         // gradient under text is exactly that, so it becomes a flat surface.
-        let colours = reduceTransparency ? [flat, flat] : palette
-        LinearGradient(
-            colors: colours,
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-        .opacity(reduceTransparency ? 1 : strength)
-        .animation(.easeInOut(duration: Design.Motion.skySeconds), value: hourFraction)
+        if reduceTransparency {
+            Rectangle().fill(scheme == .dark ? Design.Sky.flatDark : Design.Sky.flatLight)
+        } else {
+            let now = stop
+            GeometryReader { geometry in
+                LinearGradient(
+                    colors: [now.top, now.middle, now.bottom],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .overlay {
+                    // The light in the frame, rather than a second gradient: it moves east
+                    // to west across the day and is brightest at the two edges of it, which
+                    // is what makes an hour recognisable without a clock on screen.
+                    RadialGradient(
+                        colors: [now.glow.opacity(now.glowStrength * strength), .clear],
+                        center: now.glowAt,
+                        startRadius: max(geometry.size.width, geometry.size.height)
+                            * Design.Sky.glowCore,
+                        endRadius: max(geometry.size.width, geometry.size.height)
+                            * Design.Sky.glowRadius
+                    )
+                }
+            }
+            .opacity(strength)
+            .animation(.easeInOut(duration: Design.Motion.skySeconds), value: hour)
+        }
     }
 
-    private var flat: Color { scheme == .dark ? .black : Color(white: 0.96) }
-
-    /// The hour, with its minutes, as a fraction of the day.
-    private var hourFraction: Double {
+    /// The hour, with its minutes, on a 24-hour dial.
+    private var hour: Double {
         let date = Date(timeIntervalSince1970: Double(at) / 1000)
         let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
-        return (Double(parts.hour ?? 0) + Double(parts.minute ?? 0) / 60) / 24
+        return Double(parts.hour ?? 0) + Double(parts.minute ?? 0) / 60
     }
 
-    /// Four anchors around the day, blended between.
+    /// The two anchors this hour falls between, mixed.
     ///
-    /// Deliberately desaturated: this sits behind text that has to stay readable, and a sky
-    /// that competes with the words on it has stopped being a background.
-    private var palette: [Color] {
-        let stops: [(at: Double, top: Color, bottom: Color)] = scheme == .light
-            ? [
-                (0.0, Color(red: 0.72, green: 0.75, blue: 0.85), Color(red: 0.86, green: 0.87, blue: 0.92)),
-                (0.27, Color(red: 0.98, green: 0.87, blue: 0.80), Color(red: 0.94, green: 0.90, blue: 0.88)),
-                (0.52, Color(red: 0.85, green: 0.91, blue: 0.98), Color(red: 0.95, green: 0.96, blue: 0.98)),
-                (0.80, Color(red: 0.93, green: 0.85, blue: 0.86), Color(red: 0.88, green: 0.87, blue: 0.92)),
-            ]
-            : [
-                // Late night: cold and nearly out.
-                (0.0, Color(red: 0.05, green: 0.06, blue: 0.11), Color(red: 0.02, green: 0.02, blue: 0.04)),
-                // Dawn: warmth arriving at the bottom of the frame.
-                (0.27, Color(red: 0.16, green: 0.11, blue: 0.14), Color(red: 0.24, green: 0.14, blue: 0.11)),
-                // Midday: open, and the coolest of the four.
-                (0.52, Color(red: 0.09, green: 0.13, blue: 0.20), Color(red: 0.05, green: 0.08, blue: 0.13)),
-                // Evening: closing, warmer again.
-                (0.80, Color(red: 0.15, green: 0.09, blue: 0.16), Color(red: 0.07, green: 0.05, blue: 0.09)),
-            ]
-
-        let f = hourFraction
-        // Wrapped, so 23:00 blends toward midnight rather than falling off the end.
-        var lower = stops.last!
-        var upper = stops.first!
-        var lowerAt = stops.last!.at - 1
-        var upperAt = stops.first!.at
-        for (index, stop) in stops.enumerated() where stop.at <= f {
-            lower = stop
-            lowerAt = stop.at
-            let next = index + 1 < stops.count ? stops[index + 1] : stops[0]
-            upper = next
-            upperAt = index + 1 < stops.count ? next.at : 1
+    /// Wrapped, so 23:30 blends toward midnight rather than falling off the end of the
+    /// table. The last anchor is at 23 rather than at 24 precisely so that wrap has a short
+    /// distance to travel and midnight is not a seam.
+    private var stop: Design.Sky.Stop {
+        let stops = scheme == .light ? Design.Sky.light : Design.Sky.dark
+        guard let first = stops.first, let last = stops.last else {
+            return Design.Sky.dark[0]
         }
-        let width = max(0.0001, upperAt - lowerAt)
-        let t = min(1, max(0, (f - lowerAt) / width))
-        return [lower.top.mix(with: upper.top, by: t), lower.bottom.mix(with: upper.bottom, by: t)]
+
+        let now = hour
+        var lower = last
+        var upper = first
+        var lowerHour = last.hour - 24
+        var upperHour = first.hour
+        for (index, candidate) in stops.enumerated() where candidate.hour <= now {
+            lower = candidate
+            lowerHour = candidate.hour
+            let next = index + 1 < stops.count ? stops[index + 1] : first
+            upper = next
+            upperHour = index + 1 < stops.count ? next.hour : first.hour + 24
+        }
+
+        let width = max(0.0001, upperHour - lowerHour)
+        // Smoothed rather than linear, so an anchor is a place the sky *rests* at for a
+        // while instead of a corner it turns at.
+        let t = smooth(min(1, max(0, (now - lowerHour) / width)))
+
+        return Design.Sky.Stop(
+            hour: now,
+            top: lower.top.mix(with: upper.top, by: t),
+            middle: lower.middle.mix(with: upper.middle, by: t),
+            bottom: lower.bottom.mix(with: upper.bottom, by: t),
+            glow: lower.glow.mix(with: upper.glow, by: t),
+            glowAt: UnitPoint(
+                x: lower.glowAt.x + (upper.glowAt.x - lower.glowAt.x) * t,
+                y: lower.glowAt.y + (upper.glowAt.y - lower.glowAt.y) * t
+            ),
+            glowStrength: lower.glowStrength
+                + (upper.glowStrength - lower.glowStrength) * t
+        )
     }
+
+    private func smooth(_ t: Double) -> Double { t * t * (3 - 2 * t) }
 }

@@ -329,10 +329,11 @@ enum Design {
         /// panel a quaternary wash is almost invisible, and the whole point of the row is
         /// that you can see which one it is without looking for it.
         static let paletteHighlight = AnyShapeStyle(Color.accentColor.opacity(0.30))
-        /// A day in the heatmap. Floored so a day with anything in it is visibly not empty.
         /// How much of the sky a card carries. Enough to notice across a day, not enough to
         /// compete with what is written on it.
         static let skyOnCard: Double = 0.55
+
+        /// A day in the heatmap. Floored so a day with anything in it is visibly not empty.
         static let heatFloor: Double = 0.25
         static let heatRange: Double = 0.70
 
@@ -355,6 +356,196 @@ enum Design {
         static let streakBackground = AnyShapeStyle(Color.orange.opacity(0.12))
         /// The privacy promise, which is the one place a claim is made in colour.
         static let assurance = Color.green
+    }
+
+    // ── the sky ───────────────────────────────────────────────────────────────
+
+    /// What the hour looks like.
+    ///
+    /// Anchored to the app's *own* day parts rather than to astronomy, and that is the whole
+    /// point. Replay decides on the clock alone that before 5 is late night, 5 to 12 is
+    /// morning, 12 to 17 afternoon, 17 to 22 evening (`dayPart(of:)`) — so a screen that
+    /// says "EVENING" over a sky that has already gone dark is the app disagreeing with
+    /// itself. Real sunset would need to know where the Mac is, and this app asks for
+    /// nothing; matching the label it prints is both honest and the thing that reads right.
+    ///
+    /// Sunrise and sunset get their own anchors close together, because that is where the
+    /// sky actually changes quickly. An even spread made 20:30 in July look like midnight.
+    enum Sky {
+        /// One hour of the day: three gradient stops, and where the light is coming from.
+        struct Stop {
+            var hour: Double
+            var top: Color
+            var middle: Color
+            var bottom: Color
+            /// A soft bloom over the gradient — the sun, more or less, without pretending
+            /// to know where it is.
+            var glow: Color
+            var glowAt: UnitPoint
+            var glowStrength: Double
+        }
+
+        /// How wide the bloom is, as a fraction of the frame's longer edge.
+        static let glowRadius: Double = 0.85
+        /// Where the bloom starts fading. Below this it is flat colour, which keeps the
+        /// centre from reading as a disc.
+        static let glowCore: Double = 0.10
+
+        static let dark: [Stop] = [
+            // Deep night.
+            Stop(hour: 0,
+                 top: Color(red: 0.030, green: 0.035, blue: 0.070),
+                 middle: Color(red: 0.020, green: 0.025, blue: 0.050),
+                 bottom: Color(red: 0.012, green: 0.015, blue: 0.030),
+                 glow: Color(red: 0.10, green: 0.12, blue: 0.26),
+                 glowAt: UnitPoint(x: 0.50, y: 0.95), glowStrength: 0.35),
+            // The darkest stretch, just before anything happens.
+            Stop(hour: 4.5,
+                 top: Color(red: 0.035, green: 0.045, blue: 0.090),
+                 middle: Color(red: 0.025, green: 0.030, blue: 0.060),
+                 bottom: Color(red: 0.015, green: 0.018, blue: 0.035),
+                 glow: Color(red: 0.12, green: 0.16, blue: 0.32),
+                 glowAt: UnitPoint(x: 0.35, y: 0.95), glowStrength: 0.35),
+            // First light: still cold above, warming at the horizon.
+            Stop(hour: 6,
+                 top: Color(red: 0.060, green: 0.080, blue: 0.170),
+                 middle: Color(red: 0.090, green: 0.090, blue: 0.160),
+                 bottom: Color(red: 0.130, green: 0.095, blue: 0.125),
+                 glow: Color(red: 0.48, green: 0.30, blue: 0.28),
+                 glowAt: UnitPoint(x: 0.28, y: 0.88), glowStrength: 0.38),
+            // Sunrise. Early, and over quickly — by half past eight it is just morning.
+            Stop(hour: 7,
+                 top: Color(red: 0.080, green: 0.100, blue: 0.200),
+                 middle: Color(red: 0.150, green: 0.115, blue: 0.180),
+                 bottom: Color(red: 0.230, green: 0.135, blue: 0.125),
+                 glow: Color(red: 0.72, green: 0.40, blue: 0.24),
+                 glowAt: UnitPoint(x: 0.24, y: 0.84), glowStrength: 0.44),
+            // Morning, opening out and turning cool.
+            Stop(hour: 9,
+                 top: Color(red: 0.065, green: 0.105, blue: 0.205),
+                 middle: Color(red: 0.065, green: 0.115, blue: 0.215),
+                 bottom: Color(red: 0.060, green: 0.120, blue: 0.210),
+                 glow: Color(red: 0.22, green: 0.38, blue: 0.58),
+                 glowAt: UnitPoint(x: 0.35, y: 0.72), glowStrength: 0.36),
+            // Midday: the coolest and most open of them.
+            Stop(hour: 13,
+                 top: Color(red: 0.050, green: 0.100, blue: 0.190),
+                 middle: Color(red: 0.050, green: 0.110, blue: 0.200),
+                 bottom: Color(red: 0.040, green: 0.100, blue: 0.170),
+                 glow: Color(red: 0.20, green: 0.40, blue: 0.62),
+                 glowAt: UnitPoint(x: 0.50, y: 0.58), glowStrength: 0.38),
+            // Late afternoon, warming and moving west.
+            Stop(hour: 16.5,
+                 top: Color(red: 0.070, green: 0.100, blue: 0.190),
+                 middle: Color(red: 0.100, green: 0.100, blue: 0.190),
+                 bottom: Color(red: 0.130, green: 0.100, blue: 0.170),
+                 glow: Color(red: 0.42, green: 0.32, blue: 0.48),
+                 glowAt: UnitPoint(x: 0.70, y: 0.68), glowStrength: 0.42),
+            // Golden hour.
+            Stop(hour: 18.5,
+                 top: Color(red: 0.085, green: 0.080, blue: 0.180),
+                 middle: Color(red: 0.150, green: 0.095, blue: 0.170),
+                 bottom: Color(red: 0.205, green: 0.115, blue: 0.125),
+                 glow: Color(red: 0.72, green: 0.42, blue: 0.22),
+                 glowAt: UnitPoint(x: 0.80, y: 0.80), glowStrength: 0.40),
+            // Sunset. The warmest the app ever gets — which is still not very, because a
+            // full-window wash of orange is a screen you cannot read a title on.
+            Stop(hour: 20,
+                 top: Color(red: 0.090, green: 0.065, blue: 0.170),
+                 middle: Color(red: 0.165, green: 0.080, blue: 0.165),
+                 bottom: Color(red: 0.225, green: 0.085, blue: 0.130),
+                 glow: Color(red: 0.70, green: 0.27, blue: 0.20),
+                 glowAt: UnitPoint(x: 0.86, y: 0.88), glowStrength: 0.42),
+            // Dusk, closing violet.
+            Stop(hour: 21.5,
+                 top: Color(red: 0.060, green: 0.045, blue: 0.135),
+                 middle: Color(red: 0.090, green: 0.052, blue: 0.150),
+                 bottom: Color(red: 0.115, green: 0.058, blue: 0.120),
+                 glow: Color(red: 0.38, green: 0.16, blue: 0.30),
+                 glowAt: UnitPoint(x: 0.90, y: 0.92), glowStrength: 0.34),
+            // Night again — and back to the first stop, which is why 23 is not 0.
+            Stop(hour: 23,
+                 top: Color(red: 0.040, green: 0.040, blue: 0.090),
+                 middle: Color(red: 0.030, green: 0.030, blue: 0.060),
+                 bottom: Color(red: 0.020, green: 0.020, blue: 0.040),
+                 glow: Color(red: 0.12, green: 0.13, blue: 0.26),
+                 glowAt: UnitPoint(x: 0.60, y: 0.95), glowStrength: 0.34),
+        ]
+
+        /// The same day in a light room. Higher and flatter in luminance throughout, because
+        /// the text over it is dark — a light sky has far less room to move than a dark one.
+        static let light: [Stop] = [
+            Stop(hour: 0,
+                 top: Color(red: 0.62, green: 0.65, blue: 0.78),
+                 middle: Color(red: 0.70, green: 0.72, blue: 0.83),
+                 bottom: Color(red: 0.80, green: 0.81, blue: 0.88),
+                 glow: Color(red: 0.50, green: 0.54, blue: 0.72),
+                 glowAt: UnitPoint(x: 0.50, y: 0.95), glowStrength: 0.30),
+            Stop(hour: 4.5,
+                 top: Color(red: 0.66, green: 0.68, blue: 0.80),
+                 middle: Color(red: 0.74, green: 0.75, blue: 0.85),
+                 bottom: Color(red: 0.83, green: 0.84, blue: 0.90),
+                 glow: Color(red: 0.55, green: 0.58, blue: 0.75),
+                 glowAt: UnitPoint(x: 0.35, y: 0.95), glowStrength: 0.30),
+            Stop(hour: 6,
+                 top: Color(red: 0.80, green: 0.82, blue: 0.92),
+                 middle: Color(red: 0.92, green: 0.87, blue: 0.87),
+                 bottom: Color(red: 0.97, green: 0.89, blue: 0.83),
+                 glow: Color(red: 0.99, green: 0.78, blue: 0.62),
+                 glowAt: UnitPoint(x: 0.28, y: 0.88), glowStrength: 0.50),
+            Stop(hour: 7,
+                 top: Color(red: 0.84, green: 0.87, blue: 0.95),
+                 middle: Color(red: 0.96, green: 0.88, blue: 0.84),
+                 bottom: Color(red: 0.99, green: 0.86, blue: 0.75),
+                 glow: Color(red: 1.00, green: 0.72, blue: 0.48),
+                 glowAt: UnitPoint(x: 0.24, y: 0.84), glowStrength: 0.62),
+            Stop(hour: 9,
+                 top: Color(red: 0.80, green: 0.88, blue: 0.97),
+                 middle: Color(red: 0.88, green: 0.93, blue: 0.98),
+                 bottom: Color(red: 0.95, green: 0.96, blue: 0.99),
+                 glow: Color(red: 0.78, green: 0.90, blue: 1.00),
+                 glowAt: UnitPoint(x: 0.35, y: 0.72), glowStrength: 0.40),
+            Stop(hour: 13,
+                 top: Color(red: 0.78, green: 0.87, blue: 0.98),
+                 middle: Color(red: 0.87, green: 0.92, blue: 0.99),
+                 bottom: Color(red: 0.95, green: 0.97, blue: 1.00),
+                 glow: Color(red: 0.80, green: 0.91, blue: 1.00),
+                 glowAt: UnitPoint(x: 0.50, y: 0.58), glowStrength: 0.36),
+            Stop(hour: 16.5,
+                 top: Color(red: 0.84, green: 0.87, blue: 0.96),
+                 middle: Color(red: 0.91, green: 0.90, blue: 0.95),
+                 bottom: Color(red: 0.96, green: 0.93, blue: 0.94),
+                 glow: Color(red: 0.94, green: 0.86, blue: 0.92),
+                 glowAt: UnitPoint(x: 0.70, y: 0.68), glowStrength: 0.40),
+            Stop(hour: 18.5,
+                 top: Color(red: 0.86, green: 0.85, blue: 0.94),
+                 middle: Color(red: 0.96, green: 0.87, blue: 0.85),
+                 bottom: Color(red: 0.99, green: 0.87, blue: 0.77),
+                 glow: Color(red: 1.00, green: 0.78, blue: 0.52),
+                 glowAt: UnitPoint(x: 0.80, y: 0.80), glowStrength: 0.60),
+            Stop(hour: 20,
+                 top: Color(red: 0.82, green: 0.80, blue: 0.92),
+                 middle: Color(red: 0.95, green: 0.83, blue: 0.83),
+                 bottom: Color(red: 0.98, green: 0.82, blue: 0.76),
+                 glow: Color(red: 1.00, green: 0.64, blue: 0.50),
+                 glowAt: UnitPoint(x: 0.86, y: 0.88), glowStrength: 0.62),
+            Stop(hour: 21.5,
+                 top: Color(red: 0.72, green: 0.72, blue: 0.86),
+                 middle: Color(red: 0.83, green: 0.78, blue: 0.87),
+                 bottom: Color(red: 0.90, green: 0.85, blue: 0.89),
+                 glow: Color(red: 0.86, green: 0.62, blue: 0.76),
+                 glowAt: UnitPoint(x: 0.90, y: 0.92), glowStrength: 0.44),
+            Stop(hour: 23,
+                 top: Color(red: 0.64, green: 0.66, blue: 0.79),
+                 middle: Color(red: 0.72, green: 0.73, blue: 0.84),
+                 bottom: Color(red: 0.82, green: 0.82, blue: 0.88),
+                 glow: Color(red: 0.52, green: 0.55, blue: 0.73),
+                 glowAt: UnitPoint(x: 0.60, y: 0.95), glowStrength: 0.32),
+        ]
+
+        /// The flat surface Reduce Transparency gets instead.
+        static let flatDark = Color(red: 0.020, green: 0.022, blue: 0.040)
+        static let flatLight = Color(white: 0.96)
     }
 
     // ── elevation, blur, shadow ───────────────────────────────────────────────

@@ -49,6 +49,8 @@ struct TimelineView: View {
     let export: ExportModel
     /// Given so a day can be opened from its ⋯ menu.
     let onOpenDay: (Int64) -> Void
+    /// Given so a past day can be watched back, the same way today can.
+    let onReplayDay: ([ActivitySession], String) -> Void
 
     @Environment(\.motion) private var motion
     /// Which coarse buckets are showing. Empty means all of them — a filter row where
@@ -79,7 +81,8 @@ struct TimelineView: View {
                                 history: history,
                                 annotations: annotations,
                                 export: export,
-                                onOpenDay: onOpenDay
+                                onOpenDay: onOpenDay,
+                                onReplayDay: onReplayDay
                             )
                             overlayRows(for: day.dayStart)
                         }
@@ -318,6 +321,7 @@ private struct DaySection: View {
     let annotations: AnnotationsModel
     let export: ExportModel
     let onOpenDay: (Int64) -> Void
+    let onReplayDay: ([ActivitySession], String) -> Void
 
     @State private var confirmingDelete = false
 
@@ -384,6 +388,10 @@ private struct DaySection: View {
             // rarely wanted.
             Menu {
                 Button("Open This Day") { onOpenDay(day.dayStart) }
+                Button("Replay This Day") {
+                    onReplayDay(day.sessions, day.label)
+                }
+                .disabled(day.sessions.isEmpty)
                 Menu("Export This Day") {
                     ForEach(Report.Format.allCases, id: \.self) { format in
                         Button(format.label) {
@@ -453,6 +461,7 @@ struct DayView: View {
     let export: ExportModel
     let onReflect: (String) -> Void
     let onDeleteSession: (ActivitySession) -> Void
+    let onReplayDay: ([ActivitySession], String) -> Void
 
     private var story: [String] { DayStory.build(day.sessions) }
 
@@ -543,6 +552,17 @@ struct DayView: View {
         )
         .toolbar {
             if !day.sessions.isEmpty {
+                // The same offer Today makes, on a day that has already happened. Watching
+                // a day back is the point of the app; there was no reason it only worked on
+                // the one day you had already lived through.
+                ToolbarItem {
+                    Button {
+                        onReplayDay(day.sessions, day.label)
+                    } label: {
+                        Label("Replay Day", systemImage: "play.rectangle")
+                    }
+                    .help("Watch this day play back")
+                }
                 ToolbarItem {
                     Menu {
                         ForEach(Report.Format.allCases, id: \.self) { format in
