@@ -1917,6 +1917,155 @@
       "maxAppWeight": 2
     }
   },
+  "briefings": {
+    "cases": [
+      {
+        "name": "a morning with something to say",
+        "now": 1770105600000,
+        "yesterdayEvents": [
+          {
+            "id": 1100,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770022800000,
+            "endedAt": 1770024300000,
+            "duration": 1500
+          },
+          {
+            "id": 1101,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770024300000,
+            "endedAt": 1770024900000,
+            "duration": 600
+          }
+        ],
+        "monthAgo": {
+          "dayStart": 1767484800000,
+          "topApp": "Safari"
+        },
+        "bookmarkStarts": [
+          1769040000000,
+          1766620800000
+        ]
+      },
+      {
+        "name": "the afternoon, when the day is underway",
+        "now": 1770127200000,
+        "yesterdayEvents": [
+          {
+            "id": 1100,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770022800000,
+            "endedAt": 1770024300000,
+            "duration": 1500
+          },
+          {
+            "id": 1101,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770024300000,
+            "endedAt": 1770024900000,
+            "duration": 600
+          }
+        ]
+      },
+      {
+        "name": "a yesterday with nothing in it",
+        "now": 1770105600000,
+        "yesterdayEvents": []
+      },
+      {
+        "name": "no memory and no bookmark",
+        "now": 1770109200000,
+        "yesterdayEvents": [
+          {
+            "id": 1100,
+            "type": "activated",
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "startedAt": 1770022800000,
+            "endedAt": 1770024300000,
+            "duration": 1500
+          },
+          {
+            "id": 1101,
+            "type": "activated",
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "startedAt": 1770024300000,
+            "endedAt": 1770024900000,
+            "duration": 600
+          }
+        ]
+      }
+    ],
+    "summaries": [
+      {
+        "dayStart": 1769990400000,
+        "activeSeconds": 7200,
+        "topBundleId": "com.microsoft.VSCode",
+        "topAppName": "Code",
+        "topSeconds": 5000
+      }
+    ],
+    "expected": [
+      {
+        "name": "a morning with something to say",
+        "result": {
+          "dayStart": 1770076800000,
+          "yesterdayActiveSeconds": 7200,
+          "yesterdayTopApp": "Code",
+          "longestFocusSeconds": 2100,
+          "continuedProject": null,
+          "monthAgo": {
+            "dayStart": 1767484800000,
+            "topApp": "Safari"
+          },
+          "pendingBookmark": 1766620800000
+        }
+      },
+      {
+        "name": "the afternoon, when the day is underway",
+        "result": null
+      },
+      {
+        "name": "a yesterday with nothing in it",
+        "result": {
+          "dayStart": 1770076800000,
+          "yesterdayActiveSeconds": 7200,
+          "yesterdayTopApp": "Code",
+          "longestFocusSeconds": null,
+          "continuedProject": null,
+          "monthAgo": null,
+          "pendingBookmark": null
+        }
+      },
+      {
+        "name": "no memory and no bookmark",
+        "result": {
+          "dayStart": 1770076800000,
+          "yesterdayActiveSeconds": 7200,
+          "yesterdayTopApp": "Code",
+          "longestFocusSeconds": 2100,
+          "continuedProject": null,
+          "monthAgo": null,
+          "pendingBookmark": null
+        }
+      }
+    ]
+  },
   "memory": {
     "scoringCases": {
       "clamp": [

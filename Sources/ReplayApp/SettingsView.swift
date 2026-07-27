@@ -223,6 +223,9 @@ private struct GeneralTab: View {
                 .disabled(!preferences.contextualMemories)
                 .onChange(of: preferences.memoryThreshold) { _, _ in contextual.load() }
 
+                Toggle("Morning briefing", isOn: $preferences.morningBriefing)
+                    .onChange(of: preferences.morningBriefing) { _, _ in contextual.load() }
+
                 if !preferences.dismissedMemories.isEmpty {
                     LabeledContent("Put away") {
                         Button("Bring back \(preferences.dismissedMemories.count)") {
@@ -234,7 +237,9 @@ private struct GeneralTab: View {
             } footer: {
                 Footnote(
                     "Replay shows at most one memory a day, and most days it shows none. "
-                        + "Everything it says is read from your own history on this Mac."
+                        + "The briefing is a look back at yesterday, and it is gone by "
+                        + "lunchtime. Everything either says is read from your own history "
+                        + "on this Mac."
                 )
             }
 

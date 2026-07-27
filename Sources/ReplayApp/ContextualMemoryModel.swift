@@ -12,6 +12,10 @@ import ReplayCore
 @Observable
 final class ContextualMemoryModel {
     private(set) var memory: MemoryCandidate?
+    /// A look back at yesterday, in the morning, when there is one.
+    private(set) var briefing: MorningBriefing?
+    /// The moment to quote today — one line, under the briefing.
+    private(set) var quote: Moment?
     private(set) var loaded = false
 
     private let model: AppModel
@@ -57,6 +61,45 @@ final class ContextualMemoryModel {
             detectEcho(events: todayEvents, projects: candidates, now: now),
         ].compactMap { $0 }
 
+        // The briefing reads yesterday's rows and the durable headlines either side of it.
+        if preferences.morningBriefing,
+           !preferences.dismissedBriefings.contains(String(today)) {
+            let yesterday = events.filter {
+                $0.startedAt >= today - dayMillis && $0.startedAt < today
+            }
+            let summaries = (try? model.store.dailySummaries(
+                from: today - 3 * dayMillis, to: today + dayMillis
+            )) ?? []
+            let bookmarks = ((try? model.store.annotations(from: 0, to: now + dayMillis)) ?? [])
+                .filter(\.bookmarked)
+                .map(\.sessionStart)
+            let monthAgo = Memories.find(
+                in: (try? model.store.dailySummaries(from: 0, to: today + dayMillis)) ?? [],
+                now: now
+            )
+            .first { $0.range.key == "1mo" }
+            briefing = buildMorningBriefing(
+                now: now,
+                yesterdayEvents: yesterday,
+                summaries: summaries,
+                projects: candidates,
+                monthAgo: monthAgo.map { ($0.range.dayStart, $0.summary.topAppName) },
+                bookmarkStarts: bookmarks
+            )
+        } else {
+            briefing = nil
+        }
+
+        // One line under it, chosen from the day so it is the same all day.
+        let allSummaries = (try? model.store.dailySummaries(from: 0, to: today + dayMillis)) ?? []
+        quote = pickDailyQuote(
+            detectMoments(
+                seed: try? model.store.momentSeed(),
+                summaries: allSummaries, events: events, now: now
+            ),
+            now: now
+        )
+
         memory = selectLivingMemory(produced, MemorySelection(
             threshold: preferences.memoryThreshold,
             dismissed: Set(preferences.dismissedMemories),
@@ -68,6 +111,14 @@ final class ContextualMemoryModel {
     /// dismissed memory that came back tomorrow would be worse than never showing it.
     func dismiss(_ candidate: MemoryCandidate) {
         preferences.dismissedMemories.append(candidate.id)
+        load()
+    }
+
+    /// Put today's briefing away. Keyed by day, so tomorrow's is a fresh one — a briefing
+    /// you dismissed once should not be gone for good.
+    func dismissBriefing() {
+        guard let briefing else { return }
+        preferences.dismissedBriefings.append(String(briefing.dayStart))
         load()
     }
 }

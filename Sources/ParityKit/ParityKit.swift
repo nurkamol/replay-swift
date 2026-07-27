@@ -329,6 +329,46 @@ public enum ParityKit {
             public let expected: Graph
         }
 
+        public struct BriefingCase: Decodable, Sendable {
+            public struct Input: Decodable, Sendable {
+                public struct MonthAgo: Decodable, Sendable {
+                    public let dayStart: Int64
+                    public let topApp: String?
+                }
+                public let name: String
+                public let now: Int64
+                public let yesterdayEvents: [Fixture.Event]
+                public let monthAgo: MonthAgo?
+                public let bookmarkStarts: [Int64]?
+            }
+            public struct Result: Decodable, Sendable {
+                public struct Project: Decodable, Sendable {
+                    public let id: String
+                    public let name: String
+                }
+                public let dayStart: Int64
+                public let yesterdayActiveSeconds: Int
+                public let yesterdayTopApp: String?
+                public let longestFocusSeconds: Int?
+                public let continuedProject: Project?
+                public let pendingBookmark: Int64?
+            }
+            public struct Expected: Decodable, Sendable {
+                public let name: String
+                public let result: Result?
+            }
+            public struct Summary: Decodable, Sendable {
+                public let dayStart: Int64
+                public let activeSeconds: Int
+                public let topBundleId: String?
+                public let topAppName: String?
+                public let topSeconds: Int
+            }
+            public let cases: [Input]
+            public let summaries: [Summary]
+            public let expected: [Expected]
+        }
+
         public struct MemoryCase: Decodable, Sendable {
             public struct Part: Decodable, Sendable {
                 public let signal: Double
@@ -683,6 +723,8 @@ public enum ParityKit {
         public let moments: MomentsCase
         /// Contextual memory: the scoring, the selector, and the producers.
         public let memory: MemoryCase
+        /// A quiet look back, before the day begins.
+        public let briefings: BriefingCase
         /// The graph behind the memory space.
         public let canvas: CanvasCase
         public let report: ReportCase
@@ -1467,6 +1509,47 @@ public enum ParityKit {
                     now: mc.now, calendar: calendar, locale: environment.locale
                 ),
                 mc.producers.echo)
+
+        // The morning briefing, including the cases where it says nothing: after noon, and
+        // when yesterday holds nothing to reflect on.
+        let mbg = "morning briefing"
+        let briefingSummaries = fixture.briefings.summaries.map {
+            DailySummary(
+                dayStart: $0.dayStart, activeSeconds: $0.activeSeconds,
+                topBundleID: $0.topBundleId, topAppName: $0.topAppName,
+                topSeconds: $0.topSeconds
+            )
+        }
+        for (input, expected) in zip(fixture.briefings.cases, fixture.briefings.expected) {
+            let built = buildMorningBriefing(
+                now: input.now,
+                yesterdayEvents: input.yesterdayEvents.map(event),
+                summaries: briefingSummaries,
+                projects: memoryProjects,
+                monthAgo: input.monthAgo.map { ($0.dayStart, $0.topApp) },
+                bookmarkStarts: input.bookmarkStarts ?? [],
+                calendar: calendar
+            )
+            guard let want = expected.result else {
+                check(mbg, "\(expected.name): nothing is said", built == nil)
+                continue
+            }
+            guard let built else {
+                check(mbg, "\(expected.name): a briefing is assembled", false)
+                continue
+            }
+            equal(mbg, "\(expected.name): for the right day", built.dayStart, want.dayStart)
+            equal(mbg, "\(expected.name): yesterday's active time",
+                  built.yesterdayActiveSeconds, want.yesterdayActiveSeconds)
+            equal(mbg, "\(expected.name): and what led it",
+                  built.yesterdayTopApp, want.yesterdayTopApp)
+            equal(mbg, "\(expected.name): the longest stretch in it",
+                  built.longestFocusSeconds, want.longestFocusSeconds)
+            equal(mbg, "\(expected.name): the thread worth continuing",
+                  built.continuedProject?.id, want.continuedProject?.id)
+            equal(mbg, "\(expected.name): and the oldest bookmark still waiting",
+                  built.pendingBookmark, want.pendingBookmark)
+        }
 
         // Rituals — the quiet patterns in a run of days. A part of the day only counts once
         // the same app has led it more than once, which is the guard against a single

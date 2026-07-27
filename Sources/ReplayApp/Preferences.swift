@@ -145,6 +145,16 @@ final class Preferences {
         didSet { writeJSON(archivedMemories, "archivedMemories") }
     }
 
+    /// Whether the morning briefing appears at all.
+    var morningBriefing: Bool {
+        didSet { write(morningBriefing, "morningBriefing") }
+    }
+
+    /// Days whose briefing has been put away, by local midnight.
+    var dismissedBriefings: [String] {
+        didSet { writeJSON(dismissedBriefings, "dismissedBriefings") }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -163,6 +173,9 @@ final class Preferences {
             .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
         // Absent means on: a fresh install should have the feature, not have to find it.
         contextualMemories = defaults.object(forKey: "contextualMemories") as? Bool ?? true
+        morningBriefing = defaults.object(forKey: "morningBriefing") as? Bool ?? true
+        dismissedBriefings = (defaults.data(forKey: "dismissedBriefings"))
+            .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
         // Balanced by default. Zero and absent both mean "never set", which is not the same
         // as "show me everything".
         let threshold = defaults.double(forKey: "memoryThreshold")

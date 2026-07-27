@@ -38,6 +38,21 @@ struct TodayView: View {
                             onSetGoal: { preferences.focusGoalMinutes = $0 }
                         )
                     }
+                    // First, because it is about the day before this one — and gone by
+                    // lunchtime, when the day is underway and looking back is no longer
+                    // what you came for.
+                    if let briefing = contextual.briefing {
+                        MorningBriefingCard(
+                            briefing: briefing,
+                            onOpenDay: onOpenDay,
+                            onDismiss: { contextual.dismissBriefing() }
+                        )
+                    }
+                    if let quote = contextual.quote {
+                        QuoteLine(moment: quote, onOpen: {
+                            if let day = quote.dayStart { onOpenDay(day) }
+                        })
+                    }
                     // Above everything it could interrupt, and absent far more often than
                     // present — most days Replay has nothing worth saying, and says nothing.
                     if let memory = contextual.memory {
@@ -636,5 +651,126 @@ struct ContextualMemoryCard: View {
         case .threadUpdate: "Picked back up"
         case .todayInHistory: "On this day"
         }
+    }
+}
+
+/// A quiet look back at the day just gone.
+///
+/// Not a dashboard. Three lines at most, each one a fact about yesterday, and it is gone by
+/// lunchtime — a greeting that is still there at four in the afternoon is a panel.
+struct MorningBriefingCard: View {
+    let briefing: MorningBriefing
+    let onOpenDay: (Int64) -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.motion) private var motion
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Design.Space.card) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                    Text(greeting).font(Design.Text.title)
+                    Text("A quiet look back, before the day begins.")
+                        .font(Design.Text.body)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: Design.Space.inline)
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(Design.Text.detail)
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .help("Put this away until tomorrow")
+                .accessibilityLabel("Put the briefing away")
+            }
+
+            VStack(spacing: 0) {
+                row(
+                    "clock", "Yesterday",
+                    "\(formatDurationShort(briefing.yesterdayActiveSeconds)) active"
+                        + (briefing.yesterdayTopApp.map { ", mostly in \($0)" } ?? ""),
+                    day: briefing.dayStart - dayMillis
+                )
+                if let longest = briefing.longestFocusSeconds {
+                    Divider()
+                    row(
+                        "hourglass", "Longest focus",
+                        "\(formatDurationShort(longest)) without switching away",
+                        day: briefing.dayStart - dayMillis
+                    )
+                }
+                if let project = briefing.continuedProject {
+                    Divider()
+                    row("arrow.triangle.branch", "Continue", project.name, day: nil)
+                }
+                if let monthAgo = briefing.monthAgo {
+                    Divider()
+                    row(
+                        "clock.arrow.circlepath", "A month ago",
+                        monthAgo.topApp.map { "Mostly \($0)" } ?? "Worth a look back",
+                        day: monthAgo.dayStart
+                    )
+                }
+            }
+        }
+        .padding(Design.Space.page)
+        .card(border: Design.Colour.border)
+        .settlesIntoView(reduced: motion.reduced)
+    }
+
+    /// Named for the time of day, because that is what a greeting is for.
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        return hour < 5 ? "Still up." : "Good morning."
+    }
+
+    private func row(_ glyph: String, _ label: String, _ detail: String, day: Int64?) -> some View {
+        Button {
+            if let day { onOpenDay(day) }
+        } label: {
+            HStack(spacing: Design.Space.card) {
+                Image(systemName: glyph)
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.tint)
+                    .frame(width: Design.Icon.glyphColumn)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(label).cardLabelStyle()
+                    Text(detail).font(Design.Text.itemTitle)
+                }
+                Spacer(minLength: Design.Space.inline)
+            }
+            .padding(.vertical, Design.Space.row)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(day == nil)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// One moment, as a single line. The smallest way to say something worth remembering.
+struct QuoteLine: View {
+    let moment: Moment
+    let onOpen: () -> Void
+
+    var body: some View {
+        Button(action: onOpen) {
+            HStack(spacing: Design.Space.card) {
+                Image(systemName: "quote.opening")
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.tint)
+                Text(moment.detail)
+                    .font(Design.Text.body)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(moment.dayStart == nil)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(moment.detail)
     }
 }

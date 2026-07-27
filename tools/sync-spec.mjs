@@ -480,6 +480,37 @@ function buildExportFixtures() {
        export { detectRightTime } from ${JSON.stringify(join(GLAZE, "renderer/lib/right-time.ts"))};
        export { detectThreadUpdate } from ${JSON.stringify(join(GLAZE, "renderer/lib/threads.ts"))};
        export { detectEcho } from ${JSON.stringify(join(GLAZE, "renderer/lib/echoes.ts"))};
+       // The briefing is assembled inside a hook upstream, so like sessionMatches and
+       // computeLegacy above, its body is re-declared here character for character. Same
+       // known risk, same reason: nothing would check it otherwise.
+       // (No backticks in this comment: it lives inside a template literal.)
+       import { buildTimeline as bt_ } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
+       import { projectMeaning as pm_ } from ${JSON.stringify(join(GLAZE, "renderer/lib/memory-intelligence.ts"))};
+       export function buildMorningBriefing(now, yesterdayEvents, summaries, projects, monthAgo, bookmarkStarts) {
+         const DAY = 86400000;
+         const startOfLocalDay = (ts) => { const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); };
+         const todayStart = startOfLocalDay(now);
+         const yesterdayStart = todayStart - DAY;
+         if (new Date(now).getHours() >= 12) return null;
+         const yesterdaySummary = summaries.find((s) => s.dayStart === yesterdayStart) ?? null;
+         const sessions = bt_(yesterdayEvents, now).filter((i) => i.kind === "session");
+         const activeSeconds = yesterdaySummary?.activeSeconds ?? 0;
+         if (activeSeconds <= 0 && sessions.length === 0) return null;
+         const longest = sessions.reduce((best, s) => (best === null || s.activeSeconds > best.activeSeconds ? s : best), null);
+         const continued = projects
+           .filter((p) => p.sessionCount >= 2 && p.sessions.some((s) => s.startedAt >= yesterdayStart && s.startedAt < todayStart))
+           .sort((a, b) => pm_(b) - pm_(a))[0];
+         const oldestBookmark = bookmarkStarts.slice().sort((a, b) => a - b)[0];
+         return {
+           dayStart: todayStart,
+           yesterdayActiveSeconds: activeSeconds,
+           yesterdayTopApp: yesterdaySummary?.topAppName ?? null,
+           longestFocusSeconds: longest?.activeSeconds ?? null,
+           continuedProject: continued ? { id: continued.id, name: continued.name } : null,
+           monthAgo,
+           pendingBookmark: oldestBookmark !== undefined ? startOfLocalDay(oldestBookmark) : null,
+         };
+       }
        export { buildConstellation } from ${JSON.stringify(join(GLAZE, "renderer/lib/constellation.ts"))};
        export { buildCanvas } from ${JSON.stringify(join(GLAZE, "renderer/lib/canvas.ts"))};
        export { historyTargets, findMemories, relativeDayLabel, shortDateLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
@@ -560,6 +591,7 @@ function buildExportFixtures() {
                detectChapters, chapterDefaultName, listPeriods, summarizePeriod,
                computeLegacy, computeWorkflowPartners, computeRelationship,
                detectMoments, pickDailyQuote, buildConstellation, buildCanvas,
+               buildMorningBriefing,
                clamp01, ramp, freshness, blendConfidence, daysBetween, sessionMeaning,
                projectMeaning, eligibleMemories, selectLivingMemory,
                confidenceThresholdLabel, detectRightTime, detectThreadUpdate, detectEcho,
@@ -691,6 +723,14 @@ function buildExportFixtures() {
          name: projectDefaultName(p),
          named: false,
        }));
+       const briefings = input.briefingCases.map((c) => ({
+         name: c.name,
+         result: buildMorningBriefing(
+           c.now, c.yesterdayEvents, input.briefingSummaries, input.memoryProjects,
+           c.monthAgo ?? null, c.bookmarkStarts ?? [],
+         ),
+       }));
+
        const producers = {
          rightTime: detectRightTime(input.rightTimeEvents, input.memoryProjects, input.memoryNow),
          thread: detectThreadUpdate(input.memoryProjects, input.memoryNow),
@@ -827,6 +867,7 @@ function buildExportFixtures() {
          scoring,
          selection,
          producers,
+         briefings,
          moments,
          quoteKey: quote ? quote.key : null,
          constellation,
@@ -1282,6 +1323,32 @@ function buildExportFixtures() {
     ];
 
     /*
+     * The morning briefing. Four cases, one per reason it stays quiet: the afternoon,
+     * a yesterday with nothing in it, and the two shapes of a day worth mentioning.
+     */
+    const briefingToday = 1_770_076_800_000;
+    const bt = (h, m = 0) => briefingToday + h * 3_600_000 + m * 60_000;
+    const briefingSummaries = [
+      { dayStart: briefingToday - DAY, activeSeconds: 7200, topBundleId: "com.microsoft.VSCode", topAppName: "Code", topSeconds: 5000 },
+    ];
+    const yesterdayEvents = [
+      ev(1100, "Code", "com.microsoft.VSCode", briefingToday - DAY + 9 * 3_600_000, 1500),
+      ev(1101, "Terminal", "com.apple.Terminal", briefingToday - DAY + 9 * 3_600_000 + 1_500_000, 600),
+    ];
+    const briefingCases = [
+      {
+        name: "a morning with something to say",
+        now: bt(8),
+        yesterdayEvents,
+        monthAgo: { dayStart: briefingToday - 30 * DAY, topApp: "Safari" },
+        bookmarkStarts: [briefingToday - 12 * DAY, briefingToday - 40 * DAY],
+      },
+      { name: "the afternoon, when the day is underway", now: bt(14), yesterdayEvents },
+      { name: "a yesterday with nothing in it", now: bt(8), yesterdayEvents: [] },
+      { name: "no memory and no bookmark", now: bt(9), yesterdayEvents },
+    ];
+
+    /*
      * Moments. Each kind has a threshold, and the fixture crosses every one it can with
      * a single day of rows: a stretch past twenty minutes, eight distinct applications,
      * and something at 2 AM. The streak and the peak day come from the chapter summaries
@@ -1400,6 +1467,8 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        briefingCases,
+        briefingSummaries,
         scoringCases,
         selectionCases,
         memoryProjects,
@@ -1489,6 +1558,11 @@ function buildExportFixtures() {
       canvas: {
         constellation: result.constellation,
         expected: result.canvas,
+      },
+      briefings: {
+        cases: briefingCases,
+        summaries: briefingSummaries,
+        expected: result.briefings,
       },
       memory: {
         scoringCases,

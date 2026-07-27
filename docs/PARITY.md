@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 656 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 675 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -38,7 +38,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Memory confidence & selection | done | `memory-intelligence` — the scoring vocabulary, the selector, and silence as a valid answer. 18 checks |
 | Right-time / threads / echoes | done | three producers, each scored and each returning nothing far more often than something. 15 checks |
 | Anniversaries / forgotten | todo | the other two producers of the same cluster |
-| Morning briefing | todo | |
+| Morning briefing | done | `buildMorningBriefing` — yesterday's figures, the longest stretch, a thread worth continuing, a month ago, the oldest bookmark still waiting. 19 checks, including the two cases where it says nothing |
 | Surprise me | todo | |
 | Moments | done | `detectMoments` + `pickDailyQuote` — seven kinds, each with a threshold, compared as text. 7 checks |
 | The archive | done | `computeLegacy` — first day, active days, years, and the applications behind all of it. 9 checks. Its figures live inside a view upstream, so the fixture re-declares them, as `sessionMatches` does |
@@ -70,7 +70,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Menu bar item | done | current app, today's total, pause/resume, Open Today/Timeline, Settings, Quit |
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
-| Today | done | headline, top app, a contextual memory when there is one worth showing, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| Today | done | headline, top app, a morning briefing before lunchtime, a moment quoted as one line, a contextual memory when there is one worth showing, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
 | Canvas | done | the graph drawn as a field of real application icons, with pan, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
 | Command palette | done | ⌘K over surfaces, applications, projects, recent days and the actions that are not places. **The matcher has no reference counterpart** — upstream leans on a JavaScript library's scoring — so it is the one behaviour here that no fixture covers |
 | Screensaver | done | a slow drift through the day — the memory, today's sessions, the applications you keep. Borderless, on the screen Replay is on, Esc to leave. Not auto-started on a timer, unlike the reference |
