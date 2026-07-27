@@ -753,36 +753,6 @@ private struct DataTab: View {
 // ── guide and about ───────────────────────────────────────────────────────────
 
 private struct GuideTab: View {
-    private struct Entry: Identifiable {
-        let question: String
-        let answer: String
-        var id: String { question }
-    }
-
-    private let entries: [Entry] = [
-        Entry(
-            question: "What does Replay record?",
-            answer: "Which application is in front, and when you were away from the keyboard. "
-                + "Nothing about what is inside a window — not titles, not text, not screenshots."
-        ),
-        Entry(
-            question: "Does it need any permissions?",
-            answer: "No. Replay reads the frontmost application through macOS's standard signal "
-                + "and measures idle time from system input timing."
-        ),
-        Entry(
-            question: "What is a session?",
-            answer: "A run of continuous work, derived from the recorded events rather than "
-                + "stored. A gap of five minutes or more splits a run, and one app holding "
-                + "focus for half an hour reads as absence rather than focus."
-        ),
-        Entry(
-            question: "Why doesn't the file shrink when I delete history?",
-            answer: "SQLite reuses freed pages instead of returning them, so the file stays the "
-                + "same size until it is rewritten. Compact, on the Data tab, does that."
-        ),
-    ]
-
     @Environment(\.motion) private var motion
     /// Which questions are open. A set rather than one selection: answering one question
     /// should not close the one you were half-way through reading.
@@ -791,7 +761,7 @@ private struct GuideTab: View {
     var body: some View {
         PaneForm {
             Section {
-                ForEach(entries) { entry in
+                ForEach(Guide.entries) { entry in
                     // Disclosure rather than four paragraphs: the questions stay scannable,
                     // and only the one being asked takes up room.
                     //
@@ -831,7 +801,7 @@ private struct GuideTab: View {
         }
     }
 
-    private func isOpen(_ entry: Entry) -> Binding<Bool> {
+    private func isOpen(_ entry: Guide.Entry) -> Binding<Bool> {
         Binding(
             get: { opened.contains(entry.id) },
             set: { wanted in
@@ -840,7 +810,7 @@ private struct GuideTab: View {
         )
     }
 
-    private func toggle(_ entry: Entry) {
+    private func toggle(_ entry: Guide.Entry) {
         if opened.contains(entry.id) { opened.remove(entry.id) } else { opened.insert(entry.id) }
     }
 }

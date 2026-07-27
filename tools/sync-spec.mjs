@@ -616,6 +616,35 @@ function checkRedeclaredDrift(current) {
   }
 }
 
+// ── the Guide ─────────────────────────────────────────────────────────────────
+//
+// Sixteen questions and their answers, lifted whole. This is the largest single body of
+// copy in the app and it is all read by a person, which SPEC §8 calls the product — so it
+// is generated rather than retyped. Sixteen hand-copied answers would be sixteen chances
+// to paraphrase, and nothing would notice.
+//
+// Its own file rather than a key in `constants.json`: this is prose, not constants, and
+// several answers are longer than that whole file's other values put together.
+
+const guide = (() => {
+  const src = read("renderer/settings/settings-view.tsx");
+  const block = src.match(/const FAQ = \[([\s\S]*?)\n\] as const;/);
+  if (!block) {
+    problems.push("settings-view.tsx: const FAQ not found — renamed or reshaped?");
+    return [];
+  }
+  // Strings are double-quoted and may contain escaped quotes; the prose itself uses
+  // typographic apostrophes, which is why it is copied rather than normalised.
+  const entries = [...block[1].matchAll(
+    /\{\s*q:\s*"((?:[^"\\]|\\.)*)",\s*a:\s*"((?:[^"\\]|\\.)*)",?\s*\}/g,
+  )].map((m) => ({
+    question: JSON.parse(`"${m[1]}"`),
+    answer: JSON.parse(`"${m[2]}"`),
+  }));
+  if (entries.length === 0) problems.push("settings-view.tsx: FAQ matched no entries");
+  return entries;
+})();
+
 // ── golden fixtures for session derivation ────────────────────────────────────
 //
 // The derivation is the one piece of logic a port is most likely to get subtly
@@ -2191,6 +2220,11 @@ for (const fixture of fixtures) {
 }
 
 writeFileSync(
+  join(SPEC, "guide.json"),
+  JSON.stringify({ _generated: provenance, entries: guide }, null, 2) + "\n",
+);
+
+writeFileSync(
   join(SPEC, "grouping-and-export.json"),
   JSON.stringify({ _generated: provenance, ...exportFixture }, null, 2) + "\n",
 );
@@ -2208,5 +2242,6 @@ console.log(`spec/ regenerated from Glaze ${glazeVersion} (${glazeCommit})`);
 console.log(`  schema.sql        ${schemaParts.length} statement blocks`);
 console.log(`  constants.json    ${Object.keys(constants).length} groups`);
 console.log(`  fixtures/         ${fixtures.length} scenarios`);
+console.log(`  guide.json        ${guide.length} questions`);
 console.log(`  grouping-and-export.json  ${exportFixture.grouping.expected.length} days, ${Object.keys(exportFixture.report.expected).length} report formats`);
 console.log(`\nReview 'git diff spec/' — anything that changed is work for the native port.`);

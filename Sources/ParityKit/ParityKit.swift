@@ -230,6 +230,16 @@ public enum ParityKit {
         public let motion: Motion
     }
 
+    /// The Guide's sixteen questions and answers, lifted whole from the reference. The
+    /// largest body of copy in the app, and all of it read by a person. See `spec/guide.json`.
+    public struct GuideSpec: Decodable, Sendable {
+        public struct Entry: Decodable, Sendable {
+            public let question: String
+            public let answer: String
+        }
+        public let entries: [Entry]
+    }
+
     /// Day grouping and report text, run against the real Glaze code under a pinned clock,
     /// timezone and locale. See `spec/grouping-and-export.json`.
     public struct GroupingAndExport: Decodable, Sendable {
@@ -914,6 +924,7 @@ public enum ParityKit {
     public static func runAllChecks(specRoot: URL? = nil) throws -> Report {
         let root = specRoot ?? defaultSpecRoot()
         let constants = try load(Constants.self, "constants.json", from: root)
+        let guideSpec = try load(GuideSpec.self, "guide.json", from: root)
 
         var checks: [Check] = []
         func check(_ group: String, _ what: String, _ passed: Bool, _ detail: String? = nil) {
@@ -1060,6 +1071,15 @@ public enum ParityKit {
             WeekSummary.workflowLimit, constants.week.workflowLimit
         )
         equal(g1, "the hours the day-arc is marked at", WeekSummary.arcTicks, constants.week.arcTicks)
+
+        // The Guide, word for word. Sixteen answers a person reads, which SPEC §8 calls the
+        // product — and the place a paraphrase would be least visible and most costly, since
+        // nobody re-reads a help page against its source.
+        equal(g1, "how many questions the Guide answers", Guide.entries.count, guideSpec.entries.count)
+        for (mine, expected) in zip(Guide.entries, guideSpec.entries) {
+            equal(g1, "Guide: \(expected.question)", mine.question, expected.question)
+            equal(g1, "Guide answer: \(expected.question)", mine.answer, expected.answer)
+        }
 
         // Living Home: what Today leads with, and how it is chosen.
         equal(

@@ -20,7 +20,8 @@ Sizes are honest guesses: **S** an hour or so · **M** half a day · **L** a day
 The largest remaining gap in the app, and it is all user-facing words — which SPEC §8 calls
 the product.
 
-- [ ] **The Guide answers four questions; the reference answers sixteen.** `S`+`M`
+- [x] **The Guide answers four questions; the reference answers sixteen.** `S`+`M` — done
+      2026-07-28. Generated into `spec/guide.json`; 33 checks; an apostrophe fails it.
       Not one of ours is upstream's — different questions, different wording. Ours: what
       Replay records, permissions, what a session is, why the file does not shrink. Upstream
       also covers where the data lives, why Memories is empty, what Collections/Projects/the
@@ -135,5 +136,6 @@ Kept rather than deleted, so the list shows its own history.
       Apps windows, week limits. 696 checks to 761. 2026-07-27/28.
 - [x] **`design-audit.mjs` ties `DesignSystem` to the parity mirror**, closing the hole where
       a value could move in the app and the suite would go on agreeing with itself.
+- [x] **The Guide's sixteen answers**, generated rather than retyped. 2026-07-28.
 - [x] **A reopened day's story and chapter context** — found already built while starting to
       rebuild it. The ledger was wrong, not the code. 2026-07-28.

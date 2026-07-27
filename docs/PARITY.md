@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 761 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 794 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -96,7 +96,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | What's New | done | eleven releases, newest first, with the running version marked. Reachable from Help |
 | Help menu | done | Welcome, Replay Guide (⌘?), What's New. The app had no Help menu at all, which is also where macOS puts its own search |
 | Welcome | done | two pages: the things Replay will not do unasked, each off by default, and the privacy claim shown working rather than asserted |
-| Settings | done | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is rendered from `Shortcuts.swift`, the same catalogue the View menu is built from, and `tools/shortcut-audit.mjs` checks the keys a view binds against it in both directions |
+| Settings | done | General, Privacy, Data, Shortcuts, Guide, About. The Guide is the reference's sixteen questions and answers, generated into `spec/guide.json` and compared character for character. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is rendered from `Shortcuts.swift`, the same catalogue the View menu is built from, and `tools/shortcut-audit.mjs` checks the keys a view binds against it in both directions |
 | Press and hover feedback | done | `RowButtonStyle` on 25 rows and cards — the reference's own `active:scale-[0.99]` at 90ms and `hover:bg-control-subtle` at 180ms, both on `easeStandard`. Reduced motion keeps the highlight and drops the give |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
