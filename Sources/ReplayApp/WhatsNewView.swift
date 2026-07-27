@@ -19,7 +19,7 @@ struct WhatsNewView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: Design.Space.card) {
-                Image(nsImage: NSApp.applicationIconImage)
+                Image(nsImage: BundleIcon.image)
                     .resizable()
                     .frame(width: Design.Icon.about, height: Design.Icon.about)
                 VStack(alignment: .leading, spacing: Design.Space.hairline) {

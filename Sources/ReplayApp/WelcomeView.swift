@@ -256,7 +256,7 @@ struct WelcomeView: View {
     // ── shared ────────────────────────────────────────────────────────────────
 
     private var mark: some View {
-        Image(nsImage: NSApp.applicationIconImage)
+        Image(nsImage: BundleIcon.image)
             .resizable()
             .frame(width: Design.Icon.welcomeMark, height: Design.Icon.welcomeMark)
             .accessibilityHidden(true)

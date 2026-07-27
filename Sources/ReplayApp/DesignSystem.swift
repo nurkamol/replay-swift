@@ -91,6 +91,14 @@ enum Design {
     // ── corner radii ──────────────────────────────────────────────────────────
 
     enum Radius {
+        /// The Dock badge Replay draws for itself: how big the capsule is against the tile,
+        /// where it sits, and the type inside it. Proportions rather than points, because a
+        /// Dock tile is drawn at whatever size the Dock happens to be.
+        static let dockBadgeHeight: CGFloat = 0.30
+        static let dockBadgeInset: CGFloat = 0.04
+        static let dockBadgeTextRatio: CGFloat = 0.62
+        static let dockBadgePaddingRatio: CGFloat = 0.34
+
         /// A tag, a badge, an icon tile.
         /// A bar in a rhythm strip — enough to take the sharp edge off, no more.
         static let hair: CGFloat = 1.5
@@ -449,6 +457,8 @@ enum Design {
         /// and a half it is the only thing being said.
         static let canvasTourPath: Double = 0.85
         static let canvasTourBreath: Double = 0.55
+        /// The hairline that keeps a Dock badge legible against a dark icon.
+        static let dockBadgeRim: Double = 0.55
         /// A ring around an icon. An application wears a quiet one — its own icon already
         /// says what it is — and everything built on top of one wears a solid ring, so a
         /// project is never mistaken for the app whose icon it borrows.
@@ -1287,4 +1297,28 @@ struct Themed<Content: View>: View {
             .environment(\.themeTint, preferences.themeColour.resolved)
             .environment(\.surfaceStyle, preferences.surfaceStyle)
     }
+}
+
+/// The app's own icon, resolved from the bundle rather than asked of `NSApplication`.
+///
+/// Named for the bundle rather than the app because `AppIcon` is already taken by the view
+/// that draws *other* applications' icons.
+///
+/// `NSApp.applicationIconImage` goes through Launch Services, which caches by bundle path —
+/// so a bundle that has just been rewritten in place (which `scripts/make-app.sh` does on
+/// every build) can hand back the generic document icon instead. That is the "sometimes" in
+/// "the icon is sometimes missing": nothing is wrong with the icon, the lookup is answering
+/// from a stale cache.
+///
+/// Reading the `.icns` out of the bundle skips that entirely. `NSApp`'s copy is still the
+/// fallback, because it is right whenever Launch Services is.
+@MainActor
+enum BundleIcon {
+    static let image: NSImage = {
+        if let url = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+           let fromBundle = NSImage(contentsOf: url) {
+            return fromBundle
+        }
+        return NSApp.applicationIconImage
+    }()
 }

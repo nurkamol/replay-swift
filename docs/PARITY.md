@@ -320,10 +320,18 @@ document starts lying, and this one has done it twice already — see the two no
   it. This port asked for `[.alert, .sound]` and never `.badge`, so `badgeSetting` was
   `notSupported` and the badge never appeared. Every diagnostic on the app's side looked
   correct, including the read-back, which is what made it hard to find. The permission is
-  requested now, and Settings says so when it is refused rather than leaving a switch that
-  does nothing. **On a Mac that already granted notifications under the old options, macOS
-  does not re-prompt** — Badge application icon has to be turned on once in System Settings ▸
-  Notifications ▸ Replay.
+  requested now — but that only helps a fresh install. **macOS fixes the options at the first
+  authorization and never re-prompts**, so every Mac that already said yes to Replay's recaps
+  reports `notSupported` for ever and no amount of asking changes it. A badge saying how long
+  you have been at your Mac is not a notification and should not wait on notification
+  permission, so Replay draws its own Dock tile — `DockTileView`, the icon plus a capsule.
+  Nothing to grant, nothing to refuse.
+- **`NSApp.applicationIconImage` can hand back the generic document icon.** It resolves
+  through Launch Services, which caches by bundle path, so a bundle rewritten in place — which
+  `scripts/make-app.sh` does on every build — can answer from a stale entry. That is the
+  "sometimes" in an app icon that is sometimes missing: nothing is wrong with the icon, the
+  lookup is stale. `BundleIcon` reads the `.icns` out of the bundle and keeps `NSApp`'s copy
+  as a fallback.
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
   `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, `detectWorkflows`,
   `computeWeekSummary`, and both orderings in `Collections.compute`. Fixtures cover each — the collections one is built so two

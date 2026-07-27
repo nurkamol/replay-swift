@@ -186,9 +186,6 @@ private struct StatusFooter: View {
 // ── general ───────────────────────────────────────────────────────────────────
 
 private struct GeneralTab: View {
-    /// Whether macOS will draw the badge at all. A switch that does nothing is a promise the
-    /// app breaks (SPEC §8), so when the permission is off the row says so.
-    @State private var badgeAllowed = true
     let model: AppModel
     @Bindable var preferences: Preferences
     /// Reloaded when a memory setting changes, so the card on Today reflects the choice
@@ -337,20 +334,9 @@ private struct GeneralTab: View {
             Section {
                 Toggle(SettingsRow.dockBadge.label, isOn: $preferences.dockBadge)
                     .explains(.dockBadge)
-                    .task { badgeAllowed = await DockBadge.allowed() }
                     .onChange(of: preferences.dockBadge) { _, on in
                         DockBadge.update(model, enabled: on)
-                        Task { badgeAllowed = await DockBadge.allowed() }
                     }
-
-                // Only when it is actually being refused. A switch that does nothing and
-                // says nothing is a promise the app breaks (SPEC §8).
-                if preferences.dockBadge && !badgeAllowed {
-                    Footnote(
-                        "macOS is not allowing Replay to badge its icon. Turn on Badge "
-                            + "application icon in System Settings ▸ Notifications ▸ Replay."
-                    )
-                }
             } footer: {
             }
 
@@ -875,7 +861,7 @@ private struct AboutTab: View {
 
     var body: some View {
         VStack(spacing: Design.Space.snug) {
-            Image(nsImage: NSApp.applicationIconImage)
+            Image(nsImage: BundleIcon.image)
                 .resizable()
                 .frame(width: Design.Icon.about, height: Design.Icon.about)
             Text("Replay").font(.title2.weight(.semibold))
