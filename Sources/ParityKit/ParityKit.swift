@@ -138,6 +138,14 @@ public enum ParityKit {
             public let baseDurationMillis: Int
             public let speeds: [Int]
         }
+        public let today: TodayConstants
+
+        public struct TodayConstants: Decodable, Sendable {
+            public let eveningFromHour: Int
+            public let eveningPrompt: String
+            public let prompt: String
+        }
+
         public let search: SearchConstants
         public let timeline: TimelineConstants
 
@@ -173,6 +181,10 @@ public enum ParityKit {
         public let canvas: CanvasConstants
 
         public struct CanvasConstants: Decodable, Sendable {
+            public let unfocusedOpacity: Double
+            public let appsFadedBelowZoom: Double
+            public let appFadedOpacity: Double
+            public let appLabelsFromZoom: Double
             public let tourDwellMillis: Int
             public let tourNeighbours: Int
             public let tourCameraMillis: Int
@@ -992,6 +1004,17 @@ public enum ParityKit {
         // that had nothing holding it. A field you cannot push as far out, that jumps a
         // third further on each press of zoom, and that stops dead when you let go of a
         // flick is a different instrument to play, and every one of those was true here.
+        // Today's reflection prompt, which is words a person reads and so is the product.
+        equal(
+            g1, "the hour the reflection prompt turns",
+            ReflectionPrompt.eveningFromHour, constants.today.eveningFromHour
+        )
+        equal(g1, "what Today asks before then", ReflectionPrompt.daytime, constants.today.prompt)
+        equal(
+            g1, "and what it asks once the day is ending",
+            ReflectionPrompt.evening, constants.today.eveningPrompt
+        )
+
         let c = CanvasTokens.self
         equal(g1, "how long the tour rests on a stop",
               Int((c.tourDwellSeconds * 1000).rounded()), constants.canvas.tourDwellMillis)
@@ -1011,6 +1034,19 @@ public enum ParityKit {
         equal(g1, "one press of zoom", c.zoomButtonStep, constants.canvas.zoomButtonStep)
         equal(g1, "how long a press of zoom takes",
               Int((c.zoomButtonSeconds * 1000).rounded()), constants.canvas.zoomButtonMillis)
+        equal(
+            g1, "how far back an unconnected node falls",
+            c.unfocusedOpacity, constants.canvas.unfocusedOpacity
+        )
+        equal(
+            g1, "the zoom applications start fading at",
+            c.appsFadedBelowZoom, constants.canvas.appsFadedBelowZoom
+        )
+        equal(g1, "how faint a faded application is", c.appFaded, constants.canvas.appFadedOpacity)
+        equal(
+            g1, "the zoom an application's name appears at",
+            c.appLabelsFromZoom, constants.canvas.appLabelsFromZoom
+        )
         equal(g1, "how far out the field goes", c.minZoom, constants.canvas.minZoom)
         equal(g1, "and how far in", c.maxZoom, constants.canvas.maxZoom)
         equal(g1, "one notch of an ordinary wheel", c.wheelStep, constants.canvas.wheelStep)

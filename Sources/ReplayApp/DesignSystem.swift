@@ -422,7 +422,17 @@ enum Design {
         /// How far back the field falls when something is focused. Pulled back rather than
         /// hidden — a focus that empties the page loses the thing focus is *for*, which is
         /// seeing where one memory sits among the rest.
-        static let canvasUnfocused: Double = 0.14
+        ///
+        /// The reference's 0.1, not the 0.14 this port had drifted to. Found by auditing the
+        /// Canvas after generating its *camera* into the contract and stopping there — the
+        /// field's own drawing rules were left out, and this one had already moved.
+        static let canvasUnfocused: Double = 0.1
+        /// Zoom out past ``canvasAppsFadedBelowZoom`` and the applications fall back to
+        /// ``canvasAppFaded``, leaving the things built on them — collections, projects,
+        /// chapters — holding the picture. It is what makes the far view legible rather than
+        /// a hundred icons at equal weight: pulling back should show you the shape of a
+        /// history, not more of its detail.
+        static let canvasAppFaded: Double = 0.32
         static let canvasProjectOpacity: Double = 0.65
         static let canvasChapterOpacity: Double = 0.70
         static let canvasMomentOpacity: Double = 0.80
@@ -902,6 +912,12 @@ enum Design {
         /// How far out and in the field goes. The reference's, and checked: this port had
         /// 0.4, which sounds like the same number and is a whole view of a large history
         /// you could not reach.
+        /// Where applications start fading, and where their names appear. Two thresholds
+        /// rather than one because they answer different questions — how far out before an
+        /// application stops being the point, and how far in before there is room for its
+        /// name. Both the reference's.
+        static let canvasAppsFadedBelowZoom: CGFloat = 0.7
+        static let canvasAppLabelsFromZoom: CGFloat = 1.15
         static let canvasMinZoom: CGFloat = 0.32
         static let canvasMaxZoom: CGFloat = 3
         static let canvasPreviewWidth: CGFloat = 300

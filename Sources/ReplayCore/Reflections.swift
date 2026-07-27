@@ -83,3 +83,23 @@ extension ActivityStore {
         )
     }
 }
+
+/// What Today asks you, which changes with the hour.
+///
+/// Two sentences rather than one, and the difference is the whole point: before six in the
+/// evening the day is still happening and the question is about it in the abstract; from six
+/// the day is ending, and the prompt says so. This port had a single prompt, and its wording
+/// was not either of the reference's — "What do you want to remember about today?" against
+/// "What would you like to remember about today?". Words are the product (SPEC §8), so both
+/// of these come from the contract and the suite compares them character for character.
+public enum ReflectionPrompt {
+    /// The hour the wording turns, on a 24-hour clock.
+    public static let eveningFromHour = 18
+    public static let daytime = "What would you like to remember about today?"
+    public static let evening = "Before the day ends — what would you like to remember about it?"
+
+    /// The prompt for a given local hour.
+    public static func forHour(_ hour: Int) -> String {
+        hour >= eveningFromHour ? evening : daytime
+    }
+}

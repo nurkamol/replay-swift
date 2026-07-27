@@ -270,6 +270,28 @@ const constants = {
     };
   })(),
   /*
+   * Today's reflection prompt, which is two sentences rather than one.
+   *
+   * The words are the product (SPEC §8) and these change with the hour: from six in the
+   * evening the app stops asking what you want to remember about today and starts saying the
+   * day is ending. This port had one prompt, and not either of these.
+   */
+  today: (() => {
+    const src = read("renderer/main/views/today-view.tsx");
+    const match = src.match(
+      /getHours\(\) >= (\d+)\s*\n?\s*\?\s*"([^"]+)"\s*\n?\s*:\s*"([^"]+)"/,
+    );
+    if (!match) {
+      problems.push("today-view.tsx: the reflection prompt is written differently now");
+      return {};
+    }
+    return {
+      eveningFromHour: Number(match[1]),
+      eveningPrompt: match[2],
+      prompt: match[3],
+    };
+  })(),
+  /*
    * Search, and the Timeline's ranges.
    *
    * Both surfaces were audited and neither had its behaviour wrong — what they had was
@@ -396,7 +418,29 @@ const constants = {
     const [wheelSensitivity] = inline(
       src, f, "how hard a trackpad pinch zooms", /Math\.exp\(-event\.deltaY \* ([\d.]+)\)/,
     );
+    // How the field itself is drawn, as opposed to how the camera moves through it. Left out
+    // when the camera was generated in, and one of them had already drifted: this port dimmed
+    // an unconnected node to 0.14 where the reference dims it to 0.1.
+    const [unfocusedOpacity] = inline(
+      src, f, "how far back an unconnected node falls", /o = Math\.min\(o, ([\d.]+)\)/,
+    );
+    const [appsFadedBelowZoom] = inline(
+      src, f, "the zoom applications start fading out at",
+      /const appsFaded = view\.zoom < ([\d.]+)/,
+    );
+    const [appFadedOpacity] = inline(
+      src, f, "how faint a faded application is",
+      /node\.type === "app" && appsFaded\) o = ([\d.]+)/,
+    );
+    const [appLabelsFromZoom] = inline(
+      src, f, "the zoom an application's name appears at",
+      /const showAppLabels = view\.zoom >= ([\d.]+)/,
+    );
     return {
+      unfocusedOpacity,
+      appsFadedBelowZoom,
+      appFadedOpacity,
+      appLabelsFromZoom,
       tourDwellMillis: constant(src, f, "DWELL"),
       tourNeighbours,
       tourCameraMillis,

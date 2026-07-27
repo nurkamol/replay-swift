@@ -91,6 +91,10 @@ const MIRRORED = [
     ["cameraCentreSeconds", "centreSeconds"],
     ["cameraZoomSeconds", "zoomButtonSeconds"],
   ]],
+  ["Design.Colour", "CanvasTokens", [
+    ["canvasUnfocused", "unfocusedOpacity"],
+    ["canvasAppFaded", "appFaded"],
+  ]],
   ["Design.Layout", "CanvasTokens", [
     ["canvasFocusZoom", "focusZoom"],
     ["canvasTourEndZoom", "tourEndZoom"],
@@ -103,6 +107,8 @@ const MIRRORED = [
     ["canvasGlideDecay", "glideDecay"],
     ["canvasGlideMinSpeed", "glideMinSpeed"],
     ["canvasGlideRestSpeed", "glideRestSpeed"],
+    ["canvasAppsFadedBelowZoom", "appsFadedBelowZoom"],
+    ["canvasAppLabelsFromZoom", "appLabelsFromZoom"],
   ]],
 ];
 

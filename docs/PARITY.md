@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 738 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 745 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -180,6 +180,43 @@ general entrance stagger of 28 and 560. This port used the general one for both,
 twentieth result arrived at 560ms where the reference puts it at 200: nearly three times
 slower, on the one surface a person types into and reads immediately. Both numbers are the
 reference's and both are checked.
+
+### Today and Canvas, audited
+
+Five of six findings ported. The sixth is below, unported and waiting on a decision.
+
+**Today asked the wrong question.** The reference's reflection prompt is two sentences, not
+one: "What would you like to remember about today?" until six in the evening, and "Before the
+day ends — what would you like to remember about it?" after it. This port had a single prompt
+whose wording was neither. `ReflectionPrompt` lives in `ReplayCore` and both strings come from
+the contract, compared character for character.
+
+**The Canvas field's own drawing rules had been left out of the contract** when its camera was
+generated in, and one had already drifted: an unconnected node was dimmed to 0.14 where the
+reference dims it to 0.1. Two more rules were missing outright. Applications now fall back to
+0.32 below 0.7 zoom, so pulling out leaves the collections, projects and chapters holding the
+picture; and an application or moment is named only from 1.15, where the reference's
+`labelVisible` names it. The greedy collision test stays on top of that rule — it is this
+port's own, and answers a question the reference never has to.
+
+### Today shows every card; the reference shows one — **not ported**
+
+The reference calls it Living Home and documents the intent: "instead of stacking every memory
+card, Today features one — a single hero chosen for the day and rotated so the screen never
+feels static." The pick is `candidates[floor(todayStart / DAY) % candidates.length]` over
+resume, today-in-history, reflection and quote — deterministic by date, so it holds for a day
+and changes tomorrow — with one override: a resume target whose session ended within six hours
+always leads. This port renders the briefing, the quote, the contextual memory, the resume
+card, the reflection and today-in-history all at once.
+
+It is the largest behavioural divergence in the port and it is deliberate for now, because
+adopting it makes Today considerably quieter and that is a judgement about the product rather
+than a correctness fix.
+
+A related piece is blocked on the same decision: `recentReflection` — the most recent non-empty
+reflection from the thirty days before today — is one of the four hero candidates. Porting it
+on its own would add a seventh card to a surface the reference limits to one, which is the
+opposite of what it is for.
 
 ## Known divergences to keep an eye on
 

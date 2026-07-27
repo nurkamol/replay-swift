@@ -131,7 +131,7 @@ struct TodayView: View {
         ReflectionCard(
             dayStart: startOfLocalDay(model.now),
             reflection: model.reflection,
-            prompt: "What do you want to remember about today?",
+            prompt: ReflectionPrompt.forHour(Calendar.current.component(.hour, from: Date())),
             onCommit: { model.setReflection($0) }
         )
     }

@@ -53,6 +53,14 @@ public enum CanvasTokens {
     public static let wheelStep: Double = 1.09
     public static let wheelSensitivity: Double = 0.012
 
+    /// How the field itself is drawn, as opposed to how the camera moves through it. Left
+    /// out when the camera was brought into the contract, and `unfocusedOpacity` had already
+    /// drifted — this port dimmed to 0.14 where the reference dims to 0.1.
+    public static let unfocusedOpacity: Double = 0.1
+    public static let appFaded: Double = 0.32
+    public static let appsFadedBelowZoom: Double = 0.7
+    public static let appLabelsFromZoom: Double = 1.15
+
     /// The inertial glide after a flick: the speed it has to beat to start, what it keeps
     /// of that speed each frame, and the speed at which it is called finished.
     public static let glideMinSpeed: Double = 2

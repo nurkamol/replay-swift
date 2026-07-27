@@ -489,9 +489,15 @@ struct CanvasView: View {
     /// Focus is a *dimming*, not a hiding: the rest of the field stays visible so the thing
     /// you focused is still somewhere, rather than alone on an empty page. Everything at
     /// full weight when nothing is selected, which is the ordinary state.
-    private func emphasis(_ id: String) -> Double {
-        guard focusMode, selected != nil else { return 1 }
-        return neighbourhood.contains(id) ? 1 : Design.Colour.canvasUnfocused
+    private func emphasis(_ node: CanvasGraph.Node) -> Double {
+        var weight = 1.0
+        // Pull the applications back once the field is far enough out that they have stopped
+        // being the point. What is left holding the picture is what was built on them.
+        if node.type == .app, scale < Design.Layout.canvasAppsFadedBelowZoom {
+            weight = Design.Colour.canvasAppFaded
+        }
+        guard focusMode, selected != nil else { return weight }
+        return neighbourhood.contains(node.id) ? weight : min(weight, Design.Colour.canvasUnfocused)
     }
 
     var body: some View {
@@ -809,7 +815,17 @@ struct CanvasView: View {
     private func renderField(centre: CGPoint, progress: CGFloat, now: Date) -> some View {
         let phase = tourPhase(at: now)
         let camera = liveOffset(centre: centre)
+        // Built once a frame rather than searched per edge. The field redraws continuously
+        // now that it sways, and an edge asking the node list for each of its ends turns a
+        // few hundred lines into tens of thousands of comparisons a second for nothing.
+        let byID = Dictionary(
+            canvas.graph.nodes.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }
+        )
         return Canvas { context, _ in
+                func weight(of id: String) -> Double {
+                    guard let node = byID[id] else { return 1 }
+                    return emphasis(node)
+                }
                 func place(_ point: CGPoint) -> CGPoint {
                     let swayed = sway(point, at: now)
                     return CGPoint(
@@ -831,7 +847,7 @@ struct CanvasView: View {
                     // An edge is only lit when it touches the focus. A line between two
                     // dimmed nodes that stayed bright would draw the eye to the part of the
                     // field focus is meant to push back.
-                    let lit = min(emphasis(edge.a), emphasis(edge.b))
+                    let lit = min(weight(of: edge.a), weight(of: edge.b))
                     let weight: Double = (Design.Colour.canvasEdgeFloor
                         + strength * Design.Colour.canvasEdgeRange) * Double(progress) * lit
                     context.stroke(
@@ -873,7 +889,7 @@ struct CanvasView: View {
                     if grown <= 0.001 { continue }
                     let at = place(point)
                     let radius = self.radius(for: node) * scale * grown
-                    context.opacity = emphasis(node.id)
+                    context.opacity = emphasis(node)
                     let box = CGRect(
                         x: at.x - radius, y: at.y - radius, width: radius * 2, height: radius * 2
                     )
@@ -1011,6 +1027,22 @@ struct CanvasView: View {
                 let speaking: (CanvasGraph.Node) -> Bool = {
                     $0.id == selected?.id || $0.id == hovered || $0.id == tourStop
                 }
+                // Upstream's `labelVisible`, which this port never had. An application or a
+                // moment only gets its name once the field is far enough in to have room for
+                // it; everything built on them — collections, projects, chapters — is named
+                // at every zoom, because those names are the map. Whatever is being talked
+                // about is named regardless.
+                //
+                // The collision test below is this port's own and stays: it decides which of
+                // two names that would overlap survives, which is a question the reference
+                // never has to answer because it does not place labels greedily.
+                let named: (CanvasGraph.Node) -> Bool = { node in
+                    if speaking(node) { return true }
+                    switch node.type {
+                    case .app, .moment: return scale >= Design.Layout.canvasAppLabelsFromZoom
+                    default: return true
+                    }
+                }
                 let ordered = canvas.graph.nodes
                     .filter(speaking)
                     + canvas.graph.nodes
@@ -1038,11 +1070,12 @@ struct CanvasView: View {
                     // An active node always keeps its label, which is upstream's
                     // `labelVisible` rule and the whole reason hover is worth having: it is
                     // how you read a crowded node's name without clicking it.
+                    guard named(node) else { continue }
                     if !speaking(node) && placed.contains(where: { $0.intersects(box) }) {
                         continue
                     }
                     placed.append(box)
-                    context.opacity = emphasis(node.id)
+                    context.opacity = emphasis(node)
                     context.draw(text, at: origin, anchor: .topLeading)
                     context.opacity = 1
                 }

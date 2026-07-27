@@ -143,6 +143,11 @@
       5
     ]
   },
+  "today": {
+    "eveningFromHour": 18,
+    "eveningPrompt": "Before the day ends — what would you like to remember about it?",
+    "prompt": "What would you like to remember about today?"
+  },
   "search": {
     "resultStepMs": 10,
     "resultCapMs": 220,
@@ -213,6 +218,10 @@
     "defaultRange": "7d"
   },
   "canvas": {
+    "unfocusedOpacity": 0.1,
+    "appsFadedBelowZoom": 0.7,
+    "appFadedOpacity": 0.32,
+    "appLabelsFromZoom": 1.15,
     "tourDwellMillis": 1150,
     "tourNeighbours": 5,
     "tourCameraMillis": 760,
