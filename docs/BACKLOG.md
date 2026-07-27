@@ -104,7 +104,12 @@ expect thinner results as this goes on. That is still worth knowing rather than 
 Each is `M` and the method is the same: read the upstream view beside ours, compare
 behaviour first and constants second, and generate anything that matches-by-luck into `spec/`.
 
-- [ ] Memories · Collections · Projects
+- [x] **Memories · Collections · Projects** — audited 2026-07-28. Eight findings, all fixed;
+      the heatmap was the substance of it. See the ledger. Two things worth carrying into the
+      remaining audits: the reference staggers *each card*, and this port kept applying the
+      stagger to the container, so three surfaces arrived as a block; and both of Memories'
+      "no data" paths were whole-page empty states where upstream empties one section and
+      leaves the rest of the screen usable.
 - [ ] Story, Chapters, Autobiography
 - [ ] Museum · My Story · App history · Relationships
 - [ ] Replay Day · Screensaver · Welcome
@@ -176,6 +181,9 @@ Kept rather than deleted, so the list shows its own history.
 - [x] **Every Settings row explains itself**, all 29 of the reference's descriptions,
       and What's New on the About tab. 2026-07-28.
 - [x] **Delete a single day, and Reset Replay** — the last two rows Settings was missing.
+      2026-07-28.
+- [x] **Memories, Collections and Projects audited** — eight findings, including a heatmap
+      that shaded days against the busiest day rather than against fixed amounts of time.
       2026-07-28.
 - [x] **The Dock badge shows whole hours**, as the reference does — it had been formatted
       with hours *and* minutes. 2026-07-28.

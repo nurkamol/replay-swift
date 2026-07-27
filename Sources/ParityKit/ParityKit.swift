@@ -214,6 +214,22 @@ public enum ParityKit {
             }
         }
 
+        public let heatmap: HeatmapConstants
+
+        public struct HeatmapConstants: Decodable, Sendable {
+            public let lowSeconds: Int
+            public let midSeconds: Int
+            public let highSeconds: Int
+            public let levelMix: [Int]
+            public let weekBackDays: Int
+            public let monthBackDays: Int
+            public let yearBackDays: Int
+            public let yearWeeks: Int
+            public let monthCells: Int
+            public let yearSquare: Int
+            public let monthLabelMaxDate: Int
+        }
+
         public let canvas: CanvasConstants
 
         public struct CanvasConstants: Decodable, Sendable {
@@ -1147,6 +1163,32 @@ public enum ParityKit {
         equal(
             g1, "the order the heroes rotate in",
             TodayHero.allCases.map(\.rawValue), constants.today.heroOrder
+        )
+
+        // The heatmap's steps. Shading against fixed amounts rather than against the busiest
+        // day in the window is the whole claim the grid makes, so the boundaries are checked
+        // from both sides — a second under a threshold and a second over it.
+        let h = constants.heatmap
+        equal(g1, "the step half an hour reaches", Heatmap.lowSeconds, h.lowSeconds)
+        equal(g1, "the step an hour and a half reaches", Heatmap.midSeconds, h.midSeconds)
+        equal(g1, "the step three hours reaches", Heatmap.highSeconds, h.highSeconds)
+        equal(g1, "how much accent each step mixes in", Heatmap.levelMix, h.levelMix)
+        equal(g1, "an empty day is empty", Heatmap.level(0).rawValue, 0)
+        equal(g1, "a second of activity is not", Heatmap.level(1).rawValue, 1)
+        equal(g1, "a second under half an hour", Heatmap.level(h.lowSeconds - 1).rawValue, 1)
+        equal(g1, "half an hour exactly", Heatmap.level(h.lowSeconds).rawValue, 2)
+        equal(g1, "a second under an hour and a half", Heatmap.level(h.midSeconds - 1).rawValue, 2)
+        equal(g1, "an hour and a half exactly", Heatmap.level(h.midSeconds).rawValue, 3)
+        equal(g1, "a second under three hours", Heatmap.level(h.highSeconds - 1).rawValue, 3)
+        equal(g1, "three hours exactly", Heatmap.level(h.highSeconds).rawValue, 4)
+        equal(g1, "how far the week range reaches", Heatmap.Range.week.backDays, h.weekBackDays)
+        equal(g1, "how far the month range reaches", Heatmap.Range.month.backDays, h.monthBackDays)
+        equal(g1, "how far the year range reaches", Heatmap.Range.year.backDays, h.yearBackDays)
+        equal(g1, "how many week-columns a year draws", Heatmap.yearWeeks, h.yearWeeks)
+        equal(g1, "how many cells a month draws", Heatmap.monthCells, h.monthCells)
+        equal(
+            g1, "how early a month has to start to be labelled",
+            Heatmap.monthLabelMaxDate, h.monthLabelMaxDate
         )
 
         let c = CanvasTokens.self

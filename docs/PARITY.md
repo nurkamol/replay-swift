@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 857 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 875 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -160,6 +160,41 @@ document starts lying, and this one has done it twice already — see the two no
 
 ## Known divergences to keep an eye on
 
+- **The heatmap shaded a day against the busiest day, not against a quantity.** The reference
+  steps a square at fixed thresholds — half an hour, an hour and a half, three hours — so
+  the same amount of work looks the same in June as in December and two years can be read
+  against each other. This port scaled each day by `sqrt(seconds / busiest)`, which is
+  plausible in isolation and defeats the thing a year grid is for: it stretched every window
+  to fill the scale, so a quiet month and a heavy one were indistinguishable, and a square's
+  darkness meant only "compared to the rest of this view". Found auditing Memories on
+  2026-07-28. The thresholds and the five mixes are now generated into
+  `spec/constants.json` under `heatmap`, and each boundary is checked from both sides.
+  The port also had one range where the reference has three, no month or weekday labels,
+  no legend and no ring on today — all now built.
+- **A horizontal grid anchored to its trailing edge hides its own key.** The year heatmap
+  used `.defaultScrollAnchor(.trailing)` so that today was visible first, which is a
+  reasonable-sounding choice with a failure mode nothing catches: on any window narrow
+  enough for the grid to scroll, it silently pushed the weekday column and the first five
+  week-columns off the left. The grid appeared to begin in September and had no key at all,
+  and it looked deliberate. It reads from its start now, as the reference's does.
+- **Backing up "to Sunday" is not the same as backing up to the start of the week.** Both
+  heatmap grids computed their first column as `weekday - 1` days back, while the labels
+  above them came from `Calendar.firstWeekday`. In an en-US locale the two agree and nothing
+  shows; in a Monday-first locale the header would read M T W T F S S over a Sunday-aligned
+  grid and every column named the wrong day. There is no fixture for a non-Sunday locale, so
+  this was caught by reading rather than by the suite — worth remembering as the kind of bug
+  four-timezone CI does not cover, because the locale is not the timezone.
+- **The stagger sat on the container, not on the cards.** Memories, Collections and Projects
+  each applied `.settlesIn` to the stack or grid holding their cards, so every card arrived
+  on the same beat while the reference deals them out one at a time. `Design.Motion.enterDelay`
+  already matched upstream's function exactly — 28ms a step, capped at 560ms — it was simply
+  being called once instead of per item. Worth checking on the surfaces still unaudited.
+- **An empty section took the whole screen with it.** Memories showed a full-page
+  "Nothing to look back on yet" whenever it had no memories *and* no moments, which removed
+  the heatmap and the Surprise button — from the only person who ever sees that state, a new
+  user. The reference empties the "On this day" section alone and leaves the rest of the page
+  standing; its copy even ends "until then, browse any day below", pointing at the calendar
+  this port had just taken away.
 - **Workflows and projects can each carry the same name several times over.** A workflow is
   named after the category most of its sessions were, and a project after that category plus
   its lead app — so a week spent mostly in a browser produces four "Research Workflow" rows,

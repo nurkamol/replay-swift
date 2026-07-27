@@ -534,6 +534,75 @@ const constants = {
       wheelSensitivity,
     };
   })(),
+
+  /*
+   * The memory heatmap: how much time a square has to hold before it darkens.
+   *
+   * Worth contracting because the two apps had answered it differently, and in a way no
+   * screenshot would catch. Upstream shades a day against five *fixed* thresholds — half an
+   * hour, an hour and a half, three hours — so a square's darkness means a quantity, and two
+   * years read against the same ruler. This port shaded each day against the busiest day in
+   * the window, which is a different claim: it makes a quiet year and a heavy one look
+   * identical, and the whole point of a year grid is comparing across it.
+   *
+   * The thresholds are written as a chain of literal `if`s upstream, so they are matched in
+   * place; the tool stops if that shape moves.
+   */
+  heatmap: (() => {
+    const src = read("renderer/components/memory-heatmap.tsx");
+    const f = "memory-heatmap.tsx";
+    const [lowSeconds, midSeconds, highSeconds] = inline(
+      src, f, "the thresholds a day's shade steps at",
+      /if \(seconds < (\d+) \* 60\) return 1;\s*\n\s*if \(seconds < (\d+) \* 60\) return 2;\s*\n\s*if \(seconds < (\d+) \* 3600\) return 3;/,
+    );
+    const [mix1, mix2, mix3, mix4] = inline(
+      src, f, "how much accent each level mixes in",
+      /const LEVEL_MIX = \[0, (\d+), (\d+), (\d+), (\d+)\]/,
+    );
+    const [weekBack] = inline(
+      src, f, "how far the week range reaches", /=== "week"\) return \{ from: dayAt\(today, -(\d+)\)/,
+    );
+    const [monthBack] = inline(
+      src, f, "how far the month range reaches",
+      /=== "month"\) return \{ from: dayAt\(today, -(\d+)\)/,
+    );
+    const [yearBack] = inline(
+      src, f, "how far the year range reaches",
+      // Anchored on the bare `return` — the week and month lines are `if (…) return` and
+      // would otherwise match first, which is exactly what happened.
+      /\n\s+return \{ from: dayAt\(today, -(\d+)\), to: today \+ DAY \};/,
+    );
+    const [yearWeeks] = inline(
+      src, f, "how many week-columns the year grid draws", /for \(let w = 0; w < (\d+); w \+= 1\)/,
+    );
+    const [monthCells] = inline(
+      src, f, "how many cells a month grid draws",
+      /Array\.from\(\{ length: (\d+) \}, \(_, i\) => dayAt\(gridStart, i\)\)/,
+    );
+    const [yearSquare] = inline(
+      src, f, "how big a year square is", /onOpenDay=\{onOpenDay\} size=\{(\d+)\}/,
+    );
+    // A month label is only drawn where the month *starts* inside that week, so a partial
+    // first column does not get labelled with a month it barely touches.
+    const [monthLabelMaxDate] = inline(
+      src, f, "how early in a week a month has to start to be labelled",
+      /new Date\(week\[0\]!\)\.getDate\(\) <= (\d+)/,
+    );
+    return {
+      // Seconds, so the Swift side never restates the arithmetic.
+      lowSeconds: lowSeconds * 60,
+      midSeconds: midSeconds * 60,
+      highSeconds: highSeconds * 3600,
+      levelMix: [0, mix1, mix2, mix3, mix4],
+      weekBackDays: weekBack,
+      monthBackDays: monthBack,
+      yearBackDays: yearBack,
+      yearWeeks,
+      monthCells,
+      yearSquare,
+      monthLabelMaxDate,
+    };
+  })(),
 };
 
 

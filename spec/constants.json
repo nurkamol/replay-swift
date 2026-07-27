@@ -287,5 +287,24 @@
     "glideRestSpeed": 0.4,
     "wheelStep": 1.09,
     "wheelSensitivity": 0.012
+  },
+  "heatmap": {
+    "lowSeconds": 1800,
+    "midSeconds": 5400,
+    "highSeconds": 10800,
+    "levelMix": [
+      0,
+      26,
+      46,
+      70,
+      100
+    ],
+    "weekBackDays": 6,
+    "monthBackDays": 34,
+    "yearBackDays": 370,
+    "yearWeeks": 53,
+    "monthCells": 42,
+    "yearSquare": 11,
+    "monthLabelMaxDate": 7
   }
 }

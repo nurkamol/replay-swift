@@ -148,6 +148,8 @@ enum Design {
         static let subtitle = Font.subheadline
         /// A row's secondary line.
         static let detail = Font.caption
+        /// The same size carrying a figure rather than a note.
+        static let detailStrong = Font.caption.weight(.semibold)
         /// The smallest readable label; used for counts beside an icon.
         static let micro = Font.caption2
         /// An uppercase section label. Pair with ``Design/Text/labelKerning``.
@@ -477,9 +479,12 @@ enum Design {
         /// compete with what is written on it.
         static let skyOnCard: Double = 0.55
 
-        /// A day in the heatmap. Floored so a day with anything in it is visibly not empty.
-        static let heatFloor: Double = 0.25
-        static let heatRange: Double = 0.70
+        /// The heatmap. How much accent a square carries is `ReplayCore.Heatmap.mix`, which
+        /// is the reference's own and contract-checked; these are the two things around it.
+        /// A day from a neighbouring month is context rather than content, and the weekday
+        /// above a figure is a label rather than the figure.
+        static let outOfMonth: Double = 0.40
+        static let heatCaption: Double = 0.80
 
         /// The screensaver. Everything is white at a chosen weight rather than a palette:
         /// the room it plays in is dark, and colour would be the thing asking for attention.
@@ -941,10 +946,18 @@ enum Design {
         static let paletteShadowRadius: CGFloat = 30
         static let paletteShadowOffset: CGFloat = 12
         static let paletteTopInset: CGFloat = 120
-        /// A year of days as a grid: how many weeks, how big a square, how far apart.
-        static let heatmapWeeks = 53
+        /// A year of days as a grid. How *many* weeks it draws is the reference's own
+        /// `Heatmap.yearWeeks` and is contract-checked; these are how big it renders.
         static let heatmapSquare: CGFloat = 11
         static let heatmapGap: CGFloat = 3
+        /// The gutter the month labels sit above, which is the weekday column's width.
+        static let heatmapWeekdayColumn: CGFloat = 18
+        /// A month's cells are large enough to carry a date, and a week's larger still to
+        /// carry a duration — the same grid at three magnifications, not three components.
+        static let heatmapMonthCell: CGFloat = 34
+        static let heatmapWeekCell: CGFloat = 62
+        /// The ring on today, so the grid says where you are without a caption.
+        static let heatmapTodayRing: CGFloat = 1.5
         /// One press of zoom in or out. A ratio rather than a step, so each press feels the
         /// same however far in you already are.
         static let canvasZoomStep: CGFloat = 1.2

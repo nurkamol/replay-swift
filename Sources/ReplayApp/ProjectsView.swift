@@ -24,11 +24,14 @@ struct ProjectsView: View {
                     empty.centredInPage()
                 } else {
                     LazyVGrid(columns: columns, spacing: Design.Space.row) {
-                        ForEach(projects.projects) { project in
+                        // Each card on its own beat. The stagger used to sit on the grid, so
+                        // twelve projects arrived as one block where upstream deals them out.
+                        ForEach(Array(projects.projects.enumerated()), id: \.element.id) {
+                            index, project in
                             ProjectCard(named: project, onOpen: { onOpen(project.id) })
+                                .settlesIn(index)
                         }
                     }
-                    .settlesIn(0)
                 }
             }
             .pageContent()
