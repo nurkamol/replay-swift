@@ -77,4 +77,8 @@ public enum CanvasTokens {
 public enum ScreensaverTokens {
     public static let driftSeconds: Double = 90
     public static let reducedSeconds: Double = 240
+    /// Ambient mode's breath — the only thing that moves on that screen.
+    public static let breatheSeconds: Double = 6
+    public static let breatheScale: Double = 1.04
+    public static let breatheFloor: Double = 0.96
 }

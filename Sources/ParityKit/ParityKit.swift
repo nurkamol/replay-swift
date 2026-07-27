@@ -219,6 +219,9 @@ public enum ParityKit {
         public struct ScreensaverConstants: Decodable, Sendable {
             public let driftSeconds: Int
             public let reducedSeconds: Int
+            public let breatheSeconds: Int
+            public let breatheScale: Double
+            public let breatheFloor: Double
         }
 
         public let heatmap: HeatmapConstants
@@ -1347,6 +1350,19 @@ public enum ParityKit {
         equal(
             g1, "and how long with motion reduced",
             Int(ScreensaverTokens.reducedSeconds), constants.screensaver.reducedSeconds
+        )
+
+        equal(
+            g1, "how long one ambient breath takes",
+            Int(ScreensaverTokens.breatheSeconds), constants.screensaver.breatheSeconds
+        )
+        equal(
+            g1, "how far it swells",
+            ScreensaverTokens.breatheScale, constants.screensaver.breatheScale
+        )
+        equal(
+            g1, "and how far it fades between",
+            ScreensaverTokens.breatheFloor, constants.screensaver.breatheFloor
         )
 
         // The heatmap's steps. Shading against fixed amounts rather than against the busiest

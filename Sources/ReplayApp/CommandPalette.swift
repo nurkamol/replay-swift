@@ -21,6 +21,7 @@ final class CommandPaletteModel {
             case project(String)
             case day(Int64)
             case screensaver
+            case ambient
             case settings
             case toggleSidebar
         }
@@ -80,7 +81,13 @@ final class CommandPaletteModel {
         }
 
         items += [
-            Item(id: "action:screensaver", group: "Actions", title: "Screensaver",
+            // The reference groups these two under "Display", and they belong together:
+            // both take the whole screen, and the choice between them is which one you
+            // want, not whether you want one.
+            Item(id: "action:ambient", group: "Display", title: "Ambient Mode",
+                 subtitle: "Today, large enough to read across a room", symbol: "rectangle.on.rectangle",
+                 action: .ambient),
+            Item(id: "action:screensaver", group: "Display", title: "Screensaver",
                  subtitle: "A slow drift through your day", symbol: "sparkles.tv",
                  action: .screensaver),
             Item(id: "action:settings", group: "Actions", title: "Settings",

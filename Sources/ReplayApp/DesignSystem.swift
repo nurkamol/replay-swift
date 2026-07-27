@@ -371,6 +371,19 @@ enum Design {
 
         static let screensaverDriftSeconds: Double = 90
         static let screensaverSlowSeconds: Double = 240
+        /// Ambient mode's breath — the icon of whatever is in front swelling and settling.
+        /// The only thing on that screen that moves, which is why it is allowed to: nothing
+        /// else there changes for minutes at a time, and a still image of a live number
+        /// reads as a screenshot. Stopped outright when motion is reduced rather than
+        /// slowed, unlike the screensaver's drift, because here the movement is decoration
+        /// and there it is the content. All three values are the reference's, and checked.
+        static let ambientBreatheSeconds: Double = 6
+        /// How often ambient mode re-reads the day. A minute, because a minute is the
+        /// resolution of everything on that screen — the clock shows minutes and the total
+        /// is formatted in them — so anything faster redraws to show the same characters.
+        static let ambientTick: TimeInterval = 60
+        static let ambientBreatheScale: CGFloat = 1.04
+        static let ambientBreatheFloor: Double = 0.96
     }
 
     /// Motion, with Reduce Motion respected.
@@ -509,6 +522,13 @@ enum Design {
         static let screensaverSecondary: Double = 0.70
         static let screensaverTertiary: Double = 0.35
         static let screensaverQuiet: Double = 0.30
+        /// Ambient mode. Everything is white at a weight, like the screensaver, because the
+        /// room it plays in is dark and colour would be the thing asking for attention.
+        static let ambientHeadline: Double = 0.45
+        static let ambientLabel: Double = 0.40
+        static let ambientHint: Double = 0.25
+        static let ambientEyebrow: Double = 0.35
+        static let ambientIconRing: Double = 0.10
         static let screensaverIconOpacity: Double = 0.70
         static let screensaverFavouriteOpacity: Double = 0.80
         static let screensaverExitOpacity: Double = 0.40
@@ -848,6 +868,20 @@ enum Design {
         static let playhead: CGFloat = 10
         /// A round close button over a full-window surface. The whole disc is the target.
         static let closeButton: CGFloat = 34
+        /// Ambient mode, for a second monitor across a room. The headline is clamped rather
+        /// than fixed — the reference scales it with the viewport between 72 and 180 — and
+        /// the icon is large enough to recognise from a desk away.
+        static let ambientHeadlineMin: CGFloat = 72
+        static let ambientHeadlineMax: CGFloat = 180
+        static let ambientHeadlineShare: CGFloat = 0.15
+        static let ambientIcon: CGFloat = 56
+        static let ambientNowTitle: CGFloat = 26
+        static let ambientEyebrowKerning: CGFloat = 3.0
+        static let ambientNowKerning: CGFloat = 1.6
+        /// The gap between the headline and what is happening now. Generous on purpose:
+        /// this is read from across a room, and at that distance ordinary spacing reads as
+        /// one block of text rather than as two things.
+        static let ambientGap: CGFloat = 56
         static let playbackSpeedWidth: CGFloat = 130
         static let whatsNewWidth: CGFloat = 620
         static let whatsNewHeight: CGFloat = 560

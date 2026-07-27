@@ -127,9 +127,13 @@ behaviour first and constants second, and generate anything that matches-by-luck
       matched exactly and is now checked rather than merely agreeing. Welcome turned up a
       real bug — see the ledger — and one missing surface, below.
 
-## 2b · Found by the audits, not yet built
+## 2b · Found by the audits
 
-- [ ] **Ambient Mode.** `M` The reference has *two* display modes behind its command palette —
+- [x] **Ambient Mode.** Built 2026-07-28. Reached by ⇧⌘A, the View menu, the palette's new
+      **Display** group and the sidebar footer. Its breath is contracted at the reference's
+      6s / 1.04 / 0.96 and checked. **Section 2b is closed.**
+
+      ~~Was:~~ `M` The reference has *two* display modes behind its command palette —
       Ambient Mode and Screensaver — and this port has only the screensaver. Ambient is a
       distraction-free full-screen clock: today's total at 72–180px, the current session, a
       six-second breathe that stops under reduced motion. `renderer/main/ambient.tsx`

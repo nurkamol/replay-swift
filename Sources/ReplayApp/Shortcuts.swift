@@ -21,7 +21,7 @@ enum Shortcuts {
     /// answer these live on the app delegate and stay private to it.
     enum Command: String {
         case today, palette, apps, week, timeline, search, memories
-        case collections, projects, story, canvas, sidebar, screensaver
+        case collections, projects, story, canvas, sidebar, screensaver, ambient
     }
 
     /// Which part of the Settings table an entry appears under.
@@ -146,9 +146,13 @@ enum Shortcuts {
             command: .canvas, surface: .canvas
         ),
         Entry(
-            menuTitle: "Screensaver", label: "Screensaver", key: "s",
-            modifiers: [.shift, .command], command: .screensaver, group: .window,
+            menuTitle: "Ambient Mode", label: "Ambient Mode", key: "a",
+            modifiers: [.shift, .command], command: .ambient, group: .window,
             separatorBefore: true
+        ),
+        Entry(
+            menuTitle: "Screensaver", label: "Screensaver", key: "s",
+            modifiers: [.shift, .command], command: .screensaver, group: .window
         ),
     ]
 

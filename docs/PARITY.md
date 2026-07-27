@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 918 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 921 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -188,6 +188,13 @@ document starts lying, and this one has done it twice already — see the two no
   missing entirely, and they are the two sentences that say the feature is descriptive rather
   than invented. Generated into `spec/narrative-copy.json` and checked character for
   character. Found auditing the Story cluster on 2026-07-28.
+- **Ambient mode reads the frontmost app's name from the tracker and its icon from the
+  sessions.** The tracker carries the application's name and when it came forward, and not a
+  bundle identifier or a path — so there is nothing to draw an icon from. The name is matched
+  against the apps of the day's own sessions, newest first, which is where it will be,
+  because being frontmost is what put it there. A miss draws the name without an icon rather
+  than dropping the row: the name is the information. Worth knowing before anyone "fixes" it
+  by widening the tracker's `current`, which is on the recording path and should stay small.
 - **The Timeline built every row before showing one.** A `VStack` inside a `ScrollView`
   constructs all its children eagerly, so opening on Last 7 Days laid out ~280 rows — every
   session card, its icons, its annotations — before a single one was on screen, and the wait

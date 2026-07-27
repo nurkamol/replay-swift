@@ -290,7 +290,10 @@
   },
   "screensaver": {
     "driftSeconds": 90,
-    "reducedSeconds": 240
+    "reducedSeconds": 240,
+    "breatheSeconds": 6,
+    "breatheScale": 1.04,
+    "breatheFloor": 0.96
   },
   "heatmap": {
     "lowSeconds": 1800,

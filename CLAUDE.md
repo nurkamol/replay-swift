@@ -23,7 +23,7 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 918 parity checks + 61 behaviour cases
+swift test                      # 921 parity checks + 61 behaviour cases
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
@@ -69,8 +69,10 @@ node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or docum
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 918 checks. **The UI is largely built**: an application menu, a menu bar item,
+Glaze app — 921 checks. **The UI is largely built**: an application menu, a menu bar item,
 Today (headline, focus goal, reflection), the Timeline, a reopened past day, Search, Memories, Collections, a
 session's notes/tags/bookmarks, Settings, and export — reports as Markdown, CSV, JSON or
-HTML, plus full backups, and a screensaver. Counted against the reference's own router, this port now has **all 20 of its routes**. What
+HTML, plus full backups, and a screensaver. Counted against the reference's own router, this port has **all 20 of its routes**, and since
+2026-07-28 both of its display modes — the screensaver and ambient mode. (A route count was
+never a completeness measure: ambient mode is a *mode*, and the count could not see it.) What
 is left is in `docs/BACKLOG.md` — the Settings copy, the surfaces nobody has audited, and signing, which is blocked on a Developer ID rather than on code. `docs/PARITY.md` is the ledger of what is already true.

@@ -147,6 +147,7 @@ struct RootView: View {
     let onOpenSettings: () -> Void
     /// Likewise — the overlay is an `NSWindow`, which a view cannot raise on its own.
     let onOpenScreensaver: () -> Void
+    let onOpenAmbient: () -> Void
 
     @Environment(\.motion) private var motion
     /// The day being watched, if one is: its sessions and what to call it on screen. Held
@@ -331,6 +332,7 @@ struct RootView: View {
         case .project(let id): navigation.open(project: id)
         case .day(let day): navigation.open(day: day)
         case .screensaver: onOpenScreensaver()
+        case .ambient: onOpenAmbient()
         case .settings: onOpenSettings()
         case .toggleSidebar:
             withAnimation(motion.animation(Design.Motion.settle)) { navigation.toggleSidebar() }
@@ -576,6 +578,10 @@ struct RootView: View {
                 trailing: "⌘K"
             ) { palette.open = true }
 
+            footerRow(
+                "Ambient Mode", "rectangle.on.rectangle",
+                help: "Today, large enough to read across a room", action: onOpenAmbient
+            )
             footerRow(
                 "Screensaver", "sparkles.tv",
                 help: "A slow drift through your day", action: onOpenScreensaver

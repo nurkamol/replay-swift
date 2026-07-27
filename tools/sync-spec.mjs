@@ -555,7 +555,22 @@ const constants = {
       src, f, "and how long it takes when motion is reduced",
       /\.replay-saver-drift \{ animation-duration: (\d+)s; \}/,
     );
-    return { driftSeconds, reducedSeconds };
+    // Ambient mode's breath, which is the only thing that moves on that screen. Stopped
+    // outright under reduced motion rather than slowed — unlike the drift, because here the
+    // movement is decoration and there it is the content.
+    const [breatheSeconds] = inline(
+      src, f, "how long one breath takes",
+      /\.replay-ambient-breathe \{ animation: replay-ambient-breathe (\d+)s ease-in-out infinite; \}/,
+    );
+    const [breatheScale] = inline(
+      src, f, "how far the breath swells",
+      /50% \{ transform: scale\(([\d.]+)\); opacity: 1; \}/,
+    );
+    const [breatheFloor] = inline(
+      src, f, "and how far it fades between",
+      /0%, 100% \{ transform: scale\(1\); opacity: ([\d.]+); \}/,
+    );
+    return { driftSeconds, reducedSeconds, breatheSeconds, breatheScale, breatheFloor };
   })(),
 
   /*

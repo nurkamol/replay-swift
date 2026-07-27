@@ -48,6 +48,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow?
     private var settingsWindow: NSWindow?
     private var screensaverWindow: NSWindow?
+    /// Ambient mode's own window. Separate from the screensaver's rather than a mode flag on
+    /// one: the two are opened for opposite reasons — one while you are here, one once you
+    /// have gone — and nothing good comes of being able to be in both at once.
+    private var ambientWindow: NSWindow?
     private var idleWatch: Timer?
     private var whatsNewWindow: NSWindow?
     /// Which Settings pane to show when it next opens.
@@ -335,7 +339,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 timelineLayers: timelineLayers,
                 notifications: notifications,
                 onOpenSettings: { [weak self] in self?.openSettings() },
-                onOpenScreensaver: { [weak self] in self?.openScreensaver() }
+                onOpenScreensaver: { [weak self] in self?.openScreensaver() },
+                onOpenAmbient: { [weak self] in self?.openAmbient() }
             )
         )
         // The window's size is its own. Without this the SwiftUI content drives it, and a
@@ -385,6 +390,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .canvas: #selector(openCanvas)
         case .sidebar: #selector(toggleSidebar)
         case .screensaver: #selector(openScreensaver)
+        case .ambient: #selector(openAmbient)
         case nil: nil
         }
     }
@@ -442,6 +448,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let frame = screen?.frame { saver.setFrame(frame, display: true) }
         NSApp.activate(ignoringOtherApps: true)
         screensaverWindow = saver
+    }
+
+    /// Ambient mode, over everything, on the screen you are looking at.
+    ///
+    /// The same window recipe as the screensaver — borderless, screen-saver level, joins all
+    /// spaces — because the requirement is the same: cover the menu bar and the Dock without
+    /// dragging the main window into a full-screen space you then have to come back out of.
+    @objc private func openAmbient() {
+        if let ambientWindow {
+            ambientWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        closeScreensaver()
+        let screen = NSScreen.main ?? window?.screen ?? NSScreen.screens.first
+        let hosting = NSHostingController(
+            rootView: Themed(preferences: preferences) {
+                AmbientView(model: model, onExit: { [weak self] in self?.closeAmbient() })
+                    .preferredColorScheme(.dark)
+            }
+        )
+        hosting.sizingOptions = []
+        let ambient = ScreensaverWindow(contentViewController: hosting)
+        ambient.styleMask = [.borderless]
+        ambient.level = .screenSaver
+        ambient.isOpaque = true
+        ambient.backgroundColor = .black
+        ambient.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        ambient.isReleasedWhenClosed = false
+        if let frame = screen?.frame { ambient.setFrame(frame, display: true) }
+        ambient.makeKeyAndOrderFront(nil)
+        // Again after ordering front: a borderless window can be nudged as it is shown.
+        if let frame = screen?.frame { ambient.setFrame(frame, display: true) }
+        NSApp.activate(ignoringOtherApps: true)
+        ambientWindow = ambient
+    }
+
+    private func closeAmbient() {
+        ambientWindow?.orderOut(nil)
+        ambientWindow = nil
+        window?.makeKeyAndOrderFront(nil)
     }
 
     private func closeScreensaver() {
