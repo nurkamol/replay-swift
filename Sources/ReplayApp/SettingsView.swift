@@ -834,60 +834,22 @@ private struct AboutTab: View {
 
 // ── shortcuts ─────────────────────────────────────────────────────────────────
 
-/// Every key Replay binds, in one place.
+/// Every key Replay binds, in one place — and now the *same* place the app binds them from.
 ///
-/// Written out rather than derived: the shortcuts live in an `NSMenu` built in `main.swift`
-/// and on individual views, and there is no way to ask the app what it has bound. That means
-/// this table can drift from the truth, which is the honest cost of having it — and a
-/// keyboard surface nobody can discover is worse than one that might be a version behind.
+/// This table used to be written out by hand beside an `NSMenu` that was also written out by
+/// hand, with nothing able to compare them. It renders `Shortcuts` now, which the View menu
+/// is built from, so a key cannot be changed in one and not the other. What a menu cannot
+/// bind — the shortcuts that live on SwiftUI views — is declared there too and checked
+/// against the sources by `tools/shortcut-audit.mjs`.
 private struct ShortcutsTab: View {
-    private struct Row: Identifiable {
-        var id: String { action }
-        var action: String
-        var keys: [String]
-    }
-
-    private let groups: [(String, [Row])] = [
-        ("Getting around", [
-            Row(action: "Go to anything", keys: ["⌘", "K"]),
-            Row(action: "Find", keys: ["⌘", "F"]),
-            Row(action: "Today", keys: ["⌘", "1"]),
-            Row(action: "Apps", keys: ["⌘", "2"]),
-            Row(action: "This Week", keys: ["⌘", "3"]),
-            Row(action: "Timeline", keys: ["⌘", "4"]),
-            Row(action: "Search", keys: ["⌘", "5"]),
-            Row(action: "Memories", keys: ["⌘", "6"]),
-            Row(action: "Collections", keys: ["⌘", "7"]),
-            Row(action: "Projects", keys: ["⌘", "8"]),
-            Row(action: "Story", keys: ["⌘", "9"]),
-            Row(action: "Back", keys: ["⌘", "["]),
-        ]),
-        ("The window", [
-            Row(action: "Show or hide the sidebar", keys: ["⌃", "⌘", "S"]),
-            Row(action: "Screensaver", keys: ["⇧", "⌘", "S"]),
-            Row(action: "Settings", keys: ["⌘", ","]),
-            Row(action: "Close", keys: ["⌘", "W"]),
-        ]),
-        ("On the Canvas", [
-            Row(action: "Zoom in", keys: ["⌘", "+"]),
-            Row(action: "Zoom out", keys: ["⌘", "−"]),
-            Row(action: "Fit to the window", keys: ["⌘", "0"]),
-        ]),
-        ("Anywhere", [
-            Row(action: "Move through results", keys: ["↑", "↓"]),
-            Row(action: "Open what is focused", keys: ["↩"]),
-            Row(action: "Close what is open", keys: ["esc"]),
-        ]),
-    ]
-
     var body: some View {
         PaneForm {
-            ForEach(groups, id: \.0) { title, rows in
-                Section(title) {
-                    ForEach(rows) { row in
-                        LabeledContent(row.action) {
+            ForEach(Shortcuts.settingsGroups, id: \.0) { group, rows in
+                Section(group.rawValue) {
+                    ForEach(rows, id: \.label) { row in
+                        LabeledContent(row.label) {
                             HStack(spacing: Design.Space.tight) {
-                                ForEach(row.keys, id: \.self) { key in
+                                ForEach(row.display, id: \.self) { key in
                                     Text(key)
                                         .font(Design.Text.detail)
                                         .padding(.horizontal, Design.Pill.countHorizontal)
@@ -902,7 +864,7 @@ private struct ShortcutsTab: View {
                                 }
                             }
                             .accessibilityElement(children: .combine)
-                            .accessibilityLabel(row.keys.joined(separator: " "))
+                            .accessibilityLabel(row.display.joined(separator: " "))
                         }
                     }
                 }

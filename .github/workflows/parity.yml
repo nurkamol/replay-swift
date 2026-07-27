@@ -64,6 +64,12 @@ jobs:
       - name: No view spells a number
         run: node tools/design-audit.mjs
 
+      # The keyboard is the one surface that cannot show you what it can do. A shortcut
+      # bound in a view and written down nowhere works and is undiscoverable; one written
+      # down and never bound is a table that lies to whoever reads it.
+      - name: The shortcut table matches what is bound
+        run: node tools/shortcut-audit.mjs
+
       - name: Build
         run: swift build
 

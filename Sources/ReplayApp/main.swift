@@ -219,55 +219,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         editItem.submenu = editMenu
         main.addItem(editItem)
 
+        // Built from `Shortcuts.menu` rather than written out here, so this menu and the
+        // table in Settings cannot say different things about the same key. The wording, the
+        // order and the separators are all decisions and all live in that one file.
         let viewItem = NSMenuItem()
         let viewMenu = NSMenu(title: "View")
-        let sidebarItem = viewMenu.addItem(
-            withTitle: "Hide Sidebar", action: #selector(toggleSidebar), keyEquivalent: "s"
-        )
-        sidebarItem.keyEquivalentModifierMask = [.command, .control]
-        sidebarItem.target = self
-        self.sidebarMenuItem = sidebarItem
-        viewMenu.addItem(.separator())
-        viewMenu.addItem(withTitle: "Today", action: #selector(openToday), keyEquivalent: "1")
-            .target = self
-        let paletteItem = viewMenu.addItem(
-            withTitle: "Go to Anything…", action: #selector(openPalette), keyEquivalent: "k"
-        )
-        paletteItem.target = self
-        viewMenu.addItem(.separator())
-        viewMenu.addItem(withTitle: "Apps", action: #selector(openApps), keyEquivalent: "2")
-            .target = self
-        viewMenu.addItem(withTitle: "This Week", action: #selector(openWeek), keyEquivalent: "3")
-            .target = self
-        viewMenu.addItem(withTitle: "Timeline", action: #selector(openTimeline), keyEquivalent: "4")
-            .target = self
-        // Numbered in sidebar order. Search is ⌘3 rather than ⌘F: ⌘F is Find, and
-        // `.searchable` binds it to focus the field — a menu item that stole it switched
-        // surfaces and then swallowed the keystrokes meant for the search box.
-        viewMenu.addItem(withTitle: "Search", action: #selector(openSearch), keyEquivalent: "5")
-            .target = self
-        viewMenu.addItem(withTitle: "Memories", action: #selector(openMemories), keyEquivalent: "6")
-            .target = self
-        viewMenu.addItem(
-            withTitle: "Collections", action: #selector(openCollections), keyEquivalent: "7"
-        ).target = self
-        viewMenu.addItem(
-            withTitle: "Projects", action: #selector(openProjects), keyEquivalent: "8"
-        ).target = self
-        viewMenu.addItem(
-            withTitle: "Story", action: #selector(openStory), keyEquivalent: "9"
-        ).target = self
-        // No shortcut: the digits run out at nine, and Canvas is a place you go to look
-        // around rather than one you flick to.
-        viewMenu.addItem(
-            withTitle: "Canvas", action: #selector(openCanvas), keyEquivalent: ""
-        ).target = self
-        viewMenu.addItem(.separator())
-        let saverItem = viewMenu.addItem(
-            withTitle: "Screensaver", action: #selector(openScreensaver), keyEquivalent: "s"
-        )
-        saverItem.keyEquivalentModifierMask = [.command, .shift]
-        saverItem.target = self
+        for entry in Shortcuts.menu {
+            if entry.separatorBefore { viewMenu.addItem(.separator()) }
+            let item = viewMenu.addItem(
+                withTitle: entry.menuTitle ?? entry.label,
+                action: selector(for: entry.command),
+                keyEquivalent: entry.key
+            )
+            item.keyEquivalentModifierMask = entry.flags
+            item.target = self
+            // Held because its title flips to "Show Sidebar" when the sidebar is hidden.
+            if entry.command == .sidebar { self.sidebarMenuItem = item }
+        }
         viewItem.submenu = viewMenu
         main.addItem(viewItem)
 
@@ -395,6 +363,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // ── menu actions ──────────────────────────────────────────────────────────
+
+    /// The one place a catalogue entry becomes a method call.
+    ///
+    /// `Shortcuts` deliberately holds no selectors: it is read by Settings, which has no
+    /// business knowing about the app delegate, and by an audit script, which cannot run
+    /// Swift at all. So the mapping lives here, next to the methods it names, and the
+    /// compiler checks it is exhaustive.
+    private func selector(for command: Shortcuts.Command?) -> Selector? {
+        switch command {
+        case .today: #selector(openToday)
+        case .palette: #selector(openPalette)
+        case .apps: #selector(openApps)
+        case .week: #selector(openWeek)
+        case .timeline: #selector(openTimeline)
+        case .search: #selector(openSearch)
+        case .memories: #selector(openMemories)
+        case .collections: #selector(openCollections)
+        case .projects: #selector(openProjects)
+        case .story: #selector(openStory)
+        case .canvas: #selector(openCanvas)
+        case .sidebar: #selector(toggleSidebar)
+        case .screensaver: #selector(openScreensaver)
+        case nil: nil
+        }
+    }
 
     @objc private func openToday() {
         model.reload()

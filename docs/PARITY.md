@@ -96,7 +96,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | What's New | done | eleven releases, newest first, with the running version marked. Reachable from Help |
 | Help menu | done | Welcome, Replay Guide (⌘?), What's New. The app had no Help menu at all, which is also where macOS puts its own search |
 | Welcome | done | two pages: the things Replay will not do unasked, each off by default, and the privacy claim shown working rather than asserted |
-| Settings | partial | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is written out by hand rather than derived, so it can drift from what is actually bound |
+| Settings | done | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is rendered from `Shortcuts.swift`, the same catalogue the View menu is built from, and `tools/shortcut-audit.mjs` checks the keys a view binds against it in both directions |
 | Press and hover feedback | done | `RowButtonStyle` on 25 rows and cards — the reference's own `active:scale-[0.99]` at 90ms and `hover:bg-control-subtle` at 180ms, both on `easeStandard`. Reduced motion keeps the highlight and drops the give |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
@@ -159,7 +159,6 @@ the picture by 0.012 mean brightness — real in a diff, invisible to a person.
 | **Signing and notarisation** | Blocked on a Developer ID, not on code. The app is ad-hoc signed by `scripts/make-app.sh`, which is enough to run it locally and not enough to hand to anybody. Everything else on this list is smaller than it |
 | PDF export | Three WebKit routes tried and dead, recorded below. The reference's own PDF is one capped page that tells you to use HTML |
 | A reopened day's story and chapter context | The one place a past day is thinner than the reference |
-| Deriving the Settings shortcuts table | Written out by hand, so it can drift from what is actually bound |
 | A test that covers scroll routing | The command-palette scroll bug reached a person because nothing exercises which view a scroll lands in. Would need a UI test target this project does not have |
 
 ## Known divergences to keep an eye on
