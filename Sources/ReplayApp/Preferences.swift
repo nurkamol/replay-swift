@@ -160,6 +160,49 @@ final class Preferences {
         didSet { write(surfaceStyle.rawValue, "surfaceStyle") }
     }
 
+    /// Today's hours on the Dock icon, once there is an hour to show.
+    var dockBadge: Bool {
+        didSet { write(dockBadge, "dockBadge") }
+    }
+
+    /// How long the window must sit untouched before the screensaver drifts in. Zero is off,
+    /// and off is the default — a thing that takes over the screen on its own should be
+    /// asked for.
+    var screensaverIdleMinutes: Int {
+        didSet { write(screensaverIdleMinutes, "screensaverIdleMinutes") }
+    }
+
+    /// What dismisses it. Escape and the close button always do, whatever these say.
+    var screensaverExitOnMouseMove: Bool {
+        didSet { write(screensaverExitOnMouseMove, "screensaverExitOnMouseMove") }
+    }
+
+    var screensaverExitOnClick: Bool {
+        didSet { write(screensaverExitOnClick, "screensaverExitOnClick") }
+    }
+
+    var screensaverExitOnKey: Bool {
+        didSet { write(screensaverExitOnKey, "screensaverExitOnKey") }
+    }
+
+    /// A recap of the day, at an hour of your choosing. Off until asked for, and asking is
+    /// what prompts macOS for permission — nothing is requested before then.
+    var dailySummaryHour: Int {
+        didSet { write(dailySummaryHour, "dailySummaryHour") }
+    }
+
+    var dailySummary: Bool {
+        didSet { write(dailySummary, "dailySummary") }
+    }
+
+    var weeklyRecap: Bool {
+        didSet { write(weeklyRecap, "weeklyRecap") }
+    }
+
+    var onThisDayNotice: Bool {
+        didSet { write(onThisDayNotice, "onThisDayNotice") }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -173,6 +216,18 @@ final class Preferences {
         excludedApps = (defaults.data(forKey: "excludedApps"))
             .flatMap { try? JSONDecoder().decode([ExcludedApp].self, from: $0) } ?? []
         menuBarOnly = defaults.bool(forKey: "menuBarOnly")
+        dockBadge = defaults.object(forKey: "dockBadge") as? Bool ?? false
+        screensaverIdleMinutes = defaults.integer(forKey: "screensaverIdleMinutes")
+        // Mouse movement is off by default, so a screensaver you started by hand stays until
+        // you reach for it rather than vanishing when the pointer twitches.
+        screensaverExitOnMouseMove = defaults.bool(forKey: "screensaverExitOnMouseMove")
+        screensaverExitOnClick = defaults.object(forKey: "screensaverExitOnClick") as? Bool ?? true
+        screensaverExitOnKey = defaults.object(forKey: "screensaverExitOnKey") as? Bool ?? true
+        let hour = defaults.integer(forKey: "dailySummaryHour")
+        dailySummaryHour = hour == 0 ? 18 : hour
+        dailySummary = defaults.bool(forKey: "dailySummary")
+        weeklyRecap = defaults.bool(forKey: "weeklyRecap")
+        onThisDayNotice = defaults.bool(forKey: "onThisDayNotice")
         pinnedApps = (defaults.data(forKey: "pinnedApps"))
             .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
         projectNames = (defaults.data(forKey: "projectNames"))

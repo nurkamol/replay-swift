@@ -42,11 +42,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var contextual = ContextualMemoryModel(model: model, projects: projects, preferences: preferences)
     private lazy var palette = CommandPaletteModel(model: model, apps: apps, projects: projects)
     private lazy var timelineLayers = TimelineLayersModel(model: model)
+    private lazy var notifications = NotificationsModel(model: model, preferences: preferences)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
     private var settingsWindow: NSWindow?
     private var screensaverWindow: NSWindow?
+    private var idleWatch: Timer?
     /// Kept so its title can say what it will do rather than what it is.
     private var sidebarMenuItem: NSMenuItem?
     private var menuRefresh: Timer?
@@ -70,9 +72,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showWindow()
 
         // The menu is rebuilt when it opens, but the *title* has to keep up on its own.
+        // The Dock badge rides the same tick: it changes once an hour at most, so it does
+        // not need one of its own.
         menuRefresh = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.refreshStatusTitle() }
+            Task { @MainActor in
+                guard let self else { return }
+                self.refreshStatusTitle()
+                DockBadge.update(self.model, enabled: self.preferences.dockBadge)
+            }
         }
+
+        // Recaps are rewritten from the current settings on every launch, so a repeating
+        // one carries figures that are a day old at most rather than however old the app
+        // was when it was first switched on.
+        Task {
+            await notifications.refreshPermission()
+            await notifications.reschedule()
+        }
+
+        // And the screensaver's own idle watch, if it has been asked for.
+        idleWatch = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.checkScreensaverIdle() }
+        }
+    }
+
+    /// Drift the screensaver in after a spell of quiet.
+    ///
+    /// Only while Replay's own window is in front, which is the whole reason this is
+    /// tolerable: a thing that takes over the screen while you are working in something else
+    /// is a fright, and one that appears over the app you were already looking at is a
+    /// screensaver. Off by default either way.
+    private func checkScreensaverIdle() {
+        let minutes = preferences.screensaverIdleMinutes
+        guard minutes > 0, screensaverWindow == nil, NSApp.isActive,
+              window?.isKeyWindow == true else { return }
+        let idle = CGEventSource.secondsSinceLastEventType(
+            .hidSystemState, eventType: .init(rawValue: ~0)!
+        )
+        if idle >= Double(minutes) * 60 { openScreensaver() }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -472,7 +509,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let hosting = NSHostingController(
             rootView: SettingsView(
                 model: model, settings: settings, export: export,
-                preferences: preferences, contextual: contextual
+                preferences: preferences, contextual: contextual,
+                notifications: notifications
             )
         )
         // The window takes its size from the pane rather than the other way round, so

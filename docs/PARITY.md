@@ -88,7 +88,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | done | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and all nine layers — five that choose which sessions appear, one that governs the gaps, and three that add rows among the days |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
-| Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
+| Settings | partial | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. **No Welcome screen** to re-show, and the Shortcuts table is written out by hand rather than derived, so it can drift from what is actually bound |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
 | Dock badge | later | |
@@ -210,8 +210,8 @@ still claiming 8 of 20 routes after fourteen of them had landed.
 **All 20 of the reference's routes exist.** What remains is depth inside them, plus the
 platform work the brief asks for and the one thing blocked on paperwork.
 
-1. **Settings**: no Shortcuts tab, no notification digests, no Dock badge, no welcome
-   screen, and none of the screensaver's auto-start or exit-condition options.
+1. **Welcome / onboarding**, which Settings' "Show Welcome" button would re-open — the
+   button is absent because the surface is.
 2. **Whole surfaces the reference has and this does not**: the Welcome/onboarding flow,
    What's New, and Replay Day (a day played back as a short film).
 3. **Canvas** has no synced timeline side panel and no focus mode.

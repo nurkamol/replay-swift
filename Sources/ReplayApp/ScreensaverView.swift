@@ -19,6 +19,7 @@ struct ScreensaverView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drift = false
     @State private var height: CGFloat = 0
+    @State private var exitMonitor: Any?
     /// Loaded once, before the first layout.
     ///
     /// This was `@State` set in `onAppear` at first, and the loop came apart: the column was
@@ -115,6 +116,32 @@ struct ScreensaverView: View {
         // a target of zero and then re-targeted mid-flight.
         .onChange(of: height, initial: true) { _, measured in
             if measured > 0 && !drift { drift = true }
+        }
+        // Whatever the user chose dismisses it, after a moment's grace so the very click or
+        // keystroke that started it does not immediately end it. Escape and the close button
+        // are wired separately and always work, which is why the hint can promise Escape
+        // whatever these are set to.
+        .onAppear { armExit() }
+        .onDisappear {
+            if let exitMonitor { NSEvent.removeMonitor(exitMonitor) }
+            exitMonitor = nil
+        }
+    }
+
+    private func armExit() {
+        guard exitMonitor == nil else { return }
+        var mask: NSEvent.EventTypeMask = []
+        if preferences.screensaverExitOnMouseMove { mask.formUnion([.mouseMoved, .scrollWheel]) }
+        if preferences.screensaverExitOnClick { mask.formUnion([.leftMouseDown, .rightMouseDown]) }
+        if preferences.screensaverExitOnKey { mask.formUnion(.keyDown) }
+        guard !mask.isEmpty else { return }
+
+        let armedAt = Date()
+        exitMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { event in
+            if Date().timeIntervalSince(armedAt) > Design.Motion.screensaverArmSeconds {
+                onExit()
+            }
+            return event
         }
     }
 

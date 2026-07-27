@@ -21,11 +21,12 @@ struct SettingsView: View {
     let export: ExportModel
     @Bindable var preferences: Preferences
     let contextual: ContextualMemoryModel
+    let notifications: NotificationsModel
 
     /// The panes, in the order they are worth reaching for.
     private enum Pane: String, CaseIterable, Identifiable, Hashable {
         case general = "General", privacy = "Privacy", data = "Data"
-        case guide = "Guide", about = "About"
+        case shortcuts = "Shortcuts", guide = "Guide", about = "About"
 
         var id: String { rawValue }
 
@@ -34,6 +35,7 @@ struct SettingsView: View {
             case .general: "gearshape"
             case .privacy: "hand.raised"
             case .data: "internaldrive"
+            case .shortcuts: "keyboard"
             case .guide: "questionmark.circle"
             case .about: "info.circle"
             }
@@ -47,6 +49,7 @@ struct SettingsView: View {
             case .general: .gray
             case .privacy: .blue
             case .data: .indigo
+            case .shortcuts: .purple
             case .guide: .teal
             case .about: .secondary
             }
@@ -83,10 +86,11 @@ struct SettingsView: View {
         } detail: {
             Group {
                 switch pane {
-                case .general: GeneralTab(model: model, preferences: preferences, contextual: contextual)
+                case .general: GeneralTab(model: model, preferences: preferences, contextual: contextual, notifications: notifications)
                 case .privacy:
                     PrivacyTab(model: model, settings: settings, preferences: preferences)
                 case .data: DataTab(settings: settings, export: export, preferences: preferences)
+                case .shortcuts: ShortcutsTab()
                 case .guide: GuideTab()
                 case .about: AboutTab()
                 }
@@ -161,6 +165,30 @@ private struct GeneralTab: View {
     /// Reloaded when a memory setting changes, so the card on Today reflects the choice
     /// immediately rather than at the next launch.
     let contextual: ContextualMemoryModel
+    let notifications: NotificationsModel
+
+    /// Asking is what prompts macOS. Switching one *off* never asks — a request should only
+    /// ever follow from wanting the thing it is for.
+    private func enableNotification(_ on: Bool) async {
+        if on, notifications.permission != .granted {
+            let granted = await notifications.request()
+            if !granted {
+                preferences.dailySummary = false
+                preferences.weeklyRecap = false
+                preferences.onThisDayNotice = false
+            }
+        }
+        await notifications.reschedule()
+    }
+
+    /// "6:00 PM" — a plain hour, in the locale's own clock.
+    private static func hourLabel(_ hour: Int) -> String {
+        var parts = DateComponents()
+        parts.hour = hour
+        parts.minute = 0
+        guard let date = Calendar.current.date(from: parts) else { return "\(hour):00" }
+        return date.formatted(.dateTime.hour().minute())
+    }
 
     /// Zero is how "no goal" is spelled in the picker; `nil` is how it is stored.
     private var goalSelection: Binding<Int> {
@@ -217,6 +245,74 @@ private struct GeneralTab: View {
                         + " Reduce Transparency in System Settings overrides this and makes "
                         + "every surface solid. Menu bar only hides the Dock icon; Replay "
                         + "keeps recording either way."
+                )
+            }
+
+            Section {
+                Toggle("Dock badge", isOn: $preferences.dockBadge)
+                    .onChange(of: preferences.dockBadge) { _, on in
+                        DockBadge.update(model, enabled: on)
+                    }
+            } footer: {
+                Footnote(
+                    "Today's active hours on the Dock icon, once there is an hour to show. "
+                        + "A badge reading a few minutes is noise."
+                )
+            }
+
+            Section {
+                Picker("Drift in after", selection: $preferences.screensaverIdleMinutes) {
+                    Text("Never").tag(0)
+                    ForEach(Design.screensaverIdleChoices, id: \.self) { minutes in
+                        Text("\(minutes) minutes").tag(minutes)
+                    }
+                }
+                Toggle("Exit on mouse movement", isOn: $preferences.screensaverExitOnMouseMove)
+                Toggle("Exit on click", isOn: $preferences.screensaverExitOnClick)
+                Toggle("Exit on key press", isOn: $preferences.screensaverExitOnKey)
+            } header: {
+                Text("Screensaver")
+            } footer: {
+                Footnote(
+                    "Drifts in only while Replay's own window is in front, so it never "
+                        + "appears over another app. Escape and the close button always "
+                        + "dismiss it, whatever these say."
+                )
+            }
+
+            Section {
+                Toggle("Daily recap", isOn: $preferences.dailySummary)
+                    .onChange(of: preferences.dailySummary) { _, on in
+                        Task { await enableNotification(on) }
+                    }
+                Picker("At", selection: $preferences.dailySummaryHour) {
+                    ForEach(Design.notificationHours, id: \.self) { hour in
+                        Text(Self.hourLabel(hour)).tag(hour)
+                    }
+                }
+                .disabled(!preferences.dailySummary)
+                .onChange(of: preferences.dailySummaryHour) { _, _ in
+                    Task { await notifications.reschedule() }
+                }
+
+                Toggle("Weekly recap", isOn: $preferences.weeklyRecap)
+                    .onChange(of: preferences.weeklyRecap) { _, on in
+                        Task { await enableNotification(on) }
+                    }
+                Toggle("On this day", isOn: $preferences.onThisDayNotice)
+                    .onChange(of: preferences.onThisDayNotice) { _, on in
+                        Task { await enableNotification(on) }
+                    }
+            } header: {
+                Text("Notifications")
+            } footer: {
+                Footnote(
+                    notifications.permission == .denied
+                        ? "macOS is not allowing Replay to notify. Turn it on in System "
+                            + "Settings ▸ Notifications if you want these."
+                        : "Written from your own history and handed to macOS already "
+                            + "composed. Nothing is uploaded, and Replay asks for permission "
+                            + "only when you switch one of these on."
                 )
             }
 
@@ -671,5 +767,84 @@ private struct AboutTab: View {
         .padding(Design.Space.page)
         .frame(minWidth: Design.Layout.settingsDetailWidth)
         .frame(maxHeight: .infinity)
+    }
+}
+
+// ── shortcuts ─────────────────────────────────────────────────────────────────
+
+/// Every key Replay binds, in one place.
+///
+/// Written out rather than derived: the shortcuts live in an `NSMenu` built in `main.swift`
+/// and on individual views, and there is no way to ask the app what it has bound. That means
+/// this table can drift from the truth, which is the honest cost of having it — and a
+/// keyboard surface nobody can discover is worse than one that might be a version behind.
+private struct ShortcutsTab: View {
+    private struct Row: Identifiable {
+        var id: String { action }
+        var action: String
+        var keys: [String]
+    }
+
+    private let groups: [(String, [Row])] = [
+        ("Getting around", [
+            Row(action: "Go to anything", keys: ["⌘", "K"]),
+            Row(action: "Find", keys: ["⌘", "F"]),
+            Row(action: "Today", keys: ["⌘", "1"]),
+            Row(action: "Apps", keys: ["⌘", "2"]),
+            Row(action: "This Week", keys: ["⌘", "3"]),
+            Row(action: "Timeline", keys: ["⌘", "4"]),
+            Row(action: "Search", keys: ["⌘", "5"]),
+            Row(action: "Memories", keys: ["⌘", "6"]),
+            Row(action: "Collections", keys: ["⌘", "7"]),
+            Row(action: "Projects", keys: ["⌘", "8"]),
+            Row(action: "Story", keys: ["⌘", "9"]),
+            Row(action: "Back", keys: ["⌘", "["]),
+        ]),
+        ("The window", [
+            Row(action: "Show or hide the sidebar", keys: ["⌃", "⌘", "S"]),
+            Row(action: "Screensaver", keys: ["⇧", "⌘", "S"]),
+            Row(action: "Settings", keys: ["⌘", ","]),
+            Row(action: "Close", keys: ["⌘", "W"]),
+        ]),
+        ("On the Canvas", [
+            Row(action: "Zoom in", keys: ["⌘", "+"]),
+            Row(action: "Zoom out", keys: ["⌘", "−"]),
+            Row(action: "Fit to the window", keys: ["⌘", "0"]),
+        ]),
+        ("Anywhere", [
+            Row(action: "Move through results", keys: ["↑", "↓"]),
+            Row(action: "Open what is focused", keys: ["↩"]),
+            Row(action: "Close what is open", keys: ["esc"]),
+        ]),
+    ]
+
+    var body: some View {
+        PaneForm {
+            ForEach(groups, id: \.0) { title, rows in
+                Section(title) {
+                    ForEach(rows) { row in
+                        LabeledContent(row.action) {
+                            HStack(spacing: Design.Space.tight) {
+                                ForEach(row.keys, id: \.self) { key in
+                                    Text(key)
+                                        .font(Design.Text.detail)
+                                        .padding(.horizontal, Design.Pill.countHorizontal)
+                                        .padding(.vertical, Design.Pill.countVertical)
+                                        .background(
+                                            RoundedRectangle(
+                                                cornerRadius: Design.Radius.small,
+                                                style: .continuous
+                                            )
+                                            .fill(Design.Colour.fill)
+                                        )
+                                }
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel(row.keys.joined(separator: " "))
+                        }
+                    }
+                }
+            }
+        }
     }
 }

@@ -20,6 +20,12 @@ enum Design {
     /// rather than a slider: four named choices are easier to mean than a continuum.
     static let memoryThresholds: [Double] = [0.2, 0.4, 0.55, 0.8]
 
+    /// How long the window may sit untouched before the screensaver drifts in.
+    static let screensaverIdleChoices = [2, 5, 10, 20]
+    /// The hours a daily recap can be delivered at. Evening-weighted, because a recap of a
+    /// day is worth reading once the day has happened.
+    static let notificationHours = [12, 15, 17, 18, 19, 20, 21, 22]
+
 
     // ── spacing ───────────────────────────────────────────────────────────────
 
@@ -223,6 +229,10 @@ enum Design {
         /// How long one pass of the screensaver takes, and how long it takes when someone
         /// has asked the system to reduce motion — slower rather than stopped, because a
         /// screensaver that does not move is a poster.
+        /// A moment's grace before the screensaver will take a dismissal, so the click or
+        /// keystroke that started it does not end it in the same breath.
+        static let screensaverArmSeconds: TimeInterval = 0.5
+
         static let screensaverDriftSeconds: Double = 90
         static let screensaverSlowSeconds: Double = 240
     }
