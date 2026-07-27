@@ -138,6 +138,7 @@ struct RootView: View {
     let museum: MuseumModel
     let canvas: CanvasModel
     let contextual: ContextualMemoryModel
+    @Bindable var palette: CommandPaletteModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -155,6 +156,38 @@ struct RootView: View {
     }
 
     var body: some View {
+        // Over everything, because the palette is a way to *leave* whatever is under it. A
+        // scrim rather than a dialog: the app stays visible behind, which is what says the
+        // palette is a lens on it rather than a mode you have entered.
+        ZStack(alignment: .top) {
+            window
+            paletteOverlay
+        }
+        .animation(motion.animation(Design.Motion.settle), value: palette.open)
+        // Escape closes it wherever focus happens to be — including inside the field, where
+        // a `keyboardShortcut` on a button would never see the key. `nil` when it is shut,
+        // so Escape still reaches whatever else wanted it.
+        .onExitCommand(perform: escape)
+    }
+
+    private var escape: (() -> Void)? {
+        palette.open ? { palette.open = false } : nil
+    }
+
+    private var window: some View {
+        split
+            .onChange(of: navigation.surface, initial: true) { _, new in
+                // Each surface reads the store directly rather than following the tracker,
+                // so it reloads when shown — a session deleted elsewhere should not linger
+                // as a row that opens onto nothing.
+                reload(new)
+            }
+            .preferredColorScheme(preferences.appearance.colorScheme)
+    }
+
+    /// The window itself. Split out of `body` because the two together were more than the
+    /// type checker would take.
+    private var split: some View {
         NavigationSplitView(columnVisibility: columnVisibility) {
             sidebar
         } detail: {
@@ -211,24 +244,52 @@ struct RootView: View {
                     }
             }
         }
-        .onChange(of: navigation.surface, initial: true) { _, new in
-            // Each surface reads the store directly rather than following the tracker, so
-            // it reloads when shown — a session deleted elsewhere should not linger as a
-            // row that opens onto nothing.
-            switch new {
-            case .timeline: history.reload()
-            case .search: search.load()
-            case .memories: memories.load()
-            case .collections: collections.load()
-            case .week: week.load()
-            case .apps: apps.load()
-            case .projects: projects.load()
-            case .story: story.load()
-            case .canvas: canvas.load()
-            case .today: break
-            }
+    }
+
+    private func reload(_ surface: Navigation.Surface) {
+        switch surface {
+        case .timeline: history.reload()
+        case .search: search.load()
+        case .memories: memories.load()
+        case .collections: collections.load()
+        case .week: week.load()
+        case .apps: apps.load()
+        case .projects: projects.load()
+        case .story: story.load()
+        case .canvas: canvas.load()
+        case .today: break
         }
-        .preferredColorScheme(preferences.appearance.colorScheme)
+    }
+
+    @ViewBuilder
+    private var paletteOverlay: some View {
+        if palette.open {
+            ZStack(alignment: .top) {
+                Design.Colour.scrim
+                    .ignoresSafeArea()
+                    .onTapGesture { close() }
+                CommandPaletteView(palette: palette, onRun: run)
+                    .padding(.top, Design.Layout.paletteTopInset)
+            }
+            .transition(motion.transition(.opacity.combined(with: .move(edge: .top))))
+        }
+    }
+
+    private func close() { palette.open = false }
+
+    /// Run what the palette was asked for, then get out of the way.
+    private func run(_ action: CommandPaletteModel.Item.Action) {
+        close()
+        switch action {
+        case .surface(let surface): navigation.show(surface)
+        case .app(let bundleID): navigation.open(app: bundleID)
+        case .project(let id): navigation.open(project: id)
+        case .day(let day): navigation.open(day: day)
+        case .screensaver: onOpenScreensaver()
+        case .settings: onOpenSettings()
+        case .toggleSidebar:
+            withAnimation(motion.animation(Design.Motion.settle)) { navigation.toggleSidebar() }
+        }
     }
 
     /// One entry in the sidebar. The rows are built by hand rather than from `allCases`

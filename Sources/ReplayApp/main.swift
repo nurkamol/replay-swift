@@ -40,6 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var museum = MuseumModel(model: model, projects: projects)
     private lazy var canvas = CanvasModel(model: model, projects: projects, story: story)
     private lazy var contextual = ContextualMemoryModel(model: model, projects: projects, preferences: preferences)
+    private lazy var palette = CommandPaletteModel(model: model, apps: apps, projects: projects)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -188,6 +189,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         viewMenu.addItem(.separator())
         viewMenu.addItem(withTitle: "Today", action: #selector(openToday), keyEquivalent: "1")
             .target = self
+        let paletteItem = viewMenu.addItem(
+            withTitle: "Go to Anything…", action: #selector(openPalette), keyEquivalent: "k"
+        )
+        paletteItem.target = self
+        viewMenu.addItem(.separator())
         viewMenu.addItem(withTitle: "Apps", action: #selector(openApps), keyEquivalent: "2")
             .target = self
         viewMenu.addItem(withTitle: "This Week", action: #selector(openWeek), keyEquivalent: "3")
@@ -297,6 +303,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 museum: museum,
                 canvas: canvas,
                 contextual: contextual,
+                palette: palette,
                 onOpenSettings: { [weak self] in self?.openSettings() },
                 onOpenScreensaver: { [weak self] in self?.openScreensaver() }
             )
@@ -397,6 +404,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         projects.load()
         navigation.show(.projects)
         showWindow()
+    }
+
+    @objc private func openPalette() {
+        showWindow()
+        palette.open = true
     }
 
     @objc private func openApps() {

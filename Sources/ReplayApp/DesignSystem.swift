@@ -271,6 +271,15 @@ enum Design {
         /// project is never mistaken for the app whose icon it borrows.
         static let canvasRingQuiet: Double = 0.35
 
+        /// The palette floats, so it casts something. Weighted rather than dark: a hard
+        /// shadow would make it a dialog, and it is not one.
+        static let paletteShadow = Color.black.opacity(0.35)
+        static let scrim = Color.black.opacity(0.18)
+        /// The row Return would activate. The accent rather than a grey fill: on a material
+        /// panel a quaternary wash is almost invisible, and the whole point of the row is
+        /// that you can see which one it is without looking for it.
+        static let paletteHighlight = AnyShapeStyle(Color.accentColor.opacity(0.30))
+
         /// The screensaver. Everything is white at a chosen weight rather than a palette:
         /// the room it plays in is dark, and colour would be the thing asking for attention.
         static let screensaverBackground = Color(red: 0.027, green: 0.027, blue: 0.035)
@@ -475,6 +484,13 @@ enum Design {
         static let canvasMinZoom: CGFloat = 0.4
         static let canvasMaxZoom: CGFloat = 3
         static let canvasPreviewWidth: CGFloat = 300
+        /// The command palette: wide enough for a sentence of a subtitle, tall enough for a
+        /// handful of results without becoming a window of its own.
+        static let paletteWidth: CGFloat = 560
+        static let paletteMaxHeight: CGFloat = 380
+        static let paletteShadowRadius: CGFloat = 30
+        static let paletteShadowOffset: CGFloat = 12
+        static let paletteTopInset: CGFloat = 120
         /// One press of zoom in or out. A ratio rather than a step, so each press feels the
         /// same however far in you already are.
         static let canvasZoomStep: CGFloat = 1.35
