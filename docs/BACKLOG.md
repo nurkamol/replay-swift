@@ -36,13 +36,30 @@ the product.
       · Done when: the suite compares all sixteen question-and-answer pairs character for
         character, and changing one word fails it by name.
 
-- [ ] **Settings rows are labelled differently throughout.** `S`
-      "Appearance" against upstream's "Theme", "Open on" against "Open to", "Menu bar only"
-      against "Menu bar mode". Every feature exists; the words are not the reference's.
-      · Same treatment: into `spec/`, compared directly.
+- [x] **Settings rows are labelled differently throughout.** `S` — done 2026-07-28.
+      Eight were wrong. `spec/settings-copy.json` carries all 36 of the reference's labels
+      and `SettingsRow` in `ReplayCore` carries the 27 this port has; the suite checks every
+      one belongs. Comparing the two lists is what surfaced the two items below.
+
+- [ ] **A separate "Today in History" toggle.** `S`
+      Upstream has two independent switches where this port has one. `todayInHistory` shows
+      the memory card on Today and the Memories view in the sidebar; `contextualMemories` is
+      the quieter thing that surfaces a memory when it becomes relevant. This port has only
+      the second, so Living Home reads `contextualMemories` where it should read
+      `todayInHistory` — turning contextual memories off currently also removes
+      today-in-history from the hero rotation, which is not what either switch means.
+      · Found by diffing the reference's row labels against ours.
+
+- [ ] **Reset Replay.** `M`
+      "Deletes all activity, settings, and preferences, then returns to the welcome screen."
+      This port has Clear History, which removes activity and leaves every preference behind,
+      so there is no way back to a first run. Destructive, so it wants the same confirmation
+      Clear History has — SPEC §8: name what it will remove.
 
 - [ ] **Almost no row says what it does.** `M`
-      The reference carries **39** per-row descriptions — "Hide the Dock icon and keep Replay
+      The 29 that exist are already in `spec/settings-copy.json` beside their labels, so this
+      is now rendering rather than transcribing.
+      The reference carries **29** per-row descriptions — "Hide the Dock icon and keep Replay
       running in the menu bar", "Appears once you've been active an hour". This port has 12
       footnotes and tooltips between them. Every control works and most are unexplained.
 
@@ -137,5 +154,7 @@ Kept rather than deleted, so the list shows its own history.
 - [x] **`design-audit.mjs` ties `DesignSystem` to the parity mirror**, closing the hole where
       a value could move in the app and the suite would go on agreeing with itself.
 - [x] **The Guide's sixteen answers**, generated rather than retyped. 2026-07-28.
+- [x] **Settings row labels**, eight of them wrong, now checked against all 36 of the
+      reference's. 2026-07-28.
 - [x] **A reopened day's story and chapter context** — found already built while starting to
       rebuild it. The ledger was wrong, not the code. 2026-07-28.

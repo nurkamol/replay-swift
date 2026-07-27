@@ -616,6 +616,37 @@ function checkRedeclaredDrift(current) {
   }
 }
 
+// ── Settings copy ─────────────────────────────────────────────────────────────
+//
+// Every row's label and the line under it. Words a person reads, so the same argument as the
+// Guide: generated rather than retyped. Keyed by label because that is what identifies a row
+// across two codebases — this port's controls are SwiftUI `Toggle`s and `Picker`s and share
+// no structure with a `SettingsRow`.
+//
+// Not every row here has a counterpart yet, and that is useful rather than a problem: the
+// diff is the list of what is missing.
+
+const settingsCopy = (() => {
+  const src = read("renderer/settings/settings-view.tsx");
+  // A row's description is not always the next attribute — some carry an id or a `for`
+  // between the two — so each label claims the first description that appears before the
+  // next label does. Requiring adjacency quietly dropped eleven of them.
+  const labels = [...src.matchAll(/label="((?:[^"\\]|\\.)*)"/g)];
+  const rows = labels.map((match, index) => {
+    const from = match.index + match[0].length;
+    const to = index + 1 < labels.length ? labels[index + 1].index : src.length;
+    const description = src.slice(from, to).match(/description="((?:[^"\\]|\\.)*)"/);
+    return { label: match[1], description: description ? description[1] : null };
+  });
+  if (rows.length === 0) problems.push("settings-view.tsx: no labelled rows found");
+  const seen = new Set();
+  for (const row of rows) {
+    if (seen.has(row.label)) problems.push(`settings-view.tsx: two rows labelled "${row.label}"`);
+    seen.add(row.label);
+  }
+  return rows;
+})();
+
 // ── the Guide ─────────────────────────────────────────────────────────────────
 //
 // Sixteen questions and their answers, lifted whole. This is the largest single body of
@@ -2220,6 +2251,11 @@ for (const fixture of fixtures) {
 }
 
 writeFileSync(
+  join(SPEC, "settings-copy.json"),
+  JSON.stringify({ _generated: provenance, rows: settingsCopy }, null, 2) + "\n",
+);
+
+writeFileSync(
   join(SPEC, "guide.json"),
   JSON.stringify({ _generated: provenance, entries: guide }, null, 2) + "\n",
 );
@@ -2242,6 +2278,7 @@ console.log(`spec/ regenerated from Glaze ${glazeVersion} (${glazeCommit})`);
 console.log(`  schema.sql        ${schemaParts.length} statement blocks`);
 console.log(`  constants.json    ${Object.keys(constants).length} groups`);
 console.log(`  fixtures/         ${fixtures.length} scenarios`);
+console.log(`  settings-copy.json ${settingsCopy.length} labelled rows`);
 console.log(`  guide.json        ${guide.length} questions`);
 console.log(`  grouping-and-export.json  ${exportFixture.grouping.expected.length} days, ${Object.keys(exportFixture.report.expected).length} report formats`);
 console.log(`\nReview 'git diff spec/' — anything that changed is work for the native port.`);

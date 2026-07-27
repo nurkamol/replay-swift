@@ -230,6 +230,16 @@ public enum ParityKit {
         public let motion: Motion
     }
 
+    /// Every labelled row in the reference's Settings, and the line under it. See
+    /// `spec/settings-copy.json`.
+    public struct SettingsCopySpec: Decodable, Sendable {
+        public struct Row: Decodable, Sendable {
+            public let label: String
+            public let description: String?
+        }
+        public let rows: [Row]
+    }
+
     /// The Guide's sixteen questions and answers, lifted whole from the reference. The
     /// largest body of copy in the app, and all of it read by a person. See `spec/guide.json`.
     public struct GuideSpec: Decodable, Sendable {
@@ -925,6 +935,7 @@ public enum ParityKit {
         let root = specRoot ?? defaultSpecRoot()
         let constants = try load(Constants.self, "constants.json", from: root)
         let guideSpec = try load(GuideSpec.self, "guide.json", from: root)
+        let settingsCopy = try load(SettingsCopySpec.self, "settings-copy.json", from: root)
 
         var checks: [Check] = []
         func check(_ group: String, _ what: String, _ passed: Bool, _ detail: String? = nil) {
@@ -1071,6 +1082,13 @@ public enum ParityKit {
             WeekSummary.workflowLimit, constants.week.workflowLimit
         )
         equal(g1, "the hours the day-arc is marked at", WeekSummary.arcTicks, constants.week.arcTicks)
+
+        // Settings row names. Only the rows this port has — the contract carries all of the
+        // reference's, and the difference is the backlog rather than a failure.
+        let referenceLabels = Set(settingsCopy.rows.map(\.label))
+        for row in SettingsRow.allCases {
+            equal(g1, "Settings row: \(row.rawValue)", referenceLabels.contains(row.label), true)
+        }
 
         // The Guide, word for word. Sixteen answers a person reads, which SPEC §8 calls the
         // product — and the place a paraphrase would be least visible and most costly, since

@@ -257,7 +257,7 @@ private struct GeneralTab: View {
     var body: some View {
         PaneForm {
             Section {
-                Picker("Appearance", selection: $preferences.appearance) {
+                Picker(SettingsRow.theme.label, selection: $preferences.appearance) {
                     ForEach(Appearance.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.inline)
@@ -282,11 +282,11 @@ private struct GeneralTab: View {
                     ForEach(SurfaceStyle.allCases) { Text($0.label).tag($0) }
                 }
 
-                Picker("Open on", selection: $preferences.launchSurface) {
+                Picker(SettingsRow.openTo.label, selection: $preferences.launchSurface) {
                     ForEach(LaunchSurface.allCases) { Text($0.label).tag($0) }
                 }
 
-                Toggle("Menu bar only", isOn: $preferences.menuBarOnly)
+                Toggle(SettingsRow.menuBarMode.label, isOn: $preferences.menuBarOnly)
                     .onChange(of: preferences.menuBarOnly) { _, on in
                         // Applied immediately: a setting that needs a restart to mean
                         // anything is a setting the user cannot trust.
@@ -311,7 +311,7 @@ private struct GeneralTab: View {
             }
 
             Section {
-                Toggle("Dock badge", isOn: $preferences.dockBadge)
+                Toggle(SettingsRow.dockBadge.label, isOn: $preferences.dockBadge)
                     .onChange(of: preferences.dockBadge) { _, on in
                         DockBadge.update(model, enabled: on)
                     }
@@ -323,15 +323,15 @@ private struct GeneralTab: View {
             }
 
             Section {
-                Picker("Drift in after", selection: $preferences.screensaverIdleMinutes) {
+                Picker(SettingsRow.autoStartWhenIdle.label, selection: $preferences.screensaverIdleMinutes) {
                     Text("Never").tag(0)
                     ForEach(Design.screensaverIdleChoices, id: \.self) { minutes in
                         Text("\(minutes) minutes").tag(minutes)
                     }
                 }
-                Toggle("Exit on mouse movement", isOn: $preferences.screensaverExitOnMouseMove)
-                Toggle("Exit on click", isOn: $preferences.screensaverExitOnClick)
-                Toggle("Exit on key press", isOn: $preferences.screensaverExitOnKey)
+                Toggle(SettingsRow.exitOnMouseMovement.label, isOn: $preferences.screensaverExitOnMouseMove)
+                Toggle(SettingsRow.exitOnClick.label, isOn: $preferences.screensaverExitOnClick)
+                Toggle(SettingsRow.exitOnKeyPress.label, isOn: $preferences.screensaverExitOnKey)
             } header: {
                 Text("Screensaver")
             } footer: {
@@ -343,7 +343,7 @@ private struct GeneralTab: View {
             }
 
             Section {
-                Toggle("Daily recap", isOn: $preferences.dailySummary)
+                Toggle(SettingsRow.dailySummary.label, isOn: $preferences.dailySummary)
                     .onChange(of: preferences.dailySummary) { _, on in
                         Task { await enableNotification(on) }
                     }
@@ -357,11 +357,11 @@ private struct GeneralTab: View {
                     Task { await notifications.reschedule() }
                 }
 
-                Toggle("Weekly recap", isOn: $preferences.weeklyRecap)
+                Toggle(SettingsRow.weeklyRecap.label, isOn: $preferences.weeklyRecap)
                     .onChange(of: preferences.weeklyRecap) { _, on in
                         Task { await enableNotification(on) }
                     }
-                Toggle("On this day", isOn: $preferences.onThisDayNotice)
+                Toggle(SettingsRow.onThisDay.label, isOn: $preferences.onThisDayNotice)
                     .onChange(of: preferences.onThisDayNotice) { _, on in
                         Task { await enableNotification(on) }
                     }
@@ -379,12 +379,12 @@ private struct GeneralTab: View {
             }
 
             Section {
-                Toggle("Surface memories on Today", isOn: $preferences.contextualMemories)
+                Toggle(SettingsRow.surfaceMemories.label, isOn: $preferences.contextualMemories)
                     .onChange(of: preferences.contextualMemories) { _, _ in contextual.load() }
 
                 // The threshold is the user's control over how often Replay speaks, so it is
                 // named in words rather than shown as a number. "0.55" tells nobody anything.
-                Picker("How sure Replay must be", selection: $preferences.memoryThreshold) {
+                Picker(SettingsRow.howOftenToSpeak.label, selection: $preferences.memoryThreshold) {
                     ForEach(Design.memoryThresholds, id: \.self) { threshold in
                         Text(confidenceThresholdLabel(threshold)).tag(threshold)
                     }
@@ -392,7 +392,7 @@ private struct GeneralTab: View {
                 .disabled(!preferences.contextualMemories)
                 .onChange(of: preferences.memoryThreshold) { _, _ in contextual.load() }
 
-                Toggle("Morning briefing", isOn: $preferences.morningBriefing)
+                Toggle(SettingsRow.morningBriefing.label, isOn: $preferences.morningBriefing)
                     .onChange(of: preferences.morningBriefing) { _, _ in contextual.load() }
 
                 if !preferences.dismissedMemories.isEmpty {
@@ -413,7 +413,7 @@ private struct GeneralTab: View {
             }
 
             Section {
-                Picker("Daily goal", selection: goalSelection) {
+                Picker(SettingsRow.dailyFocus.label, selection: goalSelection) {
                     Text("No goal").tag(0)
                     ForEach(Goals.presetMinutes, id: \.self) {
                         Text(Goals.format($0)).tag($0)
@@ -427,7 +427,7 @@ private struct GeneralTab: View {
 
                 // Disabled with no goal set. Before, typing here silently *created* one —
                 // a control that changed a setting it appeared unrelated to.
-                LabeledContent("Custom target") {
+                LabeledContent(SettingsRow.customTarget.label) {
                     HStack(spacing: Design.Space.snug) {
                         TextField("", value: customMinutes, format: .number)
                             .labelsHidden()
@@ -450,7 +450,7 @@ private struct GeneralTab: View {
             }
 
             Section {
-                Toggle("Activity tracking", isOn: Binding(
+                Toggle(SettingsRow.activityTracking.label, isOn: Binding(
                     get: { model.isRecording },
                     set: { model.setTracking($0) }
                 ))
@@ -502,10 +502,10 @@ private struct PrivacyTab: View {
 
             if let info = settings.info {
                 Section {
-                    LabeledContent("Applications", value: "\(info.trackedApps)")
-                    LabeledContent("Excluded", value: "\(info.excludedApps)")
-                    LabeledContent("Events recorded", value: "\(info.eventCount)")
-                    LabeledContent("On disk") {
+                    LabeledContent(SettingsRow.tracked.label, value: "\(info.trackedApps)")
+                    LabeledContent(SettingsRow.excluded.label, value: "\(info.excludedApps)")
+                    LabeledContent(SettingsRow.events.label, value: "\(info.eventCount)")
+                    LabeledContent(SettingsRow.onDisk.label) {
                         VStack(alignment: .trailing, spacing: 0) {
                             Text(formatBytes(info.sizeBytes)).monospacedDigit()
                             Text(
@@ -697,7 +697,7 @@ private struct DataTab: View {
             }
 
             Section {
-                Picker("Keep activity for", selection: $preferences.retentionDays) {
+                Picker(SettingsRow.keepActivityFor.label, selection: $preferences.retentionDays) {
                     ForEach(Preferences.retentionOptions, id: \.self) {
                         Text(Preferences.retentionLabel($0)).tag($0)
                     }
