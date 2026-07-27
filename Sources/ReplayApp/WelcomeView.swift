@@ -151,6 +151,11 @@ struct WelcomeView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                // Claims the rest of the row, so every switch lands on the same right edge
+                // and every glyph on the same left one. Without it a `Toggle` sizes its
+                // label to its content, and five rows of different-length text produced
+                // five different indents.
+                Spacer(minLength: Design.Space.inline)
             }
         }
         .toggleStyle(.switch)

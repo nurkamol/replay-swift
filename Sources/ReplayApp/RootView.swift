@@ -161,12 +161,17 @@ struct RootView: View {
         // Over everything, because the palette is a way to *leave* whatever is under it. A
         // scrim rather than a dialog: the app stays visible behind, which is what says the
         // palette is a lens on it rather than a mode you have entered.
-        ZStack(alignment: .top) {
-            window
-            paletteOverlay
-            // Over everything and not dismissible by clicking away: this is the one screen
-            // that has to be read, and it is shown exactly once.
-            if !preferences.seenWelcome {
+        Group {
+            // Instead of the app rather than over it. As an overlay the toolbar still drew
+            // above it — "Today · Monday, July 27" and the sidebar button sitting on top of
+            // a screen that has not been introduced yet, which read as the app already open
+            // behind a sheet. A first run is the whole window.
+            if preferences.seenWelcome {
+                ZStack(alignment: .top) {
+                    window
+                    paletteOverlay
+                }
+            } else {
                 WelcomeView(
                     model: model, preferences: preferences, notifications: notifications,
                     onFinish: {
@@ -178,6 +183,7 @@ struct RootView: View {
                 .transition(motion.transition(.opacity))
             }
         }
+        .animation(motion.animation(Design.Motion.settle), value: preferences.seenWelcome)
         .animation(motion.animation(Design.Motion.palette), value: palette.open)
         // Escape closes it wherever focus happens to be — including inside the field, where
         // a `keyboardShortcut` on a button would never see the key. `nil` when it is shut,
