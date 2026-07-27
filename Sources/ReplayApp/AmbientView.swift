@@ -19,8 +19,16 @@ struct AmbientView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var now = Date()
-    @State private var breathing = false
     @State private var exitMonitor: Any?
+    /// The last application seen in front, held across going idle.
+    ///
+    /// `tracker.current` is nil while away or paused, and *ambient mode is the one surface
+    /// where being away is the normal state* — it is a screen you look at without touching
+    /// the keyboard, so the away threshold trips while you are sitting there reading it.
+    /// Without this the row vanished the moment you stopped typing and came back when you
+    /// moved the mouse, and the centred stack reflowed each way. Holding the last one is
+    /// also just truer: the application in front has not changed, only your hands have.
+    @State private var lastApp: (name: String, bundleID: String?, appPath: String?)?
 
     /// The application in front right now, and enough about it to draw its icon.
     ///
@@ -30,7 +38,7 @@ struct AmbientView: View {
     /// being frontmost is what put it there. No match means no icon rather than no row: the
     /// name is the information and the icon is the ornament.
     private var currentApp: (name: String, bundleID: String?, appPath: String?)? {
-        guard let current = model.current else { return nil }
+        guard let current = model.current else { return lastApp }
         for item in model.timeline.reversed() {
             guard case .session(let session) = item else { continue }
             if let app = session.apps.first(where: { $0.applicationName == current.applicationName }) {
@@ -117,7 +125,6 @@ struct AmbientView: View {
         }
         .preferredColorScheme(.dark)
         .onAppear {
-            breathing = true
             // Escape leaves, wherever focus happens to be — a borderless window at this
             // level has no title bar and no other way out but the disc.
             exitMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
@@ -138,6 +145,10 @@ struct AmbientView: View {
         ) { tick in
             now = tick
             model.reload()
+            if let seen = currentApp { lastApp = seen }
+        }
+        .onChange(of: model.current?.applicationName, initial: true) { _, _ in
+            if let seen = currentApp { lastApp = seen }
         }
     }
 
@@ -191,18 +202,18 @@ struct AmbientView: View {
                 )
                 .strokeBorder(.white.opacity(Design.Colour.ambientIconRing))
             )
-            // The one breath on this screen. Driven off a repeating animation rather than a
-            // clock because nothing else here is animating — there is no frame loop to hang
-            // it on, and starting one for a six-second swell would be the wrong trade.
-            .scaleEffect(breathing && !reduceMotion ? Design.Motion.ambientBreatheScale : 1)
-            .opacity(breathing && !reduceMotion ? 1 : Design.Motion.ambientBreatheFloor)
-            .animation(
-                reduceMotion
-                    ? nil
-                    : .easeInOut(duration: Design.Motion.ambientBreatheSeconds / 2)
-                        .repeatForever(autoreverses: true),
-                value: breathing
-            )
+            // The one breath on this screen.
+            //
+            // A `phaseAnimator` rather than a `repeatForever` implicit animation. The
+            // repeating version leaves a transaction live on this subtree for as long as
+            // the screen is open, so *any* other change here — a row appearing, the
+            // headline's width changing by a digit — gets animated by it too, and a
+            // reflow that should be instant slides. `phaseAnimator` owns its own loop and
+            // animates nothing but the phase.
+            //
+            // Anchored explicitly at the centre. It is the default, and stating it is
+            // cheap next to the class of bug where an icon swells out of one corner.
+            .modifier(Breathing(active: !reduceMotion))
 
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
                 Text("Now")
@@ -231,5 +242,29 @@ struct AmbientView: View {
     private func shortTimeLabel(_ millis: Int64) -> String {
         Date(timeIntervalSince1970: Double(millis) / 1000)
             .formatted(.dateTime.hour().minute())
+    }
+}
+
+/// One slow swell, forever, and nothing else.
+///
+/// Its own modifier so the phases are stated once and the reduced-motion branch is a plain
+/// `if` rather than a nil animation handed to an animator that would still cycle.
+private struct Breathing: ViewModifier {
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        if active {
+            content.phaseAnimator([false, true]) { view, swollen in
+                view
+                    .scaleEffect(
+                        swollen ? Design.Motion.ambientBreatheScale : 1, anchor: .center
+                    )
+                    .opacity(swollen ? 1 : Design.Motion.ambientBreatheFloor)
+            } animation: { _ in
+                .easeInOut(duration: Design.Motion.ambientBreatheSeconds / 2)
+            }
+        } else {
+            content
+        }
     }
 }
