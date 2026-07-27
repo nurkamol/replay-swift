@@ -1007,7 +1007,7 @@ struct CanvasView: View {
             .padding(Design.Space.inline)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .accessibilityHint("Opens the day this happened on")
     }
 

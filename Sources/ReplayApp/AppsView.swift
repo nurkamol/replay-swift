@@ -156,7 +156,7 @@ private struct AppStatRow: View {
             .padding(.vertical, Design.Space.card)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .focusable()
         .disabled(stat.bundleIdentifier == nil)
         .onHover { hovering = $0 }

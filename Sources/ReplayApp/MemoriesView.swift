@@ -110,7 +110,7 @@ struct MemoriesView: View {
                 .padding(.vertical, Design.Space.row)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .card(border: Design.Colour.border)
         .disabled(memories.pool.isEmpty)
         .help("Open a day worth rediscovering")
@@ -147,7 +147,7 @@ struct MemoriesView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                     .disabled(moment.dayStart == nil)
                     .card(border: Design.Colour.borderQuiet)
                     .accessibilityElement(children: .combine)
@@ -222,7 +222,7 @@ private struct MemoryRow: View {
             .padding(Design.Space.cardRoomy)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .card(border: Design.Colour.fillStrong)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
@@ -265,7 +265,7 @@ struct TodayInHistoryCard: View {
             .padding(Design.Space.cardRoomy)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .card(background: Design.Colour.surface, border: Design.Colour.fill)
     }
 

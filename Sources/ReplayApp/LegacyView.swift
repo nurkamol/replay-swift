@@ -149,7 +149,7 @@ struct LegacyView: View {
                         .padding(.vertical, Design.Space.snug)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                     .disabled(!app.key.contains("."))
                 }
             }

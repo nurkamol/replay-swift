@@ -146,7 +146,7 @@ struct ProjectDetailView: View {
             .padding(.vertical, Design.Space.inline)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .accessibilityHint("Opens the day this happened")
     }
 
@@ -175,7 +175,7 @@ struct ProjectDetailView: View {
                         .padding(.vertical, Design.Space.snug)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                     .disabled(app.bundleIdentifier == nil)
                 }
             }

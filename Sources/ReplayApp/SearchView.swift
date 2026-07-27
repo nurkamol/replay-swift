@@ -266,7 +266,7 @@ struct SearchView: View {
             .padding(Design.Space.row)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .background(Design.Colour.surfaceQuiet, in: RoundedRectangle(
             cornerRadius: Design.Radius.control, style: .continuous
         ))
@@ -566,7 +566,7 @@ struct SearchView: View {
             .padding(Design.Space.row)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .background(Design.Colour.surfaceQuiet, in: RoundedRectangle(
             cornerRadius: Design.Radius.control, style: .continuous
         ))

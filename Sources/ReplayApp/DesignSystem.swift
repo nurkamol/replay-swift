@@ -192,6 +192,10 @@ enum Design {
         static var entering: Animation { .timingCurve(easeSoft, duration: enterSeconds) }
         /// A press, which should feel like contact rather than animation.
         static var press: Animation { .timingCurve(easeStandard, duration: pressSeconds) }
+        /// How far a pressed row gives. The reference's own `active:scale-[0.99]` — small
+        /// enough that nobody would call it a movement, which is the point: it is contact,
+        /// not choreography.
+        static let pressScale: CGFloat = 0.99
 
         /// A list settles one row every `stagger`, capped so a long list finishes rather
         /// than trickling in for seconds.
@@ -359,6 +363,17 @@ enum Design {
         static let surfaceInset = AnyShapeStyle(.quaternary.opacity(0.30))
         static let fill = AnyShapeStyle(.quaternary.opacity(0.40))
         static let fillStrong = AnyShapeStyle(.quaternary.opacity(0.50))
+
+        /// A row under the pointer, and a row being pressed. Behind the row's own surface
+        /// rather than over it, so what changes is the card's ground and never the legibility
+        /// of what is written on it.
+        ///
+        /// Higher than they look like they should be, and measured rather than chosen: a
+        /// card already carries a translucent fill of its own, which absorbs most of what is
+        /// put behind it. At 0.14 the hover moved the picture by 0.012 mean brightness —
+        /// present in a difference, invisible to a person.
+        static let rowHover = AnyShapeStyle(.quaternary.opacity(0.26))
+        static let rowPressed = AnyShapeStyle(.quaternary.opacity(0.40))
 
         static let border = AnyShapeStyle(.quaternary.opacity(0.50))
         static let borderQuiet = AnyShapeStyle(.quaternary.opacity(0.40))
@@ -1104,6 +1119,77 @@ extension EnvironmentValues {
     /// fills with a `Color`, and `AnyShapeStyle(Color.accentColor)` is baked at the point it
     /// is written rather than resolved from the environment.
     @Entry var themeTint: Color = .accentColor
+}
+
+/// A row or card that answers being pointed at and being pressed.
+///
+/// The app had neither, anywhere. Every list row, session card, memory and search result was
+/// a `.plain` button: it opened something when clicked and gave no sign at all that it was
+/// the kind of thing that could be clicked, or that the click had landed. The reference has
+/// both on all of them — `hover:bg-control-subtle` and `active:scale-[0.99]` with
+/// `active:bg-control`, on `--replay-ease-standard`, which is this file's `easeStandard` to
+/// the fourth decimal.
+///
+/// Worth naming how it went unnoticed: `Design.Motion.press` has been in this file from the
+/// beginning, is mirrored into `ParityKit`, and is checked every run against the reference's
+/// own `pressMs: 90`. Nothing used it. The contract was green on a value the app never
+/// applied — a check can only tell you two numbers agree, never that either is reaching a
+/// person.
+///
+/// The two timings are different on purpose, and the asymmetry is the reference's: pressing
+/// registers in 90ms because it is answering you, and settling back into hover takes 180
+/// because nothing is waiting on that.
+struct RowButtonStyle: ButtonStyle {
+    /// Matched to the row's own corner so the highlight sits inside it rather than proud of
+    /// it. A card and a bare list row do not share a radius, so it is asked for.
+    var radius: CGFloat = Design.Radius.card
+
+    func makeBody(configuration: Configuration) -> some View {
+        Surface(configuration: configuration, radius: radius)
+    }
+
+    /// A `View` rather than the style's own body, because a style cannot hold `@State` and
+    /// hover is state.
+    private struct Surface: View {
+        let configuration: Configuration
+        let radius: CGFloat
+
+        @Environment(\.motion) private var motion
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .background(
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .fill(fill)
+                )
+                // Reduced motion keeps the highlight and drops the give: the colour is what
+                // says "this is pressable", and the scale is the part that is movement.
+                .scaleEffect(
+                    configuration.isPressed && !motion.reduced ? Design.Motion.pressScale : 1
+                )
+                .animation(
+                    motion.animation(configuration.isPressed
+                        ? Design.Motion.press
+                        : Design.Motion.inPlace),
+                    value: configuration.isPressed
+                )
+                .animation(motion.animation(Design.Motion.inPlace), value: hovering)
+                .onHover { hovering = $0 }
+        }
+
+        private var fill: AnyShapeStyle {
+            if configuration.isPressed { return Design.Colour.rowPressed }
+            return hovering ? Design.Colour.rowHover : AnyShapeStyle(.clear)
+        }
+    }
+}
+
+extension ButtonStyle where Self == RowButtonStyle {
+    /// A pressable row at the standard card radius.
+    static var row: RowButtonStyle { RowButtonStyle() }
+    /// A pressable row whose corner is not the standard one.
+    static func row(radius: CGFloat) -> RowButtonStyle { RowButtonStyle(radius: radius) }
 }
 
 private struct SettlesIn: ViewModifier {

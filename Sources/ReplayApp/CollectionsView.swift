@@ -182,7 +182,7 @@ private struct CollectionRow: View {
             .padding(Design.Space.cardRoomy)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .card(border: Design.Colour.fillStrong)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(

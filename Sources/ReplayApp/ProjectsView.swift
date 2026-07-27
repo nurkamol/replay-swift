@@ -109,7 +109,7 @@ private struct ProjectCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .focusable()
         .card(border: Design.Colour.border)
         .accessibilityElement(children: .ignore)

@@ -250,7 +250,7 @@ struct TimelineView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .card(border: Design.Colour.borderQuiet)
         .accessibilityElement(children: .combine)
     }
@@ -634,7 +634,7 @@ struct DayView: View {
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.row)
 
             if !context.nearbyDays.isEmpty {
                 Divider()

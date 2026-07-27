@@ -91,7 +91,7 @@ private struct ChapterRow: View {
             .padding(Design.Space.section)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .focusable()
         .card(border: Design.Colour.border)
         .accessibilityElement(children: .ignore)
@@ -243,7 +243,7 @@ struct ChapterDetailView: View {
                         .padding(.vertical, Design.Space.inline)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                     .accessibilityHint("Opens this day")
                 }
             }

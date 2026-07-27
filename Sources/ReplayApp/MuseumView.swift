@@ -97,7 +97,7 @@ struct MuseumView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                     .disabled(moment.dayStart == nil)
                     .card(border: Design.Colour.borderQuiet)
                     .accessibilityElement(children: .combine)
@@ -141,7 +141,7 @@ struct MuseumView: View {
                         .padding(Design.Space.section)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                     .card(border: Design.Colour.borderQuiet)
                     .accessibilityElement(children: .combine)
                     .accessibilityHint("Opens that day")
@@ -184,7 +184,7 @@ struct MuseumView: View {
                         .padding(.vertical, Design.Space.snug)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                 }
             }
             .padding(Design.Space.snug)

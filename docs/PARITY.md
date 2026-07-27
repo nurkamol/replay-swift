@@ -96,20 +96,58 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Help menu | done | Welcome, Replay Guide (⌘?), What's New. The app had no Help menu at all, which is also where macOS puts its own search |
 | Welcome | done | two pages: the things Replay will not do unasked, each off by default, and the privacy claim shown working rather than asserted |
 | Settings | partial | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is written out by hand rather than derived, so it can drift from what is actually bound |
+| Press and hover feedback | done | `RowButtonStyle` on 25 rows and cards — the reference's own `active:scale-[0.99]` at 90ms and `hover:bg-control-subtle` at 180ms, both on `easeStandard`. Reduced motion keeps the highlight and drops the give |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
-| Dock badge | later | |
+| Dock badge | done | `Preferences.dockBadge`, applied to the dock tile as the day's total changes |
 | Memories / Today in History | done | fixed calendar offsets over the durable headlines, so a memory survives its day being pruned; the date arithmetic is fixture-pinned |
 | Search | done | by session name, note or tag; by application; and a few phrases ("morning", "longest", "bookmarked") that go straight to a slice — checked against the reference's own predicates |
 | Collections | done | derived from the session category — no table, nothing to file. Both orderings tie-broken, with the fixture built so both ties occur |
-| Projects | later | needs detection logic with no equivalent here yet |
 | Story Mode | done | a reopened day, narrated in a few sentences; five day shapes fixture-checked as text |
-| Autobiography | later | |
-| Canvas | later | a project of its own |
-| Screensaver / Ambient | later | |
-| Replay Movie | later | |
-| Contextual memories | later | the largest single subsystem after Canvas |
-| Notifications (digests) | later | needs `UNUserNotificationCenter` authorisation |
+
+### The ledger had been lying about eight rows
+
+`Projects`, `Autobiography`, `Canvas`, `Screensaver / Ambient`, `Replay Movie`, `Contextual
+memories`, `Notifications (digests)` and `Dock badge` sat at the foot of the same table
+marked **later** — several of them directly contradicting a **done** row for the same
+feature a dozen lines above. Every one of them is built: the views exist, the dock badge and
+the three notification recaps are wired to real preferences, and upstream's "Replay Movie"
+is this port's Replay Day, sharing the `Playback` clock the suite already checks. They were
+written when the list was a plan and never struck off as the plan was carried out.
+
+Recorded rather than quietly deleted, because it is the failure this document exists to
+prevent — CLAUDE.md's own words are that a ledger nobody trusts is worse than none, and a
+row that says *later* about something finished is exactly how the trust goes. The habit that
+would have caught it is the one already written down: update the ledger in the same commit
+as the code.
+
+### Nothing responded to being pressed, and a green check said otherwise
+
+Every row, card, memory and search result was a `.plain` button: it opened something when
+clicked and gave no sign that it *was* clickable, or that the click had landed. The reference
+has `hover:bg-control-subtle` and `active:scale-[0.99]` with `active:bg-control` on all of
+them. Ported as `RowButtonStyle`, using the reference's own values.
+
+The part worth keeping: `Design.Motion.press` has been in `DesignSystem.swift` since the
+beginning, is mirrored into `ParityKit`, and has been checked every run against the
+reference's `pressMs: 90` — and **no view had ever used it**. The contract was green on a
+number the app never applied to anything. A check can tell you two values agree; it cannot
+tell you either one reaches a person. Worth remembering the next time a row of ticks is
+mistaken for evidence.
+
+The highlight opacities were measured rather than chosen. A card carries a translucent fill
+of its own, which absorbs most of what is put behind it: at the first value the hover moved
+the picture by 0.012 mean brightness — real in a diff, invisible to a person.
+
+## Roadmap — deliberately not done yet
+
+| what | why it is waiting |
+|---|---|
+| **Signing and notarisation** | Blocked on a Developer ID, not on code. The app is ad-hoc signed by `scripts/make-app.sh`, which is enough to run it locally and not enough to hand to anybody. Everything else on this list is smaller than it |
+| PDF export | Three WebKit routes tried and dead, recorded below. The reference's own PDF is one capped page that tells you to use HTML |
+| A reopened day's story and chapter context | The one place a past day is thinner than the reference |
+| Deriving the Settings shortcuts table | Written out by hand, so it can drift from what is actually bound |
+| A test that covers scroll routing | The command-palette scroll bug reached a person because nothing exercises which view a scroll lands in. Would need a UI test target this project does not have |
 
 ## Known divergences to keep an eye on
 

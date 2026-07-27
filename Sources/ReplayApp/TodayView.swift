@@ -327,7 +327,7 @@ struct SessionCard: View {
                 .padding(Design.Space.card)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.row)
             // A real focus ring, so Tab reaches the card and Return opens it. Without this
             // the whole surface was mouse-only: the cards were buttons the keyboard could
             // not get to.
@@ -834,7 +834,7 @@ struct MorningBriefingCard: View {
             .padding(.vertical, Design.Space.row)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .disabled(day == nil)
         .accessibilityElement(children: .combine)
     }
@@ -859,7 +859,7 @@ struct QuoteLine: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.row)
         .disabled(moment.dayStart == nil)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(moment.detail)

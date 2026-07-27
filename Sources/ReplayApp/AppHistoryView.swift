@@ -141,7 +141,7 @@ struct AppHistoryView: View {
                         .padding(.vertical, Design.Space.snug)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.row)
                     .disabled(partner.identity.bundleIdentifier == nil)
                     .accessibilityHint("Opens how these two are used together")
                 }
