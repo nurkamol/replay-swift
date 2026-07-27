@@ -783,24 +783,65 @@ private struct GuideTab: View {
         ),
     ]
 
+    @Environment(\.motion) private var motion
+    /// Which questions are open. A set rather than one selection: answering one question
+    /// should not close the one you were half-way through reading.
+    @State private var opened: Set<String> = []
+
     var body: some View {
         PaneForm {
             Section {
                 ForEach(entries) { entry in
                     // Disclosure rather than four paragraphs: the questions stay scannable,
                     // and only the one being asked takes up room.
-                    DisclosureGroup(entry.question) {
+                    //
+                    // Driven by a binding rather than left to `DisclosureGroup` so the whole
+                    // row can open it. On its own it hands only the little triangle a hit
+                    // area, which makes a full-width question into an eight-point target and
+                    // leaves the obvious thing to click — the question — doing nothing.
+                    DisclosureGroup(isExpanded: isOpen(entry)) {
                         Text(entry.answer)
                             .font(Design.Text.detail)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                    } label: {
+                        // A `Button` rather than `onTapGesture`, so the row is reachable by
+                        // Tab and announced as something that can be opened. A tap gesture
+                        // would look identical and be invisible to the keyboard.
+                        Button {
+                            withAnimation(motion.animation(Design.Motion.inPlace)) {
+                                toggle(entry)
+                            }
+                        } label: {
+                            Text(entry.question)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(
+                            opened.contains(entry.id) ? [.isButton, .isSelected] : .isButton
+                        )
+                        .accessibilityHint(opened.contains(entry.id) ? "Closes the answer" : "Opens the answer")
                     }
                 }
             } header: {
                 Text("How Replay works")
             }
         }
+    }
+
+    private func isOpen(_ entry: Entry) -> Binding<Bool> {
+        Binding(
+            get: { opened.contains(entry.id) },
+            set: { wanted in
+                if wanted { opened.insert(entry.id) } else { opened.remove(entry.id) }
+            }
+        )
+    }
+
+    private func toggle(_ entry: Entry) {
+        if opened.contains(entry.id) { opened.remove(entry.id) } else { opened.insert(entry.id) }
     }
 }
 
