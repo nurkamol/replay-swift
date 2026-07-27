@@ -213,7 +213,7 @@ struct AmbientView: View {
             //
             // Anchored explicitly at the centre. It is the default, and stating it is
             // cheap next to the class of bug where an icon swells out of one corner.
-            .modifier(Breathing(active: !reduceMotion))
+            .modifier(Breathing(active: preferences.ambientBreath && !reduceMotion))
 
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
                 Text("Now")

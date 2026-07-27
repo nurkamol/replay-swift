@@ -1120,6 +1120,8 @@ private struct DisplayTab: View {
                     isOn: $preferences.ambientCurrentSession
                 )
                 .explains(own: .ambientCurrentSession)
+                Toggle(OwnSettingsRow.ambientBreath.label, isOn: $preferences.ambientBreath)
+                    .explains(own: .ambientBreath)
             } header: {
                 Text("Ambient mode")
             } footer: {

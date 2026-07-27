@@ -145,12 +145,14 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
     case ambientClock
     case ambientCurrentApp
     case ambientCurrentSession
+    case ambientBreath
 
     public var label: String {
         switch self {
         case .screensaverClock, .ambientClock: "Show the time"
         case .ambientCurrentApp: "Show the current application"
         case .ambientCurrentSession: "Show the current session"
+        case .ambientBreath: "Gentle motion"
         }
     }
 
@@ -167,6 +169,10 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
                 + "other people can see."
         case .ambientCurrentSession:
             "What Replay is calling this stretch of work, and when it began."
+        case .ambientBreath:
+            "A slow swell on the application's icon, so a screen of live figures does not "
+                + "read as a still picture of one. Off leaves ambient mode completely "
+                + "still. Reduce Motion turns it off either way."
         }
     }
 }

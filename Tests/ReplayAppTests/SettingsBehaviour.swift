@@ -29,6 +29,7 @@ struct SettingsBehaviour {
     }
 
     private static func makeFixture() throws -> Fixture {
+        sweepAbandonedSuites()
         let id = UUID().uuidString
         let directory = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("replay-settings-tests-\(id)")
@@ -44,7 +45,43 @@ struct SettingsBehaviour {
 
     private static func discard(_ fixture: Fixture) {
         try? FileManager.default.removeItem(at: fixture.directory)
-        UserDefaults.standard.removePersistentDomain(forName: fixture.suite)
+        // Two steps, and both are needed.
+        //
+        // `.standard.removePersistentDomain(forName:)` was the whole of it, and asking
+        // standard to drop a domain it does not own silently does nothing — so every run
+        // since these tests were written left its suite behind in the user's real
+        // preferences. 531 of them by the time one was noticed, and only because a stray
+        // click sent me reading `defaults domains`. A leak with no symptom is still a leak.
+        //
+        // Removing the domain through the suite's *own* instance is the documented way, and
+        // it still leaves the plist on disk, because `cfprefsd` writes the file back when
+        // the instance is released. So the file goes too.
+        removeSuite(fixture.suite)
+    }
+
+    private static func removeSuite(_ suite: String) {
+        UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite)
+        guard let preferences = preferencesDirectory() else { return }
+        try? FileManager.default.removeItem(
+            at: preferences.appendingPathComponent("\(suite).plist")
+        )
+    }
+
+    private static func preferencesDirectory() -> URL? {
+        FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)
+            .first?.appendingPathComponent("Preferences")
+    }
+
+    /// Anything an earlier run left behind, swept on the way past.
+    ///
+    /// The fix above stops new ones; this clears the old, and costs a directory listing per
+    /// run. Scoped to this suite's own prefix so it can never touch anything else.
+    static func sweepAbandonedSuites() {
+        guard let preferences = preferencesDirectory() else { return }
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: preferences.path)) ?? []
+        for file in names where file.hasPrefix("replay.tests.") && file.hasSuffix(".plist") {
+            removeSuite(String(file.dropLast(".plist".count)))
+        }
     }
 
     @discardableResult

@@ -299,6 +299,17 @@ final class Preferences {
         didSet { write(ambientCurrentSession, "ambientCurrentSession") }
     }
 
+    /// The one moving thing in ambient mode.
+    ///
+    /// On by default, and the reference's own — but a switch because this is a surface made
+    /// for the corner of your eye, and peripheral vision is *more* sensitive to motion than
+    /// central vision, not less. A 4% swell is nothing at minute one and can be a small
+    /// irritation at hour three, and which of those you are is not something a default can
+    /// know. Reduce Motion still wins over it either way.
+    var ambientBreath: Bool {
+        didSet { write(ambientBreath, "ambientBreath") }
+    }
+
     /// A recap of the day, at an hour of your choosing. Off until asked for, and asking is
     /// what prompts macOS for permission — nothing is requested before then.
     var dailySummaryHour: Int {
@@ -351,6 +362,7 @@ final class Preferences {
         ambientClock = defaults.object(forKey: "ambientClock") as? Bool ?? true
         ambientCurrentApp = defaults.object(forKey: "ambientCurrentApp") as? Bool ?? true
         ambientCurrentSession = defaults.object(forKey: "ambientCurrentSession") as? Bool ?? true
+        ambientBreath = defaults.object(forKey: "ambientBreath") as? Bool ?? true
         let hour = defaults.integer(forKey: "dailySummaryHour")
         dailySummaryHour = hour == 0 ? 18 : hour
         dailySummary = defaults.bool(forKey: "dailySummary")
@@ -415,6 +427,7 @@ final class Preferences {
         "ambientClock",
         "ambientCurrentApp",
         "ambientCurrentSession",
+        "ambientBreath",
         "screensaverExitOnMouseMove",
         "screensaverIdleMinutes",
         "seenWelcome",
@@ -465,6 +478,7 @@ final class Preferences {
         ambientClock = fresh.ambientClock
         ambientCurrentApp = fresh.ambientCurrentApp
         ambientCurrentSession = fresh.ambientCurrentSession
+        ambientBreath = fresh.ambientBreath
         dailySummaryHour = fresh.dailySummaryHour
         dailySummary = fresh.dailySummary
         weeklyRecap = fresh.weeklyRecap
