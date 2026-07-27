@@ -351,6 +351,10 @@ struct Heatmap: View {
 
     @State private var range: Heatmap.Kind = .year
     @State private var hovered: Int64?
+    /// How much room the year grid actually got, so the caption can say whether there is
+    /// more of it off to the side. Measured rather than assumed: whether it overflows
+    /// depends on the window, the sidebar and the page measure together.
+    @State private var yearViewport: CGFloat = 0
 
     /// The reference's three, under a local name so the view's own `Heatmap` does not
     /// shadow the core type it reads its rules from.
@@ -402,6 +406,18 @@ struct Heatmap: View {
         .accessibilityHidden(true)
     }
 
+    /// How wide the year grid wants to be. Fifty-three columns and the pinned key.
+    private var yearContentWidth: CGFloat {
+        Design.Layout.heatmapWeekdayColumn + Design.Layout.heatmapGap
+            + CGFloat(ReplayCore.Heatmap.yearWeeks)
+            * (Design.Layout.heatmapSquare + Design.Layout.heatmapGap)
+    }
+
+    /// Whether part of the year is off to the side right now.
+    private var yearOverflows: Bool {
+        range == .year && yearViewport > 0 && yearContentWidth > yearViewport
+    }
+
     private var caption: some View {
         HStack(spacing: Design.Space.snug) {
             if let hovered, let seconds = byDay[hovered], seconds > 0 {
@@ -412,63 +428,93 @@ struct Heatmap: View {
                 Text("Darker is busier. Click a day to replay it.")
                     .font(Design.Text.micro)
                     .foregroundStyle(.tertiary)
+                // Only when there is genuinely something off-screen. A permanent "you can
+                // scroll" on a window wide enough to show the whole year is noise at best
+                // and wrong at worst — and the grid gives no other clue, because it ends
+                // flush at the card's edge rather than at the year's.
+                if yearOverflows {
+                    Image(systemName: "arrow.left")
+                        .font(Design.Text.micro)
+                        .foregroundStyle(.quaternary)
+                    Text("Scroll sideways for earlier months.")
+                        .font(Design.Text.micro)
+                        .foregroundStyle(.tertiary)
+                }
             }
             Spacer(minLength: 0)
         }
+        .animation(Design.Motion.enter, value: yearOverflows)
     }
 
     // MARK: - The three grids
 
     /// Fifty-three week-columns, months labelled along the top and alternate weekdays down
-    /// the side. Starts on a Sunday so every column is a real week rather than a rolling
-    /// seven days, which is what makes the weekday labels mean anything.
+    /// the side. Starts on the week's own first day so every column is a real week rather
+    /// than a rolling seven days, which is what makes the weekday labels mean anything.
+    ///
+    /// **The key is pinned and the grid opens on today.** A year of columns is about 763pt
+    /// and the page it sits in leaves ~530 at the default window, so this always scrolls —
+    /// and the two obvious ways to handle that each lose something. Anchoring to the leading
+    /// edge, which is what the reference does, opens the grid on last August with today off
+    /// the right: the one part everybody wants is the part you have to go looking for.
+    /// Anchoring to the trailing edge opens on today and pushes the weekday labels out of
+    /// sight, so the grid has no key at all — this port shipped that for an afternoon.
+    ///
+    /// Lifting the weekday column out of the scrolling content resolves it rather than
+    /// trading between them: the key is always there, and the scroll can land where the
+    /// information is. A deliberate divergence, recorded in the ledger.
     private var yearGrid: some View {
         let weeks = yearWeeks
-        return ScrollView(.horizontal, showsIndicators: false) {
+        return HStack(alignment: .top, spacing: Design.Layout.heatmapGap) {
             VStack(alignment: .leading, spacing: Design.Space.tight) {
-                HStack(spacing: Design.Layout.heatmapGap) {
-                    ForEach(Array(weeks.enumerated()), id: \.offset) { index, week in
-                        Text(monthLabel(startingWeek: week, at: index, in: weeks) ?? "")
+                // Sits on the month labels' own line, so the key's rows line up with the
+                // grid's rather than riding a row high.
+                Text(" ")
+                    .font(Design.Text.micro)
+                VStack(spacing: Design.Layout.heatmapGap) {
+                    ForEach(0..<7, id: \.self) { index in
+                        // Every other one, because seven stacked single letters at this
+                        // size is a smear rather than a label.
+                        Text(index % 2 == 1 ? weekdayInitials[index] : " ")
                             .font(Design.Text.micro)
                             .foregroundStyle(.tertiary)
-                            .fixedSize()
-                            .frame(width: Design.Layout.heatmapSquare, alignment: .leading)
+                            .frame(
+                                width: Design.Layout.heatmapWeekdayColumn,
+                                height: Design.Layout.heatmapSquare,
+                                alignment: .leading
+                            )
                     }
                 }
-                // The weekday column *and* the gap after it, or every month label sits one
-                // gap left of the column it names.
-                .padding(.leading, Design.Layout.heatmapWeekdayColumn + Design.Layout.heatmapGap)
+            }
 
-                HStack(alignment: .top, spacing: Design.Layout.heatmapGap) {
-                    VStack(spacing: Design.Layout.heatmapGap) {
-                        ForEach(0..<7, id: \.self) { index in
-                            // Every other one, because seven stacked single letters at this
-                            // size is a smear rather than a label.
-                            Text(index % 2 == 1 ? weekdayInitials[index] : " ")
+            ScrollView(.horizontal, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: Design.Space.tight) {
+                    HStack(spacing: Design.Layout.heatmapGap) {
+                        ForEach(Array(weeks.enumerated()), id: \.offset) { index, week in
+                            Text(monthLabel(startingWeek: week, at: index, in: weeks) ?? "")
                                 .font(Design.Text.micro)
                                 .foregroundStyle(.tertiary)
-                                .frame(
-                                    width: Design.Layout.heatmapWeekdayColumn,
-                                    height: Design.Layout.heatmapSquare,
-                                    alignment: .leading
-                                )
+                                .fixedSize()
+                                .frame(width: Design.Layout.heatmapSquare, alignment: .leading)
                         }
                     }
-                    ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
-                        VStack(spacing: Design.Layout.heatmapGap) {
-                            ForEach(week, id: \.self) { day in
-                                square(day, side: Design.Layout.heatmapSquare)
+                    HStack(alignment: .top, spacing: Design.Layout.heatmapGap) {
+                        ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
+                            VStack(spacing: Design.Layout.heatmapGap) {
+                                ForEach(week, id: \.self) { day in
+                                    square(day, side: Design.Layout.heatmapSquare)
+                                }
                             }
                         }
                     }
                 }
             }
-            .padding(.vertical, Design.Space.tight)
+            // Opens on today. The month labels travel with the columns they name; only the
+            // weekday key stays put, because it says the same thing at every scroll offset.
+            .defaultScrollAnchor(.trailing)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { yearViewport = $0 }
         }
-        // Reads from its start, as the reference's does. Anchoring to the trailing edge
-        // showed today first, which sounds better and was not: on any window narrow enough
-        // to scroll it silently pushed the weekday labels and the first weeks off the left,
-        // so the grid appeared to begin in September and had no key.
+        .padding(.vertical, Design.Space.tight)
     }
 
     /// This month, as a calendar with the dates on. Six rows always, so paging between a
@@ -584,10 +630,22 @@ struct Heatmap: View {
 
     private func date(_ millis: Int64) -> Date { Date(timeIntervalSince1970: Double(millis) / 1000) }
 
-    /// Whole weeks back from today, aligned to the week's own first day so the rows are
-    /// weekdays rather than an arbitrary seven-day slice.
+    /// Whole weeks *ending* with the one today falls in, aligned to the week's own first
+    /// day so the rows are weekdays rather than an arbitrary seven-day slice.
+    ///
+    /// Counted backwards from today deliberately. The reference counts forwards: it goes
+    /// back `yearBackDays`, snaps to a week boundary, then draws 53 columns — and 53 weeks
+    /// is 371 days, so the grid ends somewhere between today and six days before it,
+    /// depending on which weekday the far end happened to land on. Today is missing from
+    /// its own year roughly six times in seven, and this port inherited that: on the day
+    /// this was found the last square drawn was three days old.
+    ///
+    /// Nothing about the range changes — still 53 columns, still about `yearBackDays` of
+    /// history. It is only anchored at the end that matters instead of the end that does not.
     private var yearWeeks: [[Int64]] {
-        let gridStart = weekStart(startOfLocalDay(today - Int64(Kind.year.backDays) * dayMillis))
+        let gridStart = startOfLocalDay(
+            weekStart(today) - Int64((ReplayCore.Heatmap.yearWeeks - 1) * 7) * dayMillis
+        )
         return (0..<ReplayCore.Heatmap.yearWeeks).map { week in
             (0..<7).map { startOfLocalDay(gridStart + Int64(week * 7 + $0) * dayMillis) }
         }

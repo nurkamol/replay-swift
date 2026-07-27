@@ -195,12 +195,31 @@ document starts lying, and this one has done it twice already — see the two no
   user. The reference empties the "On this day" section alone and leaves the rest of the page
   standing; its copy even ends "until then, browse any day below", pointing at the calendar
   this port had just taken away.
-- **The year heatmap is wider than the page it sits in, on both sides.** Fifty-three columns
-  at 11pt plus the weekday gutter come to about 763pt; upstream's `max-w-3xl` shell leaves
-  712 and this port's readable measure leaves about 705. So the last few weeks — including
-  the current month — are off the right edge until you scroll, in both apps. Inherited and
-  matching, checked rather than assumed: it would have been easy to "fix" here and quietly
-  diverge. If it is ever worth changing, change the shell in the Glaze app.
+- **Today was missing from its own year.** The reference builds the year grid forwards: back
+  `yearBackDays`, snap to a week boundary, then draw 53 columns. Fifty-three weeks is 371
+  days, so the grid ends between today and six days *before* it, depending on which weekday
+  the far end happened to land on — today is absent from the year roughly six times in
+  seven. On the day this was found the last square drawn was three days old, and the two
+  most recent days of history simply were not on the page. This port now counts backwards
+  from the week today falls in, so today is always in the last column. Same 53 columns, same
+  span; only the end it is anchored at changed. **A deliberate divergence, and the one place
+  in this feature where the reference is wrong rather than merely different.**
+- **The year heatmap is wider than the page it sits in.** Fifty-three columns at 11pt plus
+  the weekday gutter come to about 763pt; upstream's `max-w-3xl` shell leaves 712 and this
+  port's readable measure leaves about 705, so it always scrolls. Handled differently here,
+  on purpose. The reference scrolls its weekday key along with the grid and opens on the
+  leading edge, which means it opens on a year ago with today off the right. Anchoring to
+  the trailing edge instead opens on today and pushes the key out of sight — this port
+  shipped that for an afternoon and it looked deliberate. Lifting the weekday column out of
+  the scrolling content resolves it rather than trading between them: the key is pinned, the
+  month labels still travel with the columns they name, and the scroll lands on today. The
+  caption says the rest is off to the side, but only when it measurably is.
+- **Today's square is ringed but empty, in both apps.** Daily summaries are written for
+  completed days, so the day you are looking at has no headline yet and reads as zero. The
+  ring distinguishes it from a genuinely idle day and "Delete a single day" adds today from
+  the front for the same reason. Left matching; filling it would mean the heatmap reading
+  live sessions as well as the durable headlines, which is a second data source for one
+  square.
 - **Memories was the tallest page in the app.** Both card sections were a single column, so
   eight moments pushed "Browse by date" the better part of two screens down — and that
   section is the only navigation on the page; everything above it is a destination and the
