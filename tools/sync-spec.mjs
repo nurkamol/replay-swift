@@ -372,6 +372,40 @@ const constants = {
     };
   })(),
   /*
+   * Apps' three windows, and the two limits This Week holds itself to.
+   *
+   * The same shape as the Timeline's ranges: labels and subtitles reproduced word for word in
+   * Swift with nothing checking them. Contracting the Timeline and missing the parallel type
+   * on Apps is how a rule gets applied once and then forgotten.
+   */
+  apps: (() => {
+    const src = read("renderer/main/views/apps-view.tsx");
+    const windows = [...src.matchAll(
+      /\{ value: "(\w+)", label: "([^"]*)", days: (\d+), subtitle: "([^"]*)" \}/g,
+    )].map((m) => ({ value: m[1], label: m[2], days: Number(m[3]), subtitle: m[4] }));
+    if (windows.length === 0) problems.push("apps-view.tsx: APP_RANGES not found — reshaped?");
+    return { windows };
+  })(),
+  week: (() => {
+    const src = read("renderer/main/views/week-view.tsx");
+    const f = "week-view.tsx";
+    const [workflowLimit] = inline(
+      src, f, "how many recurring combinations the week shows",
+      /detectWorkflows\(sessions\)\.slice\(0, (\d+)\)/,
+    );
+    const [appLimit] = inline(
+      src, f, "how many applications the week lists",
+      /week\.apps\.slice\(0, (\d+)\)/,
+    );
+    const ticks = src.match(/ARC_TICKS = \[([^\]]*)\]/);
+    if (!ticks) problems.push(`${f}: ARC_TICKS not found`);
+    return {
+      workflowLimit,
+      appLimit,
+      arcTicks: ticks ? ticks[1].split(",").map((n) => Number(n.trim())) : [],
+    };
+  })(),
+  /*
    * The canvas camera, and the tour it flies on its own.
    *
    * Here for the reason every motion value is here: the two apps are meant to move alike,

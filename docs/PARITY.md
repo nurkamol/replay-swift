@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 748 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 761 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -221,6 +221,25 @@ actually overrides. The first version of that test asserted a stale resume targe
 chosen, which passed for the wrong reason: with all four available the rotation happened to
 land on resume anyway. It picks a day the rotation lands elsewhere now, so the two halves
 differ only because of the rule under test.
+
+### This Week and Apps, audited
+
+The thinnest audit of the set, and that is the result rather than a shortcut. Both surfaces
+match: pinned favourites in pin order, the peak sentence word for word, the five most-used
+applications, the four recurring combinations, the arc's four ticks, and the three windows'
+day counts. Nothing behavioural was wrong.
+
+What was missing was the same thing as everywhere else — nothing held any of it.
+`AppsModel.Window` reproduced `APP_RANGES` labels and subtitles word for word, which is the
+identical shape to `TimeRange`; contracting the Timeline's ranges and missing the parallel
+type on Apps is how a rule gets applied once and forgotten. It is `AppWindow` in `ReplayCore`
+now, checked directly. The week's three limits are named in `WeekSummary` and checked too.
+
+**One word is left deliberately.** The week's stat group says "applications" where the
+reference says "Apps" — but the reference says "application"/"applications" on its own daily
+memory card, so it is inconsistent with itself and this port is not. Left as it is rather than
+matched to whichever of the two upstream happened to type here, and recorded so the choice is
+visible. Worth deciding, not worth guessing.
 
 ## Known divergences to keep an eye on
 

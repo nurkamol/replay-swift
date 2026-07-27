@@ -10,40 +10,7 @@ import ReplayCore
 @MainActor
 @Observable
 final class AppsModel {
-    /// How far back the surface is looking. Not a `TimeRange` — that one exists for the
-    /// Timeline and carries a `keepDayOffset` rule about single days that means nothing
-    /// here, where every window reaches back from today.
-    enum Window: String, CaseIterable, Identifiable {
-        case today, week, month
-
-        var id: String { rawValue }
-
-        var label: String {
-            switch self {
-            case .today: "Today"
-            case .week: "This Week"
-            case .month: "This Month"
-            }
-        }
-
-        var subtitle: String {
-            switch self {
-            case .today: "Where your time went today."
-            case .week: "Where your time went this week."
-            case .month: "Where your time went this month."
-            }
-        }
-
-        var days: Int {
-            switch self {
-            case .today: 1
-            case .week: 7
-            case .month: 30
-            }
-        }
-    }
-
-    var window: Window = .week {
+    var window: AppWindow = .week {
         didSet { if window != oldValue { refilter() } }
     }
 
@@ -76,7 +43,7 @@ final class AppsModel {
     func load() {
         now = Int64(Date().timeIntervalSince1970 * 1000)
         let todayStart = startOfLocalDay(now)
-        let from = todayStart - Int64(Window.month.days - 1) * dayMillis
+        let from = todayStart - Int64(AppWindow.month.days - 1) * dayMillis
         all = ((try? model.store.sessions(from: from, to: todayStart + dayMillis)) ?? [])
             .filter { $0.startedAt >= from }
         loaded = true

@@ -45,7 +45,7 @@ struct AppsView: View {
             Picker("Window", selection: Binding(
                 get: { apps.window }, set: { apps.window = $0 }
             )) {
-                ForEach(AppsModel.Window.allCases) { window in
+                ForEach(AppWindow.allCases) { window in
                     Text(window.label).tag(window)
                 }
             }

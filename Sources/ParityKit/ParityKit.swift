@@ -138,6 +138,26 @@ public enum ParityKit {
             public let baseDurationMillis: Int
             public let speeds: [Int]
         }
+        public let apps: AppsConstants
+        public let week: WeekConstants
+
+        public struct AppsConstants: Decodable, Sendable {
+            public let windows: [Window]
+
+            public struct Window: Decodable, Sendable {
+                public let value: String
+                public let label: String
+                public let days: Int
+                public let subtitle: String
+            }
+        }
+
+        public struct WeekConstants: Decodable, Sendable {
+            public let workflowLimit: Int
+            public let appLimit: Int
+            public let arcTicks: [Int]
+        }
+
         public let today: TodayConstants
 
         public struct TodayConstants: Decodable, Sendable {
@@ -1017,6 +1037,29 @@ public enum ParityKit {
             g1, "and what it asks once the day is ending",
             ReflectionPrompt.evening, constants.today.eveningPrompt
         )
+
+        // Apps' three windows — the same copy-with-no-contract the Timeline's ranges were,
+        // on the parallel type that was missed when those were brought in.
+        equal(
+            g1, "the windows Apps offers",
+            AppWindow.allCases.map(\.rawValue), constants.apps.windows.map(\.value)
+        )
+        for (window, expected) in zip(AppWindow.allCases, constants.apps.windows) {
+            equal(g1, "\(expected.value): its name", window.label, expected.label)
+            equal(g1, "\(expected.value): days back", window.days, expected.days)
+            equal(g1, "\(expected.value): the line under the title", window.subtitle, expected.subtitle)
+        }
+
+        // What This Week holds itself to.
+        equal(
+            g1, "how many applications the week lists",
+            WeekSummary.appLimit, constants.week.appLimit
+        )
+        equal(
+            g1, "how many recurring combinations it shows",
+            WeekSummary.workflowLimit, constants.week.workflowLimit
+        )
+        equal(g1, "the hours the day-arc is marked at", WeekSummary.arcTicks, constants.week.arcTicks)
 
         // Living Home: what Today leads with, and how it is chosen.
         equal(

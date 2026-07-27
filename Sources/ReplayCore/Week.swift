@@ -220,3 +220,13 @@ public func describePeak(_ peak: WeekSummary.Peak) -> String {
     }
     return "\(weekday) \(partOfDay)"
 }
+
+extension WeekSummary {
+    /// What This Week holds itself to. Both the reference's, and both are the same kind of
+    /// decision: a week is a glance, so it shows the handful that carried it rather than
+    /// everything it could.
+    public static let appLimit = 5
+    public static let workflowLimit = 4
+    /// The hours the day-arc is marked at — midnight, six, noon, six.
+    public static let arcTicks = [0, 6, 12, 18]
+}

@@ -34,7 +34,7 @@ final class WeekModel {
         do {
             let events = try store.sessions(from: dayStarts[0], to: today + dayMillis)
             summary = computeWeekSummary(events: events, dayStarts: dayStarts, now: now)
-            workflows = Array(detectWorkflows(sessionsForWeek(events, now: now)).prefix(4))
+            workflows = Array(detectWorkflows(sessionsForWeek(events, now: now)).prefix(WeekSummary.workflowLimit))
             rangeLabel = Self.range(from: dayStarts[0], to: dayStarts[6])
             errorMessage = nil
         } catch {

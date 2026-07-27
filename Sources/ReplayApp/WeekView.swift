@@ -114,7 +114,7 @@ struct WeekView: View {
     // ── the applications ──────────────────────────────────────────────────────
 
     private func mostUsed(_ summary: WeekSummary) -> some View {
-        let top = Array(summary.apps.prefix(5))
+        let top = Array(summary.apps.prefix(WeekSummary.appLimit))
         return VStack(alignment: .leading, spacing: Design.Space.row) {
             Text("Most used this week").sectionLabelStyle()
             VStack(spacing: Design.Space.snug) {
@@ -236,7 +236,7 @@ private struct DayArc: View {
 /// Under all seven rather than beneath each: the scale is identical for every day, and
 /// repeating it seven times would be noise standing in for information.
 private struct HourAxis: View {
-    private static let ticks = [0, 6, 12, 18]
+    private static let ticks = WeekSummary.arcTicks
 
     var body: some View {
         HStack(spacing: Design.Space.card) {

@@ -225,6 +225,38 @@
     ],
     "defaultRange": "7d"
   },
+  "apps": {
+    "windows": [
+      {
+        "value": "today",
+        "label": "Today",
+        "days": 1,
+        "subtitle": "Where your time went today."
+      },
+      {
+        "value": "week",
+        "label": "This Week",
+        "days": 7,
+        "subtitle": "Where your time went this week."
+      },
+      {
+        "value": "month",
+        "label": "This Month",
+        "days": 30,
+        "subtitle": "Where your time went this month."
+      }
+    ]
+  },
+  "week": {
+    "workflowLimit": 4,
+    "appLimit": 5,
+    "arcTicks": [
+      0,
+      6,
+      12,
+      18
+    ]
+  },
   "canvas": {
     "unfocusedOpacity": 0.1,
     "appsFadedBelowZoom": 0.7,
