@@ -41,7 +41,7 @@ final class NotificationsModel {
     func request() async -> Bool {
         do {
             let granted = try await UNUserNotificationCenter.current()
-                .requestAuthorization(options: [.alert, .sound])
+                .requestAuthorization(options: [.alert, .sound, .badge])
             permission = granted ? .granted : .denied
             return granted
         } catch {
@@ -140,6 +140,21 @@ final class NotificationsModel {
 /// launches makes the Dock a counter you watch rather than a place you launch from.
 @MainActor
 enum DockBadge {
+    /// Whether macOS will actually draw a badge for this app.
+    ///
+    /// The trap that cost an evening: `NSApp.dockTile.badgeLabel` accepts a value, reads it
+    /// back, and is then *silently* discarded unless the app holds the notification badge
+    /// permission. An app that links `UserNotifications` has its Dock badge gated by it —
+    /// and this one requested `[.alert, .sound]` and never `.badge`, so macOS reported the
+    /// badge as `notSupported` and drew nothing. Everything on this side looked correct,
+    /// including the read-back, which is what made it hard to see.
+    ///
+    /// The permission is asked for now. It can still be off if somebody turned it off, so
+    /// this is readable and Settings says so rather than leaving a switch that does nothing.
+    static func allowed() async -> Bool {
+        await UNUserNotificationCenter.current().notificationSettings().badgeSetting == .enabled
+    }
+
     static func update(_ model: AppModel, enabled: Bool) {
         guard enabled, let summary = model.summary else {
             NSApp.dockTile.badgeLabel = nil

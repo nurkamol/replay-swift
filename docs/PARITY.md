@@ -314,6 +314,16 @@ document starts lying, and this one has done it twice already — see the two no
   ranges without it. Recorded so the absence reads as a decision rather than an oversight:
   **building it here would mean shipping something the reference does not have**, which is
   the wrong direction for a port. If it is ever wanted, it belongs in the Glaze app first.
+- **A Dock badge is gated by the notification badge permission, silently.** `NSApp.dockTile
+  .badgeLabel` accepts a value and reads it back unchanged, and macOS then draws nothing
+  unless the app holds that permission — any app linking `UserNotifications` is subject to
+  it. This port asked for `[.alert, .sound]` and never `.badge`, so `badgeSetting` was
+  `notSupported` and the badge never appeared. Every diagnostic on the app's side looked
+  correct, including the read-back, which is what made it hard to find. The permission is
+  requested now, and Settings says so when it is refused rather than leaving a switch that
+  does nothing. **On a Mac that already granted notifications under the old options, macOS
+  does not re-prompt** — Badge application icon has to be turned on once in System Settings ▸
+  Notifications ▸ Replay.
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
   `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, `detectWorkflows`,
   `computeWeekSummary`, and both orderings in `Collections.compute`. Fixtures cover each — the collections one is built so two
