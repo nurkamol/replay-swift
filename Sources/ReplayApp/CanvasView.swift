@@ -25,6 +25,41 @@ struct CanvasView: View {
         min(max(zoom * pinch, Design.Layout.canvasMinZoom), Design.Layout.canvasMaxZoom)
     }
 
+    /// The magnification, as a whole percentage. Built as a `String` rather than
+    /// interpolated: `Text` would group-separate it, and "1,000%" is not a thing.
+    private var zoomLabel: String { "\(Int((scale * 100).rounded()))%" }
+
+    /// Zoom about the middle of the view.
+    ///
+    /// The offset is scaled by the same ratio, which is what keeps whatever you were looking
+    /// at where it was — zoom that quietly slides the field somewhere else costs you your
+    /// place, and finding it again is the whole cost of the gesture.
+    private func zoom(by factor: CGFloat) {
+        let target = min(
+            max(zoom * factor, Design.Layout.canvasMinZoom), Design.Layout.canvasMaxZoom
+        )
+        guard target != zoom else { return }
+        let ratio = target / zoom
+        withAnimation(motion.animation(Design.Motion.settle)) {
+            offset.width *= ratio
+            offset.height *= ratio
+            zoom = target
+        }
+    }
+
+    /// Bring one node to the middle and move in on it. What a double-click should do: the
+    /// thing you pointed at becomes the thing you are looking at, without losing the field
+    /// around it.
+    private func focus(on node: CanvasGraph.Node) {
+        guard let point = canvas.positions[node.id] else { return }
+        let target = Design.Layout.canvasFocusZoom
+        withAnimation(motion.animation(Design.Motion.settle)) {
+            zoom = target
+            offset = CGSize(width: -point.x * target, height: -point.y * target)
+            selected = node
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             if canvas.loaded && canvas.graph.nodes.isEmpty {
@@ -39,7 +74,31 @@ struct CanvasView: View {
         .navigationSubtitle("Your history as a landscape")
         .onAppear { if !canvas.loaded { canvas.load() } }
         .toolbar {
-            ToolbarItem {
+            ToolbarItemGroup {
+                Button { zoom(by: 1 / Design.Layout.canvasZoomStep) } label: {
+                    Image(systemName: "minus.magnifyingglass")
+                }
+                .disabled(scale <= Design.Layout.canvasMinZoom)
+                .help("Zoom out")
+                .accessibilityLabel("Zoom out")
+
+                // The current magnification, so the buttons are not the only way to know
+                // where you are. Announced as a percentage rather than a multiplier.
+                Text(zoomLabel)
+                    .font(Design.Text.detail)
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
+                    .frame(width: Design.Layout.canvasZoomReadoutWidth)
+                    .accessibilityLabel("Zoom \(zoomLabel)")
+
+                Button { zoom(by: Design.Layout.canvasZoomStep) } label: {
+                    Image(systemName: "plus.magnifyingglass")
+                }
+                .disabled(scale >= Design.Layout.canvasMaxZoom)
+                .help("Zoom in")
+                .accessibilityLabel("Zoom in")
+
                 Button {
                     withAnimation(motion.animation(Design.Motion.settle)) {
                         offset = .zero
@@ -50,9 +109,31 @@ struct CanvasView: View {
                 } label: {
                     Image(systemName: "scope")
                 }
-                .help("Recentre")
+                .help("Fit to the window")
                 .accessibilityLabel("Recentre the canvas")
             }
+        }
+        // The shortcuts every Mac app uses for magnification, so the toolbar is not the only
+        // way in. Bound on the view rather than in the menu bar: they mean nothing anywhere
+        // else in the app.
+        .background {
+            Group {
+                Button("Zoom In") { zoom(by: Design.Layout.canvasZoomStep) }
+                    .keyboardShortcut("+", modifiers: .command)
+                Button("Zoom In") { zoom(by: Design.Layout.canvasZoomStep) }
+                    .keyboardShortcut("=", modifiers: .command)
+                Button("Zoom Out") { zoom(by: 1 / Design.Layout.canvasZoomStep) }
+                    .keyboardShortcut("-", modifiers: .command)
+                Button("Actual Size") {
+                    withAnimation(motion.animation(Design.Motion.settle)) {
+                        zoom = 1
+                        offset = .zero
+                    }
+                }
+                .keyboardShortcut("0", modifiers: .command)
+            }
+            .opacity(0)
+            .accessibilityHidden(true)
         }
     }
 
@@ -238,6 +319,9 @@ struct CanvasView: View {
                         pinch = 1
                     }
             )
+            .onTapGesture(count: 2) { location in
+                if let node = node(at: location, centre: centre) { focus(on: node) }
+            }
             .onTapGesture { location in
                 withAnimation(motion.animation(Design.Motion.settle)) {
                     selected = node(at: location, centre: centre)

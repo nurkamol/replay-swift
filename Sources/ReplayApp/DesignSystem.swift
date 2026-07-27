@@ -471,6 +471,13 @@ enum Design {
         static let canvasMinZoom: CGFloat = 0.4
         static let canvasMaxZoom: CGFloat = 3
         static let canvasPreviewWidth: CGFloat = 300
+        /// One press of zoom in or out. A ratio rather than a step, so each press feels the
+        /// same however far in you already are.
+        static let canvasZoomStep: CGFloat = 1.35
+        /// The magnification readout, wide enough for "300%" so the toolbar does not shuffle.
+        static let canvasZoomReadoutWidth: CGFloat = 44
+        /// Where a double-click lands you: close enough to read a node's neighbourhood.
+        static let canvasFocusZoom: CGFloat = 1.8
         /// The screensaver's column, and how far its edges dissolve.
         static let screensaverColumnWidth: CGFloat = 460
         static let screensaverFade: CGFloat = 160
