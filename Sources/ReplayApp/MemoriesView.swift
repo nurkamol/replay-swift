@@ -73,8 +73,12 @@ struct MemoriesView: View {
                 if memories.memories.isEmpty && memories.moments.isEmpty {
                     empty.centredInPage()
                 } else {
+                    // Memories arrived whole where every other surface assembles. Nothing
+                    // here was staggered at all, so switching to it after Today or the
+                    // Timeline read as a jump rather than as a screen being entered.
                     surpriseButton
-                    if !memories.moments.isEmpty { momentsSection }
+                        .settlesIn(0)
+                    if !memories.moments.isEmpty { momentsSection.settlesIn(1) }
                     if !memories.memories.isEmpty {
                         VStack(alignment: .leading, spacing: Design.Space.row) {
                             Text("On this day").sectionLabelStyle()
@@ -85,11 +89,13 @@ struct MemoriesView: View {
                                 )
                             }
                         }
+                        .settlesIn(2)
                     }
-                    if !memories.byDay.isEmpty { heatmapSection }
+                    if !memories.byDay.isEmpty { heatmapSection.settlesIn(3) }
                     Text("Everything here is built on this Mac, from your own history.")
                         .font(Design.Text.detail)
                         .foregroundStyle(.tertiary)
+                        .settlesIn(4)
                 }
             }
             .pageContent()

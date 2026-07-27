@@ -334,7 +334,7 @@ private struct DaySection: View {
                 // span two or three hours, so an hour rule between every pair would
                 // out-number the sessions it was meant to organise.
                 if let part = partBreak(at: index) {
-                    PartDivider(part: part)
+                    PartDivider(part: part).settlesIn(1)
                 }
                 switch item {
                 case .session(let session):
@@ -346,7 +346,10 @@ private struct DaySection: View {
                     )
                     .settlesIn(1)
                 case .breakItem(let gap):
-                    BreakRow(gap: gap)
+                    // Everything in the day arrives together. The cards used to settle in
+                    // while the breaks and the day-part labels between them were simply
+                    // already there, which read as the list arriving around them.
+                    BreakRow(gap: gap).settlesIn(1)
                 }
             }
         }
@@ -543,9 +546,9 @@ struct DayView: View {
                                     export: export,
                                     onDelete: { onDeleteSession(session) }
                                 )
-                    .settlesIn(2)
+                                .settlesIn(2)
                             case .breakItem(let gap):
-                                BreakRow(gap: gap)
+                                BreakRow(gap: gap).settlesIn(2)
                             }
                         }
                     }

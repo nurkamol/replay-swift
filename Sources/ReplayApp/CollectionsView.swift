@@ -74,10 +74,11 @@ struct CollectionsView: View {
                         Label("All collections", systemImage: "chevron.left")
                     }
                     .buttonStyle(.link)
+                    .settlesIn(0)
                 }
 
                 if let opened = collections.opened {
-                    openedCollection(opened)
+                    openedCollection(opened).settlesIn(1)
                 } else if collections.collections.isEmpty {
                     empty.centredInPage()
                 } else {
@@ -88,6 +89,7 @@ struct CollectionsView: View {
                             }
                         }
                     }
+                    .settlesIn(1)
                 }
             }
             .pageContent()

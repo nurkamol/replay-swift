@@ -23,6 +23,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: Design.Space.block) {
                 if let summary = model.summary, summary.switches > 0 {
                     HeadlineCard(summary: summary)
+                        .settlesIn(0)
                     // Only when one has been asked for. No goal means no card, not an
                     // invitation to set one — the app does not push a target on anybody.
                     if let goal = preferences.focusGoalMinutes {
@@ -39,6 +40,7 @@ struct TodayView: View {
                             goalMinutes: goal,
                             onSetGoal: { preferences.focusGoalMinutes = $0 }
                         )
+                        .settlesIn(1)
                     }
                     // First, because it is about the day before this one — and gone by
                     // lunchtime, when the day is underway and looking back is no longer
@@ -49,6 +51,7 @@ struct TodayView: View {
                             onOpenDay: onOpenDay,
                             onDismiss: { contextual.dismissBriefing() }
                         )
+                        .settlesIn(2)
                     }
                     // Above everything it could interrupt, and absent far more often than
                     // present — most days Replay has nothing worth saying, and says nothing.
@@ -63,6 +66,7 @@ struct TodayView: View {
                                 ? { contextual.archive(memory) }
                                 : nil
                         )
+                        .settlesIn(3)
                     }
 
                     // One of them, not all of them. See `pickTodayHero`: the quote, the
@@ -70,9 +74,12 @@ struct TodayView: View {
                     // appear together, so a rich day opened with a column of cards before
                     // the day itself. Now the day picks one and keeps it until midnight.
                     hero
+                        .settlesIn(4)
 
                     reflection
+                        .settlesIn(5)
                     sessionList
+                        .settlesIn(6)
                 } else {
                     quietDay.centredInPage()
                 }
@@ -188,9 +195,12 @@ struct TodayView: View {
                         export: export,
                         onDelete: { model.deleteSession(session) }
                     )
-                    .settlesIn(0)
+                    .settlesIn(6)
                 case .breakItem(let gap):
-                    BreakRow(gap: gap)
+                    // The same arrival as the card above it. A break is part of the day, not
+                    // furniture between the parts that are — and a row that appears while its
+                    // neighbours are still fading in reads as something the list forgot.
+                    BreakRow(gap: gap).settlesIn(6)
                 }
             }
         }
@@ -761,7 +771,6 @@ struct ContextualMemoryCard: View {
         .onTapGesture { if memory.dayStart != nil { onOpen() } }
         .onHover { hovering = $0 }
         .card(border: Design.Colour.markedBorder)
-        .settlesIn(1)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label). \(memory.headline) \(memory.detail ?? "")")
         .accessibilityHint(memory.dayStart != nil ? "Opens that day" : "")
@@ -842,7 +851,6 @@ struct MorningBriefingCard: View {
         }
         .padding(Design.Space.page)
         .card(border: Design.Colour.border)
-        .settlesIn(2)
     }
 
     /// Named for the time of day, because that is what a greeting is for.

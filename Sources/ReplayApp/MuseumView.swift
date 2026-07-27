@@ -27,10 +27,10 @@ struct MuseumView: View {
                         milestones
                     }
                     if !museum.deepestFocus.isEmpty {
-                        sessions("Your deepest focus", museum.deepestFocus)
+                        sessions("Your deepest focus", museum.deepestFocus).settlesIn(2)
                     }
                     if !museum.bookmarked.isEmpty {
-                        sessions("The ones you kept", museum.bookmarked)
+                        sessions("The ones you kept", museum.bookmarked).settlesIn(3)
                     }
                     if !museum.reflections.isEmpty { reflections }
                     if !museum.topProjects.isEmpty { projects }
@@ -148,7 +148,7 @@ struct MuseumView: View {
                 }
             }
         }
-        .settlesIn(2)
+        .settlesIn(4)
     }
 
     private var projects: some View {
@@ -190,7 +190,7 @@ struct MuseumView: View {
             .padding(Design.Space.snug)
             .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIn(3)
+        .settlesIn(5)
     }
 
     private func glyph(for kind: Moment.Kind) -> String {
