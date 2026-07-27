@@ -62,6 +62,62 @@ public enum Memories {
         }
     }
 
+    /// The day a written phrase points at, or `nil` when it points at nothing.
+    ///
+    /// "Yesterday", "last month", "three months ago", "friday". Not a date parser and not
+    /// trying to be one: a fixed list of phrases people actually type into a search field,
+    /// so a query that reads like a date jumps to that day instead of matching nothing.
+    ///
+    /// Uses the same overflowing arithmetic as ``targets(now:calendar:)`` for the same
+    /// reason — "last month" on 31 March has to mean the same day in both apps.
+    public static func day(matching query: String, now: Int64, calendar: Calendar = .current)
+        -> Int64?
+    {
+        let phrase = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !phrase.isEmpty else { return nil }
+
+        let today = Date(timeIntervalSince1970: Double(startOfLocalDay(now, calendar: calendar)) / 1000)
+        let parts = calendar.dateComponents([.year, .month, .day, .weekday], from: today)
+        guard let year = parts.year, let month = parts.month, let day = parts.day,
+              let weekday = parts.weekday
+        else { return nil }
+
+        func shift(years: Int = 0, months: Int = 0, days: Int = 0) -> Int64? {
+            var components = DateComponents()
+            components.year = year - years
+            components.month = month - months
+            components.day = day - days
+            guard let date = calendar.date(from: components) else { return nil }
+            return Int64((date.timeIntervalSince1970 * 1000).rounded())
+        }
+
+        let phrases: [(words: Set<String>, years: Int, months: Int, days: Int)] = [
+            (["today"], 0, 0, 0),
+            (["yesterday"], 0, 0, 1),
+            (["last week", "a week ago", "one week ago", "1 week ago"], 0, 0, 7),
+            (["last month", "a month ago", "one month ago", "1 month ago"], 0, 1, 0),
+            (["3 months ago", "three months ago"], 0, 3, 0),
+            (["6 months ago", "six months ago"], 0, 6, 0),
+            (["last year", "a year ago", "one year ago", "1 year ago"], 1, 0, 0),
+            (["2 years ago", "two years ago"], 2, 0, 0),
+        ]
+        for entry in phrases where entry.words.contains(phrase) {
+            return shift(years: entry.years, months: entry.months, days: entry.days)
+        }
+
+        // "monday" is the most recent one, which may be today; "last monday" on a Monday
+        // means the week before, not this morning.
+        let named = phrase.hasPrefix("last ")
+        let name = named ? String(phrase.dropFirst("last ".count)) : phrase
+        let weekdayNames = [
+            "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+        ]
+        guard let target = weekdayNames.firstIndex(of: name) else { return nil }
+        var back = ((weekday - 1) - target + 7) % 7
+        if named, back == 0 { back = 7 }
+        return shift(days: back)
+    }
+
     /// Every offset that actually has recorded activity, nearest first.
     ///
     /// A day with a headline of zero is not a memory — it is a day the app was running and

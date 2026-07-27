@@ -263,7 +263,7 @@ struct ModelBehaviour {
     func searchReadsAnnotations() throws {
         let (model, directory) = try Self.makeModel()
         defer { Self.discard(directory) }
-        let search = SearchModel(model: model)
+        let search = SearchModel(model: model, preferences: Preferences())
 
         let start = Self.midnight(daysAgo: 1) + 9 * Self.hour
         try Self.record(model.store, "Code", "com.microsoft.VSCode", from: start, seconds: 900)

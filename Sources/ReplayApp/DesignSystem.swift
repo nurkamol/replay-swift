@@ -295,6 +295,9 @@ enum Design {
         /// How far a bookmarked border is warmed, and a streak's background tinted.
         static let markedOpacity: Double = 0.45
         static let streakOpacity: Double = 0.12
+        /// The matched run inside a search result. Light enough to leave the text primary —
+        /// a highlight that has to be read *through* has stopped pointing at anything.
+        static let matchOpacity: Double = 0.20
 
         /// A rhythm bar's weight. The busiest hour is solid and the quietest still shows,
         /// so the strip reads as a shape rather than as a row of on/off cells.

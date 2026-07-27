@@ -111,6 +111,33 @@ final class Preferences {
         }
     }
 
+    /// Queries kept for one-tap recall, newest first.
+    var savedSearches: [String] {
+        didSet { writeJSON(savedSearches, "savedSearches") }
+    }
+
+    /// A shortlist, not a history log — so recall stays something you read at a glance.
+    static let maxSavedSearches = 12
+
+    /// Save a query, or forget it if it is already saved.
+    ///
+    /// Matched case-insensitively so "Figma" and "figma" do not both pile up, but stored as
+    /// typed: the list is read back, and a query lower-cased on the way in reads as a
+    /// correction of something you wrote.
+    func toggleSavedSearch(_ query: String) {
+        let value = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return }
+        let without = savedSearches.filter { $0.lowercased() != value.lowercased() }
+        savedSearches = without.count == savedSearches.count
+            ? Array(([value] + without).prefix(Preferences.maxSavedSearches))
+            : without
+    }
+
+    func isSaved(_ query: String) -> Bool {
+        let value = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return !value.isEmpty && savedSearches.contains { $0.lowercased() == value }
+    }
+
     /// The names given to projects, keyed by signature.
     ///
     /// The only thing about a project that is ever stored. Everything else is derived, so a
@@ -235,6 +262,8 @@ final class Preferences {
         weeklyRecap = defaults.bool(forKey: "weeklyRecap")
         onThisDayNotice = defaults.bool(forKey: "onThisDayNotice")
         pinnedApps = (defaults.data(forKey: "pinnedApps"))
+            .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
+        savedSearches = (defaults.data(forKey: "savedSearches"))
             .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
         projectNames = (defaults.data(forKey: "projectNames"))
             .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]

@@ -21,6 +21,55 @@ public enum Search {
     /// is a shortcut to a handful, not a way to list a month.
     public static let conceptLimit = 12
 
+    /// How many applications a query answers with. Also the reference's: naming an app is
+    /// a way of asking "which one did I mean", and thirty candidates is not an answer.
+    public static let appLimit = 6
+
+    /// How far back a query looks.
+    ///
+    /// A narrowing, not a second search: the same predicates run, over fewer days. `all` is
+    /// the whole searchable window rather than all history — nothing outside it is loaded.
+    public enum Span: String, CaseIterable, Sendable, Identifiable {
+        case all, today, week, month
+
+        public var id: String { rawValue }
+
+        public var label: String {
+            switch self {
+            case .all: "All time"
+            case .today: "Today"
+            case .week: "Week"
+            case .month: "Month"
+            }
+        }
+
+        /// The earliest instant this span admits. `all` admits everything.
+        public func start(now: Int64, calendar: Calendar = .current) -> Int64 {
+            let today = startOfLocalDay(now, calendar: calendar)
+            switch self {
+            case .all: return 0
+            case .today: return today
+            case .week: return today - 6 * dayMillis
+            case .month: return today - 29 * dayMillis
+            }
+        }
+    }
+
+    /// Where the query first appears in a piece of text, for highlighting it.
+    ///
+    /// Case-insensitive by comparison rather than by lowercasing both sides and taking an
+    /// index into one of them — which is what the reference does, and which is off by a
+    /// character whenever a case fold changes a string's length. Same answer for every
+    /// query anyone will type, and correct for the rest.
+    public static func firstMatch(of query: String, in text: String) -> Range<String.Index>? {
+        var needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        while needle.hasPrefix("#") { needle.removeFirst() }
+        guard !needle.isEmpty else { return nil }
+        // Case only. Not diacritic-insensitive: the predicate that *found* this result is
+        // not, so a fold here would highlight a word the search did not actually match on.
+        return text.range(of: needle, options: [.caseInsensitive])
+    }
+
     /// Does a session match a typed query, by its name or by what was written on it?
     ///
     /// A leading `#` is dropped so a tag can be typed the way it is displayed. Tags match on
@@ -129,10 +178,11 @@ public enum Search {
         }
         // Sorted on (seconds, name) rather than seconds alone: Swift's sort is not stable,
         // and two apps with equal time would otherwise reorder between keystrokes.
-        return hits.values.sorted {
+        let ranked = hits.values.sorted {
             $0.seconds != $1.seconds
                 ? $0.seconds > $1.seconds
                 : $0.applicationName < $1.applicationName
         }
+        return Array(ranked.prefix(appLimit))
     }
 }

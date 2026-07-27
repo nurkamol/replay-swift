@@ -28,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model: model, history: history, preferences: preferences
     )
     private lazy var export = ExportModel(model: model)
-    private lazy var search = SearchModel(model: model)
+    private lazy var search = SearchModel(model: model, preferences: preferences)
     private lazy var memories = MemoriesModel(model: model)
     private lazy var collections = CollectionsModel(model: model)
     private lazy var week = WeekModel(model: model)

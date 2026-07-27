@@ -528,9 +528,14 @@ struct RootView: View {
             SearchView(
                 search: search,
                 navigation: navigation,
+                preferences: preferences,
                 annotations: model.annotations,
                 export: export,
-                onDeleteSession: { history.deleteSession($0); search.load() }
+                onDeleteSession: { history.deleteSession($0); search.load() },
+                onOpenCollection: {
+                    collections.opened = $0
+                    navigation.show(.collections)
+                }
             )
         case .memories:
             MemoriesView(
