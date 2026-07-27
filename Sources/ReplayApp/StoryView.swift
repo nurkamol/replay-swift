@@ -21,49 +21,32 @@ struct StoryView: View {
             VStack(alignment: .leading, spacing: Design.Space.block) {
                 // Across the full width: it is the whole archive, and the other two are
                 // ways into parts of it.
-                hub(
-                    "My Story", "archivebox",
-                    "The whole of it at a glance — how long you have been building this, "
-                        + "and everything it holds.",
-                    .legacy
-                )
-                .settlesIn(0)
+                // Titles and descriptions are the reference's own and contract-checked;
+                // only the glyph and the destination belong to this port.
+                hub(0, "archivebox", .legacy).settlesIn(0)
 
                 LazyVGrid(columns: columns, spacing: Design.Space.row) {
-                    hub(
-                        "Autobiography", "text.book.closed",
-                        "Your history told back to you, a month or a year at a time.",
-                        .autobiography
-                    )
-                    hub(
-                        "Chapters", "book",
-                        "Your history divided into the eras it naturally fell into.",
-                        .chapters
-                    )
-                    hub(
-                        "Museum", "building.columns",
-                        "A quiet walk through the parts worth coming back to.",
-                        .museum
-                    )
+                    hub(1, "text.book.closed", .autobiography).settlesIn(1)
+                    hub(2, "book", .chapters).settlesIn(2)
+                    hub(3, "building.columns", .museum).settlesIn(3)
                 }
-                .settlesIn(1)
 
-                if !story.rituals.slots.isEmpty || story.rituals.firstApp != nil {
-                    rituals
-                }
+                rituals
             }
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Your story")
-        .navigationSubtitle("The long view of your work")
+        .navigationTitle(NarrativeCopy.storyTitle)
+        .navigationSubtitle(NarrativeCopy.storySubtitle)
         .onAppear { story.load() }
     }
 
     private func hub(
-        _ title: String, _ glyph: String, _ detail: String, _ target: Navigation.StoryTarget
+        _ index: Int, _ glyph: String, _ target: Navigation.StoryTarget
     ) -> some View {
-        Button {
+        let title = NarrativeCopy.storyHub[index].title
+        let detail = NarrativeCopy.storyHub[index].detail
+        return Button {
             onOpen(target)
         } label: {
             HStack(alignment: .top, spacing: Design.Space.card) {
@@ -100,19 +83,44 @@ struct StoryView: View {
     /// deliberately no suggestion attached to it (SPEC §8).
     private var rituals: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("What your days tend to look like").sectionLabelStyle()
-            VStack(spacing: 0) {
-                if let first = story.rituals.firstApp {
-                    ritual("sunrise", "You usually begin with", first)
+            Text(NarrativeCopy.ritualsLabel).sectionLabelStyle()
+            if story.rituals.slots.isEmpty && story.rituals.firstApp == nil {
+                // The section stays and explains itself rather than vanishing. Omitting it
+                // was the same mistake Memories made: the only person who ever sees this
+                // state is someone new, and they were shown three hub cards and no hint
+                // that a fourth thing was coming.
+                VStack(spacing: Design.Space.hairline) {
+                    Text(NarrativeCopy.ritualsEmptyTitle).font(Design.Text.itemTitle)
+                    Text(NarrativeCopy.ritualsEmptyDetail)
+                        .font(Design.Text.detail)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                ForEach(story.rituals.slots, id: \.part) { slot in
-                    ritual(glyph(for: slot.part), "\(slot.part) tends to lead with", slot.app)
+                .padding(Design.Space.cardRoomy)
+                .frame(maxWidth: .infinity)
+                .card(border: Design.Colour.borderQuiet)
+            } else {
+                VStack(spacing: 0) {
+                    if let first = story.rituals.firstApp {
+                        ritual("sunrise", "You usually begin with", first)
+                    }
+                    ForEach(story.rituals.slots, id: \.part) { slot in
+                        ritual(glyph(for: slot.part), "\(slot.part) tends to lead with", slot.app)
+                    }
                 }
+                .padding(Design.Space.snug)
+                .card(border: Design.Colour.borderQuiet)
+
+                // The rule, said out loud. Without it a ritual reads as something the app
+                // decided, and the last clause is the whole point: nothing was scheduled.
+                Text(NarrativeCopy.ritualsFootnote)
+                    .font(Design.Text.micro)
+                    .foregroundStyle(.tertiary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(Design.Space.snug)
-            .card(border: Design.Colour.borderQuiet)
         }
-        .settlesIn(2)
+        .settlesIn(4)
     }
 
     private func ritual(_ glyph: String, _ label: String, _ app: Rituals.App) -> some View {

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 882 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 904 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -177,6 +177,22 @@ document starts lying, and this one has done it twice already — see the two no
   enough for the grid to scroll, it silently pushed the weekday column and the first five
   week-columns off the left. The grid appeared to begin in September and had no key at all,
   and it looked deliberate. It reads from its start now, as the reference's does.
+- **The narrative surfaces were entirely paraphrase.** Story, Chapters and Autobiography are
+  almost nothing but prose — a hub of four cards that each explain themselves, three
+  subtitles, three empty states and two footnotes — and not one sentence was the reference's.
+  Close in meaning throughout, which is why nobody noticed: "The eras your history fell into"
+  for "Your history, divided into the eras it naturally fell into — and yours to name", and a
+  Chapters empty state that said "once there are a few of those" where the reference answers
+  the actual question, "a week or two of history is enough for the first". Both footnotes —
+  how a ritual is decided, and where every sentence of the autobiography comes from — were
+  missing entirely, and they are the two sentences that say the feature is descriptive rather
+  than invented. Generated into `spec/narrative-copy.json` and checked character for
+  character. Found auditing the Story cluster on 2026-07-28.
+- **Story's rituals section vanished when it was empty.** Same shape as the Memories finding
+  a few hours earlier: emptiness handled by omission, so the only person who ever sees that
+  state — someone new — got three hub cards and no hint that a fourth thing was coming. The
+  reference keeps the section and explains what will fill it. **Worth treating as a rule
+  rather than two incidents: check every remaining surface for it.**
 - **Replay Day's scrubber answered a drag but never said it had been grabbed.** Dragging
   moved the playhead — which says where the day is, not that you have hold of it — and
   nothing at all happened on pointer-down. Apple's *Designing Fluid Interfaces* puts this

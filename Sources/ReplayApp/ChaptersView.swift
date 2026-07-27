@@ -26,18 +26,17 @@ struct ChaptersView: View {
         }
         .background(.background)
         .navigationTitle("Chapters")
-        .navigationSubtitle("The eras your history fell into")
+        .navigationSubtitle(NarrativeCopy.chaptersSubtitle)
         .onAppear { if !story.loaded { story.load() } }
     }
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("No chapters yet", systemImage: "book")
+            Label(NarrativeCopy.chaptersEmptyTitle, systemImage: "book")
         } description: {
-            Text(
-                "A chapter is a run of days that shared a character. "
-                    + "Once there are a few of those, they will appear here."
-            )
+            // The reference's own, and it says the thing the paraphrase left out: how much
+            // history is enough. "A few of those" is not an answer; "a week or two" is.
+            Text(NarrativeCopy.chaptersEmptyDetail)
         }
     }
 }

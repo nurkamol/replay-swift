@@ -110,7 +110,12 @@ behaviour first and constants second, and generate anything that matches-by-luck
       stagger to the container, so three surfaces arrived as a block; and both of Memories'
       "no data" paths were whole-page empty states where upstream empties one section and
       leaves the rest of the screen usable.
-- [ ] Story, Chapters, Autobiography
+- [x] **Story, Chapters, Autobiography** — audited 2026-07-28. Almost the whole of these
+      three surfaces is prose and nothing held any of it: every subtitle and empty state was
+      a paraphrase and both footnotes were missing outright. Generated into
+      `spec/narrative-copy.json`; 22 checks. Also: Story's rituals section vanished when
+      empty rather than explaining itself — the same mistake Memories made — and the hub
+      cards arrived as a block rather than one at a time.
 - [ ] Museum · My Story · App history · Relationships
 - [ ] Replay Day · Screensaver · Welcome
 

@@ -279,6 +279,40 @@ public enum ParityKit {
         public let entries: [Entry]
     }
 
+    /// The narrative surfaces' own words — Story's hub and rituals, and the subtitles,
+    /// empty states and footnotes of Chapters and Autobiography. Almost the whole of those
+    /// three screens is prose, and until 2026-07-28 nothing held any of it: every sentence
+    /// was a paraphrase and both footnotes were missing. See `spec/narrative-copy.json`.
+    public struct NarrativeCopySpec: Decodable, Sendable {
+        public struct Hub: Decodable, Sendable {
+            public let title: String
+            public let detail: String
+        }
+        public struct Story: Decodable, Sendable {
+            public let title: String
+            public let subtitle: String
+            public let hub: [Hub]
+            public let ritualsLabel: String
+            public let ritualsFootnote: String
+            public let ritualsEmptyTitle: String
+            public let ritualsEmptyDetail: String
+        }
+        public struct Chapters: Decodable, Sendable {
+            public let subtitle: String
+            public let emptyTitle: String
+            public let emptyDetail: String
+        }
+        public struct Autobiography: Decodable, Sendable {
+            public let subtitle: String
+            public let emptyTitle: String
+            public let emptyDetail: String
+            public let footnote: String
+        }
+        public let story: Story
+        public let chapters: Chapters
+        public let autobiography: Autobiography
+    }
+
     /// Day grouping and report text, run against the real Glaze code under a pinned clock,
     /// timezone and locale. See `spec/grouping-and-export.json`.
     public struct GroupingAndExport: Decodable, Sendable {
@@ -965,6 +999,7 @@ public enum ParityKit {
         let constants = try load(Constants.self, "constants.json", from: root)
         let guideSpec = try load(GuideSpec.self, "guide.json", from: root)
         let settingsCopy = try load(SettingsCopySpec.self, "settings-copy.json", from: root)
+        let narrative = try load(NarrativeCopySpec.self, "narrative-copy.json", from: root)
 
         var checks: [Check] = []
         func check(_ group: String, _ what: String, _ passed: Bool, _ detail: String? = nil) {
@@ -1163,6 +1198,60 @@ public enum ParityKit {
         equal(
             g1, "the order the heroes rotate in",
             TodayHero.allCases.map(\.rawValue), constants.today.heroOrder
+        )
+
+        // The narrative surfaces' prose, character for character.
+        let gN = "narrative copy"
+        equal(gN, "Story's title", NarrativeCopy.storyTitle, narrative.story.title)
+        equal(gN, "Story's subtitle", NarrativeCopy.storySubtitle, narrative.story.subtitle)
+        equal(
+            gN, "the hub has four ways in",
+            NarrativeCopy.storyHub.count, narrative.story.hub.count
+        )
+        for (ours, theirs) in zip(NarrativeCopy.storyHub, narrative.story.hub) {
+            equal(gN, "the hub card \"\(theirs.title)\"", ours.title, theirs.title)
+            equal(gN, "what \"\(theirs.title)\" says it is", ours.detail, theirs.detail)
+        }
+        equal(gN, "the rituals label", NarrativeCopy.ritualsLabel, narrative.story.ritualsLabel)
+        equal(
+            gN, "how a ritual is explained",
+            NarrativeCopy.ritualsFootnote, narrative.story.ritualsFootnote
+        )
+        equal(
+            gN, "what an empty rituals section is called",
+            NarrativeCopy.ritualsEmptyTitle, narrative.story.ritualsEmptyTitle
+        )
+        equal(
+            gN, "and what it says",
+            NarrativeCopy.ritualsEmptyDetail, narrative.story.ritualsEmptyDetail
+        )
+        equal(
+            gN, "Chapters' subtitle",
+            NarrativeCopy.chaptersSubtitle, narrative.chapters.subtitle
+        )
+        equal(
+            gN, "Chapters with nothing in it",
+            NarrativeCopy.chaptersEmptyTitle, narrative.chapters.emptyTitle
+        )
+        equal(
+            gN, "and what that explains",
+            NarrativeCopy.chaptersEmptyDetail, narrative.chapters.emptyDetail
+        )
+        equal(
+            gN, "Autobiography's subtitle",
+            NarrativeCopy.autobiographySubtitle, narrative.autobiography.subtitle
+        )
+        equal(
+            gN, "Autobiography with nothing in it",
+            NarrativeCopy.autobiographyEmptyTitle, narrative.autobiography.emptyTitle
+        )
+        equal(
+            gN, "and what that explains",
+            NarrativeCopy.autobiographyEmptyDetail, narrative.autobiography.emptyDetail
+        )
+        equal(
+            gN, "where every sentence comes from",
+            NarrativeCopy.autobiographyFootnote, narrative.autobiography.footnote
         )
 
         // A week begins on Monday, everywhere in the app.

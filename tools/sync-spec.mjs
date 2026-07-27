@@ -770,6 +770,81 @@ const guide = (() => {
   return entries;
 })();
 
+/*
+ * The narrative surfaces' own words.
+ *
+ * Story, Chapters and Autobiography are almost entirely prose — a hub of four cards that
+ * each explain themselves, three subtitles, three empty states and two footnotes — and none
+ * of it was held by anything. The audit of 2026-07-28 found every one of them paraphrased:
+ * close in meaning, not one of them the reference's sentence. SPEC §8 calls the copy the
+ * product, so it is generated here for the same reason the Guide's sixteen answers are.
+ *
+ * Pulled out of JSX by attribute and by tag, which is why each is matched in place: if the
+ * shape moves, this stops rather than silently recording fewer strings.
+ */
+const narrativeCopy = (() => {
+  const view = (f) => read(`renderer/main/views/${f}`);
+  const attr = (src, file, name, what, nth = 0) => {
+    /* `(?<![a-zA-Z])` because `title=` otherwise matches the tail of `subtitle=`, which
+       is how the autobiography's empty-state title came out as its page subtitle. */
+    const all = [...src.matchAll(
+      new RegExp(`(?<![a-zA-Z])${name}=\\{?"((?:[^"\\\\]|\\\\.)*)"\\}?`, "g"),
+    )];
+    if (all.length <= nth) {
+      problems.push(`${file}: ${what} — no ${name} at index ${nth}`);
+      return "";
+    }
+    return JSON.parse(`"${all[nth][1]}"`);
+  };
+  /* JSX wraps prose across lines and indents it; the runs of whitespace are layout, not
+     text, so they collapse to the single spaces a reader would see. */
+  const prose = (src, file, pattern, what) => {
+    const m = src.match(pattern);
+    if (!m) { problems.push(`${file}: ${what} not found`); return ""; }
+    return m[1].replace(/\s+/g, " ").trim();
+  };
+
+  const story = view("story-view.tsx");
+  const chapters = view("chapters-view.tsx");
+  const auto = view("autobiography-view.tsx");
+
+  return {
+    story: {
+      title: attr(story, "story-view.tsx", "title", "the page title"),
+      subtitle: attr(story, "story-view.tsx", "subtitle", "the page subtitle"),
+      // The four hub cards, in the order they are laid out.
+      hub: [
+        { title: "My Story", detail: attr(story, "story-view.tsx", "detail", "My Story", 0) },
+        { title: "Autobiography", detail: attr(story, "story-view.tsx", "detail", "Autobiography", 1) },
+        { title: "Chapters", detail: attr(story, "story-view.tsx", "detail", "Chapters", 2) },
+        { title: "Museum", detail: attr(story, "story-view.tsx", "detail", "Museum", 3) },
+      ],
+      ritualsLabel: prose(story, "story-view.tsx",
+        /<SectionLabel>([\s\S]*?)<\/SectionLabel>/, "the rituals section label"),
+      ritualsFootnote: prose(story, "story-view.tsx",
+        /(A part becomes a ritual[\s\S]*?)<\/Text>/, "the rituals footnote"),
+      ritualsEmptyTitle: prose(story, "story-view.tsx",
+        /<Text variant="strong">(Your rituals[\s\S]*?)<\/Text>/, "the rituals empty title"),
+      ritualsEmptyDetail: prose(story, "story-view.tsx",
+        /(As the days repeat,[\s\S]*?)<\/Text>/, "the rituals empty detail"),
+    },
+    chapters: {
+      subtitle: attr(chapters, "chapters-view.tsx", "subtitle", "the page subtitle"),
+      // Index 2: the ScrollArea's title and the PageHeader's are both "Chapters".
+      emptyTitle: attr(chapters, "chapters-view.tsx", "title", "the empty title", 2),
+      emptyDetail: attr(chapters, "chapters-view.tsx", "description", "the empty detail"),
+    },
+    autobiography: {
+      subtitle: attr(auto, "autobiography-view.tsx", "subtitle", "the page subtitle"),
+      // Index 2: the ScrollArea's title and the PageHeader's are both "Autobiography".
+      emptyTitle: attr(auto, "autobiography-view.tsx", "title", "the empty title", 2),
+      emptyDetail: attr(auto, "autobiography-view.tsx", "description", "the empty detail"),
+      footnote: prose(auto, "autobiography-view.tsx",
+        /(Every sentence is drawn[\s\S]*?)<\/Text>/, "the autobiography footnote"),
+    },
+  };
+})();
+
 // ── golden fixtures for session derivation ────────────────────────────────────
 //
 // The derivation is the one piece of logic a port is most likely to get subtly
@@ -2355,6 +2430,11 @@ writeFileSync(
 );
 
 writeFileSync(
+  join(SPEC, "narrative-copy.json"),
+  JSON.stringify({ _generated: provenance, ...narrativeCopy }, null, 2) + "\n",
+);
+
+writeFileSync(
   join(SPEC, "grouping-and-export.json"),
   JSON.stringify({ _generated: provenance, ...exportFixture }, null, 2) + "\n",
 );
@@ -2373,6 +2453,7 @@ console.log(`  schema.sql        ${schemaParts.length} statement blocks`);
 console.log(`  constants.json    ${Object.keys(constants).length} groups`);
 console.log(`  fixtures/         ${fixtures.length} scenarios`);
 console.log(`  settings-copy.json ${settingsCopy.length} labelled rows`);
-console.log(`  guide.json        ${guide.length} questions`);
+console.log(`  guide.json        ${guide.length} questions
+  narrative-copy.json  the Story cluster's own words`);
 console.log(`  grouping-and-export.json  ${exportFixture.grouping.expected.length} days, ${Object.keys(exportFixture.report.expected).length} report formats`);
 console.log(`\nReview 'git diff spec/' — anything that changed is work for the native port.`);

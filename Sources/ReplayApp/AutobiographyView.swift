@@ -28,7 +28,7 @@ struct AutobiographyView: View {
         }
         .background(.background)
         .navigationTitle("Autobiography")
-        .navigationSubtitle("Your history, told back to you")
+        .navigationSubtitle(NarrativeCopy.autobiographySubtitle)
         .onAppear {
             if !story.loaded { story.load() }
             if selected == nil { selected = story.periods.first }
@@ -94,19 +94,25 @@ struct AutobiographyView: View {
                 }
             }
 
-            // Said plainly, because it is the product rather than a disclaimer.
-            Text("Assembled on this Mac from your own history. No model, no network.")
-                .font(Design.Text.detail)
-                .foregroundStyle(.tertiary)
+            // Said plainly, because it is the product rather than a disclaimer. "Told back
+            // to you" invites the question of who is doing the telling, and this answers it.
+            HStack(spacing: Design.Space.snug) {
+                Spacer(minLength: 0)
+                Image(systemName: "lock").font(Design.Text.micro)
+                Text(NarrativeCopy.autobiographyFootnote).font(Design.Text.micro)
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(.tertiary)
+            .accessibilityElement(children: .combine)
         }
         .settlesIn(1)
     }
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("Nothing to tell yet", systemImage: "text.book.closed")
+            Label(NarrativeCopy.autobiographyEmptyTitle, systemImage: "text.book.closed")
         } description: {
-            Text("Once there are a few days of history, they will be told back to you here.")
+            Text(NarrativeCopy.autobiographyEmptyDetail)
         }
     }
 }
