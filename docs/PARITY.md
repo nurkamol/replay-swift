@@ -177,6 +177,21 @@ document starts lying, and this one has done it twice already — see the two no
   enough for the grid to scroll, it silently pushed the weekday column and the first five
   week-columns off the left. The grid appeared to begin in September and had no key at all,
   and it looked deliberate. It reads from its start now, as the reference's does.
+- **Replay Day's scrubber answered a drag but never said it had been grabbed.** Dragging
+  moved the playhead — which says where the day is, not that you have hold of it — and
+  nothing at all happened on pointer-down. Apple's *Designing Fluid Interfaces* puts this
+  first: respond on press, not on release, because the moment feedback waits for the mouse-up
+  is the moment directness falls off a cliff. The playhead now grows on press and settles on
+  release, and the bar brightens under the pointer so it reads as a control before you commit
+  to it. The reference's own scrubber is a web `<input type=range>` and gets this from the
+  browser, so there is nothing upstream to match — this is the port supplying what the
+  platform did not.
+- **A 12-point drag target.** The filmstrip is drawn 12 points tall and *was* 12 points tall
+  to the pointer. Apple asks for roughly ten points of slack around a small target; the bar
+  still draws at 12 and the grabbable band around it is 32 — the same trick the close button
+  on this screen already used, where "the hit area is the whole disc, not the glyph inside
+  it." Neither number is contracted: `spec/` carries the playback duration and the speeds,
+  and nothing about the bar.
 - **The app had two definitions of a week, and the heatmap picked the wrong one.**
   `startOfWeek` is Monday-based in both ports — the reference writes `(d.getDay() + 6) % 7`
   and comments it "days since Monday" — but it lived privately inside `Autobiography`, so

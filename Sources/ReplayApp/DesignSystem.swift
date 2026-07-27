@@ -244,6 +244,10 @@ enum Design {
         static let enter = Animation.spring(duration: 0.46, bounce: 0.05)
         /// How far it rises. Small enough to read as arrival rather than as a slide.
         static let enterRise: CGFloat = 8
+        /// What a row does as it leaves the top or bottom of a scroll. Barely anything, on
+        /// purpose — enough that the edge of a list reads as an edge rather than a cut.
+        static let scrollFade: Double = 0.6
+        static let scrollShrink: CGFloat = 0.985
 
         /// How long two clicks may be apart and still be one double-click. The system's own
         /// interval would be better, but it is not reachable from inside a `Canvas` gesture,
@@ -875,6 +879,22 @@ enum Design {
         static let ringThickness: CGFloat = 4
         /// The row a progress bar is laid out in.
         static let barRow: CGFloat = 12
+        /// The filmstrip's *hit* height, which is not its drawn height.
+        ///
+        /// Apple's gesture guidance asks for about ten points of slack around a small
+        /// target; a 12-point bar is a 12-point bar to the eye and a coin-toss to the
+        /// pointer. The bar stays 12 and the grabbable band around it is this, which is the
+        /// same trick the close button on this screen already uses — "the hit area is the
+        /// whole disc, not the glyph inside it."
+        static let barHitRow: CGFloat = 32
+        /// How much bigger the playhead gets while it is being dragged.
+        ///
+        /// Response, in Apple's sense: the scrubber answered a drag by moving the playhead
+        /// and said nothing at all about being *held*, so a drag that started outside the
+        /// bar and a drag that started on it looked identical. It grows on pointer-down —
+        /// not on release — because the moment feedback waits for the mouse-up is the
+        /// moment directness falls off a cliff.
+        static let playheadGrabScale: CGFloat = 1.45
         /// A weekday's name and date, so the seven rhythm rows align.
         static let weekdayColumn: CGFloat = 44
         /// A day's rhythm strip, and the pieces of it.
@@ -1294,10 +1314,13 @@ private struct SettlesIn: ViewModifier {
                     arrived = true
                 }
             }
-            .scrollTransition(.interactive, axis: .vertical) { content, phase in
+            // `reduced` is read once, here, rather than inside the closure: the transition
+            // body is `Sendable` and the environment value is main-actor isolated, which
+            // Swift 6 warns about eight times over. A plain `Bool` crosses freely.
+            .scrollTransition(.interactive, axis: .vertical) { [still = reduced] content, phase in
                 content
-                    .opacity(reduced ? 1 : (phase.isIdentity ? 1 : 0.6))
-                    .scaleEffect(reduced ? 1 : (phase.isIdentity ? 1 : 0.985))
+                    .opacity(still ? 1 : (phase.isIdentity ? 1 : Design.Motion.scrollFade))
+                    .scaleEffect(still ? 1 : (phase.isIdentity ? 1 : Design.Motion.scrollShrink))
             }
     }
 }

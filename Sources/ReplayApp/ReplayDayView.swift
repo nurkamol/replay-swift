@@ -20,6 +20,10 @@ struct ReplayDayView: View {
     @State private var playing = true
     @State private var speed = 1
     @State private var lastTick: Date?
+    /// Whether the day is being dragged, and whether the pointer is merely over the strip.
+    /// Two states, not one: hovering says "this is a control", scrubbing says "you have it".
+    @State private var scrubbing = false
+    @State private var hoveringStrip = false
 
     private var current: ActivitySession? {
         Playback.session(at: progress, in: sessions)
@@ -171,8 +175,10 @@ struct ReplayDayView: View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Design.Colour.fill)
+                    .fill(hoveringStrip || scrubbing
+                          ? Design.Colour.fillStrong : Design.Colour.fill)
                     .frame(height: Design.Layout.barThickness)
+                    .animation(motion.animation(Design.Motion.inPlace), value: hoveringStrip)
                 // A mark per session, at its real place in the day — which is what makes the
                 // empty stretches visible as empty.
                 ForEach(sessions, id: \.startedAt) { session in
@@ -189,19 +195,31 @@ struct ReplayDayView: View {
                 Circle()
                     .fill(.white)
                     .frame(width: Design.Layout.playhead, height: Design.Layout.playhead)
+                    // Grows on pointer-down, shrinks on release. The scrubber used to answer
+                    // a drag only by moving, which says where the day is but not that you
+                    // have hold of it.
+                    .scaleEffect(scrubbing ? Design.Layout.playheadGrabScale : 1)
+                    .animation(motion.animation(Design.Motion.press), value: scrubbing)
                     .offset(x: progress * geometry.size.width - Design.Layout.playhead / 2)
             }
             .frame(height: geometry.size.height, alignment: .center)
+            // The band, not the bar. A 12-point target is a 12-point target to the eye and
+            // a coin-toss to the pointer; this leaves the drawing alone and makes the
+            // grabbable area the height a hand can actually find.
+            .frame(height: Design.Layout.barHitRow)
             .contentShape(Rectangle())
+            .onHover { hoveringStrip = $0 }
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         playing = false
+                        scrubbing = true
                         progress = min(1, max(0, value.location.x / geometry.size.width))
                     }
+                    .onEnded { _ in scrubbing = false }
             )
         }
-        .frame(height: Design.Layout.barRow)
+        .frame(height: Design.Layout.barHitRow)
         .accessibilityLabel("Scrub the day")
         .accessibilityValue("\(Int(progress * 100)) percent")
     }
