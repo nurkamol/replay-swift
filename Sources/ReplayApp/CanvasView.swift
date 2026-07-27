@@ -16,6 +16,11 @@ struct CanvasView: View {
     let onOpen: (CanvasGraph.Node) -> Void
     /// Given so a session in the side panel can lead into the day it happened on.
     let onOpenDay: (Int64) -> Void
+    /// Whether the command palette is open over the top of all this. Passed in rather than
+    /// worked out here: the palette covers the field exactly, so no amount of looking at the
+    /// pointer can tell the two apart, and a scroll meant for a list of results must not be
+    /// taken by the field underneath it.
+    let paletteOpen: Bool
 
     @Environment(\.motion) private var motion
     @Environment(\.themeTint) private var tint
@@ -46,6 +51,34 @@ struct CanvasView: View {
     @State private var entranceStart = Date()
     @State private var entranceDone = false
     @State private var scrollMonitor: Any?
+    /// Whether the pointer is over the field itself, which is what decides whether a scroll
+    /// is this surface's to take.
+    @State private var pointerInField = false
+    /// ``paletteOpen``, mirrored into state.
+    ///
+    /// Not redundant, and the reason is a trap worth naming: the scroll monitor's closure is
+    /// made once, in `onAppear`, and captures the view *struct* — a value. A plain `let` read
+    /// through that capture is whatever it was at capture time, for ever. `@State` is not,
+    /// because the property wrapper reads shared storage rather than the copy. So `let
+    /// paletteOpen` inside the monitor was permanently `false` and the guard did nothing,
+    /// which looked exactly like the guard being wrong rather than being stale.
+    @State private var paletteIsOpen = false
+    /// Which stop a Replay Story is resting on, and the task flying it. Held so that any
+    /// touch of the field can cancel it: a tour that keeps going while you are trying to
+    /// drag is the camera fighting you for the wheel.
+    @State private var tourStop: String?
+    /// The stop the camera has just left, and when it left — between them they are the line
+    /// being drawn and the breath being let out, both of which are functions of elapsed time
+    /// rather than of state. A `Canvas` does not interpolate: it draws one pass from
+    /// whatever the values are at that instant, so anything that moves inside it has to be
+    /// read off a clock. Same reason the entrance is driven this way.
+    @State private var tourFrom: String?
+    @State private var tourArrivedAt = Date()
+    @State private var tour: Task<Void, Never>?
+    /// When the selection last changed, so its halo can arrive rather than appear.
+    @State private var selectedAt = Date()
+    /// A flick's leftover speed, in points per second, decaying to rest.
+    @State private var glide: Task<Void, Never>?
 
     private var scale: CGFloat {
         min(max(zoom * pinch, Design.Layout.canvasMinZoom), Design.Layout.canvasMaxZoom)
@@ -60,32 +93,60 @@ struct CanvasView: View {
     /// The offset is scaled by the same ratio, which is what keeps whatever you were looking
     /// at where it was — zoom that quietly slides the field somewhere else costs you your
     /// place, and finding it again is the whole cost of the gesture.
-    private func zoom(by factor: CGFloat) {
+    private func zoom(by factor: CGFloat, animated: Bool = true) {
         let target = min(
             max(zoom * factor, Design.Layout.canvasMinZoom), Design.Layout.canvasMaxZoom
         )
         guard target != zoom else { return }
         let ratio = target / zoom
-        withAnimation(motion.animation(Design.Motion.settle)) {
+        let apply = {
             offset.width *= ratio
             offset.height *= ratio
             zoom = target
         }
+        // A press of a button is a journey and gets the camera's easing. A scroll is the
+        // hand moving and gets nothing: easing a gesture that is still happening is the
+        // camera arguing with the fingers, which is the reference's split too.
+        if animated {
+            withAnimation(motion.animation(Design.Motion.camera(Design.Motion.cameraZoomSeconds))) {
+                apply()
+            }
+        } else {
+            apply()
+        }
     }
 
+    /// Zoom the field by scrolling over it.
+    ///
+    /// A local monitor rather than a gesture, because SwiftUI has no scroll-wheel gesture and
+    /// the field is a `Canvas` rather than a scroll view. The cost of a monitor is that it
+    /// sees *every* scroll in the app, and this one used to swallow all of them — the comment
+    /// here said "this surface has nothing else that scrolls", which was wrong the day it was
+    /// written and got worse: the timeline panel sits beside the field with a list in it, and
+    /// the command palette opens over the top of everything. Neither could be scrolled while
+    /// Canvas was the current surface, by mouse or by trackpad.
+    ///
+    /// So it acts only while the pointer is actually over the field, and passes every other
+    /// scroll along untouched. Hover is the right test rather than the pointer's coordinates:
+    /// SwiftUI stops reporting the field as hovered the moment something is layered over it,
+    /// which is exactly the case the coordinates would get wrong.
     private func watchScrollWheel() {
         guard scrollMonitor == nil else { return }
         scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
-            // A trackpad sends precise deltas that are already small; a wheel sends coarse
-            // lines, scaled here to land in the same range.
-            let delta = event.hasPreciseScrollingDeltas
-                ? event.scrollingDeltaY
-                : event.scrollingDeltaY * Design.Layout.canvasWheelLineScale
-            if delta != 0 {
-                zoom(by: 1 + delta * Design.Layout.canvasWheelSensitivity)
-            }
-            // Swallowed: this surface has nothing else that scrolls, and letting it through
-            // would scroll whatever is behind while the field zooms.
+            let delta = event.scrollingDeltaY
+            guard !paletteIsOpen, pointerInField, delta != 0 else { return event }
+            stopTour()
+            stopGlide()
+            // Trackpad: continuous, so the exponential the reference uses, which keeps each
+            // unit of movement worth the same *ratio* however far in you already are.
+            // Wheel: one firm notch, because a mouse has no in-between to offer.
+            let factor = event.hasPreciseScrollingDeltas
+                ? exp(delta * Design.Layout.canvasWheelSensitivity)
+                : (delta > 0
+                    ? Design.Layout.canvasWheelStep
+                    : 1 / Design.Layout.canvasWheelStep)
+            zoom(by: factor, animated: !event.hasPreciseScrollingDeltas)
+            // Swallowed only now that it has been used for something.
             return nil
         }
     }
@@ -96,6 +157,8 @@ struct CanvasView: View {
     /// every single click back to see whether a second was coming — exactly the hesitation
     /// this surface should not have.
     private func click(at location: CGPoint, centre: CGPoint) {
+        stopTour()
+        stopGlide()
         let hit = node(at: location, centre: centre)
         let now = Date()
         if let hit, let last = lastClick, last.id == hit.id,
@@ -112,18 +175,213 @@ struct CanvasView: View {
     /// thing you pointed at becomes the thing you are looking at, without losing the field
     /// around it.
     private func focus(on node: CanvasGraph.Node) {
-        guard let point = canvas.positions[node.id] else { return }
-        let target = Design.Layout.canvasFocusZoom
-        withAnimation(motion.animation(Design.Motion.settle)) {
+        stopTour()
+        centre(
+            on: node.id,
+            zoom: Design.Layout.canvasFocusZoom,
+            seconds: Design.Motion.cameraCentreSeconds
+        ) { select(node) }
+    }
+
+    /// Fly the camera until one node is in the middle at a given magnification.
+    ///
+    /// The whole of the camera goes through here — focusing, and every stop of a tour — so
+    /// there is one place that decides what a journey looks like.
+    private func centre(
+        on id: String,
+        zoom target: CGFloat,
+        seconds: TimeInterval,
+        then also: (() -> Void)? = nil
+    ) {
+        guard let point = canvas.positions[id] else { return }
+        stopGlide()
+        withAnimation(motion.animation(Design.Motion.camera(seconds))) {
             zoom = target
             offset = CGSize(width: -point.x * target, height: -point.y * target)
-            select(node)
+            dragged = .zero
+            also?()
         }
     }
 
+    /// Lean the camera a little way toward where it is going next.
+    ///
+    /// Linear rather than eased, and that is deliberate: an ease would have a shape, and a
+    /// shape is a movement you notice. A constant crawl is the camera being held rather than
+    /// being moved, which is the difference this is for.
+    private func drift(from stop: String, toward next: String, over seconds: TimeInterval) {
+        guard seconds > 0, !motion.reduced,
+              let here = canvas.positions[stop], let there = canvas.positions[next] else { return }
+        let share = Design.Motion.tourDriftShare
+        let target = CGPoint(
+            x: here.x + (there.x - here.x) * share,
+            y: here.y + (there.y - here.y) * share
+        )
+        withAnimation(.linear(duration: seconds)) {
+            offset = CGSize(width: -target.x * zoom, height: -target.y * zoom)
+        }
+    }
+
+    /// Replay Story: the camera travels through a memory and the things around it, dwelling
+    /// on each. Narration by motion — there are no words, and it does not need any.
+    ///
+    /// The stops come from ``CanvasGraph/tourPath(from:limit:)`` so the ordering is the
+    /// reference's and lives somewhere it can be tested. What is here is only the flying:
+    /// rest on a stop, move to the next, and when the last one is done let it go.
+    private func startTour(from node: CanvasGraph.Node) {
+        stopTour()
+        select(node)
+        let path = canvas.graph.tourPath(from: node.id)
+        let flight = Design.Motion.tourCameraSeconds
+        let held = max(0, Design.Motion.tourDwellSeconds - flight)
+        tour = Task { @MainActor in
+            for (index, stop) in path.enumerated() {
+                let isEnd = index == 0 || index == path.count - 1
+                tourFrom = index == 0 ? nil : path[index - 1]
+                tourArrivedAt = Date()
+                withAnimation(motion.animation(Design.Motion.inPlace)) { tourStop = stop }
+                centre(
+                    on: stop,
+                    zoom: isEnd
+                        ? Design.Layout.canvasTourEndZoom
+                        : Design.Layout.canvasTourStepZoom,
+                    seconds: flight
+                )
+
+                // The flight, then the rest of the dwell — spent leaning toward wherever the
+                // camera is going next rather than sitting still, so the story is one
+                // movement instead of a run of separate ones.
+                try? await Task.sleep(for: .seconds(flight))
+                if Task.isCancelled { return }
+                if index + 1 < path.count {
+                    drift(from: stop, toward: path[index + 1], over: held)
+                }
+                try? await Task.sleep(for: .seconds(held))
+                if Task.isCancelled { return }
+            }
+            // One last dwell on the way home, so the story ends on the thing it was about
+            // rather than snapping out the instant the camera lands.
+            try? await Task.sleep(for: .seconds(Design.Motion.tourDwellSeconds))
+            if Task.isCancelled { return }
+            withAnimation(motion.animation(Design.Motion.inPlace)) { tourStop = nil }
+            tourFrom = nil
+            tour = nil
+        }
+    }
+
+    /// Stop the tour wherever it is. Called by anything that touches the field, because a
+    /// camera that carries on while you are dragging is a camera you are fighting.
+    private func stopTour() {
+        guard tour != nil || tourStop != nil else { return }
+        tour?.cancel()
+        tour = nil
+        tourFrom = nil
+        withAnimation(motion.animation(Design.Motion.inPlace)) { tourStop = nil }
+    }
+
+    /// How far through the current stop the story is, on two clocks.
+    ///
+    /// `flight` runs while the camera is travelling and draws the line; `breath` runs a
+    /// little longer and is the ring the stop lets out on arrival. Both eased out, so each
+    /// starts quickly and settles rather than running at a constant rate — a line that
+    /// creeps at a fixed speed reads as a progress bar.
+    /// Both finished is how "draw neither" is said: the line and the breath are only drawn
+    /// while their phase is under 1, so reduced motion keeps the camera and the lit stop and
+    /// silently drops the decoration.
+    private func tourPhase(at now: Date) -> (flight: CGFloat, breath: CGFloat) {
+        guard !motion.reduced else { return (1, 1) }
+        let elapsed = now.timeIntervalSince(tourArrivedAt)
+        return (
+            easedOut(elapsed, over: Design.Motion.tourCameraSeconds),
+            easedOut(elapsed, over: Design.Motion.tourBreathSeconds)
+        )
+    }
+
+    /// How far the selection's halo has arrived.
+    private func arrival(at now: Date) -> CGFloat {
+        guard !motion.reduced else { return 1 }
+        return easedOut(
+            now.timeIntervalSince(selectedAt), over: Design.Motion.selectionArriveSeconds
+        )
+    }
+
+    /// Fast to most of the way, then settling — the shape everything in this file that is
+    /// driven off a clock rather than by SwiftUI uses.
+    private func easedOut(_ elapsed: TimeInterval, over seconds: TimeInterval) -> CGFloat {
+        let t = CGFloat(min(1, max(0, elapsed / seconds)))
+        return 1 - pow(1 - t, 3)
+    }
+
+    /// A flick keeps gliding, decaying to rest — movement with momentum.
+    ///
+    /// The reference multiplies the speed by ``Design/Layout/canvasGlideDecay`` once per
+    /// animation frame, which ties how far a flick coasts to the display's refresh rate.
+    /// That is a quirk rather than a decision, so this reads the same number as the rate it
+    /// was written against and decays by elapsed time instead — the same glide on a 60 Hz
+    /// display and on a 120 Hz one.
+    ///
+    /// Its two thresholds are per-frame distances upstream for the same reason, so they are
+    /// read at that rate too: "faster than 2 points a frame" is 120 points a second, which
+    /// is what SwiftUI hands over.
+    private func startGlide(velocity: CGSize) {
+        stopGlide()
+        let hz = Design.Layout.canvasGlideReferenceHz
+        let speed = hypot(velocity.width, velocity.height)
+        guard speed > Design.Layout.canvasGlideMinSpeed * hz, !motion.reduced else { return }
+        let rest = Design.Layout.canvasGlideRestSpeed * hz
+        glide = Task { @MainActor in
+            var current = velocity
+            var last = ContinuousClock.now
+            while !Task.isCancelled, hypot(current.width, current.height) > rest {
+                try? await Task.sleep(for: .seconds(1 / hz))
+                if Task.isCancelled { return }
+                let now = ContinuousClock.now
+                let tick = now - last
+                last = now
+                let elapsed = CGFloat(
+                    Double(tick.components.seconds) + Double(tick.components.attoseconds) * 1e-18
+                )
+                offset.width += current.width * elapsed
+                offset.height += current.height * elapsed
+                let kept = pow(Design.Layout.canvasGlideDecay, elapsed * hz)
+                current.width *= kept
+                current.height *= kept
+            }
+            glide = nil
+        }
+    }
+
+    private func stopGlide() {
+        glide?.cancel()
+        glide = nil
+    }
+
     private func select(_ node: CanvasGraph.Node?) {
+        if node?.id != selected?.id { selectedAt = Date() }
         selected = node
         neighbourhood = node.map { canvas.graph.neighbours(of: $0.id) } ?? []
+    }
+
+    /// Where a point sits once the field's own sway is taken into account.
+    ///
+    /// Used by the drawing *and* by the hit test, which is the whole reason it is a function
+    /// rather than two copies of the same arithmetic: a field that moves under a click the
+    /// eye had already aimed is worse than a field that does not move at all.
+    private func sway(_ point: CGPoint, at now: Date) -> CGPoint {
+        guard !motion.reduced else { return point }
+        let t = now.timeIntervalSinceReferenceDate
+        let angle = Design.Motion.canvasSwayDegrees * .pi / 180
+            * sin(t * 2 * .pi / Design.Motion.canvasSwaySeconds)
+        let wander = t * 2 * .pi / Design.Motion.canvasDriftSeconds
+        let cosine = cos(angle)
+        let sine = sin(angle)
+        return CGPoint(
+            x: point.x * cosine - point.y * sine
+                + Design.Motion.canvasDriftPoints * cos(wander),
+            // Half the reach vertically: the field is wider than it is tall, and an equal
+            // wander in both reads as a wobble rather than as a drift.
+            y: point.x * sine + point.y * cosine
+                + Design.Motion.canvasDriftPoints * sin(wander) / 2
+        )
     }
 
     /// How strongly a node reads right now.
@@ -144,6 +402,13 @@ struct CanvasView: View {
                 } else {
                     field
                     if let selected { preview(selected) }
+                    // Opposite corner to the card, so the thing that undoes a focus is not
+                    // sitting among the things that act on it.
+                    if selected != nil {
+                        clearFocus
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .transition(motion.transition(.opacity))
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -166,10 +431,19 @@ struct CanvasView: View {
         // event, because `scrollWheel` walks *up* the responder chain rather than across to
         // a sibling, and one in front would swallow the clicks. Installed only while this
         // surface is on screen, and removed with it.
-        .onAppear { watchScrollWheel() }
+        .onAppear {
+            paletteIsOpen = paletteOpen
+            watchScrollWheel()
+        }
+        .onChange(of: paletteOpen) { _, now in paletteIsOpen = now }
         .onDisappear {
             if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
             scrollMonitor = nil
+            // Both keep moving the camera on their own, so both have to go with the view —
+            // a tour still flying against a surface nobody is looking at is work for nothing
+            // and a field in the wrong place when you come back.
+            stopTour()
+            stopGlide()
         }
         .onAppear {
             if !canvas.loaded { canvas.load() }
@@ -228,7 +502,11 @@ struct CanvasView: View {
                 .accessibilityLabel("Zoom in")
 
                 Button {
-                    withAnimation(motion.animation(Design.Motion.settle)) {
+                    stopTour()
+                    stopGlide()
+                    withAnimation(motion.animation(Design.Motion.camera(
+                        Design.Motion.cameraSeconds
+                    ))) {
                         offset = .zero
                         dragged = .zero
                         zoom = 1
@@ -253,7 +531,11 @@ struct CanvasView: View {
                 Button("Zoom Out") { zoom(by: 1 / Design.Layout.canvasZoomStep) }
                     .keyboardShortcut("-", modifiers: .command)
                 Button("Actual Size") {
-                    withAnimation(motion.animation(Design.Motion.settle)) {
+                    stopTour()
+                    stopGlide()
+                    withAnimation(motion.animation(Design.Motion.camera(
+                        Design.Motion.cameraSeconds
+                    ))) {
                         zoom = 1
                         offset = .zero
                     }
@@ -279,6 +561,7 @@ struct CanvasView: View {
                     .onChanged { value in
                         if hypot(value.translation.width, value.translation.height)
                             > Design.Layout.canvasClickSlop {
+                            if !dragging { stopTour(); stopGlide() }
                             dragging = true
                             dragged = value.translation
                         }
@@ -287,16 +570,24 @@ struct CanvasView: View {
                         if dragging {
                             offset.width += value.translation.width
                             offset.height += value.translation.height
-                        } else {
-                            click(at: value.location, centre: centre)
+                            dragging = false
+                            dragged = .zero
+                            // Let go mid-movement and the field keeps going. `velocity` is
+                            // already points per second, which is what the glide wants.
+                            startGlide(velocity: value.velocity)
+                            return
                         }
+                        click(at: value.location, centre: centre)
                         dragging = false
                         dragged = .zero
                     }
             )
             .gesture(
                 MagnifyGesture()
-                    .onChanged { pinch = $0.magnification }
+                    .onChanged {
+                        if pinch == 1 { stopTour(); stopGlide() }
+                        pinch = $0.magnification
+                    }
                     .onEnded { value in
                         zoom = min(
                             max(zoom * value.magnification, Design.Layout.canvasMinZoom),
@@ -306,6 +597,9 @@ struct CanvasView: View {
                     }
             )
             .accessibilityHidden(true)
+            .onContinuousHover { phase in
+                if case .active = phase { pointerInField = true } else { pointerInField = false }
+            }
         }
         // The picture is not reachable by keyboard, so the same information is offered as a
         // list to anything that reads the screen.
@@ -320,13 +614,29 @@ struct CanvasView: View {
     /// The field, on a clock while it is arriving and off it once it has.
     @ViewBuilder
     private func animatedField(centre: CGPoint) -> some View {
-        if entranceDone || motion.reduced {
-            renderField(centre: centre, progress: 1)
+        // On a clock while the field is arriving *or* while a story is playing, and off it
+        // otherwise — a timeline still ticking with nothing moving is a redraw a second for
+        // nothing. Reduced motion keeps the camera and the lit stop, which are what the
+        // feature *is*, and drops the line and the breath, which are decoration.
+        if motion.reduced {
+            // Nothing moves on its own, so nothing needs a clock. The field is still drawn
+            // in full — reduced motion asks for less movement, not for less of the picture.
+            renderField(centre: centre, progress: 1, now: .distantFuture)
+        } else if entranceDone && tour == nil {
+            // Only the sway is running, and it is slow enough that a third of a display's
+            // rate is indistinguishable from all of it. Qualified: this app has its own
+            // `TimelineView` — the Timeline surface — and it shadows SwiftUI's here.
+            SwiftUI.TimelineView(
+                .periodic(from: entranceStart, by: Design.Motion.canvasAmbientTick)
+            ) { timeline in
+                renderField(centre: centre, progress: 1, now: timeline.date)
+            }
         } else {
-            // Qualified: this app has its own `TimelineView` — the Timeline surface — and
-            // it shadows SwiftUI's inside this module.
+            // The entrance or a story is playing, and both are movement worth every frame.
             SwiftUI.TimelineView(.animation) { timeline in
-                renderField(centre: centre, progress: progress(at: timeline.date))
+                renderField(
+                    centre: centre, progress: progress(at: timeline.date), now: timeline.date
+                )
             }
         }
     }
@@ -365,12 +675,14 @@ struct CanvasView: View {
     }
 
     /// Everything drawn, in one pass.
-    private func renderField(centre: CGPoint, progress: CGFloat) -> some View {
-        Canvas { context, _ in
+    private func renderField(centre: CGPoint, progress: CGFloat, now: Date) -> some View {
+        let phase = tourPhase(at: now)
+        return Canvas { context, _ in
                 func place(_ point: CGPoint) -> CGPoint {
-                    CGPoint(
-                        x: centre.x + (point.x * scale) + offset.width + dragged.width,
-                        y: centre.y + (point.y * scale) + offset.height + dragged.height
+                    let swayed = sway(point, at: now)
+                    return CGPoint(
+                        x: centre.x + (swayed.x * scale) + offset.width + dragged.width,
+                        y: centre.y + (swayed.y * scale) + offset.height + dragged.height
                     )
                 }
 
@@ -394,6 +706,32 @@ struct CanvasView: View {
                         path,
                         with: .color(.secondary.opacity(weight)),
                         lineWidth: Design.Layout.canvasEdgeWidth
+                    )
+                }
+
+                // The line the camera is on, drawn over the edges and under the nodes so it
+                // reads as one of the field's own lines rather than as an overlay. Drawn
+                // only as far as the camera has flown, which is what makes it look like the
+                // story travelling rather than a connection being pointed at.
+                if let tourFrom, let tourStop,
+                   let from = canvas.positions[tourFrom], let to = canvas.positions[tourStop],
+                   phase.flight < 1 {
+                    let start = place(from)
+                    let end = place(to)
+                    var path = Path()
+                    path.move(to: start)
+                    path.addLine(
+                        to: CGPoint(
+                            x: start.x + (end.x - start.x) * phase.flight,
+                            y: start.y + (end.y - start.y) * phase.flight
+                        )
+                    )
+                    context.stroke(
+                        path,
+                        with: .color(tint.opacity(Design.Colour.canvasTourPath)),
+                        style: StrokeStyle(
+                            lineWidth: Design.Layout.canvasRingWidth, lineCap: .round
+                        )
                     )
                 }
 
@@ -480,14 +818,37 @@ struct CanvasView: View {
                         context.draw(glyph, at: corner, anchor: .center)
                     }
 
-                    if node.id == selected?.id {
+                    // The selection wears a halo, and so does whichever stop a tour is
+                    // resting on — the reference lights the two the same way, which is what
+                    // makes a tour read as the camera pointing rather than as it drifting.
+                    if node.id == selected?.id || node.id == tourStop {
+                        // Eased outward from the node's own edge into its place, so the
+                        // halo arrives with the click rather than being there before the
+                        // eye gets back. A tour's stop skips it: the breath is already
+                        // saying the same thing, and two rings arriving at once is a fuss.
+                        let arrived = node.id == tourStop ? 1 : arrival(at: now)
+                        let reach = Design.Layout.canvasSelectionInset * arrived
                         context.stroke(
-                            Circle().path(in: box.insetBy(
-                                dx: -Design.Layout.canvasSelectionInset,
-                                dy: -Design.Layout.canvasSelectionInset
-                            )),
-                            with: .color(.primary),
+                            Circle().path(in: box.insetBy(dx: -reach, dy: -reach)),
+                            with: .color(.primary.opacity(Double(arrived))),
                             lineWidth: Design.Layout.canvasSelectionWidth
+                        )
+                    }
+
+                    // The breath: one ring easing outward from the stop and fading as it
+                    // goes, let out on arrival and finished well before the camera leaves.
+                    // It is what tells you which of the two haloed nodes is being spoken
+                    // about — the selection keeps its halo the whole way through.
+                    if node.id == tourStop, phase.breath < 1 {
+                        let reach = radius * Design.Motion.tourBreathReach * phase.breath
+                        context.stroke(
+                            Circle().path(in: box.insetBy(dx: -reach, dy: -reach)),
+                            with: .color(
+                                tint.opacity(
+                                    Design.Colour.canvasTourBreath * (1 - Double(phase.breath))
+                                )
+                            ),
+                            lineWidth: Design.Motion.tourBreathWidth
                         )
                     }
                     context.opacity = 1
@@ -650,6 +1011,28 @@ struct CanvasView: View {
         .accessibilityHint("Opens the day this happened on")
     }
 
+    /// The way back to the whole field.
+    ///
+    /// The toolbar's recentre button already does this and more — it also returns the zoom
+    /// and the position to where they started. This is the smaller, more obvious thing: it
+    /// drops the focus and lets everything that was pulled back come forward again, without
+    /// moving the camera. Having focused something and read it, the next thing anybody wants
+    /// is the rest of the picture, and the reference puts that within reach rather than in a
+    /// toolbar at the far end of the window.
+    private var clearFocus: some View {
+        Button {
+            stopTour()
+            withAnimation(motion.animation(Design.Motion.settle)) { select(nil) }
+        } label: {
+            Label("Clear focus", systemImage: "xmark")
+                .font(Design.Text.detail)
+        }
+        .buttonStyle(.bordered)
+        .keyboardShortcut(.escape, modifiers: [])
+        .help("Bring the whole field back")
+        .padding(Design.Space.page)
+    }
+
     /// The preview for whatever is selected, and the way into it.
     private func preview(_ node: CanvasGraph.Node) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.snug) {
@@ -659,15 +1042,40 @@ struct CanvasView: View {
                 .font(Design.Text.detail)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            if node.ref.isEmpty {
-                Text("Nothing to open for this one.")
-                    .font(Design.Text.micro)
-                    .foregroundStyle(.tertiary)
-            } else {
-                Button("Open") { onOpen(node) }
+            HStack(spacing: Design.Space.inline) {
+                if node.ref.isEmpty {
+                    Text("Nothing to open for this one.")
+                        .font(Design.Text.micro)
+                        .foregroundStyle(.tertiary)
+                } else {
+                    Button {
+                        onOpen(node)
+                    } label: {
+                        Label("Open", systemImage: "arrow.up.right")
+                    }
                     .buttonStyle(.borderedProminent)
-                    .padding(.top, Design.Space.tight)
+                }
+
+                // The way to be *told* about a memory rather than to go and read it: the
+                // camera walks the things around it and rests on each. Offered here and
+                // nowhere else, because it only means anything once the field has been
+                // narrowed to one memory — which is what focusing did.
+                Button {
+                    if tour == nil { startTour(from: node) } else { stopTour() }
+                } label: {
+                    Label(
+                        tour == nil ? "Replay Story" : "Stop",
+                        systemImage: tour == nil ? "play" : "stop"
+                    )
+                }
+                .buttonStyle(.bordered)
+                .help(
+                    tour == nil
+                        ? "Travel through this and the things around it"
+                        : "Stop the story"
+                )
             }
+            .padding(.top, Design.Space.tight)
         }
         .frame(maxWidth: Design.Layout.canvasPreviewWidth, alignment: .leading)
         .padding(Design.Space.section)
@@ -757,11 +1165,15 @@ struct CanvasView: View {
     /// demand a pixel-perfect hit.
     private func node(at location: CGPoint, centre: CGPoint) -> CanvasGraph.Node? {
         var best: (node: CanvasGraph.Node, distance: CGFloat)?
+        // Read at the moment of the click rather than off the drawing's clock — the two are
+        // at most a frame apart, and at this speed a frame is a fraction of a point.
+        let now = Date()
         for node in canvas.graph.nodes {
             guard let point = canvas.positions[node.id] else { continue }
+            let swayed = sway(point, at: now)
             let at = CGPoint(
-                x: centre.x + point.x * scale + offset.width + dragged.width,
-                y: centre.y + point.y * scale + offset.height + dragged.height
+                x: centre.x + swayed.x * scale + offset.width + dragged.width,
+                y: centre.y + swayed.y * scale + offset.height + dragged.height
             )
             let distance = hypot(at.x - location.x, at.y - location.y)
             let reach = radius(for: node) * scale + Design.Layout.canvasHitSlack

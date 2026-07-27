@@ -231,6 +231,80 @@ enum Design {
         static let canvasEntranceStagger: CGFloat = 0.012
         static let canvasEntranceStaggerCap: CGFloat = 0.55
 
+        /// The canvas camera. Every value here is the reference's, and checked — see
+        /// `CanvasTokens` and docs/PARITY.md.
+        ///
+        /// Eased rather than sprung, which is the one place the canvas parts company with
+        /// the rest of this app. Elsewhere a spring is right: a card is responding to you
+        /// and should look like it came to rest. A camera is not responding to you — it is
+        /// travelling somewhere it already knows about — and a spring's slow tail reads as
+        /// the field drifting after it arrived. The reference eases out a cubic, so this
+        /// does too.
+        static let easeOutCubic = UnitCurve.bezier(
+            startControlPoint: .init(x: 0.215, y: 0.61), endControlPoint: .init(x: 0.355, y: 1)
+        )
+        /// The camera's own flight time, and the two journeys that ask for their own.
+        static let cameraSeconds: TimeInterval = 0.560
+        static let cameraCentreSeconds: TimeInterval = 0.620
+        static let cameraZoomSeconds: TimeInterval = 0.340
+        /// A camera move over `seconds`. Named for what it carries rather than for its shape,
+        /// so a view asks for a flight and not for a curve.
+        static func camera(_ seconds: TimeInterval) -> Animation {
+            .timingCurve(easeOutCubic, duration: seconds)
+        }
+
+        /// Replay Story: how long the camera rests on each stop, and how long it takes to
+        /// get between them. The dwell is longer than the flight on purpose — the pause is
+        /// where you read the thing, and the travel is only how you got there.
+        static let tourDwellSeconds: TimeInterval = 1.150
+        static let tourCameraSeconds: TimeInterval = 0.760
+        /// What the field does while the story plays, which is this port's own and has no
+        /// counterpart upstream — the reference's tour is the camera and the lit node, and
+        /// nothing else. Kept quiet enough to stay that way in spirit: one breath per stop
+        /// and a line drawing itself, rather than a thing demanding to be watched.
+        ///
+        /// The breath is a ring easing outward from the node and fading as it goes. It
+        /// takes less than the dwell on purpose, so it finishes and leaves the stop sitting
+        /// still — a ring pulsing the whole time reads as an alert.
+        static let tourBreathSeconds: TimeInterval = 0.780
+        /// How far the camera leans toward the next stop while it rests on this one, as a
+        /// share of the distance between them.
+        ///
+        /// The reference flies for 760ms and then dwells for 1150, which leaves 390ms in
+        /// which nothing at all moves — and a camera that stops dead between stops reads as
+        /// a slideshow rather than as travelling. So it spends that time already drifting
+        /// toward wherever it is going next, slowly and linearly, and the flight picks the
+        /// movement up rather than starting it. Small enough that nobody would call it a
+        /// move: it is the difference between a held shot and a frozen one.
+        static let tourDriftShare: CGFloat = 0.07
+
+        /// The field's own breathing, when nothing else is happening.
+        ///
+        /// A sway rather than a rotation: the whole picture leans a fraction of a degree one
+        /// way and then the other, and drifts around a small ellipse while it does. A true
+        /// rotation would keep going, and a map of someone's history that has quietly turned
+        /// ninety degrees while they read it is a map they have to find their way around
+        /// again. Bounded motion is alive; unbounded motion is a problem.
+        ///
+        /// The two periods are deliberately not multiples of each other, so the sway and the
+        /// drift never line up into a pattern anyone could learn.
+        static let canvasSwayDegrees: CGFloat = 0.6
+        static let canvasSwaySeconds: TimeInterval = 44
+        static let canvasDriftPoints: CGFloat = 6
+        static let canvasDriftSeconds: TimeInterval = 63
+        /// How often the field is redrawn when the sway is all that is moving. A third of a
+        /// display's rate, because at this speed nothing is fast enough to show the seam,
+        /// and a canvas this size redrawn sixty times a second for a movement nobody would
+        /// name is not a trade worth making.
+        static let canvasAmbientTick: TimeInterval = 1.0 / 30
+
+        /// A selection arriving. The halo eases outward into place rather than appearing,
+        /// which is the difference between the field answering you and the field blinking.
+        static let selectionArriveSeconds: TimeInterval = 0.28
+        /// How far past the node the breath travels, as a share of the node's own radius.
+        static let tourBreathReach: CGFloat = 0.85
+        static let tourBreathWidth: CGFloat = 2
+
 
         /// How long one pass of the screensaver takes, and how long it takes when someone
         /// has asked the system to reduce motion — slower rather than stopped, because a
@@ -323,6 +397,11 @@ enum Design {
         /// How far the bubble's own colour is pulled back when an icon sits on it. Enough
         /// to tint the padding, not enough to become a halo.
         static let canvasBubbleBehindIcon: Double = 0.28
+        /// The line the camera is travelling along during a Replay Story, and the breath the
+        /// stop it lands on lets out. Brighter than an ordinary edge because for a second
+        /// and a half it is the only thing being said.
+        static let canvasTourPath: Double = 0.85
+        static let canvasTourBreath: Double = 0.55
         /// A ring around an icon. An application wears a quiet one — its own icon already
         /// says what it is — and everything built on top of one wears a solid ring, so a
         /// project is never mistaken for the app whose icon it borrows.
@@ -610,6 +689,10 @@ enum Design {
     /// App icon sizes. Named for context because an icon's size is decided by what it sits
     /// beside, never by preference.
     enum Icon {
+        /// The column every sidebar glyph is centred in, so the names beside them line up.
+        /// SF Symbols are not one width, and a `Label` sizes its icon to the glyph.
+        static let sidebarColumn: CGFloat = 18
+
         /// In a dense app-breakdown row.
         static let inline: CGFloat = 18
         /// In a search result or an exclusion list.
@@ -652,6 +735,15 @@ enum Design {
         static let windowHeight: CGFloat = 760
         static let windowMinWidth: CGFloat = 720
         static let windowMinHeight: CGFloat = 480
+        /// The leading inset a sidebar `List` gives its own rows, matched by anything laid
+        /// out beside it rather than inside it — the footer, which otherwise sat two points
+        /// to the left of every row above it.
+        ///
+        /// A measured number, not a chosen one: SwiftUI does not publish the inset it uses,
+        /// so this is where the list's own labels actually start, read off a screenshot of
+        /// the running app. Worth re-measuring if a macOS release moves the source list
+        /// about; the check is that one straight edge runs down every label in the sidebar.
+        static let sidebarRowInset: CGFloat = 20
         /// The sidebar. A range rather than a number, because a split view lets the user
         /// decide and only needs to be told what is sensible.
         static let sidebarMinWidth: CGFloat = 170
@@ -770,7 +862,10 @@ enum Design {
         static let canvasRingWidth: CGFloat = 2
         static let canvasRingWidthStrong: CGFloat = 3
         static let canvasHitSlack: CGFloat = 6
-        static let canvasMinZoom: CGFloat = 0.4
+        /// How far out and in the field goes. The reference's, and checked: this port had
+        /// 0.4, which sounds like the same number and is a whole view of a large history
+        /// you could not reach.
+        static let canvasMinZoom: CGFloat = 0.32
         static let canvasMaxZoom: CGFloat = 3
         static let canvasPreviewWidth: CGFloat = 300
         /// The timeline beside the canvas. Wide enough for a session's name and its hours
@@ -789,17 +884,37 @@ enum Design {
         static let heatmapGap: CGFloat = 3
         /// One press of zoom in or out. A ratio rather than a step, so each press feels the
         /// same however far in you already are.
-        static let canvasZoomStep: CGFloat = 1.35
+        static let canvasZoomStep: CGFloat = 1.2
         /// How far a click may wander before it becomes a drag.
         static let canvasClickSlop: CGFloat = 4
-        /// How hard a scroll turns into zoom, and how much coarser a wheel's lines are than
-        /// a trackpad's precise deltas.
+        /// Zoom by scrolling, in the two shapes the reference has. A trackpad's precise
+        /// deltas are continuous, so they go through an exponential and the field zooms as
+        /// smoothly as the fingers move; a wheel arrives in notches and gets one firm step
+        /// each. Upstream the smooth path is a pinch — a browser reports one as a wheel
+        /// event — and this port already has pinch as a real gesture, so what it maps to
+        /// here is two-finger scrolling.
         static let canvasWheelSensitivity: CGFloat = 0.012
-        static let canvasWheelLineScale: CGFloat = 3
+        static let canvasWheelStep: CGFloat = 1.09
         /// The magnification readout, wide enough for "300%" so the toolbar does not shuffle.
         static let canvasZoomReadoutWidth: CGFloat = 44
         /// Where a double-click lands you: close enough to read a node's neighbourhood.
-        static let canvasFocusZoom: CGFloat = 1.8
+        static let canvasFocusZoom: CGFloat = 1.55
+        /// Where the tour lands: further in at its middle stops than at either end, so
+        /// arriving and leaving frame the neighbourhood and the stops between it read one
+        /// thing at a time.
+        static let canvasTourEndZoom: CGFloat = 1.5
+        static let canvasTourStepZoom: CGFloat = 1.9
+        /// A flick keeps gliding, decaying to rest.
+        ///
+        /// The decay is per *frame* upstream, which is a real quirk: it is applied inside a
+        /// `requestAnimationFrame` loop, so the same flick coasts further on a 60 Hz display
+        /// than on a 120 Hz one. Reproducing the quirk would be the wrong kind of fidelity,
+        /// so the port keeps the reference's number and reads it as the 60 Hz rate it was
+        /// written against — see `canvasGlideHalfLife`.
+        static let canvasGlideDecay: CGFloat = 0.9
+        static let canvasGlideReferenceHz: CGFloat = 60
+        static let canvasGlideMinSpeed: CGFloat = 2
+        static let canvasGlideRestSpeed: CGFloat = 0.4
         /// The screensaver's column, and how far its edges dissolve.
         static let screensaverColumnWidth: CGFloat = 460
         static let screensaverFade: CGFloat = 160

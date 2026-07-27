@@ -138,6 +138,28 @@ public enum ParityKit {
             public let baseDurationMillis: Int
             public let speeds: [Int]
         }
+        public let canvas: CanvasConstants
+
+        public struct CanvasConstants: Decodable, Sendable {
+            public let tourDwellMillis: Int
+            public let tourNeighbours: Int
+            public let tourCameraMillis: Int
+            public let tourEndZoom: Double
+            public let tourStepZoom: Double
+            public let focusZoom: Double
+            public let centreZoom: Double
+            public let centreMillis: Int
+            public let cameraMillis: Int
+            public let zoomButtonStep: Double
+            public let zoomButtonMillis: Int
+            public let minZoom: Double
+            public let maxZoom: Double
+            public let glideMinSpeed: Double
+            public let glideDecay: Double
+            public let glideRestSpeed: Double
+            public let wheelStep: Double
+            public let wheelSensitivity: Double
+        }
         public let motion: Motion
     }
 
@@ -880,6 +902,40 @@ public enum ParityKit {
               Int((MotionTokens.staggerSeconds * 1000).rounded()), constants.motion.enterStepMs)
         equal(g1, "stagger cap",
               Int((MotionTokens.staggerCapSeconds * 1000).rounded()), constants.motion.enterCapMs)
+
+        // the canvas camera — the same argument as the motion tokens above, for a surface
+        // that had nothing holding it. A field you cannot push as far out, that jumps a
+        // third further on each press of zoom, and that stops dead when you let go of a
+        // flick is a different instrument to play, and every one of those was true here.
+        let c = CanvasTokens.self
+        equal(g1, "how long the tour rests on a stop",
+              Int((c.tourDwellSeconds * 1000).rounded()), constants.canvas.tourDwellMillis)
+        equal(g1, "how many neighbours the tour visits",
+              c.tourNeighbours, constants.canvas.tourNeighbours)
+        equal(g1, "how long the tour's camera takes",
+              Int((c.tourCameraSeconds * 1000).rounded()), constants.canvas.tourCameraMillis)
+        equal(g1, "the tour's zoom at either end", c.tourEndZoom, constants.canvas.tourEndZoom)
+        equal(g1, "and in the middle", c.tourStepZoom, constants.canvas.tourStepZoom)
+        equal(g1, "the zoom a focused node is brought to",
+              c.focusZoom, constants.canvas.focusZoom)
+        equal(g1, "the zoom centring settles on", c.centreZoom, constants.canvas.centreZoom)
+        equal(g1, "how long centring takes",
+              Int((c.centreSeconds * 1000).rounded()), constants.canvas.centreMillis)
+        equal(g1, "the camera's own flight time",
+              Int((c.cameraSeconds * 1000).rounded()), constants.canvas.cameraMillis)
+        equal(g1, "one press of zoom", c.zoomButtonStep, constants.canvas.zoomButtonStep)
+        equal(g1, "how long a press of zoom takes",
+              Int((c.zoomButtonSeconds * 1000).rounded()), constants.canvas.zoomButtonMillis)
+        equal(g1, "how far out the field goes", c.minZoom, constants.canvas.minZoom)
+        equal(g1, "and how far in", c.maxZoom, constants.canvas.maxZoom)
+        equal(g1, "one notch of an ordinary wheel", c.wheelStep, constants.canvas.wheelStep)
+        equal(g1, "how hard a pinch zooms",
+              c.wheelSensitivity, constants.canvas.wheelSensitivity)
+        equal(g1, "the speed a flick has to beat to glide",
+              c.glideMinSpeed, constants.canvas.glideMinSpeed)
+        equal(g1, "what a glide keeps each frame", c.glideDecay, constants.canvas.glideDecay)
+        equal(g1, "the speed a glide is called finished at",
+              c.glideRestSpeed, constants.canvas.glideRestSpeed)
 
         // the category table — order-sensitive, because first match wins and it names
         // the session.

@@ -288,6 +288,47 @@ extension CanvasGraph {
         return found
     }
 
+    /// How many neighbours a Replay Story visits. The reference's cap, and checked against
+    /// `spec/constants.json` — a tour of everything a busy application touches is not a
+    /// story, it is the whole field again one node at a time.
+    public static let tourNeighbourLimit = 5
+
+    /// The stops a Replay Story makes, in order: the memory itself, the heaviest things
+    /// around it, then back to where it began.
+    ///
+    /// Returning to the start is what makes it a story rather than a list — the camera
+    /// leaves and comes home, and the thing you asked about is the last thing you see.
+    ///
+    /// Two details are load-bearing and both are the reference's. Neighbours exclude the
+    /// node itself, which is why this does not go through ``neighbours(of:)`` — that one
+    /// includes it, correctly, because it answers "what stays lit". And the sort is on
+    /// `(weight, first appearance)`: upstream builds the set by walking the edges and
+    /// JavaScript's sort is stable, so two neighbours of equal weight keep edge order.
+    /// Swift's sort is not stable, so the tie-break is spelled out. See docs/PARITY.md.
+    public func tourPath(from id: String, limit: Int = CanvasGraph.tourNeighbourLimit) -> [String] {
+        var seen: Set<String> = []
+        var order: [String] = []
+        for edge in edges {
+            let other = edge.a == id ? edge.b : (edge.b == id ? edge.a : nil)
+            guard let other, other != id, seen.insert(other).inserted else { continue }
+            order.append(other)
+        }
+        let byID = Dictionary(nodes.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var ranked: [(id: String, weight: Int, offset: Int)] = []
+        for (offset, neighbour) in order.enumerated() {
+            guard let node = byID[neighbour] else { continue }
+            ranked.append((id: node.id, weight: node.weight, offset: offset))
+        }
+        ranked.sort { left, right in
+            left.weight == right.weight ? left.offset < right.offset : left.weight > right.weight
+        }
+        let around: [String] = ranked.prefix(limit).map(\.id)
+        // A node joined to nothing still tours: the reference builds `[id, ...[], id]` and
+        // runs it, so the camera settles on it twice and stops. Kept rather than guarded,
+        // because the guard would be this port inventing a rule the reference does not have.
+        return [id] + around + [id]
+    }
+
     /// The sessions a node stands for, newest first.
     ///
     /// Each kind answers a different question, which is why this is a switch rather than one

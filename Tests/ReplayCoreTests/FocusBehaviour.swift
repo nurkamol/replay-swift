@@ -79,6 +79,49 @@ struct FocusBehaviour {
         #expect(graph.neighbours(of: "nothing") == ["nothing"])
     }
 
+    @Test("A Replay Story visits the heaviest neighbours and comes home")
+    func tourPath() {
+        // Built so two of them tie on weight, because a fixture that never ties would pass
+        // against an unstable sort — the same reason the collections fixture ties twice.
+        // `b` and `d` are both 5; upstream keeps them in edge order, so `b` has to come out
+        // first because its edge is scanned first.
+        func weighted(_ id: String, _ weight: Int) -> CanvasGraph.Node {
+            var node = Self.node(id, .app, ref: id)
+            node.weight = weight
+            return node
+        }
+        let graph = CanvasGraph(
+            nodes: [
+                weighted("a", 100), weighted("b", 5), weighted("c", 9),
+                weighted("d", 5), weighted("e", 1), weighted("f", 7), weighted("g", 3),
+            ],
+            edges: [
+                CanvasGraph.Edge(a: "a", b: "b", weight: 1, kind: .appApp),
+                CanvasGraph.Edge(a: "c", b: "a", weight: 1, kind: .appApp),
+                CanvasGraph.Edge(a: "a", b: "d", weight: 1, kind: .appApp),
+                CanvasGraph.Edge(a: "a", b: "e", weight: 1, kind: .appApp),
+                CanvasGraph.Edge(a: "f", b: "a", weight: 1, kind: .appApp),
+                CanvasGraph.Edge(a: "a", b: "g", weight: 1, kind: .appApp),
+                // Nothing to do with `a`, so it is never a stop.
+                CanvasGraph.Edge(a: "x", b: "y", weight: 1, kind: .appApp),
+            ],
+            maxAppWeight: 100
+        )
+
+        // Heaviest first, the tie in edge order, capped at five, and home again. `e` is the
+        // lightest of six neighbours and is the one left out.
+        #expect(graph.tourPath(from: "a") == ["a", "c", "f", "b", "d", "g", "a"])
+
+        // The node itself is never a stop in the middle, even though `neighbours(of:)`
+        // includes it — that one answers a different question.
+        #expect(graph.tourPath(from: "a").dropFirst().dropLast().contains("a") == false)
+
+        // A node joined to nothing still tours, degenerately, because the reference's path
+        // is `[id, ...[], id]` and it runs it.
+        #expect(graph.tourPath(from: "e") == ["e", "a", "e"])
+        #expect(graph.tourPath(from: "alone") == ["alone", "alone"])
+    }
+
     @Test("Each kind of node answers with the sessions it actually stands for")
     func sessionsBehindEachKind() {
         let monday = Self.at(2026, 7, 13, 9)

@@ -340,17 +340,57 @@ struct RootView: View {
     /// One entry in the sidebar. The rows are built by hand rather than from `allCases`
     /// because the order is a grouping decision, not the order the cases happen to be
     /// declared in.
+    /// One row at the foot of the sidebar, laid out to match the list above it.
+    private func footerRow(
+        _ title: String, _ glyph: String, help: String, trailing: String? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: Design.Space.inline) {
+                sidebarLabel(title, glyph)
+                Spacer(minLength: Design.Space.tight)
+                // The shortcut as a menu would print it: quiet, on the far side, and read
+                // as a fact about the row rather than as part of its name.
+                if let trailing {
+                    Text(trailing)
+                        .font(Design.Text.micro)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, Design.Space.snug)
+            .padding(.horizontal, Design.Layout.sidebarRowInset)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    /// The shape of every row in the sidebar: a glyph in a fixed column, then its name.
+    ///
+    /// The column is what makes the labels line up. A `Label` sizes its icon to the glyph,
+    /// and SF Symbols are not one width — a magnifier is narrower than a bar chart — so
+    /// without it every row began at a slightly different place.
+    private func sidebarLabel(_ title: String, _ glyph: String) -> some View {
+        Label {
+            // One line, always. A sidebar row that wraps breaks the even rhythm the column
+            // is read by, and the sidebar is resizable, so any row is one drag from being
+            // too narrow for its own name.
+            Text(title).lineLimit(1)
+        } icon: {
+            // Tinted explicitly rather than left to the `Label`'s default: a sidebar glyph
+            // is drawn with AppKit's `controlAccentColor`, which a SwiftUI `.tint` does not
+            // reach — so with a theme colour chosen, every other control in the window
+            // followed it and the sidebar alone stayed the system blue.
+            Image(systemName: glyph)
+                .foregroundStyle(.tint)
+                .frame(width: Design.Icon.sidebarColumn, alignment: .center)
+        }
+    }
+
     private func row(_ item: Navigation.Surface) -> some View {
         NavigationLink(value: item) {
-            // The icon is tinted explicitly rather than left to the `Label`'s default. A
-            // sidebar glyph is drawn with AppKit's `controlAccentColor`, which a SwiftUI
-            // `.tint` does not reach — so with a theme colour chosen, every other control
-            // in the window followed it and the sidebar alone stayed the system blue.
-            Label {
-                Text(item.rawValue)
-            } icon: {
-                Image(systemName: item.symbol).foregroundStyle(.tint)
-            }
+            sidebarLabel(item.rawValue, item.symbol)
         }
         .accessibilityHint(item.purpose)
     }
@@ -478,30 +518,44 @@ struct RootView: View {
             // The screensaver and Settings sit at the foot rather than in the list: neither
             // is a place in the app, and putting them among the surfaces would suggest they
             // are. Both are also in the menus, for anyone who reaches there first.
+            //
+            // Laid out by a stack rather than by the `List`, which is what put them out of
+            // line: a sidebar list insets its own rows, so a footer padded to its own taste
+            // sat several points to the left of everything above it. `footerRow` restores
+            // the list's inset and gives the glyph the same fixed column, so one vertical
+            // line runs down every icon in the sidebar and another down every label.
             Divider()
-            Button(action: onOpenScreensaver) {
-                Label("Screensaver", systemImage: "sparkles.tv")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, Design.Space.card)
-            .padding(.top, Design.Space.row)
-            .help("A slow drift through your day")
+                .padding(.top, Design.Space.tight)
 
-            // Settings sits at the foot of the sidebar rather than only in a menu: it is
-            // where every app with a source list puts the thing you reach for last, and it
-            // stops Settings being a keyboard shortcut you have to know about.
-            Button(action: onOpenSettings) {
-                Label("Settings", systemImage: "gearshape")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, Design.Space.card)
-            .padding(.vertical, Design.Space.row)
+            // The palette is the fastest way anywhere in this app and the only one with no
+            // sign of itself on screen — a shortcut you have to already know about is a
+            // shortcut most people never find. So it says so, in the one place a Mac app has
+            // room to, and it opens on a click as well: a hint that only hints is a hint you
+            // have to act on somewhere else.
+            //
+            // "Commands" rather than "Command Palette": with the shortcut on the right there
+            // are about 108 points left for the name at the sidebar's own width, and the
+            // longer one needs more than that — it wrapped onto two lines, which is a worse
+            // way to be precise than being short.
+            footerRow(
+                "Commands", "command",
+                help: "Go anywhere, or do anything, by name",
+                trailing: "⌘K"
+            ) { palette.open = true }
+
+            footerRow(
+                "Screensaver", "sparkles.tv",
+                help: "A slow drift through your day", action: onOpenScreensaver
+            )
+            footerRow(
+                // Settings sits at the foot of the sidebar rather than only in a menu: it
+                // is where every app with a source list puts the thing you reach for last,
+                // and it stops Settings being a shortcut you have to know about.
+                "Settings", "gearshape",
+                help: "Replay Settings", action: onOpenSettings
+            )
             .keyboardShortcut(",", modifiers: .command)
-            .help("Replay Settings")
+            .padding(.bottom, Design.Space.tight)
         }
         .navigationSplitViewColumnWidth(
             min: Design.Layout.sidebarMinWidth,
@@ -531,7 +585,8 @@ struct RootView: View {
             CanvasView(
                 canvas: canvas,
                 onOpen: openCanvasNode,
-                onOpenDay: { navigation.open(day: $0) }
+                onOpenDay: { navigation.open(day: $0) },
+                paletteOpen: palette.open
             )
         case .story:
             StoryView(story: story, onOpen: { navigation.open(story: $0) })

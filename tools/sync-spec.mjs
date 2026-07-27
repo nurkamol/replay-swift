@@ -74,6 +74,24 @@ function constant(source, file, name) {
   }
 }
 
+/**
+ * Pull numbers out of an expression written in place — a call argument, a default
+ * parameter, a literal in a condition — where there is no `const` to read.
+ *
+ * The canvas camera is written this way upstream: `centerOn(id, 1.55)`, `duration = 560`,
+ * `speed > 2`. Matching in place is less sturdy than reading a named constant, and that is
+ * the point of failing loudly — a pattern that stops matching means the camera was
+ * rewritten, which is exactly the change a port needs to be told about.
+ */
+function inline(source, file, what, pattern) {
+  const match = source.match(pattern);
+  if (!match) {
+    problems.push(`${file}: ${what} not found — written differently now?`);
+    return [];
+  }
+  return match.slice(1).map(Number);
+}
+
 // ── schema ────────────────────────────────────────────────────────────────────
 
 const storeSrc = read("main/services/activity-store.ts");
@@ -249,6 +267,88 @@ const constants = {
     return {
       baseDurationMillis: constant(source, "playback.tsx", "BASE_DURATION_MS"),
       speeds: speeds ? speeds[1].split(",").map((n) => Number(n.trim())) : [],
+    };
+  })(),
+  /*
+   * The canvas camera, and the tour it flies on its own.
+   *
+   * Here for the reason every motion value is here: the two apps are meant to move alike,
+   * and until now nothing checked that the canvas did — the surface is view code on both
+   * sides, and `port-queue.mjs` can only tell you a UI file changed, not what it now says.
+   * Five of these had drifted silently.
+   *
+   * `DWELL` is the only one upstream names. The rest are literals at their call sites, so
+   * they are matched in place and the tool stops if the shape they are written in moves.
+   */
+  canvas: (() => {
+    const src = read("renderer/main/views/canvas-view.tsx");
+    const f = "canvas-view.tsx";
+    const [tourEndZoom, tourStepZoom, tourCameraMillis] = inline(
+      src, f, "the tour's zooms and flight time",
+      /centerOn\(stopId,[^)]*\?\s*([\d.]+)\s*:\s*([\d.]+),\s*(\d+)\)/,
+    );
+    const [tourNeighbours] = inline(
+      src, f, "how many neighbours a tour visits",
+      /\.slice\(0,\s*(\d+)\)\s*\n\s*\.map\(\(n\) => n\.id\)/,
+    );
+    const [focusZoom] = inline(
+      src, f, "the zoom a focused node is brought to",
+      /const focusNode = React\.useCallback\([\s\S]{0,240}?centerOn\(id,\s*([\d.]+)\)/,
+    );
+    const [centreZoom, centreMillis] = inline(
+      src, f, "what centring on a node does when nobody says",
+      /const centerOn = React\.useCallback\(\s*\(id[^,]*,\s*zoom = ([\d.]+),\s*duration = (\d+)\)/,
+    );
+    const [cameraMillis] = inline(
+      src, f, "the camera's own flight time",
+      /const animateTo = React\.useCallback\(\(target: View, duration = (\d+)\)/,
+    );
+    const [zoomButtonStep] = inline(
+      src, f, "one press of zoom", /zoomBy\(([\d.]+)\)/,
+    );
+    const [zoomButtonMillis] = inline(
+      src, f, "how long a press of zoom takes",
+      /const zoomBy = React\.useCallback\([\s\S]*?animateTo\(\{[^}]*\},\s*(\d+)\)/,
+    );
+    const [minZoom, maxZoom] = inline(
+      src, f, "how far in and out the field goes",
+      /clamp\(v\.zoom \* factor,\s*([\d.]+),\s*([\d.]+)\)/,
+    );
+    const [glideMinSpeed] = inline(
+      src, f, "the speed a flick has to beat to glide at all", /if \(speed > ([\d.]+)\)/,
+    );
+    const [glideDecay] = inline(
+      src, f, "what a glide keeps of its speed each frame", /g\.vx \*= ([\d.]+);/,
+    );
+    const [glideRestSpeed] = inline(
+      src, f, "the speed a glide is called finished at",
+      /Math\.hypot\(g\.vx, g\.vy\) > ([\d.]+)\)/,
+    );
+    const [wheelStep] = inline(
+      src, f, "one notch of an ordinary wheel", /event\.deltaY < 0 \? ([\d.]+)/,
+    );
+    const [wheelSensitivity] = inline(
+      src, f, "how hard a trackpad pinch zooms", /Math\.exp\(-event\.deltaY \* ([\d.]+)\)/,
+    );
+    return {
+      tourDwellMillis: constant(src, f, "DWELL"),
+      tourNeighbours,
+      tourCameraMillis,
+      tourEndZoom,
+      tourStepZoom,
+      focusZoom,
+      centreZoom,
+      centreMillis,
+      cameraMillis,
+      zoomButtonStep,
+      zoomButtonMillis,
+      minZoom,
+      maxZoom,
+      glideMinSpeed,
+      glideDecay,
+      glideRestSpeed,
+      wheelStep,
+      wheelSensitivity,
     };
   })(),
 };

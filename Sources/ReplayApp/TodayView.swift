@@ -509,33 +509,70 @@ struct AppIcon: View {
 
     var body: some View {
         Group {
-            if let image = IconCache.shared.icon(bundleID: bundleID, appPath: appPath) {
-                Image(nsImage: image).resizable()
+            if let image = IconCache.shared.icon(
+                bundleID: bundleID, appPath: appPath, size: size
+            ) {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .antialiased(true)
             } else {
-                RoundedRectangle(cornerRadius: size * 0.22).fill(.quaternary)
+                RoundedRectangle(
+                    cornerRadius: size * Design.Radius.iconSquircleRatio, style: .continuous
+                ).fill(.quaternary)
             }
         }
         .frame(width: size, height: size)
     }
 }
 
+/// The application icons, kept twice over: once as the system hands them out, and once per
+/// size they are actually drawn at.
+///
+/// The second half is the part that matters for how they look. An `.icns` is a ladder of
+/// representations — 16, 32, 128, 256, 512, 1024, each also at 2×, and AppKit chooses a rung
+/// by the image's own `size`. `NSWorkspace.icon(forFile:)` reports 32×32 no matter what it
+/// is carrying, so every icon in this app was drawn by scaling the 32-point rung up: fine
+/// for a 18-point row, visibly soft by the time the Canvas showed one at 128 and worse as
+/// soon as anyone zoomed. Handing each view an image whose `size` is the size it asked for
+/// makes AppKit pick the rung that fits, which is the whole fix and is what `NSImageView`
+/// has always done.
+///
+/// The copies are cheap: `NSImage.copy()` shares the underlying representations, so a second
+/// entry costs a wrapper rather than a second bitmap. Sizes are rounded to whole points
+/// because that is the granularity a rung is chosen at, and it keeps a pinch-zoom from
+/// filling the cache with near-identical entries.
 @MainActor
 final class IconCache {
     static let shared = IconCache()
-    private var cache: [String: NSImage] = [:]
+    /// One entry per application, as `NSWorkspace` returned it.
+    private var sources: [String: NSImage] = [:]
+    /// One entry per application *and* drawn size.
+    private var scaled: [String: NSImage] = [:]
 
-    func icon(bundleID: String?, appPath: String?) -> NSImage? {
+    func icon(bundleID: String?, appPath: String?, size: CGFloat) -> NSImage? {
         let key = bundleID ?? appPath ?? ""
         guard !key.isEmpty else { return nil }
-        if let hit = cache[key] { return hit }
+        let points = max(1, Int(size.rounded()))
+        let scaledKey = "\(key)@\(points)"
+        if let hit = scaled[scaledKey] { return hit }
+        guard let source = source(key: key, bundleID: bundleID, appPath: appPath),
+              let sized = source.copy() as? NSImage
+        else { return nil }
+        sized.size = NSSize(width: points, height: points)
+        scaled[scaledKey] = sized
+        return sized
+    }
 
+    private func source(key: String, bundleID: String?, appPath: String?) -> NSImage? {
+        if let hit = sources[key] { return hit }
         var path = appPath
         if path == nil, let bundleID {
             path = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)?.path
         }
         guard let path, FileManager.default.fileExists(atPath: path) else { return nil }
         let image = NSWorkspace.shared.icon(forFile: path)
-        cache[key] = image
+        sources[key] = image
         return image
     }
 }

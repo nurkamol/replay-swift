@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 696 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 714 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -73,7 +73,9 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, a morning briefing before lunchtime, a moment quoted as one line, a contextual memory when there is one worth showing, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
-| Canvas | done | the graph drawn as a field of real application icons, with pan, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
+| Canvas | done | the graph drawn as a field of real application icons, with pan that keeps gliding after a flick, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
+| Replay Story | done | the camera travels through a memory and the heaviest five things around it, dwelling on each and coming home — narration by motion, no words. The path is `tourPath`, ordered as the reference orders it and tie-broken explicitly; the camera's numbers are contract-checked. The line drawing itself between stops, the breath each stop lets out, and the lean toward the next one are **this port's own** — see the divergences |
+| Clear focus | done | a chip opposite the card that drops the selection and lets the field come forward again, Escape bound to it. The reference has the same control in the same corner |
 | Command palette | done | ⌘K over surfaces, applications, projects, recent days and the actions that are not places. **The matcher has no reference counterpart** — upstream leans on a JavaScript library's scoring — so it is the one behaviour here that no fixture covers |
 | Screensaver | done | a slow drift through the day — the memory, today's sessions, the applications you keep. Borderless, on the screen Replay is on, Esc to leave. Not auto-started on a timer, unlike the reference |
 | Museum | done | the day's featured moment, the milestones, the deepest stretches, what was bookmarked, what was written, and the work that took the most |
@@ -152,6 +154,78 @@ function now and live in `ReplayCore` where the suite can reach them.
   first makes it a plain `String` and avoids it, which is why most counts in this app were
   already safe by accident. Found by looking at My Story. Any new `Text("\(someInt)")` is
   suspect.
+- **`NSWorkspace.icon(forFile:)` lies about its size.** It returns an image carrying the
+  whole `.icns` ladder — 16 through 1024, each also at 2× — and reports `size` as 32×32
+  regardless. AppKit picks a rung by that reported size, so every application icon in this
+  app was drawn by scaling the 32-point rung up: invisible in an 18-point row, soft at the
+  128 the Canvas uses, and plainly blurry once anyone zoomed the Canvas in. `IconCache`
+  hands each view a copy whose `size` is the size that view asked for, which is what
+  `NSImageView` has always done and what makes AppKit choose the matching rung. The copies
+  share representations, so a second size costs a wrapper rather than a second bitmap. Any
+  new use of `NSWorkspace.icon` that skips the cache is suspect.
+- **The Canvas camera drifted for as long as it existed, and nothing could have said so.**
+  Five values were this port's invention rather than the reference's: the focus zoom (1.8
+  against 1.55), how far out the field would go (0.4 against 0.32), one press of zoom (1.35
+  against 1.2), a spring where the reference eases out a cubic, and a pan that stopped dead
+  where the reference glides. None of it was caught, and the reason is worth keeping: the
+  canvas is view code on both sides, so it is not in the contract, and `port-queue.mjs` can
+  only report that a UI file changed upstream — never what it now says. It reported nothing
+  to port while all five were out. `spec/constants.json` has a generated `canvas` block now
+  and the suite checks eighteen of these, which is the only reason the next one will be
+  loud. **Any behaviour that lives in a Glaze view is in this blind spot until somebody
+  generates it into the contract.**
+- **Nothing tied `DesignSystem.swift` to the mirror the suite checks.** `ParityKit` cannot
+  import `ReplayApp` — it is an executable — so the motion values are mirrored in
+  `MotionChecks.swift` and compared against `spec/`. That comparison never touched the app:
+  a value could be changed in the design system and the suite would go on agreeing with
+  itself about a number nothing used. `tools/design-audit.mjs` now reads both files and
+  fails if a mirrored value differs, which closes the chain — `spec/` fixes the mirror, the
+  audit fixes the app to the mirror. Found while porting the canvas camera, which is exactly
+  the change that would have slipped through.
+- **Three places the canvas port is a mapping rather than a copy**, all because the input
+  models differ rather than because anybody chose differently. The glide's decay is per
+  *frame* upstream, inside a `requestAnimationFrame` loop, so the same flick coasts further
+  on a 60 Hz display than a 120 Hz one; the port keeps the number and reads it at the 60 Hz
+  it was written against, decaying by elapsed time. The reference's smooth zoom path is a
+  trackpad pinch, which a browser delivers as a wheel event with `ctrlKey` — natively that
+  is a `MagnifyGesture`, so what the exponential maps to here is two-finger scrolling, and a
+  mouse wheel gets the firm 1.09 notch. And Replay Story sits on the selection card, because
+  upstream distinguishes a hover preview from a focused node and this port has one card that
+  only ever appears on a real click.
+- **Four pieces of Canvas motion have no counterpart upstream, and are labelled here so
+  nobody later mistakes them for parity.** The reference's tour is the camera and a lit
+  node; the reference's field is still when nothing is happening. This port adds: a line
+  that draws itself from the last stop to the current one as the camera flies; a single ring
+  each stop breathes out on arrival; a slow lean toward the next stop through the 390ms the
+  reference spends holding perfectly still; and a permanent sway — the whole field leaning
+  0.6° each way over 44 seconds and drifting around a 6-point ellipse over 63. All four are
+  off under reduced motion, and none of them changes a contract-checked number: they use the
+  reference's own durations and fill the gaps between them. **If any of this is ever wanted
+  in both apps, build it in the Glaze app first** — this is the wrong direction of travel and
+  is only acceptable because it is decoration on top rather than behaviour underneath.
+- **A local `NSEvent` monitor sees the whole app, and this one ate every scroll in it.**
+  Canvas zooms on scroll, which SwiftUI has no gesture for, so it installs a local
+  scroll-wheel monitor and returned `nil` from it unconditionally — swallowing the event so
+  it could not also scroll whatever was behind. The comment justified that with "this surface
+  has nothing else that scrolls", which was untrue when written (the timeline panel sits
+  beside the field with a list in it) and became worse when the command palette arrived: with
+  Canvas as the current surface, ⌘K opened a palette whose results could not be scrolled by
+  mouse or trackpad. Reported, not caught — nothing tests scroll. The monitor now acts only
+  when the pointer is over the field and nothing is layered over it, and passes every other
+  scroll along untouched.
+- **A closure made in `onAppear` freezes every plain property it reads.** The first fix for
+  the above added `let paletteOpen` to `CanvasView` and guarded on it, and changed nothing:
+  the monitor's closure is built once and captures the view *struct*, so a stored property
+  read through that capture keeps its value from capture time for ever. `@State` does not
+  behave this way — the wrapper reads shared storage — which is why `pointerInField` worked
+  and `paletteOpen` silently did not. It is mirrored into `@State` now. **Any long-lived
+  closure in a SwiftUI view is suspect here**: it sees `@State` live and everything else
+  frozen, and the failure is invisible — the guard is simply always the old answer.
+- **The sway costs a redraw.** A `Canvas` does not interpolate, so anything that moves inside
+  it has to be read off a clock, and a field that is never still needs that clock always
+  running. It ticks at a third of the display's rate while the sway is all that is moving,
+  and at full rate during the entrance or a story. That is a real cost this surface did not
+  used to carry, and it is worth remembering before adding a fifth moving thing.
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
   `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, `detectWorkflows`,
   `computeWeekSummary`, and both orderings in `Collections.compute`. Fixtures cover each — the collections one is built so two

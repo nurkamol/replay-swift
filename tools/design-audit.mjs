@@ -66,8 +66,91 @@ for (const file of readdirSync(VIEWS).filter((f) => f.endsWith(".swift"))) {
   });
 }
 
+/*
+ * The other half: the mirror in `ParityKit` has to still be the app's own numbers.
+ *
+ * The parity suite checks `MotionTokens` and `CanvasTokens` against `spec/constants.json`,
+ * and cannot check `DesignSystem.swift` at all — `ReplayApp` is an executable, so nothing
+ * can import it. That left a gap wide enough to drive the whole point through: change a
+ * duration in the design system and the suite goes on comparing the mirror to the spec,
+ * agreeing with itself about a number the app no longer uses. Found while porting the
+ * canvas camera, which is exactly the kind of change that would have slipped through.
+ *
+ * So the chain is closed from this end. `spec/` fixes the mirror, and this fixes the app to
+ * the mirror; a value can only move by moving in the Glaze app first.
+ */
+const MIRRORED = [
+  ["Design.Motion", "MotionTokens", [
+    "pressSeconds", "hoverSeconds", "enterSeconds", "staggerSeconds", "staggerCapSeconds",
+  ]],
+  ["Design.Motion", "CanvasTokens", [
+    ["tourDwellSeconds", "tourDwellSeconds"],
+    ["tourCameraSeconds", "tourCameraSeconds"],
+    ["cameraSeconds", "cameraSeconds"],
+    ["cameraCentreSeconds", "centreSeconds"],
+    ["cameraZoomSeconds", "zoomButtonSeconds"],
+  ]],
+  ["Design.Layout", "CanvasTokens", [
+    ["canvasFocusZoom", "focusZoom"],
+    ["canvasTourEndZoom", "tourEndZoom"],
+    ["canvasTourStepZoom", "tourStepZoom"],
+    ["canvasZoomStep", "zoomButtonStep"],
+    ["canvasMinZoom", "minZoom"],
+    ["canvasMaxZoom", "maxZoom"],
+    ["canvasWheelStep", "wheelStep"],
+    ["canvasWheelSensitivity", "wheelSensitivity"],
+    ["canvasGlideDecay", "glideDecay"],
+    ["canvasGlideMinSpeed", "glideMinSpeed"],
+    ["canvasGlideRestSpeed", "glideRestSpeed"],
+  ]],
+];
+
+/** Every `static let NAME: Type = <number>` in a file, by name. */
+function numbers(source) {
+  const out = new Map();
+  for (const m of source.matchAll(
+    /static\s+let\s+(\w+)\s*(?::\s*[\w.]+\s*)?=\s*(-?\d+(?:\.\d+)?)\s*$/gm,
+  )) {
+    out.set(m[1], Number(m[2]));
+  }
+  return out;
+}
+
+const design = numbers(readFileSync(join(VIEWS, "DesignSystem.swift"), "utf8"));
+const mirror = numbers(
+  readFileSync(resolve(HERE, "..", "Sources", "ParityKit", "MotionChecks.swift"), "utf8"),
+);
+const drifted = [];
+for (const [, , pairs] of MIRRORED) {
+  for (const pair of pairs) {
+    const [inDesign, inMirror] = Array.isArray(pair) ? pair : [pair, pair];
+    const a = design.get(inDesign);
+    const b = mirror.get(inMirror);
+    if (a === undefined) drifted.push(`Design has no ${inDesign} — renamed or removed?`);
+    else if (b === undefined) drifted.push(`the mirror has no ${inMirror} — renamed or removed?`);
+    else if (a !== b) drifted.push(`${inDesign} is ${a}, but the mirror says ${inMirror} is ${b}`);
+  }
+}
+
+if (drifted.length > 0) {
+  console.error(
+    `design audit: ${drifted.length} value(s) drifted between DesignSystem.swift and the\n` +
+      "mirror the parity suite checks against.\n",
+  );
+  for (const line of drifted) console.error(`  ${line}`);
+  console.error(
+    "\nThe mirror is what the suite compares to spec/, so a value that differs here is a\n" +
+      "value the app uses and nothing checks. Fix whichever is wrong — and if the intent is\n" +
+      "to change the behaviour, change it in the Glaze app and re-run tools/sync-spec.mjs.",
+  );
+  process.exit(1);
+}
+
 if (findings.length === 0) {
-  console.log("design audit: every view reads its values from Design.");
+  console.log(
+    "design audit: every view reads its values from Design, and the parity mirror still " +
+      "matches it.",
+  );
   process.exit(0);
 }
 

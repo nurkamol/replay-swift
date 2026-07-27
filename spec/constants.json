@@ -142,5 +142,25 @@
       2,
       5
     ]
+  },
+  "canvas": {
+    "tourDwellMillis": 1150,
+    "tourNeighbours": 5,
+    "tourCameraMillis": 760,
+    "tourEndZoom": 1.5,
+    "tourStepZoom": 1.9,
+    "focusZoom": 1.55,
+    "centreZoom": 1.6,
+    "centreMillis": 620,
+    "cameraMillis": 560,
+    "zoomButtonStep": 1.2,
+    "zoomButtonMillis": 340,
+    "minZoom": 0.32,
+    "maxZoom": 3,
+    "glideMinSpeed": 2,
+    "glideDecay": 0.9,
+    "glideRestSpeed": 0.4,
+    "wheelStep": 1.09,
+    "wheelSensitivity": 0.012
   }
 }
