@@ -79,9 +79,86 @@ struct CanvasView: View {
     @State private var selectedAt = Date()
     /// A flick's leftover speed, in points per second, decaying to rest.
     @State private var glide: Task<Void, Never>?
+    /// Where the pointer is in the field, so zoom can keep whatever is under it under it,
+    /// and where the middle of the field is — the scroll monitor is outside the geometry
+    /// that knows, so it has to be told.
+    @State private var pointerAt: CGPoint?
+    @State private var fieldCentre: CGPoint = .zero
+
+    /// How far the pointer sits from the middle of the field. Zero when it is not over the
+    /// field at all, which makes an anchored zoom fall back to a centred one.
+    private var pointerAway: CGPoint {
+        guard let pointerAt else { return .zero }
+        return CGPoint(x: pointerAt.x - fieldCentre.x, y: pointerAt.y - fieldCentre.y)
+    }
+    /// The camera flight in progress, if there is one.
+    ///
+    /// Recorded because SwiftUI animates the *rendered* value and will not tell you what it
+    /// is: `offset` and `zoom` hold the destination from the instant a flight begins. So
+    /// grabbing the field while the camera was moving added the drag to where the camera was
+    /// *going* rather than to where it was, and the field jumped when you let go — the exact
+    /// failure Apple's fluid-interface talk puts first, "always animate from the presentation
+    /// value". Knowing the curve, the start and the duration is enough to evaluate where the
+    /// screen actually is and take the camera back at that point.
+    @State private var flight: Flight?
+
+    private struct Flight {
+        var fromOffset: CGSize
+        var toOffset: CGSize
+        var fromZoom: CGFloat
+        var toZoom: CGFloat
+        var started: Date
+        var seconds: TimeInterval
+    }
 
     private var scale: CGFloat {
         min(max(zoom * pinch, Design.Layout.canvasMinZoom), Design.Layout.canvasMaxZoom)
+    }
+
+    /// The offset the field is actually drawn with.
+    ///
+    /// While a pinch is under way this keeps whatever is under the pointer under the pointer,
+    /// which is what "touch and content move together" means for a zoom: scaling `scale`
+    /// alone pins the field's own origin, so the thing being pinched slides out from under
+    /// the fingers. The correction is the same arithmetic as an anchored zoom, applied live
+    /// rather than at the end, because the ratio is known at every moment of the gesture.
+    private func liveOffset(centre: CGPoint) -> CGSize {
+        let dragging = CGSize(
+            width: offset.width + dragged.width, height: offset.height + dragged.height
+        )
+        let ratio = scale / zoom
+        guard ratio != 1, let anchor = pointerAt else { return dragging }
+        let away = CGPoint(x: anchor.x - centre.x, y: anchor.y - centre.y)
+        return CGSize(
+            width: away.x * (1 - ratio) + dragging.width * ratio,
+            height: away.y * (1 - ratio) + dragging.height * ratio
+        )
+    }
+
+    /// Take the camera back at wherever it is on screen, abandoning where it was going.
+    ///
+    /// Called by anything that touches the field. Evaluating the same `UnitCurve` the flight
+    /// was given, at the elapsed fraction, is where the screen is — so the value it commits
+    /// is the one already being looked at and nothing moves at the moment of the catch.
+    private func catchCamera() {
+        guard let inFlight = flight else { return }
+        flight = nil
+        let elapsed = Date().timeIntervalSince(inFlight.started)
+        guard inFlight.seconds > 0, elapsed < inFlight.seconds else { return }
+        let k = CGFloat(
+            Design.Motion.easeOutCubic.value(at: max(0, elapsed / inFlight.seconds))
+        )
+        var still = Transaction()
+        still.disablesAnimations = true
+        withTransaction(still) {
+            offset = CGSize(
+                width: inFlight.fromOffset.width
+                    + (inFlight.toOffset.width - inFlight.fromOffset.width) * k,
+                height: inFlight.fromOffset.height
+                    + (inFlight.toOffset.height - inFlight.fromOffset.height) * k
+            )
+            zoom = inFlight.fromZoom + (inFlight.toZoom - inFlight.fromZoom) * k
+        }
     }
 
     /// The magnification, as a whole percentage. Built as a `String` rather than
@@ -90,18 +167,23 @@ struct CanvasView: View {
 
     /// Zoom about the middle of the view.
     ///
-    /// The offset is scaled by the same ratio, which is what keeps whatever you were looking
-    /// at where it was — zoom that quietly slides the field somewhere else costs you your
-    /// place, and finding it again is the whole cost of the gesture.
-    private func zoom(by factor: CGFloat, animated: Bool = true) {
+    /// Zoom about a point, which is the middle of the view unless somebody says otherwise.
+    ///
+    /// `away` is how far the anchor sits from the centre. Zero is the reference's own
+    /// behaviour for its zoom buttons — a press of a button is not aimed at anything, so the
+    /// middle is the only fair place to keep still. A scroll *is* aimed: the reference keeps
+    /// the memory under the cursor exactly where it is, and this port had been pinning the
+    /// centre instead, so zooming toward a node slid it away from you.
+    private func zoom(by factor: CGFloat, away: CGPoint = .zero, animated: Bool = true) {
+        catchCamera()
         let target = min(
             max(zoom * factor, Design.Layout.canvasMinZoom), Design.Layout.canvasMaxZoom
         )
         guard target != zoom else { return }
         let ratio = target / zoom
         let apply = {
-            offset.width *= ratio
-            offset.height *= ratio
+            offset.width = away.x * (1 - ratio) + offset.width * ratio
+            offset.height = away.y * (1 - ratio) + offset.height * ratio
             zoom = target
         }
         // A press of a button is a journey and gets the camera's easing. A scroll is the
@@ -145,7 +227,9 @@ struct CanvasView: View {
                 : (delta > 0
                     ? Design.Layout.canvasWheelStep
                     : 1 / Design.Layout.canvasWheelStep)
-            zoom(by: factor, animated: !event.hasPreciseScrollingDeltas)
+            // Anchored on the pointer, which is what makes zooming *toward* something work:
+            // the reference keeps the memory under the cursor exactly where it is.
+            zoom(by: factor, away: pointerAway, animated: !event.hasPreciseScrollingDeltas)
             // Swallowed only now that it has been used for something.
             return nil
         }
@@ -195,9 +279,16 @@ struct CanvasView: View {
     ) {
         guard let point = canvas.positions[id] else { return }
         stopGlide()
+        catchCamera()
+        let landing = CGSize(width: -point.x * target, height: -point.y * target)
+        flight = Flight(
+            fromOffset: offset, toOffset: landing,
+            fromZoom: zoom, toZoom: target,
+            started: Date(), seconds: motion.reduced ? 0 : seconds
+        )
         withAnimation(motion.animation(Design.Motion.camera(seconds))) {
             zoom = target
-            offset = CGSize(width: -point.x * target, height: -point.y * target)
+            offset = landing
             dragged = .zero
             also?()
         }
@@ -561,7 +652,10 @@ struct CanvasView: View {
                     .onChanged { value in
                         if hypot(value.translation.width, value.translation.height)
                             > Design.Layout.canvasClickSlop {
-                            if !dragging { stopTour(); stopGlide() }
+                            // Caught before the first pixel of drag is applied, so what the
+                            // translation is added to is where the camera is rather than
+                            // where it was headed.
+                            if !dragging { stopTour(); stopGlide(); catchCamera() }
                             dragging = true
                             dragged = value.translation
                         }
@@ -585,20 +679,39 @@ struct CanvasView: View {
             .gesture(
                 MagnifyGesture()
                     .onChanged {
-                        if pinch == 1 { stopTour(); stopGlide() }
+                        if pinch == 1 { stopTour(); stopGlide(); catchCamera() }
                         pinch = $0.magnification
                     }
                     .onEnded { value in
-                        zoom = min(
+                        // Commit exactly what was being drawn: the same anchored offset the
+                        // gesture was showing, so letting go changes nothing on screen.
+                        let settled = liveOffset(centre: centre)
+                        let target = min(
                             max(zoom * value.magnification, Design.Layout.canvasMinZoom),
                             Design.Layout.canvasMaxZoom
                         )
+                        offset = CGSize(
+                            width: settled.width - dragged.width,
+                            height: settled.height - dragged.height
+                        )
+                        zoom = target
                         pinch = 1
                     }
             )
             .accessibilityHidden(true)
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { size in
+                fieldCentre = CGPoint(x: size.width / 2, y: size.height / 2)
+            }
             .onContinuousHover { phase in
-                if case .active = phase { pointerInField = true } else { pointerInField = false }
+                if case .active(let location) = phase {
+                    pointerInField = true
+                    pointerAt = location
+                } else {
+                    pointerInField = false
+                    // Deliberately kept: a pinch begins after the cursor has stopped moving,
+                    // and on a trackpad it does not move during one. The last place it was
+                    // is the anchor the gesture is aimed at.
+                }
             }
         }
         // The picture is not reachable by keyboard, so the same information is offered as a
@@ -677,12 +790,13 @@ struct CanvasView: View {
     /// Everything drawn, in one pass.
     private func renderField(centre: CGPoint, progress: CGFloat, now: Date) -> some View {
         let phase = tourPhase(at: now)
+        let camera = liveOffset(centre: centre)
         return Canvas { context, _ in
                 func place(_ point: CGPoint) -> CGPoint {
                     let swayed = sway(point, at: now)
                     return CGPoint(
-                        x: centre.x + (swayed.x * scale) + offset.width + dragged.width,
-                        y: centre.y + (swayed.y * scale) + offset.height + dragged.height
+                        x: centre.x + (swayed.x * scale) + camera.width,
+                        y: centre.y + (swayed.y * scale) + camera.height
                     )
                 }
 
@@ -1168,12 +1282,13 @@ struct CanvasView: View {
         // Read at the moment of the click rather than off the drawing's clock — the two are
         // at most a frame apart, and at this speed a frame is a fraction of a point.
         let now = Date()
+        let camera = liveOffset(centre: centre)
         for node in canvas.graph.nodes {
             guard let point = canvas.positions[node.id] else { continue }
             let swayed = sway(point, at: now)
             let at = CGPoint(
-                x: centre.x + swayed.x * scale + offset.width + dragged.width,
-                y: centre.y + swayed.y * scale + offset.height + dragged.height
+                x: centre.x + swayed.x * scale + camera.width,
+                y: centre.y + swayed.y * scale + camera.height
             )
             let distance = hypot(at.x - location.x, at.y - location.y)
             let reach = radius(for: node) * scale + Design.Layout.canvasHitSlack

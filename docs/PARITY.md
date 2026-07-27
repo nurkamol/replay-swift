@@ -259,6 +259,23 @@ the picture by 0.012 mean brightness — real in a diff, invisible to a person.
   and `paletteOpen` silently did not. It is mirrored into `@State` now. **Any long-lived
   closure in a SwiftUI view is suspect here**: it sees `@State` live and everything else
   frozen, and the failure is invisible — the guard is simply always the old answer.
+- **Scroll-zoom pinned the wrong point, and the reference says which.** `zoom(by:)` scaled
+  the offset uniformly, which keeps the *view centre* still. That is right for the toolbar
+  buttons — upstream's `zoomBy` does exactly the same, because a press of a button is not
+  aimed at anything — and wrong for a scroll, which is: upstream's `onWheel` preserves the
+  point under the cursor, commented "so the memory under the cursor stays put". Zooming
+  toward a node used to slide it away from you. Pinch was a third behaviour again, anchoring
+  at the field's own origin, because `pinch` scaled `scale` without compensating `offset` at
+  all. All three go through one anchored path now, with the anchor at the pointer for scroll
+  and pinch and at the centre for the buttons.
+- **Grabbing the field mid-flight jumped.** SwiftUI animates the rendered value and will not
+  tell you what it is: `offset` and `zoom` hold the *destination* from the instant a flight
+  begins. So a drag during a camera move added the translation to where the camera was going
+  rather than to where it was, and the field snapped by the remaining distance on release.
+  The flight is recorded now — curve, start, duration — so `catchCamera()` can evaluate the
+  same `UnitCurve` at the elapsed fraction and commit the value already on screen. **This is
+  a general SwiftUI trap, not a canvas one:** any code that reads an animating `@State` is
+  reading the target, and the further through the animation it is, the more wrong it is.
 - **The sway costs a redraw.** A `Canvas` does not interpolate, so anything that moves inside
   it has to be read off a clock, and a field that is never still needs that clock always
   running. It ticks at a third of the display's rate while the sway is all that is moving,
