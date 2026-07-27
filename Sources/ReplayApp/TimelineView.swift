@@ -6,6 +6,29 @@ import SwiftUI
 /// Today answers "what has today been". The Timeline is the archive — the same sessions,
 /// grouped by the day they began, with the quiet gaps left in so the shape of a day is
 /// legible. It describes; it does not grade. A day with nothing on it simply is not there.
+/// A lens on the same days.
+///
+/// Two kinds. **Sessions**, **Bookmarks**, **Notes** and **Collections** choose *which*
+/// sessions appear — a session shows if any active one keeps it. **Activity** is the gaps
+/// between them, which the plain timeline shows and any narrowing hides.
+///
+/// Fewer than the reference's nine: Projects, Reflections, Moments and Memories are overlay
+/// rows rather than filters, and none is built here yet. Recorded on the ledger rather than
+/// stubbed, so the row does not offer something that does nothing.
+enum Layer: String, CaseIterable, Hashable {
+    case sessions, bookmarks, notes, collections, activity
+
+    var label: String {
+        switch self {
+        case .sessions: "Sessions"
+        case .bookmarks: "Bookmarks"
+        case .notes: "Notes"
+        case .collections: "Collections"
+        case .activity: "Activity"
+        }
+    }
+}
+
 struct TimelineView: View {
     let history: HistoryModel
     let annotations: AnnotationsModel
@@ -14,14 +37,28 @@ struct TimelineView: View {
     let onOpenDay: (Int64) -> Void
 
     @Environment(\.motion) private var motion
+    /// Which coarse buckets are showing. Empty means all of them — a filter row where
+    /// everything starts switched on reads as a set of things to switch *off*, and this one
+    /// is a set of things to narrow *to*.
+    @State private var categories: Set<FilterCategory> = []
+    /// Which layers are on. Sessions alone by default, which is the plain timeline.
+    @State private var layers: Set<Layer> = [.sessions]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.block) {
-                if history.days.isEmpty {
-                    empty.centredInPage()
+                controls
+                if filtered.isEmpty {
+                    // Two different silences: a range with nothing in it, and a range whose
+                    // contents the chips have hidden. Saying "no history yet" to someone who
+                    // has just filtered it all out would be a lie.
+                    if history.days.isEmpty {
+                        empty.centredInPage()
+                    } else {
+                        narrowed.centredInPage()
+                    }
                 } else {
-                    ForEach(history.days) { day in
+                    ForEach(filtered) { day in
                         DaySection(
                             day: day,
                             history: history,
@@ -54,6 +91,119 @@ struct TimelineView: View {
                 .labelsHidden()
                 .help("How much history the Timeline shows")
             }
+        }
+    }
+
+    /// The two rows of chips: what kind of work, and which layers.
+    private var controls: some View {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
+            FlowRow(spacing: Design.Space.snug) {
+                ForEach(FilterCategory.allCases, id: \.self) { category in
+                    chip(
+                        category.rawValue,
+                        on: categories.contains(category),
+                        toggle: {
+                            if categories.contains(category) {
+                                categories.remove(category)
+                            } else {
+                                categories.insert(category)
+                            }
+                        }
+                    )
+                }
+            }
+            HStack(alignment: .top, spacing: Design.Space.inline) {
+                Label("Layers", systemImage: "square.3.layers.3d")
+                    .labelStyle(.titleAndIcon)
+                    .sectionLabelStyle()
+                    .padding(.top, Design.Space.snug)
+                FlowRow(spacing: Design.Space.snug) {
+                    ForEach(Layer.allCases, id: \.self) { layer in
+                        chip(
+                            layer.label,
+                            on: layers.contains(layer),
+                            toggle: {
+                                if layers.contains(layer) {
+                                    // Never nothing: a timeline with every layer off is a
+                                    // blank page, and the way to see less is a filter.
+                                    if layers.count > 1 { layers.remove(layer) }
+                                } else {
+                                    layers.insert(layer)
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        .settlesIntoView(reduced: motion.reduced)
+    }
+
+    private func chip(_ label: String, on: Bool, toggle: @escaping () -> Void) -> some View {
+        Button(action: toggle) {
+            Text(label)
+                .font(Design.Text.detail.weight(.medium))
+                .foregroundStyle(on ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
+                .padding(.horizontal, Design.Pill.horizontal)
+                .padding(.vertical, Design.Pill.vertical)
+                .background(
+                    Capsule().fill(on ? AnyShapeStyle(Color.accentColor) : Design.Colour.surface)
+                )
+                .overlay(Capsule().strokeBorder(on ? AnyShapeStyle(.clear) : Design.Colour.border))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? [.isSelected] : [])
+    }
+
+    /// The days as the chips leave them.
+    ///
+    /// A day whose sessions are all filtered out disappears entirely rather than remaining
+    /// as an empty heading — an empty day under a filter says "nothing here", which is what
+    /// the absence of the day already says.
+    private var filtered: [TimelineDay] {
+        guard !categories.isEmpty || layers != [.sessions] else { return history.days }
+        return history.days.compactMap { day in
+            let items = day.items.filter { item in
+                guard case .session(let session) = item else {
+                    // Any narrowing hides the breaks too: a gap between two sessions you are
+                    // no longer looking at describes a rhythm that is not on screen.
+                    return categories.isEmpty && layers.contains(.activity)
+                }
+                if !categories.isEmpty,
+                   !categories.contains(sessionFilterCategory(session)) { return false }
+                return keeps(session)
+            }
+            guard !items.isEmpty else { return nil }
+            var narrowed = day
+            narrowed.items = items
+            return narrowed
+        }
+    }
+
+    /// Whether any active selection layer keeps this session.
+    private func keeps(_ session: ActivitySession) -> Bool {
+        var wanted = false
+        for layer in layers {
+            switch layer {
+            case .sessions: wanted = true
+            case .bookmarks:
+                if annotations.annotation(for: session.startedAt).bookmarked { wanted = true }
+            case .notes:
+                if !annotations.annotation(for: session.startedAt).note.isEmpty { wanted = true }
+            case .collections:
+                if Collections.isCollectable(session.category) { wanted = true }
+            case .activity:
+                break
+            }
+        }
+        return wanted
+    }
+
+    private var narrowed: some View {
+        ContentUnavailableView {
+            Label("Nothing matches", systemImage: "line.3.horizontal.decrease")
+        } description: {
+            Text("No session in this range is in the kinds of work, or the layers, you chose.")
         }
     }
 

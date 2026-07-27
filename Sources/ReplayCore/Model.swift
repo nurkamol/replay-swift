@@ -144,6 +144,24 @@ public struct ActivitySession: Equatable, Sendable {
     public var apps: [SessionApp]
     public var events: [ActivityEvent]
     public var switches: Int
+
+    /// Public so the parity suite can build one to ask a question about, rather than
+    /// deriving a whole timeline to reach a session with the right category on it.
+    public init(
+        title: String, category: SessionCategory, startedAt: Int64, endedAt: Int64,
+        spanSeconds: Int, activeSeconds: Int, apps: [SessionApp],
+        events: [ActivityEvent], switches: Int
+    ) {
+        self.title = title
+        self.category = category
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+        self.spanSeconds = spanSeconds
+        self.activeSeconds = activeSeconds
+        self.apps = apps
+        self.events = events
+        self.switches = switches
+    }
 }
 
 public struct ActivityBreak: Equatable, Sendable {

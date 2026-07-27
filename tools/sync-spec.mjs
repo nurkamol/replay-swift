@@ -517,7 +517,7 @@ function buildExportFixtures() {
        export { buildCanvas } from ${JSON.stringify(join(GLAZE, "renderer/lib/canvas.ts"))};
        export { historyTargets, findMemories, relativeDayLabel, shortDateLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
        export { buildExport, selectScope, EXPORT_SCOPES } from ${JSON.stringify(join(GLAZE, "renderer/lib/export.ts"))};
-       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, computeWeekSummary, describePeak, findResumeTarget, formatWhen, excludeIdleStretches } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
+       export { buildTimeline, groupSessionsForWeek, sessionUsesApp, describeBreak, FILTER_CATEGORIES, sessionFilterCategory, computeWeekSummary, describePeak, findResumeTarget, formatWhen, excludeIdleStretches } from ${JSON.stringify(join(GLAZE, "renderer/lib/sessions.ts"))};
        // sessionMatches is module-private in the view, so the predicate is
        // re-declared here character for character. If it drifts upstream this
        // fixture keeps asserting the old rule — the one risk in extracting it,
@@ -588,6 +588,7 @@ function buildExportFixtures() {
        const { groupByDay, buildExport, selectScope, EXPORT_SCOPES, buildTimeline,
                groupSessionsForWeek, sessionUsesApp, sessionMatches,
                historyTargets, findMemories, describeBreak,
+               FILTER_CATEGORIES, sessionFilterCategory,
                computeWeekSummary, describePeak, detectWorkflows, detectProjects,
                projectDefaultName, relativeDayLabel, shortDateLabel, detectRituals,
                detectChapters, chapterDefaultName, listPeriods, summarizePeriod,
@@ -699,6 +700,16 @@ function buildExportFixtures() {
        }));
 
        const legacy = computeLegacy(input.chapterSummaries, new Map());
+
+       // The coarse buckets the Timeline filters by, and which one every session
+       // category falls into — including the two that have no bucket of their own.
+       const filters = {
+         categories: FILTER_CATEGORIES,
+         mapped: input.filterCases.map((category) => ({
+           category,
+           bucket: sessionFilterCategory({ category }),
+         })),
+       };
 
        // The confidence primitives. Every producer scores in this vocabulary, so if the
        // arithmetic drifts every memory in the app drifts with it.
@@ -885,6 +896,7 @@ function buildExportFixtures() {
          chapters,
          autobiography,
          legacy,
+         filters,
          scoring,
          selection,
          producers,
@@ -1520,6 +1532,8 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        // Every session category, so the two that fall through to Other are pinned.
+        filterCases: ["Development", "Research", "Communication", "Writing", "Design", "Media", "Admin", "Other"],
         anniversaryNow,
         anniversarySeed,
         memoryBookmarks,
@@ -1612,6 +1626,7 @@ function buildExportFixtures() {
         expected: result.autobiography,
       },
       legacy: { expected: result.legacy },
+      filters: result.filters,
       canvas: {
         constellation: result.constellation,
         expected: result.canvas,

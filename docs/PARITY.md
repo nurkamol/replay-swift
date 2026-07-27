@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 683 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 692 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -37,6 +37,7 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Canvas graph | done | `buildCanvas` — every node and every edge compared, including the subtitles. 16 checks |
 | Memory confidence & selection | done | `memory-intelligence` — the scoring vocabulary, the selector, and silence as a valid answer. 18 checks |
 | Right-time / threads / echoes | done | three producers, each scored and each returning nothing far more often than something. 15 checks |
+| Timeline filter buckets | done | `sessionFilterCategory` — six coarse buckets, with Writing and Media falling to Other. 9 checks |
 | Anniversaries | done | exact dates only — a year to the day, or the six-month mark. 3 checks |
 | Forgotten | done | old bookmarks, projects stepped away from, reflections worth rereading, each archivable. 5 checks |
 | Morning briefing | done | `buildMorningBriefing` — yesterday's figures, the longest stretch, a thread worth continuing, a month ago, the oldest bookmark still waiting. 19 checks, including the two cases where it says nothing |
@@ -85,7 +86,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Apps | done | ranked by time, with a Today/This Week/This Month window, pinned favourites, and a row leading into that application's own history |
 | An application's history | done | header, the four figures, which collections it appears in, the applications it works alongside, and its recent sessions |
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
-| Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯ (open, export, delete). No layers or filters |
+| Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and five layers (Sessions, Bookmarks, Notes, Collections, Activity). **Four layers short** of the reference: Projects, Reflections, Moments and Memories are overlay *rows* rather than filters and are not built |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
 | Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |

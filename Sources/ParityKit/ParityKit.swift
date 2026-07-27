@@ -742,6 +742,17 @@ public enum ParityKit {
         public let memory: MemoryCase
         /// A quiet look back, before the day begins.
         public let briefings: BriefingCase
+        /// The coarse buckets the Timeline filters by.
+        public let filters: FilterCase
+
+        public struct FilterCase: Decodable, Sendable {
+            public struct Mapped: Decodable, Sendable {
+                public let category: String
+                public let bucket: String
+            }
+            public let categories: [String]
+            public let mapped: [Mapped]
+        }
         /// The graph behind the memory space.
         public let canvas: CanvasCase
         public let report: ReportCase
@@ -1578,6 +1589,24 @@ public enum ParityKit {
                   .allSatisfy { abs($0.confidence - $1.confidence) < 0.0001 })
         check(ang, "everything forgotten can be archived as well as dismissed",
               forgotten.allSatisfy(\.archivable))
+
+        // The Timeline's filter buckets. Fewer than the session categories on purpose, and
+        // the two that fall through to Other are the ones worth pinning.
+        let fcg = "filter categories"
+        equal(fcg, "the same buckets, in the same order",
+              FilterCategory.allCases.map(\.rawValue), fixture.filters.categories)
+        for mapped in fixture.filters.mapped {
+            guard let category = SessionCategory(rawValue: mapped.category) else {
+                check(fcg, "the port knows the category '\(mapped.category)'", false)
+                continue
+            }
+            let session = ActivitySession(
+                title: "", category: category, startedAt: 0, endedAt: 0,
+                spanSeconds: 0, activeSeconds: 0, apps: [], events: [], switches: 0
+            )
+            equal(fcg, "a \(mapped.category) session filters as \(mapped.bucket)",
+                  sessionFilterCategory(session).rawValue, mapped.bucket)
+        }
 
         // The morning briefing, including the cases where it says nothing: after noon, and
         // when yesterday holds nothing to reflect on.

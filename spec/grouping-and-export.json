@@ -1540,6 +1540,50 @@
       ]
     }
   },
+  "filters": {
+    "categories": [
+      "Development",
+      "Browsing",
+      "Communication",
+      "Design",
+      "Utilities",
+      "Other"
+    ],
+    "mapped": [
+      {
+        "category": "Development",
+        "bucket": "Development"
+      },
+      {
+        "category": "Research",
+        "bucket": "Browsing"
+      },
+      {
+        "category": "Communication",
+        "bucket": "Communication"
+      },
+      {
+        "category": "Writing",
+        "bucket": "Other"
+      },
+      {
+        "category": "Design",
+        "bucket": "Design"
+      },
+      {
+        "category": "Media",
+        "bucket": "Other"
+      },
+      {
+        "category": "Admin",
+        "bucket": "Utilities"
+      },
+      {
+        "category": "Other",
+        "bucket": "Other"
+      }
+    ]
+  },
   "canvas": {
     "constellation": {
       "nodes": [
