@@ -1,10 +1,15 @@
-# Roadmap
+# Roadmap — superseded
 
-What is left, in the order it is worth doing, and why. `docs/PARITY.md` is the ledger of
-what *is* — this is the argument about what should be next.
-
-Nothing here has a date. The port has one developer and no deadline, and a roadmap with
-invented dates on it is a worse document than one without.
+> **This document is history, not a plan.** Every feature it argued for has been built, and
+> two of the things it filed under *"later, and honestly maybe never"* — the Canvas and
+> Ambient mode — shipped. **`docs/BACKLOG.md` is the only list of remaining work**; if this
+> file and that one disagree, that one is right.
+>
+> It is kept because the *arguments* were the useful part, and because a roadmap that was
+> wrong about what mattered is worth being able to re-read. Retired 2026-07-28.
+>
+> The one item here that outlived it — that the interface has no test coverage — is now an
+> open decision in `docs/BACKLOG.md` §3, where it can actually be answered.
 
 ---
 

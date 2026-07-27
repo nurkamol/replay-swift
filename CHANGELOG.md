@@ -10,10 +10,16 @@ that tells you the contract is doing its job.
 The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions
 follow the Glaze app's, so "level with 2.3.2" means this port matches that release.
 
-## Unreleased — 0.1.0
+## 0.1.0 — 2026-07-28
 
-The first version that is an application rather than a library with a placeholder `main`.
-Level with **Glaze 2.3.2** (`d355ba2`), verified by **450 checks**.
+The first complete version: every route the reference has, both of its display modes, and
+the whole of its Settings. Level with **Glaze 2.3.2** (`d355ba2`), verified by **931
+contract checks and 61 behaviour cases**.
+
+Dated rather than released. `scripts/make-app.sh` signs ad-hoc, which runs on the machine
+that built it and nowhere else, so this is a version of the source and not something anyone
+can be handed. Signing is the only thing standing between the two, and it needs a Developer
+ID rather than any more code.
 
 ### Added
 
@@ -50,6 +56,26 @@ Level with **Glaze 2.3.2** (`d355ba2`), verified by **450 checks**.
   time. The motion tokens are the reference's own, extracted into the generated contract and
   checked by the parity suite.
 - **CI** running the parity suite on every push, in four timezones, plus the design audit.
+
+### Added — the rest of the surfaces
+
+- **Projects** — the app combinations that keep coming back, named descriptively and
+  renameable, with a page each.
+- **Canvas** — the whole history as a field you can fly through, and **Replay Story**, a
+  camera tour that narrates a memory by moving rather than by writing.
+- **Story, Chapters, Autobiography, Museum and My Story** — the long view: your history
+  divided into eras, told back to you a month at a time, and the best of it curated.
+- **Relationships and an application's own page** — what two apps do together, and what one
+  app has done across the record.
+- **This Week**, **Replay Day** (scrub a day back at 1×, 2× or 5×), and a **screensaver**.
+- **Ambient mode** — a distraction-free full-screen clock for a second monitor, the second
+  of the reference's two display modes.
+- **A welcome screen**, a **Dock badge** showing whole active hours, and a **command
+  palette** that reaches every surface, application and project by name.
+- **One catalogue for keyboard shortcuts**, feeding the View menu, the Settings table and
+  the sidebar hints, with `tools/shortcut-audit.mjs` checking all three agree.
+- **A Display pane in Settings** for the screensaver and ambient mode — the reference's own
+  grouping for the pair.
 
 ### Fixed — differences found between the two implementations
 
@@ -91,13 +117,32 @@ These are the ones worth reading. Each was invisible until something checked it.
 - **The same icons were inlined once per use** — fifty-odd icons appearing three hundred
   times in one document. Defined once as CSS classes and referenced by name.
 
+### Fixed — divergences the audits found
+
+Seven surface audits, each comparing a view against its reference beside it. Every one found
+something; these are the ones worth naming.
+
+- **The memory heatmap shaded days against the busiest day in view**, not against fixed
+  amounts of time — so a quiet month and a heavy one looked identical, and a square's
+  darkness meant nothing you could compare across a year.
+- **Today was missing from its own year.** The reference builds the grid forwards from 370
+  days ago; 53 weeks is 371 days, so it ends between today and six days before it.
+- **The narrative surfaces were entirely paraphrase** — every subtitle and empty state on
+  Story, Chapters and Autobiography, with both footnotes missing outright.
+- **My Story was missing a section** the reference has, found by diffing section labels.
+- **The screensaver's close button and exit hint had never been visible**, pushed off-screen
+  by a `ZStack` sizing to its drifting column.
+- **The Timeline built every row before showing one**, which read as a slow query and was
+  not: the data is 22ms.
+
 ### Known gaps
 
-- **No PDF export.** Two attempts failed in WebKit; the reference's own PDF is a single page
-  and points readers at HTML for anything longer. See `docs/PARITY.md` for what to try next.
-- **The app is not signed for distribution.** `scripts/make-app.sh` signs ad-hoc, which runs
-  on the machine that built it and nowhere else.
-- **Projects and Canvas are not started.**
+- **No PDF export.** Three WebKit routes tried and dead. Reviving it means leaving WebKit
+  and drawing the report into a `CGContext` by hand. See `docs/PARITY.md`.
+- **The app is not signed for distribution.**
 - **The suite covers the core, not the interface.** Every UI behaviour above was verified by
   running the app against real data, which is weaker than a fixture and is recorded as such
-  in the ledger.
+  in the ledger. Three bugs this release were invisible to every automated check and were
+  found only by looking: a Settings toggle bound to the wrong `Bool`, chrome laid out
+  off-screen, and a test suite leaking a `UserDefaults` domain per fixture. That is the
+  argument for a UI test target, which is an open decision in `docs/BACKLOG.md`.

@@ -21,6 +21,17 @@ it is hand-authored:
 | `spec/schema.sql` | the database, verbatim | a database written by one app must be readable by the other |
 | `spec/constants.json` | every behavioural threshold | 5-minute away, 30-minute idle break, 45-second stray switch, compaction ratio, the category table |
 | `spec/fixtures/*.json` | session derivation, **run** | inputs plus the output the Glaze code actually produced |
+| `spec/grouping-and-export.json` | day grouping and report text, **run** | under a pinned clock, timezone and locale |
+| `spec/settings-copy.json` | all 36 of the reference's Settings labels and their descriptions | eight of ours had been renamed, and seven controls said nothing at all |
+| `spec/guide.json` | the Guide's sixteen questions and answers | this port answered four, and not one of them was upstream's |
+| `spec/narrative-copy.json` | Story, Chapters, Autobiography, Museum, My Story and two empty states | every sentence on those surfaces had been paraphrased, and both footnotes were missing |
+
+**Three of those seven are copy, and that is not an accident.** SPEC §8 calls the words the
+product, and words are where a port drifts without anyone noticing: a paraphrase is close
+enough in meaning that nobody re-reads it against the source, and there is no crash, no
+failing check and no visual difference to catch it. Every one of the three was added *after*
+an audit found dozens of sentences quietly rewritten. If a fourth surface turns out to be
+mostly prose, generate it too rather than retyping it.
 
 The fixtures are the important part. Session derivation is the one piece of logic a
 port is most likely to get subtly wrong — and subtly wrong here means every title and

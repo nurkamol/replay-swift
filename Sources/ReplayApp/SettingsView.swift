@@ -979,6 +979,11 @@ private struct GuideTab: View {
 }
 
 private struct AboutTab: View {
+    /// Where the source lives. In About because that is where somebody looks when they want
+    /// to know what this *is* — and for an app whose whole claim is that nothing leaves the
+    /// Mac, "you can read it" is the strongest form that claim takes.
+    private static let repository = URL(string: "https://github.com/nurkamol/replay-swift")!
+
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
     }
@@ -1010,6 +1015,18 @@ private struct AboutTab: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, Design.Space.inline)
+
+            Link(destination: Self.repository) {
+                Label("Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+            }
+            .buttonStyle(.link)
+            .padding(.top, Design.Space.tight)
+            .help(Self.repository.absoluteString)
+
+            Spacer(minLength: 0)
+            Text("MIT licensed. Built on this Mac, and it stays here.")
+                .font(Design.Text.micro)
+                .foregroundStyle(.tertiary)
         }
         .padding(Design.Space.page)
         .frame(minWidth: Design.Layout.settingsDetailWidth)

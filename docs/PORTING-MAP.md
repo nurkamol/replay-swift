@@ -7,6 +7,13 @@ across 103 files.
 The shape of the job in one sentence: **the backend is small and gets smaller; the
 renderer is the whole cost.**
 
+> **How it turned out, 2026-07-28.** The sentence held. The core was finished and verified
+> early and has barely moved since; every week after that went into the renderer, and the
+> last stretch was not new features at all but seven audits reading each view beside its
+> reference — which found more real divergence than the porting had. Line counts below are
+> from Glaze 2.3.1 and are left as they were: they are a record of the estimate, and an
+> estimate rewritten after the fact stops being one.
+
 ---
 
 ## Backend → native

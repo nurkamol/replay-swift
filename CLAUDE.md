@@ -13,6 +13,8 @@ version ships today and is the reference implementation** — it lives at
 - `docs/PORTING-MAP.md` — Glaze API → native equivalent, scope, risks.
 - `docs/PARITY.md` — status ledger. Update it in the same commit as the code.
 - `docs/BACKLOG.md` — **the only list of remaining work**, in the order it is worth doing.
+  (`docs/ROADMAP.md` is retired and kept as history — it argued for features that are all
+  built now. If the two disagree, the backlog is right.)
   Check the code before starting anything on it: the ledger has been wrong twice, and both
   times it sent work toward something already built.
 
