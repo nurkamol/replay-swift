@@ -270,6 +270,72 @@ const constants = {
     };
   })(),
   /*
+   * Search, and the Timeline's ranges.
+   *
+   * Both surfaces were audited and neither had its behaviour wrong — what they had was
+   * constants and copy that nothing held. The Timeline's four ranges are reproduced in Swift
+   * word for word, subtitles included, and subtitles are the product (SPEC §8); `describeBreak`
+   * is here for exactly that reason, after drifting in three places while looking fine.
+   *
+   * The one that had already gone wrong is the result stagger. Upstream gives search results
+   * their own — ten milliseconds a row, capped at 220, "snapping in under the fingers" — and
+   * this port had been using the app's general entrance stagger of 28 and 560. Nearly three
+   * times slower on the one surface a person types into and reads immediately.
+   */
+  search: (() => {
+    const src = read("renderer/main/views/search-view.tsx");
+    const f = "search-view.tsx";
+    const [conceptLimit] = inline(
+      src, f, "how many sessions a concept answers with", /\.slice\(0,\s*(\d+)\)/,
+    );
+    const [weekBack] = inline(
+      src, f, "how far back the week range reaches", /case "week":\s*\n\s*return today - (\d+) \* DAY/,
+    );
+    const [monthBack] = inline(
+      src, f, "how far back the month range reaches",
+      /case "month":\s*\n\s*return today - (\d+) \* DAY/,
+    );
+    return {
+      resultStepMs: constant(src, f, "RESULT_STEP_MS"),
+      resultCapMs: constant(src, f, "RESULT_DELAY_CAP_MS"),
+      days: constant(src, f, "SEARCH_DAYS"),
+      conceptLimit,
+      // The spans, in the order they are offered, and how far each reaches back in days.
+      spans: [...src.matchAll(/\{ value: "(\w+)", label: "([^"]+)" \}/g)].map((m) => ({
+        value: m[1],
+        label: m[2],
+      })),
+      weekDaysBack: weekBack,
+      monthDaysBack: monthBack,
+    };
+  })(),
+  /*
+   * The Timeline's ranges: how many days each fetches, what it is called, the line under the
+   * title, and whether it keeps one day out of what it fetched or all of them.
+   */
+  timeline: (() => {
+    const src = read("renderer/lib/time-range.ts");
+    const f = "time-range.ts";
+    const order = src.match(/TIME_RANGES: TimeRange\[\] = \[([^\]]*)\]/);
+    const ranges = [...src.matchAll(
+      /"?([\w]+)"?:\s*\{\s*days:\s*(\d+),\s*label:\s*"([^"]*)",\s*subtitle:\s*"([^"]*)",\s*keepDayLabels:\s*(\[[^\]]*\]|null),/g,
+    )].map((m) => ({
+      key: m[1],
+      days: Number(m[2]),
+      label: m[3],
+      subtitle: m[4],
+      keepDayLabels: m[5] === "null" ? null : [...m[5].matchAll(/"([^"]+)"/g)].map((k) => k[1]),
+    }));
+    if (ranges.length === 0) problems.push(`${f}: TIME_RANGE_CONFIG not found — reshaped?`);
+    const fallback = src.match(/DEFAULT_TIME_RANGE: TimeRange = "([^"]+)"/);
+    if (!fallback) problems.push(`${f}: DEFAULT_TIME_RANGE not found`);
+    return {
+      order: order ? [...order[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]) : [],
+      ranges,
+      defaultRange: fallback ? fallback[1] : null,
+    };
+  })(),
+  /*
    * The canvas camera, and the tour it flies on its own.
    *
    * Here for the reason every motion value is here: the two apps are meant to move alike,

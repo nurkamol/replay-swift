@@ -82,6 +82,7 @@ for (const file of readdirSync(VIEWS).filter((f) => f.endsWith(".swift"))) {
 const MIRRORED = [
   ["Design.Motion", "MotionTokens", [
     "pressSeconds", "hoverSeconds", "enterSeconds", "staggerSeconds", "staggerCapSeconds",
+    "resultStaggerSeconds", "resultStaggerCapSeconds",
   ]],
   ["Design.Motion", "CanvasTokens", [
     ["tourDwellSeconds", "tourDwellSeconds"],

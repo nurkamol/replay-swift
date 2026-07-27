@@ -501,7 +501,7 @@ struct SearchView: View {
             )
             VStack(spacing: Design.Space.row) { content() }
         }
-        .settlesIn(index)
+        .settlesInAsResult(index)
     }
 
     @ViewBuilder

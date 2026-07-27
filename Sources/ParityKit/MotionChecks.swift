@@ -17,6 +17,10 @@ public enum MotionTokens {
     public static let easeStandard: [Double] = [0.32, 0.72, 0, 1]
     public static let staggerSeconds: Double = 0.028
     public static let staggerCapSeconds: Double = 0.560
+    /// A search result's own stagger, which is deliberately not the one above — see
+    /// `Design.Motion.resultStaggerSeconds`.
+    public static let resultStaggerSeconds: Double = 0.010
+    public static let resultStaggerCapSeconds: Double = 0.220
 }
 
 /// The canvas camera, as plain numbers, mirroring `Design.Layout` and `Design.Motion`.

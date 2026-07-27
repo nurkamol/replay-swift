@@ -206,6 +206,24 @@ enum Design {
             min(base + Double(index) * staggerSeconds, staggerCapSeconds)
         }
 
+        /// A search result's own stagger, which is not the one above.
+        ///
+        /// The reference keeps two, and the difference is the point: a list of a day's
+        /// sessions is arriving somewhere you have just navigated to, and can afford to
+        /// settle; a search result is arriving under the fingers of somebody still typing,
+        /// and cannot. Upstream calls it "snapping in under the fingers" — ten milliseconds
+        /// a row against twenty-eight, capped at 220 against 560.
+        ///
+        /// This port had been using the general one for both, so the twentieth result landed
+        /// at 560ms where the reference puts it at 200. Found by auditing Search; both
+        /// numbers are the reference's and both are checked.
+        static let resultStaggerSeconds: Double = 0.010
+        static let resultStaggerCapSeconds: Double = 0.220
+
+        static func resultDelay(_ index: Int) -> Double {
+            min(Double(index) * resultStaggerSeconds, resultStaggerCapSeconds)
+        }
+
         /// A spring for things that move rather than merely change.
         ///
         /// No bounce. Replay's motion is settling, not springing — a card arriving should
@@ -1012,6 +1030,15 @@ extension View {
         modifier(SettlesIn(index: index))
     }
 
+    /// The same arrival, on a search result's faster clock.
+    ///
+    /// A separate entry point rather than a parameter with a default, so the two staggers
+    /// stay two decisions: reaching for this is choosing the one the reference reserves for
+    /// results, and the compiler will not let it happen by accident.
+    func settlesInAsResult(_ index: Int) -> some View {
+        modifier(SettlesIn(index: index, delay: Design.Motion.resultDelay(index)))
+    }
+
 
 
     /// Content that should sit in the middle of whatever room it has, rather than at the
@@ -1198,6 +1225,8 @@ extension ButtonStyle where Self == RowButtonStyle {
 
 private struct SettlesIn: ViewModifier {
     let index: Int
+    /// When this one arrives. `nil` takes the app's general stagger from its index.
+    var delay: Double?
 
     @Environment(\.accessibilityReduceMotion) private var reduced
     @State private var arrived = false
@@ -1208,7 +1237,9 @@ private struct SettlesIn: ViewModifier {
             .offset(y: reduced || arrived ? 0 : Design.Motion.enterRise)
             .onAppear {
                 guard !reduced else { return }
-                withAnimation(Design.Motion.enter.delay(Design.Motion.enterDelay(index))) {
+                withAnimation(
+                    Design.Motion.enter.delay(delay ?? Design.Motion.enterDelay(index))
+                ) {
                     arrived = true
                 }
             }

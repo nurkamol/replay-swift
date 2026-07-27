@@ -2,54 +2,6 @@ import Foundation
 import Observation
 import ReplayCore
 
-/// The spans the Timeline can jump between.
-///
-/// The single-day ranges deliberately fetch more than their day and then keep only it: the
-/// range query reaches back so a long away stretch that began before midnight is not lost,
-/// and the day filter is applied afterwards (SPEC §5).
-enum TimeRange: String, CaseIterable, Identifiable {
-    case today, yesterday, week, month
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .today: "Today"
-        case .yesterday: "Yesterday"
-        case .week: "Last 7 Days"
-        case .month: "Last 30 Days"
-        }
-    }
-
-    var subtitle: String {
-        switch self {
-        case .today: "Everything you did today."
-        case .yesterday: "A look back at yesterday."
-        case .week: "Your last seven days, newest first."
-        case .month: "The last month, newest first."
-        }
-    }
-
-    /// Days of events to fetch back from today, inclusive.
-    var days: Int {
-        switch self {
-        case .today: 1
-        case .yesterday: 2
-        case .week: 7
-        case .month: 30
-        }
-    }
-
-    /// Which single day to keep, as an offset back from today. `nil` keeps them all.
-    var keepDayOffset: Int? {
-        switch self {
-        case .today: 0
-        case .yesterday: 1
-        case .week, .month: nil
-        }
-    }
-}
-
 /// A day as the Timeline draws it: its key, its name, and the runs that began on it.
 struct TimelineDay: Identifiable {
     var dayStart: Int64

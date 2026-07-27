@@ -138,6 +138,38 @@ public enum ParityKit {
             public let baseDurationMillis: Int
             public let speeds: [Int]
         }
+        public let search: SearchConstants
+        public let timeline: TimelineConstants
+
+        public struct SearchConstants: Decodable, Sendable {
+            public let resultStepMs: Int
+            public let resultCapMs: Int
+            public let days: Int
+            public let conceptLimit: Int
+            public let spans: [Span]
+            public let weekDaysBack: Int
+            public let monthDaysBack: Int
+
+            public struct Span: Decodable, Sendable {
+                public let value: String
+                public let label: String
+            }
+        }
+
+        public struct TimelineConstants: Decodable, Sendable {
+            public let order: [String]
+            public let ranges: [Range]
+            public let defaultRange: String
+
+            public struct Range: Decodable, Sendable {
+                public let key: String
+                public let days: Int
+                public let label: String
+                public let subtitle: String
+                public let keepDayLabels: [String]?
+            }
+        }
+
         public let canvas: CanvasConstants
 
         public struct CanvasConstants: Decodable, Sendable {
@@ -902,6 +934,59 @@ public enum ParityKit {
               Int((MotionTokens.staggerSeconds * 1000).rounded()), constants.motion.enterStepMs)
         equal(g1, "stagger cap",
               Int((MotionTokens.staggerCapSeconds * 1000).rounded()), constants.motion.enterCapMs)
+        equal(g1, "a search result's own stagger",
+              Int((MotionTokens.resultStaggerSeconds * 1000).rounded()),
+              constants.search.resultStepMs)
+        equal(g1, "and its cap",
+              Int((MotionTokens.resultStaggerCapSeconds * 1000).rounded()),
+              constants.search.resultCapMs)
+
+        // search and the Timeline's ranges. Both surfaces were audited and neither had its
+        // behaviour wrong — what they had was constants and copy that nothing held. The
+        // subtitles below are the reason this matters most: they are words a person reads,
+        // and the words are the product (SPEC §8).
+        equal(g1, "how far back Search looks", ReplayCore.Report.fetchDays, constants.search.days)
+        equal(
+            g1, "how many sessions a concept answers with",
+            Search.conceptLimit, constants.search.conceptLimit
+        )
+        equal(
+            g1, "the search spans offered",
+            Search.Span.allCases.map(\.rawValue), constants.search.spans.map(\.value)
+        )
+        equal(
+            g1, "and what they are called",
+            Search.Span.allCases.map(\.label), constants.search.spans.map(\.label)
+        )
+        equal(
+            g1, "the Timeline's ranges, in order",
+            TimeRange.allCases.map(\.rawValue), constants.timeline.order.map {
+                // The reference names its two multi-day ranges by length; this port names
+                // them by period. The mapping is the only thing about them that differs.
+                switch $0 {
+                case "7d": "week"
+                case "30d": "month"
+                default: $0
+                }
+            }
+        )
+        equal(
+            g1, "what the Timeline opens on",
+            defaultTimeRange.days, constants.timeline.ranges
+                .first { $0.key == constants.timeline.defaultRange }?.days ?? -1
+        )
+        for (range, expected) in zip(TimeRange.allCases, constants.timeline.ranges) {
+            equal(g1, "\(expected.key): days fetched", range.days, expected.days)
+            equal(g1, "\(expected.key): its name", range.label, expected.label)
+            equal(g1, "\(expected.key): the line under the title", range.subtitle, expected.subtitle)
+            // Upstream keeps a day by its *label*; this port keeps it by an offset back from
+            // today, which is the same rule expressed against a calendar rather than a
+            // string. What is compared is whether one day is kept or all of them.
+            equal(
+                g1, "\(expected.key): one day kept or all",
+                range.keepDayOffset != nil, expected.keepDayLabels != nil
+            )
+        }
 
         // the canvas camera — the same argument as the motion tokens above, for a surface
         // that had nothing holding it. A field you cannot push as far out, that jumps a

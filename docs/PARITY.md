@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 714 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 738 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -160,6 +160,26 @@ the picture by 0.012 mean brightness — real in a diff, invisible to a person.
 | PDF export | Three WebKit routes tried and dead, recorded below. The reference's own PDF is one capped page that tells you to use HTML |
 | A reopened day's story and chapter context | The one place a past day is thinner than the reference |
 | A test that covers scroll routing | The command-palette scroll bug reached a person because nothing exercises which view a scroll lands in. Would need a UI test target this project does not have |
+
+### Timeline and Search: the behaviour was right, nothing held the words
+
+Audited both. Neither had its behaviour wrong — all nine Timeline layers are present in the
+reference's order, `sessionMatches` is already hash-guarded, and concept detection, saved
+searches, highlighting and the four search spans all matched. What they had was constants and
+copy that nothing checked.
+
+`TimeRange` reproduced `TIME_RANGE_CONFIG` exactly, subtitles word for word, and none of it
+was in the contract. It is in `ReplayCore` now rather than in a view model, so the suite can
+compare it directly instead of through another mirror, and `spec/constants.json` carries a
+generated `timeline` block. Changing one word of "Your last seven days, newest first." now
+fails the suite by name — verified by doing it.
+
+One thing had already gone wrong. Upstream gives search results **their own** stagger — ten
+milliseconds a row, capped at 220, "snapping in under the fingers" — separate from the app's
+general entrance stagger of 28 and 560. This port used the general one for both, so the
+twentieth result arrived at 560ms where the reference puts it at 200: nearly three times
+slower, on the one surface a person types into and reads immediately. Both numbers are the
+reference's and both are checked.
 
 ## Known divergences to keep an eye on
 
