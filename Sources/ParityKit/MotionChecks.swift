@@ -67,3 +67,14 @@ public enum CanvasTokens {
     public static let glideDecay: Double = 0.9
     public static let glideRestSpeed: Double = 0.4
 }
+
+/// The screensaver's drift, mirroring `Design.Motion`.
+///
+/// Here for the same reason the canvas camera is: `ParityKit` cannot import `ReplayApp`,
+/// so a value the two apps are meant to share has to be restated somewhere the suite can
+/// reach. `tools/design-audit.mjs` ties this back to `DesignSystem.swift`, which is what
+/// stops the mirror and the app drifting apart while both stay green.
+public enum ScreensaverTokens {
+    public static let driftSeconds: Double = 90
+    public static let reducedSeconds: Double = 240
+}

@@ -536,6 +536,29 @@ const constants = {
   })(),
 
   /*
+   * The screensaver's drift, and how much it slows when motion is reduced.
+   *
+   * Both apps had the same two numbers and nothing checked that they did. It is a marquee —
+   * one copy's height over ninety seconds, linear, forever — and the reduced-motion answer
+   * is the interesting half: the reference *slows* it rather than stopping it, which is what
+   * "fewer and gentler, not zero" means for a surface whose whole content is movement.
+   * Written as CSS animation shorthands upstream, so they are matched in place.
+   */
+  screensaver: (() => {
+    const src = read("renderer/main/ambient.tsx");
+    const f = "ambient.tsx";
+    const [driftSeconds] = inline(
+      src, f, "how long one pass of the drift takes",
+      /\.replay-saver-drift \{ animation: replay-saver-drift (\d+)s linear infinite; \}/,
+    );
+    const [reducedSeconds] = inline(
+      src, f, "and how long it takes when motion is reduced",
+      /\.replay-saver-drift \{ animation-duration: (\d+)s; \}/,
+    );
+    return { driftSeconds, reducedSeconds };
+  })(),
+
+  /*
    * The memory heatmap: how much time a square has to hold before it darkens.
    *
    * Worth contracting because the two apps had answered it differently, and in a way no

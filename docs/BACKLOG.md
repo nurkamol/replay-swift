@@ -122,7 +122,25 @@ behaviour first and constants second, and generate anything that matches-by-luck
       section labels, not by reading the code. It also had no subtitle at all. Four of the
       museum's five rooms were renamed, and both "nothing here" states said "the kept
       history" where the reference names the window: thirty days.
-- [ ] Replay Day · Screensaver · Welcome
+- [x] **Replay Day · Screensaver · Welcome** — audited 2026-07-28. **Section 2 is done.**
+      Replay Day's constants were already contracted and correct; the screensaver's drift
+      matched exactly and is now checked rather than merely agreeing. Welcome turned up a
+      real bug — see the ledger — and one missing surface, below.
+
+## 2b · Found by the audits, not yet built
+
+- [ ] **Ambient Mode.** `M` The reference has *two* display modes behind its command palette —
+      Ambient Mode and Screensaver — and this port has only the screensaver. Ambient is a
+      distraction-free full-screen clock: today's total at 72–180px, the current session, a
+      six-second breathe that stops under reduced motion. `renderer/main/ambient.tsx`
+      lines 140–248; the mode switch is `AmbientMode = "ambient" | "screensaver"` at line 26
+      and the palette entry is `command-palette.tsx:253` under a **Display** group, with
+      keywords "ambient, focus, second monitor, big, now, distraction free".
+      · Found auditing the screensaver on 2026-07-28. It is a *mode*, not a route, which is
+        why the "all 20 routes" count in CLAUDE.md missed it — worth remembering that the
+        route count is not a completeness measure.
+      · This port's screensaver already solves the hard parts (a borderless full-screen
+        window, the exit affordance, the arm delay), so most of this is the view.
 
 ## 3 · Waiting on a decision, not on work
 

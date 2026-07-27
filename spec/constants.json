@@ -288,6 +288,10 @@
     "wheelStep": 1.09,
     "wheelSensitivity": 0.012
   },
+  "screensaver": {
+    "driftSeconds": 90,
+    "reducedSeconds": 240
+  },
   "heatmap": {
     "lowSeconds": 1800,
     "midSeconds": 5400,

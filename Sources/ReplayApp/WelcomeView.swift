@@ -60,12 +60,17 @@ struct WelcomeView: View {
                 choice(
                     "clock.arrow.circlepath", "Today in History",
                     "Rediscover what you were doing on this date a week, a month, a year ago.",
-                    isOn: $preferences.contextualMemories
+                    // `todayInHistory`, not `contextualMemories`. The two were one switch
+                    // until they were split earlier, and this call site was missed: the
+                    // toggle said "Today in History" and set the quieter, unrelated one, so
+                    // turning it off at onboarding left today-in-history on and removed
+                    // something nobody had been offered. Upstream writes `todayInHistory`.
+                    isOn: $preferences.todayInHistory
                 )
                 Divider()
                 choice(
                     "target", "Daily focus goal",
-                    "A gentle daily target, with a streak on Today. Around three hours to start.",
+                    "A gentle daily target, with a streak on Today. Around 3 hours to start.",
                     isOn: Binding(
                         get: { preferences.focusGoalMinutes != nil },
                         set: { preferences.focusGoalMinutes = $0 ? Design.welcomeGoalMinutes : nil }
@@ -170,8 +175,8 @@ struct WelcomeView: View {
             VStack(spacing: Design.Space.snug) {
                 Text("One quick check").font(Design.Text.title)
                 Text(
-                    "Replay reads which app is frontmost using macOS's standard signal — no "
-                        + "Automation, and it never looks inside your windows. Here it is "
+                    "Replay reads which app is frontmost using macOS\u{2019}s standard signal "
+                        + "— no Automation, and it never looks inside your windows. Here\u{2019}s it "
                         + "working:"
                 )
                 .font(Design.Text.body)

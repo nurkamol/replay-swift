@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 916 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 918 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -188,6 +188,14 @@ document starts lying, and this one has done it twice already — see the two no
   missing entirely, and they are the two sentences that say the feature is descriptive rather
   than invented. Generated into `spec/narrative-copy.json` and checked character for
   character. Found auditing the Story cluster on 2026-07-28.
+- **The welcome screen's "Today in History" toggle set the wrong switch.** `todayInHistory`
+  and `contextualMemories` were one preference until they were split earlier the same day,
+  and this call site was missed: the toggle carried the label "Today in History" and wrote
+  `contextualMemories`. Turning it off during onboarding left today-in-history on and
+  quietly disabled something the user had never been offered. Upstream writes
+  `todayInHistory`. **The lesson is about the fix rather than the bug** — splitting one
+  preference into two is a change where the compiler cannot help, because both sides are
+  `Bool` and every call site still builds.
 - **My Story was missing a whole section, and nobody had noticed.** The reference's page has
   three — Years, **Growth**, Favourite applications — and this port had two. Growth is the
   year grid over the whole archive, and it belongs on that page more than anywhere else: My

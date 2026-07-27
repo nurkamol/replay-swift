@@ -214,6 +214,13 @@ public enum ParityKit {
             }
         }
 
+        public let screensaver: ScreensaverConstants
+
+        public struct ScreensaverConstants: Decodable, Sendable {
+            public let driftSeconds: Int
+            public let reducedSeconds: Int
+        }
+
         public let heatmap: HeatmapConstants
 
         public struct HeatmapConstants: Decodable, Sendable {
@@ -1329,6 +1336,18 @@ public enum ParityKit {
             let day = startOfLocalDay(mondayProbe + Int64(offset) * dayMillis)
             equal(g1, "day \(offset) of the week starts on its Monday", startOfWeek(day), mondayProbe)
         }
+
+        // The screensaver's marquee. Its reduced-motion answer is the interesting half:
+        // the reference slows it rather than stopping it, because a surface whose whole
+        // content is movement has nothing left if the movement goes.
+        equal(
+            g1, "how long one pass of the drift takes",
+            Int(ScreensaverTokens.driftSeconds), constants.screensaver.driftSeconds
+        )
+        equal(
+            g1, "and how long with motion reduced",
+            Int(ScreensaverTokens.reducedSeconds), constants.screensaver.reducedSeconds
+        )
 
         // The heatmap's steps. Shading against fixed amounts rather than against the busiest
         // day in the window is the whole claim the grid makes, so the boundaries are checked
