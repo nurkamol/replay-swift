@@ -480,6 +480,8 @@ function buildExportFixtures() {
        export { detectRightTime } from ${JSON.stringify(join(GLAZE, "renderer/lib/right-time.ts"))};
        export { detectThreadUpdate } from ${JSON.stringify(join(GLAZE, "renderer/lib/threads.ts"))};
        export { detectEcho } from ${JSON.stringify(join(GLAZE, "renderer/lib/echoes.ts"))};
+       export { detectAnniversaries } from ${JSON.stringify(join(GLAZE, "renderer/lib/anniversaries.ts"))};
+       export { detectForgotten } from ${JSON.stringify(join(GLAZE, "renderer/lib/forgotten.ts"))};
        // The briefing is assembled inside a hook upstream, so like sessionMatches and
        // computeLegacy above, its body is re-declared here character for character. Same
        // known risk, same reason: nothing would check it otherwise.
@@ -595,6 +597,7 @@ function buildExportFixtures() {
                clamp01, ramp, freshness, blendConfidence, daysBetween, sessionMeaning,
                projectMeaning, eligibleMemories, selectLivingMemory,
                confidenceThresholdLabel, detectRightTime, detectThreadUpdate, detectEcho,
+               detectAnniversaries, detectForgotten,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -730,6 +733,24 @@ function buildExportFixtures() {
            c.monthAgo ?? null, c.bookmarkStarts ?? [],
          ),
        }));
+
+       const anniversaries = detectAnniversaries(
+         {
+           seed: input.anniversarySeed,
+           projects: input.memoryProjects,
+           bookmarks: input.memoryBookmarks,
+           reflections: input.memoryReflections,
+         },
+         input.anniversaryNow,
+       );
+       const forgotten = detectForgotten(
+         {
+           projects: input.memoryProjects,
+           bookmarks: input.memoryBookmarks,
+           reflections: input.memoryReflections,
+         },
+         input.memoryNow,
+       );
 
        const producers = {
          rightTime: detectRightTime(input.rightTimeEvents, input.memoryProjects, input.memoryNow),
@@ -867,6 +888,8 @@ function buildExportFixtures() {
          scoring,
          selection,
          producers,
+         anniversaries,
+         forgotten,
          briefings,
          moments,
          quoteKey: quote ? quote.key : null,
@@ -1323,6 +1346,36 @@ function buildExportFixtures() {
     ];
 
     /*
+     * Anniversaries only fire on an exact date, so `anniversaryNow` is built to *be*
+     * one: a year to the day after the seed's first event, and six months after a
+     * project began. Bookmarks and reflections are aged past each producer's floor so
+     * the forgotten cases fire on the ordinary clock.
+     */
+    const anniversaryNow = 1_770_076_800_000 + 10 * 3_600_000;
+    const yearBefore = new Date(anniversaryNow);
+    yearBefore.setFullYear(yearBefore.getFullYear() - 1);
+    const sixMonthsBefore = new Date(anniversaryNow);
+    sixMonthsBefore.setMonth(sixMonthsBefore.getMonth() - 6);
+    const anniversarySeed = {
+      firstEventAt: yearBefore.getTime(),
+      appCount: 3,
+      appFirstSeen: [
+        { applicationName: "Code", bundleIdentifier: "com.microsoft.VSCode", appPath: null, firstAt: yearBefore.getTime() },
+      ],
+    };
+    const memoryBookmarks = [
+      // Older than the 45-day floor, with a note, so the excerpt is exercised.
+      { sessionStart: memoryDay - 90 * DAY, note: "  the migration   spike, and what it cost  ", bookmarked: true, tags: [], updatedAt: yearBefore.getTime() },
+      // Inside the floor: must not appear.
+      { sessionStart: memoryDay - 10 * DAY, note: "", bookmarked: true, tags: [], updatedAt: memoryDay - 10 * DAY },
+    ];
+    const memoryReflections = [
+      { dayStart: memoryDay - 200 * DAY, text: "A long line about what mattered that week, written down so it would not be lost." },
+      { dayStart: memoryDay - 5 * DAY, text: "Too recent to have been forgotten." },
+      { dayStart: memoryDay - 3 * DAY, text: "   " },
+    ];
+
+    /*
      * The morning briefing. Four cases, one per reason it stays quiet: the afternoon,
      * a yesterday with nothing in it, and the two shapes of a day worth mentioning.
      */
@@ -1467,6 +1520,10 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        anniversaryNow,
+        anniversarySeed,
+        memoryBookmarks,
+        memoryReflections,
         briefingCases,
         briefingSummaries,
         scoringCases,
@@ -1574,6 +1631,12 @@ function buildExportFixtures() {
         rightTimeEvents,
         echoEvents,
         producers: result.producers,
+        anniversaryNow,
+        anniversarySeed,
+        bookmarks: memoryBookmarks,
+        reflections: memoryReflections,
+        anniversaries: result.anniversaries,
+        forgotten: result.forgotten,
       },
       moments: {
         events: momentEvents,

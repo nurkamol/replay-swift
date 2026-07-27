@@ -459,6 +459,23 @@ public enum ParityKit {
             public let rightTimeEvents: [Fixture.Event]
             public let echoEvents: [Fixture.Event]
             public let producers: Producers
+            public let anniversaryNow: Int64
+            public let anniversarySeed: MomentsCase.Seed
+            public let bookmarks: [Bookmark]
+            public let reflections: [Reflection]
+            public let anniversaries: [Produced]
+            public let forgotten: [Produced]
+
+            public struct Bookmark: Decodable, Sendable {
+                public let sessionStart: Int64
+                public let note: String
+                public let bookmarked: Bool
+                public let updatedAt: Int64
+            }
+            public struct Reflection: Decodable, Sendable {
+                public let dayStart: Int64
+                public let text: String
+            }
         }
 
         public struct MomentsCase: Decodable, Sendable {
@@ -1509,6 +1526,58 @@ public enum ParityKit {
                     now: mc.now, calendar: calendar, locale: environment.locale
                 ),
                 mc.producers.echo)
+
+        // Anniversaries and the forgotten, the last two producers of the cluster. An
+        // anniversary only fires on an exact date, so the fixture's clock *is* one.
+        let ang = "anniversaries and the forgotten"
+        let anniversarySeed = MomentSeed(
+            firstEventAt: mc.anniversarySeed.firstEventAt,
+            appCount: mc.anniversarySeed.appCount,
+            appFirstSeen: mc.anniversarySeed.appFirstSeen.map {
+                MomentSeed.FirstSeen(
+                    applicationName: $0.applicationName,
+                    bundleIdentifier: $0.bundleIdentifier,
+                    appPath: nil, firstAt: $0.firstAt
+                )
+            }
+        )
+        let memoryBookmarks = mc.bookmarks.map {
+            SessionAnnotation(
+                sessionStart: $0.sessionStart, note: $0.note,
+                bookmarked: $0.bookmarked, tags: [], updatedAt: $0.updatedAt
+            )
+        }
+        let memoryReflections = mc.reflections.map {
+            DatedText(dayStart: $0.dayStart, text: $0.text)
+        }
+        let anniversaries = detectAnniversaries(
+            seed: anniversarySeed, projects: memoryProjects,
+            bookmarks: memoryBookmarks, reflections: memoryReflections,
+            now: mc.anniversaryNow, calendar: calendar
+        )
+        equal(ang, "the same anniversaries fall today",
+              anniversaries.map(\.id), mc.anniversaries.map(\.id))
+        equal(ang, "each said the same way",
+              anniversaries.map(\.headline), mc.anniversaries.map(\.headline))
+        check(ang, "and scored the same",
+              zip(anniversaries, mc.anniversaries)
+                  .allSatisfy { abs($0.confidence - $1.confidence) < 0.0001 })
+
+        let forgotten = detectForgotten(
+            projects: memoryProjects, bookmarks: memoryBookmarks,
+            reflections: memoryReflections, now: mc.now, calendar: calendar
+        )
+        equal(ang, "the same things have been let lie, most confident first",
+              forgotten.map(\.id), mc.forgotten.map(\.id))
+        equal(ang, "each said the same way",
+              forgotten.map(\.headline), mc.forgotten.map(\.headline))
+        equal(ang, "with the same excerpt where there is one",
+              forgotten.map { $0.detail ?? "" }, mc.forgotten.map { $0.detail ?? "" })
+        check(ang, "and scored the same",
+              zip(forgotten, mc.forgotten)
+                  .allSatisfy { abs($0.confidence - $1.confidence) < 0.0001 })
+        check(ang, "everything forgotten can be archived as well as dismissed",
+              forgotten.allSatisfy(\.archivable))
 
         // The morning briefing, including the cases where it says nothing: after noon, and
         // when yesterday holds nothing to reflect on.

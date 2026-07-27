@@ -55,11 +55,28 @@ final class ContextualMemoryModel {
             )
         }
 
-        let produced = [
+        // Two years of reflections, which is enough to catch a first-reflection
+        // anniversary, and every bookmark ever made.
+        let reflections = ((try? model.store.reflections(
+            from: today - 366 * 2 * dayMillis, to: today + dayMillis
+        )) ?? []).map { DatedText(dayStart: $0.dayStart, text: $0.text) }
+        let bookmarks = ((try? model.store.annotations(from: 0, to: now + dayMillis)) ?? [])
+            .filter(\.bookmarked)
+        let seed = try? model.store.momentSeed()
+
+        var produced = [
             detectRightTime(events: events, projects: candidates, now: now),
             detectThreadUpdate(candidates, now: now),
             detectEcho(events: todayEvents, projects: candidates, now: now),
         ].compactMap { $0 }
+        produced += detectAnniversaries(
+            seed: seed, projects: candidates, bookmarks: bookmarks,
+            reflections: reflections, now: now
+        )
+        produced += detectForgotten(
+            projects: candidates, bookmarks: bookmarks,
+            reflections: reflections, now: now
+        )
 
         // The briefing reads yesterday's rows and the durable headlines either side of it.
         if preferences.morningBriefing,
@@ -107,10 +124,21 @@ final class ContextualMemoryModel {
         ))
     }
 
-    /// Put this memory away. Recorded by id, which is why the ids have to be stable — a
-    /// dismissed memory that came back tomorrow would be worse than never showing it.
+    /// Put this memory away for now. Recorded by id, which is why the ids have to be
+    /// stable — a dismissed memory that came back tomorrow would be worse than never
+    /// showing it at all.
     func dismiss(_ candidate: MemoryCandidate) {
         preferences.dismissedMemories.append(candidate.id)
+        load()
+    }
+
+    /// Put it away for good.
+    ///
+    /// A different act from dismissing, and only offered where it makes sense: saying "not
+    /// today" about an anniversary is reasonable, but a bookmark you have decided you are
+    /// finished with should not come round again in a month.
+    func archive(_ candidate: MemoryCandidate) {
+        preferences.archivedMemories.append(candidate.id)
         load()
     }
 

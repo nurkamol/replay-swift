@@ -2580,7 +2580,105 @@
         "bundleId": "com.microsoft.VSCode"
       },
       "projectCount": 2
-    }
+    },
+    "anniversaryNow": 1770112800000,
+    "anniversarySeed": {
+      "firstEventAt": 1738576800000,
+      "appCount": 3,
+      "appFirstSeen": [
+        {
+          "applicationName": "Code",
+          "bundleIdentifier": "com.microsoft.VSCode",
+          "appPath": null,
+          "firstAt": 1738576800000
+        }
+      ]
+    },
+    "bookmarks": [
+      {
+        "sessionStart": 1762300800000,
+        "note": "  the migration   spike, and what it cost  ",
+        "bookmarked": true,
+        "tags": [],
+        "updatedAt": 1738576800000
+      },
+      {
+        "sessionStart": 1769212800000,
+        "note": "",
+        "bookmarked": true,
+        "tags": [],
+        "updatedAt": 1769212800000
+      }
+    ],
+    "reflections": [
+      {
+        "dayStart": 1752796800000,
+        "text": "A long line about what mattered that week, written down so it would not be lost."
+      },
+      {
+        "dayStart": 1769644800000,
+        "text": "Too recent to have been forgotten."
+      },
+      {
+        "dayStart": 1769817600000,
+        "text": "   "
+      }
+    ],
+    "anniversaries": [
+      {
+        "id": "anniversary:origin:1738540800000:2026",
+        "kind": "anniversary",
+        "confidence": 0.91,
+        "headline": "One year ago today, you began keeping this memory.",
+        "dayStart": 1738540800000
+      },
+      {
+        "id": "anniversary:app:com.microsoft.VSCode:1738540800000:2026",
+        "kind": "anniversary",
+        "confidence": 0.7,
+        "headline": "One year since you first opened Code.",
+        "dayStart": 1738540800000,
+        "appPath": null,
+        "bundleId": "com.microsoft.VSCode"
+      },
+      {
+        "id": "anniversary:first-bookmark:1762300800000:2026",
+        "kind": "anniversary",
+        "confidence": 0.7,
+        "headline": "One year since you saved your first bookmark.",
+        "dayStart": 1762300800000
+      }
+    ],
+    "forgotten": [
+      {
+        "id": "forgotten:project:proj-editor:1766620800000",
+        "kind": "forgotten",
+        "archivable": true,
+        "confidence": 0.5534805418526347,
+        "headline": "You haven't returned to Development · Code in 6 weeks.",
+        "dayStart": 1766620800000,
+        "appPath": null,
+        "bundleId": "com.microsoft.VSCode"
+      },
+      {
+        "id": "forgotten:bookmark:1762300800000",
+        "kind": "forgotten",
+        "archivable": true,
+        "confidence": 0.4683257918552036,
+        "headline": "A bookmark you saved 3 months ago.",
+        "detail": "the migration spike, and what it cost",
+        "dayStart": 1762300800000
+      },
+      {
+        "id": "forgotten:reflection:1752796800000",
+        "kind": "forgotten",
+        "archivable": true,
+        "confidence": 0.4552631578947368,
+        "headline": "A reflection you wrote 7 months ago.",
+        "detail": "A long line about what mattered that week, written down so it would not be lost.",
+        "dayStart": 1752796800000
+      }
+    ]
   },
   "moments": {
     "events": [

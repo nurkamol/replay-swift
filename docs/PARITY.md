@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 675 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 683 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -37,7 +37,8 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Canvas graph | done | `buildCanvas` — every node and every edge compared, including the subtitles. 16 checks |
 | Memory confidence & selection | done | `memory-intelligence` — the scoring vocabulary, the selector, and silence as a valid answer. 18 checks |
 | Right-time / threads / echoes | done | three producers, each scored and each returning nothing far more often than something. 15 checks |
-| Anniversaries / forgotten | todo | the other two producers of the same cluster |
+| Anniversaries | done | exact dates only — a year to the day, or the six-month mark. 3 checks |
+| Forgotten | done | old bookmarks, projects stepped away from, reflections worth rereading, each archivable. 5 checks |
 | Morning briefing | done | `buildMorningBriefing` — yesterday's figures, the longest stretch, a thread worth continuing, a month ago, the oldest bookmark still waiting. 19 checks, including the two cases where it says nothing |
 | Surprise me | todo | |
 | Moments | done | `detectMoments` + `pickDailyQuote` — seven kinds, each with a threshold, compared as text. 7 checks |

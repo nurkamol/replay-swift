@@ -61,7 +61,10 @@ struct TodayView: View {
                             onOpen: {
                                 if let day = memory.dayStart { onOpenDay(day) }
                             },
-                            onDismiss: { contextual.dismiss(memory) }
+                            onDismiss: { contextual.dismiss(memory) },
+                            onArchive: memory.archivable
+                                ? { contextual.archive(memory) }
+                                : nil
                         )
                     }
                     // Above the reflection: this is the one card that leads somewhere
@@ -594,6 +597,8 @@ struct ContextualMemoryCard: View {
     let memory: MemoryCandidate
     let onOpen: () -> Void
     let onDismiss: () -> Void
+    /// Given only where putting something away for good makes sense.
+    let onArchive: (() -> Void)?
 
     @Environment(\.motion) private var motion
     @State private var hovering = false
@@ -617,17 +622,29 @@ struct ContextualMemoryCard: View {
                 }
             }
             Spacer(minLength: Design.Space.inline)
-            // Visible on hover: a dismiss button always on screen invites dismissal, and the
-            // point of the card is that it is worth reading.
-            Button(action: onDismiss) {
-                Image(systemName: "xmark")
-                    .font(Design.Text.micro)
-                    .foregroundStyle(.tertiary)
+            // Visible on hover: controls always on screen invite use, and the point of the
+            // card is that it is worth reading rather than worth clearing.
+            HStack(spacing: Design.Space.snug) {
+                if let onArchive {
+                    Button(action: onArchive) {
+                        Image(systemName: "archivebox")
+                            .font(Design.Text.micro)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Put this away for good")
+                    .accessibilityLabel("Put this away for good")
+                }
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(Design.Text.micro)
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+                .help("Not today")
+                .accessibilityLabel("Put this memory away for now")
             }
-            .buttonStyle(.plain)
             .opacity(hovering ? 1 : 0)
-            .help("Put this memory away")
-            .accessibilityLabel("Put this memory away")
         }
         .padding(Design.Space.section)
         .frame(maxWidth: .infinity, alignment: .leading)
