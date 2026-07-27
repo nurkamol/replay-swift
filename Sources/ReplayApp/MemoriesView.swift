@@ -67,6 +67,18 @@ struct MemoriesView: View {
     let memories: MemoriesModel
     let onOpenDay: (Int64) -> Void
 
+    /// Two across when there is room, one when there is not.
+    ///
+    /// Both card sections were a single column, which made this the tallest page in the app:
+    /// eight moments at full width pushed "Browse by date" the better part of two screens
+    /// down, and that section is the only *navigation* on the page — everything above it is
+    /// a destination, the calendar is the map. Nothing is hidden to fix it and no order
+    /// changed; the same cards simply sit two abreast, which is what the reference already
+    /// does with its memory cards.
+    private let columns = [
+        GridItem(.adaptive(minimum: Design.Layout.cardMinWidth), spacing: Design.Space.row)
+    ]
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.block) {
@@ -86,15 +98,18 @@ struct MemoriesView: View {
                         // then given nothing to browse with.
                         noMemoriesYet
                     } else {
-                        ForEach(Array(memories.memories.enumerated()), id: \.element.range.key) {
-                            index, memory in
-                            MemoryRow(
-                                memory: memory,
-                                onOpen: { onOpenDay(memory.range.dayStart) }
-                            )
-                            // Each card on its own beat, as upstream. Applied to the list
-                            // rather than the section, which arrived as one block.
-                            .settlesIn(index)
+                        LazyVGrid(columns: columns, spacing: Design.Space.row) {
+                            ForEach(
+                                Array(memories.memories.enumerated()), id: \.element.range.key
+                            ) { index, memory in
+                                MemoryRow(
+                                    memory: memory,
+                                    onOpen: { onOpenDay(memory.range.dayStart) }
+                                )
+                                // Each card on its own beat, as upstream. Applied to the
+                                // cards rather than the section, which arrived as one block.
+                                .settlesIn(index)
+                            }
                         }
                     }
                 }
@@ -130,7 +145,7 @@ struct MemoriesView: View {
     private var momentsSection: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
             Text("Moments").sectionLabelStyle()
-            VStack(spacing: Design.Space.snug) {
+            LazyVGrid(columns: columns, spacing: Design.Space.row) {
                 ForEach(memories.moments, id: \.key) { moment in
                     Button {
                         if let day = moment.dayStart { onOpenDay(day) }
@@ -145,6 +160,9 @@ struct MemoriesView: View {
                                 Text(moment.detail)
                                     .font(Design.Text.detail)
                                     .foregroundStyle(.secondary)
+                                    // Wraps rather than truncates: at half width most of
+                                    // these run to two lines, and the second line is
+                                    // usually when it happened.
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: Design.Space.inline)
@@ -155,7 +173,7 @@ struct MemoriesView: View {
                             }
                         }
                         .padding(Design.Space.section)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.row)
@@ -253,6 +271,7 @@ private struct MemoryRow: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(Design.Space.cardRoomy)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.row)

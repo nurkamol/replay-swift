@@ -195,6 +195,21 @@ document starts lying, and this one has done it twice already — see the two no
   user. The reference empties the "On this day" section alone and leaves the rest of the page
   standing; its copy even ends "until then, browse any day below", pointing at the calendar
   this port had just taken away.
+- **The year heatmap is wider than the page it sits in, on both sides.** Fifty-three columns
+  at 11pt plus the weekday gutter come to about 763pt; upstream's `max-w-3xl` shell leaves
+  712 and this port's readable measure leaves about 705. So the last few weeks — including
+  the current month — are off the right edge until you scroll, in both apps. Inherited and
+  matching, checked rather than assumed: it would have been easy to "fix" here and quietly
+  diverge. If it is ever worth changing, change the shell in the Glaze app.
+- **Memories was the tallest page in the app.** Both card sections were a single column, so
+  eight moments pushed "Browse by date" the better part of two screens down — and that
+  section is the only navigation on the page; everything above it is a destination and the
+  calendar is the map. Now two abreast, adaptive, so it collapses back to one column on a
+  narrow window. Nothing hidden, no order changed, no disclosure added: a section people have
+  to open is a section most people never see, and Moments exists to surface what you would
+  not have gone looking for. Upstream stacks its Moment cards in one column too and has the
+  same problem; its memory cards are already a two-column grid, so half of this is catching
+  up and half is a deliberate improvement on it.
 - **Workflows and projects can each carry the same name several times over.** A workflow is
   named after the category most of its sessions were, and a project after that category plus
   its lead app — so a week spent mostly in a browser produces four "Research Workflow" rows,
