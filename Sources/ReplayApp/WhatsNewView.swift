@@ -10,7 +10,6 @@ struct WhatsNewView: View {
     let onClose: () -> Void
     @Environment(\.themeTint) private var tint
 
-    @Environment(\.motion) private var motion
 
     private var current: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""

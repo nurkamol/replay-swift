@@ -316,7 +316,7 @@ struct CanvasView: View {
             x: here.x + (there.x - here.x) * share,
             y: here.y + (there.y - here.y) * share
         )
-        withAnimation(.linear(duration: seconds)) {
+        withAnimation(Design.Motion.drift(seconds)) {
             offset = CGSize(width: -target.x * zoom, height: -target.y * zoom)
         }
     }

@@ -64,12 +64,11 @@ struct CollectionsView: View {
     let export: ExportModel
     let onDeleteSession: (ActivitySession) -> Void
 
-    @Environment(\.motion) private var motion
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Design.Space.section) {
-                if let opened = collections.opened {
+                if collections.opened != nil {
                     Button { collections.opened = nil } label: {
                         Label("All collections", systemImage: "chevron.left")
                     }

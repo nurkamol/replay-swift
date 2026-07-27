@@ -10,7 +10,6 @@ import SwiftUI
 struct AutobiographyView: View {
     let story: StoryModel
 
-    @Environment(\.motion) private var motion
     @State private var selected: Period?
 
     var body: some View {

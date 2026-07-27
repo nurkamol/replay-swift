@@ -205,7 +205,6 @@ struct CommandPaletteView: View {
     @Bindable var palette: CommandPaletteModel
     let onRun: (CommandPaletteModel.Item.Action) -> Void
 
-    @Environment(\.motion) private var motion
     @FocusState private var focused: Bool
 
     var body: some View {

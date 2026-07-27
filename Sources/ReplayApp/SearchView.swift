@@ -168,7 +168,6 @@ struct SearchView: View {
     let onDeleteSession: (ActivitySession) -> Void
     let onOpenCollection: (SessionCategory) -> Void
 
-    @Environment(\.motion) private var motion
     @FocusState private var fieldFocused: Bool
 
     private var typing: Bool { !search.trimmedQuery.isEmpty }

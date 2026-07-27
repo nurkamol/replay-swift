@@ -52,7 +52,6 @@ struct TimelineView: View {
     /// Given so a past day can be watched back, the same way today can.
     let onReplayDay: ([ActivitySession], String) -> Void
 
-    @Environment(\.motion) private var motion
     /// Which coarse buckets are showing. Empty means all of them — a filter row where
     /// everything starts switched on reads as a set of things to switch *off*, and this one
     /// is a set of things to narrow *to*.
@@ -315,7 +314,6 @@ struct TimelineView: View {
 
 /// One day in the Timeline: its divider, its actions, and everything that happened on it.
 private struct DaySection: View {
-    @Environment(\.motion) private var motion
     let day: TimelineDay
     let history: HistoryModel
     let annotations: AnnotationsModel
@@ -456,7 +454,6 @@ private struct PartDivider: View {
 /// pruned past the retention window — it says so plainly rather than pretending the day was
 /// empty, because the day's headline is still there to prove otherwise.
 struct DayView: View {
-    @Environment(\.motion) private var motion
     let day: TimelineDay
     let headline: DailySummary?
     let reflection: Reflection

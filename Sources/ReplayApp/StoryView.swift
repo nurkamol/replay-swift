@@ -11,7 +11,6 @@ struct StoryView: View {
     let story: StoryModel
     let onOpen: (Navigation.StoryTarget) -> Void
 
-    @Environment(\.motion) private var motion
 
     private let columns = [
         GridItem(.adaptive(minimum: Design.Layout.cardMinWidth), spacing: Design.Space.row)

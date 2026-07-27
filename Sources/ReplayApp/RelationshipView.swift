@@ -14,7 +14,6 @@ struct RelationshipView: View {
     let export: ExportModel
     let onDeleteSession: (ActivitySession) -> Void
 
-    @Environment(\.motion) private var motion
 
     private var pair: Relationship? { relationships.pair }
 

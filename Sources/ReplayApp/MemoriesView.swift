@@ -369,6 +369,7 @@ struct TodayInHistoryCard: View {
 /// the parity suite checks each boundary from both sides.
 struct Heatmap: View {
     @Environment(\.themeTint) private var tint
+    @Environment(\.motion) private var motion
     let byDay: [Int64: Int]
     let onOpenDay: (Int64) -> Void
 
@@ -398,11 +399,19 @@ struct Heatmap: View {
                 legend
             }
 
-            switch range {
-            case .year: yearGrid
-            case .month: monthGrid
-            case .week: weekRow
+            // The three ranges answer one question at three resolutions, so they
+            // cross-fade rather than move: a slide would claim a spatial relationship
+            // between a year and a week that there is not one of. The card's height
+            // changes with the range, so the same animation carries the reflow below it.
+            Group {
+                switch range {
+                case .year: yearGrid
+                case .month: monthGrid
+                case .week: weekRow
+                }
             }
+            .transition(motion.transition(.opacity))
+            .animation(motion.animation(Design.Motion.inPlace), value: range)
 
             caption
         }

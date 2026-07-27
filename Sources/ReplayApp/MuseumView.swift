@@ -14,7 +14,6 @@ struct MuseumView: View {
     let onOpenProject: (String) -> Void
     let onDeleteSession: (ActivitySession) -> Void
 
-    @Environment(\.motion) private var motion
 
     var body: some View {
         ScrollView {

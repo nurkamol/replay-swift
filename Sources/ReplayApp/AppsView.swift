@@ -12,7 +12,6 @@ struct AppsView: View {
     /// Given so a row can lead into that application's own history.
     let onOpenApp: (String) -> Void
 
-    @Environment(\.motion) private var motion
 
     var body: some View {
         ScrollView {

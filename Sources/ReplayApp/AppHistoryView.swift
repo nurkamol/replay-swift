@@ -14,7 +14,6 @@ struct AppHistoryView: View {
     let onDeleteSession: (ActivitySession) -> Void
     let onOpenPair: (String, String) -> Void
 
-    @Environment(\.motion) private var motion
 
     var body: some View {
         ScrollView {

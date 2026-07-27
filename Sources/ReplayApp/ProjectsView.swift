@@ -11,7 +11,6 @@ struct ProjectsView: View {
     let projects: ProjectsModel
     let onOpen: (String) -> Void
 
-    @Environment(\.motion) private var motion
 
     /// Two across when there is room, one when there is not — a project card carries a name,
     /// two figures and a row of icons, and needs about half a window to do it.

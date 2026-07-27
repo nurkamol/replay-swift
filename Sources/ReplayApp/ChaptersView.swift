@@ -10,7 +10,6 @@ struct ChaptersView: View {
     let story: StoryModel
     let onOpen: (String) -> Void
 
-    @Environment(\.motion) private var motion
 
     var body: some View {
         ScrollView {
@@ -110,7 +109,6 @@ struct ChapterDetailView: View {
     let story: StoryModel
     let onOpenDay: (Int64) -> Void
 
-    @Environment(\.motion) private var motion
     @State private var renaming = false
     @State private var draft = ""
 

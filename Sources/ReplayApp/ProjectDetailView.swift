@@ -11,7 +11,6 @@ struct ProjectDetailView: View {
     let onOpenApp: (String) -> Void
     let onOpenDay: (Int64) -> Void
 
-    @Environment(\.motion) private var motion
     @State private var renaming = false
     @State private var draft = ""
 

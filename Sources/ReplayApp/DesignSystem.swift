@@ -198,8 +198,6 @@ enum Design {
 
         /// State changing in place: a card expanding, a selection moving.
         static var inPlace: Animation { .timingCurve(easeStandard, duration: hoverSeconds) }
-        /// Something arriving on screen.
-        static var entering: Animation { .timingCurve(easeSoft, duration: enterSeconds) }
         /// A press, which should feel like contact rather than animation.
         static var press: Animation { .timingCurve(easeStandard, duration: pressSeconds) }
         /// How far a pressed row gives. The reference's own `active:scale-[0.99]` — small
@@ -255,8 +253,9 @@ enum Design {
         /// The field assembling itself when Canvas opens, and how the nodes are staggered
         /// through it. Slower than a settle, because a landscape is arriving rather than a
         /// control responding.
-        /// The command palette. Short and linear rather than a spring: it is a thing you
-        /// open by reflex, and anything that settles reads as a delay.
+        /// The command palette. Short and eased out rather than a spring: it is a thing you
+        /// open by reflex, and anything that settles reads as a delay. Twelve hundredths is
+        /// long enough not to be a hard cut and short enough to read as instant.
         static let palette = Animation.easeOut(duration: 0.12)
 
         static let canvasEntranceSeconds: TimeInterval = 0.9
@@ -283,6 +282,19 @@ enum Design {
         /// so a view asks for a flight and not for a curve.
         static func camera(_ seconds: TimeInterval) -> Animation {
             .timingCurve(easeOutCubic, duration: seconds)
+        }
+
+        /// The lean between two stops of a story.
+        ///
+        /// Eased at both ends rather than linear, which is what it was. The flight before it
+        /// eases *out* — it ends at rest — so a constant-velocity creep starting from that
+        /// rest is a visible jerk, and the jerk sits exactly where the drift was added to
+        /// remove a seam. Slow in, slow out, and the story reads as one movement.
+        static let easeInOutCubic = UnitCurve.bezier(
+            startControlPoint: .init(x: 0.645, y: 0.045), endControlPoint: .init(x: 0.355, y: 1)
+        )
+        static func drift(_ seconds: TimeInterval) -> Animation {
+            .timingCurve(easeInOutCubic, duration: seconds)
         }
 
         /// Replay Story: how long the camera rests on each stop, and how long it takes to

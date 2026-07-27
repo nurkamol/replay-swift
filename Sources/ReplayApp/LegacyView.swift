@@ -13,7 +13,6 @@ struct LegacyView: View {
     let onOpenApp: (String) -> Void
     let onOpenAutobiography: () -> Void
 
-    @Environment(\.motion) private var motion
     @State private var legacy: Legacy?
 
     var body: some View {

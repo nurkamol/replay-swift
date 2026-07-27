@@ -13,7 +13,6 @@ import SwiftUI
 struct WeekView: View {
     let week: WeekModel
 
-    @Environment(\.motion) private var motion
 
     var body: some View {
         ScrollView {
