@@ -188,6 +188,16 @@ document starts lying, and this one has done it twice already — see the two no
   missing entirely, and they are the two sentences that say the feature is descriptive rather
   than invented. Generated into `spec/narrative-copy.json` and checked character for
   character. Found auditing the Story cluster on 2026-07-28.
+- **The Timeline built every row before showing one.** A `VStack` inside a `ScrollView`
+  constructs all its children eagerly, so opening on Last 7 Days laid out ~280 rows — every
+  session card, its icons, its annotations — before a single one was on screen, and the wait
+  scaled with the range. It was easy to read as a slow query and it is not: fetching and
+  deriving seven days measures **22ms** (0.9ms and 0.9ms for one day; 9.0 and 13.4 for
+  seven), and application icons are already cached by source *and* by drawn size. Now a
+  `LazyVStack`, so the cost scales with the window rather than with the range.
+  **Measured before changing anything** — the first proposal was to default the Timeline to
+  Yesterday, which would have traded a contract-checked default away to work around a
+  problem in a different layer.
 - **The welcome screen's "Today in History" toggle set the wrong switch.** `todayInHistory`
   and `contextualMemories` were one preference until they were split earlier the same day,
   and this call site was missed: the toggle carried the label "Today in History" and wrote

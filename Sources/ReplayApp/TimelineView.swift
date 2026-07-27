@@ -61,7 +61,16 @@ struct TimelineView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Design.Space.block) {
+            // Lazy, and it has to be. A `VStack` inside a `ScrollView` builds every child
+            // up front, so opening the Timeline on Last 7 Days constructed all ~280 rows —
+            // every session card, its icons, its annotations — before a single one was on
+            // screen. That is where the wait came from: the data is not the cost (fetching
+            // and deriving seven days measures about 22ms), the eager layout of the rows is.
+            //
+            // `LazyVStack` builds what is near the viewport and the rest as it is scrolled
+            // to, so the cost stops scaling with the range and starts scaling with the
+            // window — which is the only thing a person is actually looking at.
+            LazyVStack(alignment: .leading, spacing: Design.Space.block) {
                 controls
                 if filtered.isEmpty {
                     // Two different silences: a range with nothing in it, and a range whose
