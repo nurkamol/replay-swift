@@ -195,24 +195,38 @@ function now and live in `ReplayCore` where the suite can reach them.
   `swift run replay-parity` (no Xcode). It covers the core thoroughly and everything else
   not at all — the tracker's timing behaviour and anything in the UI are unverified.
 
-## Next three things
+## What is left
 
-1. **Sign and notarise a build.** Blocked on a certificate rather than on code — this
-   machine has no Developer ID at all. A decision, not a task. See `docs/ROADMAP.md`.
-2. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
-   `SettingsModel` and `CollectionsModel` have none, and the tracker's own live-state
-   handling is still only exercised by using the app.
-3. **The port has 8 of the reference's 20 routes.** Counted, not estimated: `/apps` and
-   `/app/$bundleId` landed here, leaving `/autobiography`, `/canvas`, `/chapters`,
-   `/chapter/$id`, `/legacy`, `/museum`, `/projects`, `/project/$id`,
-   `/relationship/$a/$b` and `/story` as a surface of its own. Four of those are in the
-   reference's own sidebar, which is the honest measure of what a user would miss: Canvas,
-   Story and Projects. Next, and in that order.
+Counted rather than estimated, and corrected — the previous version of this list was stale,
+still claiming 8 of 20 routes after fourteen of them had landed.
 
-Also open: **Projects** — the same signature grouping as workflows, but keeping the whole span so a
-   combination gets a page of its own with a first-seen date and every session under it.
-   `detectProjects`, `computeWorkflowPartners` and `computeRelationship` are all in the
-   reference's `workflows.ts` and none is ported.
+**All 20 of the reference's routes exist.** What remains is depth inside them, plus the
+platform work the brief asks for and the one thing blocked on paperwork.
+
+1. **Four Timeline layers.** Projects, Reflections, Moments and Memories are overlay *rows*
+   among the days rather than filters over them — a different mechanism from the five that
+   are built. This is the largest visible gap against the reference's own screenshots.
+2. **Memories is three features short**: Surprise me, the Moments list, and the
+   browse-by-date heatmap.
+3. **`surprise.ts`** — the last of the seven memory modules; the other six are ported and
+   under contract.
+4. **Settings**: no Shortcuts tab, no notification digests, no Dock badge, no welcome
+   screen, and none of the screensaver's auto-start or exit-condition options.
+5. **Whole surfaces the reference has and this does not**: the Welcome/onboarding flow,
+   What's New, and Replay Day (a day played back as a short film).
+6. **Canvas** has no synced timeline side panel and no focus mode.
+7. **Search** has no saved searches, no time-range chips, and does not highlight matches.
+8. **A past day** has no story or chapter context.
+9. **PDF export** — dropped deliberately after WebKit failed twice; the route worth trying
+   next is `NSPrintOperation` on a real window.
+10. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
+    `SettingsModel` and `CollectionsModel` have none, and the tracker's live-state handling
+    is still only exercised by using the app.
+11. **The brief's platform integrations, none started**: App Intents, Widgets, Spotlight,
+    Quick Look, Handoff/`NSUserActivity`, multiple windows and tabs, Services, sound and
+    haptics.
+12. **Sign and notarise.** Blocked on a certificate rather than on code — this machine has
+    no Developer ID at all. A decision, not a task.
 
 Done and no longer blocking:
 - ~~The models were untestable~~ — they never were. This ledger recorded them as beyond
