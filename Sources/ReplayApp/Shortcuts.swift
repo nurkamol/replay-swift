@@ -59,6 +59,10 @@ enum Shortcuts {
         /// `nil` keeps it out of Settings — Canvas has a menu item and no shortcut, and a
         /// table of keys is no place for a row with no key in it.
         var group: Group?
+        /// The sidebar row this belongs to, so the row can say what its key is. Named rather
+        /// than matched on a label: both types live in this module, so the compiler checks
+        /// the pairing and a renamed surface cannot silently stop showing its shortcut.
+        var surface: Navigation.Surface?
         var separatorBefore = false
         /// A key bound by a SwiftUI view rather than by a menu, and the file it lives in.
         /// Checked by the audit; `nil` means a menu binds it.
@@ -84,7 +88,7 @@ enum Shortcuts {
         ),
         Entry(
             menuTitle: "Today", label: "Today", key: "1",
-            command: .today, group: .around, separatorBefore: true
+            command: .today, group: .around, surface: .today, separatorBefore: true
         ),
         Entry(
             menuTitle: "Go to Anything…", label: "Go to anything", key: "k",
@@ -92,33 +96,45 @@ enum Shortcuts {
         ),
         Entry(
             menuTitle: "Apps", label: "Apps", key: "2",
-            command: .apps, group: .around, separatorBefore: true
+            command: .apps, group: .around, surface: .apps, separatorBefore: true
         ),
-        Entry(menuTitle: "This Week", label: "This Week", key: "3", command: .week, group: .around),
+        Entry(
+            menuTitle: "This Week", label: "This Week", key: "3",
+            command: .week, group: .around, surface: .week
+        ),
         Entry(
             menuTitle: "Timeline", label: "Timeline", key: "4",
-            command: .timeline, group: .around
+            command: .timeline, group: .around, surface: .timeline
         ),
         // Numbered in sidebar order. Search is ⌘5 rather than ⌘F: ⌘F is Find, and
         // `.searchable` binds it to focus the field — a menu item that stole it switched
         // surfaces and then swallowed the keystrokes meant for the search box.
-        Entry(menuTitle: "Search", label: "Search", key: "5", command: .search, group: .around),
+        Entry(
+            menuTitle: "Search", label: "Search", key: "5",
+            command: .search, group: .around, surface: .search
+        ),
         Entry(
             menuTitle: "Memories", label: "Memories", key: "6",
-            command: .memories, group: .around
+            command: .memories, group: .around, surface: .memories
         ),
         Entry(
             menuTitle: "Collections", label: "Collections", key: "7",
-            command: .collections, group: .around
+            command: .collections, group: .around, surface: .collections
         ),
         Entry(
             menuTitle: "Projects", label: "Projects", key: "8",
-            command: .projects, group: .around
+            command: .projects, group: .around, surface: .projects
         ),
-        Entry(menuTitle: "Story", label: "Story", key: "9", command: .story, group: .around),
+        Entry(
+            menuTitle: "Story", label: "Story", key: "9",
+            command: .story, group: .around, surface: .story
+        ),
         // No shortcut: the digits run out at nine, and Canvas is a place you go to look
         // around rather than one you flick to. In the menu, absent from the table.
-        Entry(menuTitle: "Canvas", label: "Canvas", key: "", modifiers: [], command: .canvas),
+        Entry(
+            menuTitle: "Canvas", label: "Canvas", key: "", modifiers: [],
+            command: .canvas, surface: .canvas
+        ),
         Entry(
             menuTitle: "Screensaver", label: "Screensaver", key: "s",
             modifiers: [.shift, .command], command: .screensaver, group: .window,
@@ -145,6 +161,15 @@ enum Shortcuts {
         Entry(label: "Open what is focused", key: "↩", modifiers: [], group: .anywhere),
         Entry(label: "Close what is open", key: "esc", modifiers: [], group: .anywhere),
     ]
+
+    /// What a sidebar row should show on its trailing edge, or nothing when the surface has
+    /// no key. Canvas is the one that has none — the digits run out at nine.
+    static func keys(for surface: Navigation.Surface) -> [String]? {
+        guard let entry = menu.first(where: { $0.surface == surface }), !entry.key.isEmpty else {
+            return nil
+        }
+        return entry.display
+    }
 
     /// Everything Settings shows, gathered under its headings in the order they are declared.
     static var settingsGroups: [(Group, [Entry])] {

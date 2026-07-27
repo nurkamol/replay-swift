@@ -349,13 +349,7 @@ struct RootView: View {
             HStack(spacing: Design.Space.inline) {
                 sidebarLabel(title, glyph)
                 Spacer(minLength: Design.Space.tight)
-                // The shortcut as a menu would print it: quiet, on the far side, and read
-                // as a fact about the row rather than as part of its name.
-                if let trailing {
-                    Text(trailing)
-                        .font(Design.Text.micro)
-                        .foregroundStyle(.tertiary)
-                }
+                if let trailing { shortcutHint(trailing) }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, Design.Space.snug)
@@ -371,6 +365,19 @@ struct RootView: View {
     /// The column is what makes the labels line up. A `Label` sizes its icon to the glyph,
     /// and SF Symbols are not one width — a magnifier is narrower than a bar chart — so
     /// without it every row began at a slightly different place.
+    /// A shortcut as a menu would print it: quiet, on the far side, and read as a fact about
+    /// the row rather than as part of its name.
+    ///
+    /// One function so a list row and a footer row print it the same way — the sidebar's two
+    /// halves are laid out by different things, and this is the second time that has been a
+    /// chance for them to disagree.
+    private func shortcutHint(_ keys: String) -> some View {
+        Text(keys)
+            .font(Design.Text.micro)
+            .foregroundStyle(.tertiary)
+            .accessibilityHidden(true)
+    }
+
     private func sidebarLabel(_ title: String, _ glyph: String, selected: Bool = false) -> some View {
         Label {
             // One line, always. A sidebar row that wraps breaks the even rhythm the column
@@ -403,7 +410,17 @@ struct RootView: View {
 
     private func row(_ item: Navigation.Surface) -> some View {
         NavigationLink(value: item) {
-            sidebarLabel(item.rawValue, item.symbol, selected: navigation.surface == item)
+            HStack(spacing: Design.Space.tight) {
+                sidebarLabel(item.rawValue, item.symbol, selected: navigation.surface == item)
+                // Every surface with a key says so, in the column the footer already uses.
+                // The keyboard is the one thing an interface cannot show you by drawing it,
+                // so the only way anybody learns these is being told — and Settings is a
+                // long way to go to find out that Today is ⌘1.
+                if let keys = Shortcuts.keys(for: item) {
+                    Spacer(minLength: Design.Space.tight)
+                    shortcutHint(keys.joined())
+                }
+            }
         }
         .accessibilityHint(item.purpose)
     }
