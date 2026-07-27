@@ -197,6 +197,23 @@ enum Design {
         /// playfulness the content does not have.
         static let settle = Animation.spring(duration: 0.42, bounce: 0)
 
+        /// How long two clicks may be apart and still be one double-click. The system's own
+        /// interval would be better, but it is not reachable from inside a `Canvas` gesture,
+        /// and this is the same default.
+        static let doubleClickSeconds: TimeInterval = 0.4
+
+        /// The field assembling itself when Canvas opens, and how the nodes are staggered
+        /// through it. Slower than a settle, because a landscape is arriving rather than a
+        /// control responding.
+        /// The command palette. Short and linear rather than a spring: it is a thing you
+        /// open by reflex, and anything that settles reads as a delay.
+        static let palette = Animation.easeOut(duration: 0.12)
+
+        static let canvasEntranceSeconds: TimeInterval = 0.9
+        static let canvasEntranceStagger: CGFloat = 0.012
+        static let canvasEntranceStaggerCap: CGFloat = 0.55
+
+
         /// How long one pass of the screensaver takes, and how long it takes when someone
         /// has asked the system to reduce motion — slower rather than stopped, because a
         /// screensaver that does not move is a poster.
@@ -494,6 +511,12 @@ enum Design {
         /// One press of zoom in or out. A ratio rather than a step, so each press feels the
         /// same however far in you already are.
         static let canvasZoomStep: CGFloat = 1.35
+        /// How far a click may wander before it becomes a drag.
+        static let canvasClickSlop: CGFloat = 4
+        /// How hard a scroll turns into zoom, and how much coarser a wheel's lines are than
+        /// a trackpad's precise deltas.
+        static let canvasWheelSensitivity: CGFloat = 0.012
+        static let canvasWheelLineScale: CGFloat = 3
         /// The magnification readout, wide enough for "300%" so the toolbar does not shuffle.
         static let canvasZoomReadoutWidth: CGFloat = 44
         /// Where a double-click lands you: close enough to read a node's neighbourhood.

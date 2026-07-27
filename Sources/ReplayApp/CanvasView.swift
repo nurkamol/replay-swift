@@ -1,3 +1,4 @@
+import AppKit
 import ReplayCore
 import SwiftUI
 
@@ -20,6 +21,19 @@ struct CanvasView: View {
     @State private var zoom: CGFloat = 1
     @State private var pinch: CGFloat = 1
     @State private var selected: CanvasGraph.Node?
+    @State private var dragging = false
+    /// When the last click landed, so a second one soon after is a double.
+    @State private var lastClick: (id: String, at: Date)?
+    /// When the entrance began, and whether it has finished.
+    ///
+    /// A `Canvas` does not interpolate — SwiftUI animates view properties, and everything
+    /// inside a canvas is drawn in one pass from whatever the values are at that instant. So
+    /// the entrance is driven by a clock: a `TimelineView` while it runs, and a plain canvas
+    /// the moment it is done, because a timeline still ticking afterwards is a redraw every
+    /// frame for nothing.
+    @State private var entranceStart = Date()
+    @State private var entranceDone = false
+    @State private var scrollMonitor: Any?
 
     private var scale: CGFloat {
         min(max(zoom * pinch, Design.Layout.canvasMinZoom), Design.Layout.canvasMaxZoom)
@@ -47,6 +61,41 @@ struct CanvasView: View {
         }
     }
 
+    private func watchScrollWheel() {
+        guard scrollMonitor == nil else { return }
+        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { event in
+            // A trackpad sends precise deltas that are already small; a wheel sends coarse
+            // lines, scaled here to land in the same range.
+            let delta = event.hasPreciseScrollingDeltas
+                ? event.scrollingDeltaY
+                : event.scrollingDeltaY * Design.Layout.canvasWheelLineScale
+            if delta != 0 {
+                zoom(by: 1 + delta * Design.Layout.canvasWheelSensitivity)
+            }
+            // Swallowed: this surface has nothing else that scrolls, and letting it through
+            // would scroll whatever is behind while the field zooms.
+            return nil
+        }
+    }
+
+    /// A click: select, or focus when it is the second on the same node.
+    ///
+    /// Double-click is timed rather than declared, because declaring one made SwiftUI hold
+    /// every single click back to see whether a second was coming — exactly the hesitation
+    /// this surface should not have.
+    private func click(at location: CGPoint, centre: CGPoint) {
+        let hit = node(at: location, centre: centre)
+        let now = Date()
+        if let hit, let last = lastClick, last.id == hit.id,
+           now.timeIntervalSince(last.at) < Design.Motion.doubleClickSeconds {
+            lastClick = nil
+            focus(on: hit)
+            return
+        }
+        lastClick = hit.map { ($0.id, now) }
+        withAnimation(motion.animation(Design.Motion.settle)) { selected = hit }
+    }
+
     /// Bring one node to the middle and move in on it. What a double-click should do: the
     /// thing you pointed at becomes the thing you are looking at, without losing the field
     /// around it.
@@ -72,7 +121,30 @@ struct CanvasView: View {
         .background(.background)
         .navigationTitle("Canvas")
         .navigationSubtitle("Your history as a landscape")
-        .onAppear { if !canvas.loaded { canvas.load() } }
+        // The wheel, which SwiftUI has no modifier for. Pinch is the trackpad gesture and
+        // already works; this is the mouse, and two fingers on a trackpad, which would
+        // otherwise do nothing at all on an obviously zoomable surface.
+        //
+        // A local monitor rather than an `NSView`: a view behind the canvas never sees the
+        // event, because `scrollWheel` walks *up* the responder chain rather than across to
+        // a sibling, and one in front would swallow the clicks. Installed only while this
+        // surface is on screen, and removed with it.
+        .onAppear { watchScrollWheel() }
+        .onDisappear {
+            if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
+            scrollMonitor = nil
+        }
+        .onAppear {
+            if !canvas.loaded { canvas.load() }
+            // Restarted on every appearance, so coming back plays it again rather than
+            // showing a field that is simply already there.
+            entranceDone = false
+            entranceStart = Date()
+        }
+        .task(id: entranceStart) {
+            try? await Task.sleep(for: .seconds(Design.Motion.canvasEntranceSeconds))
+            entranceDone = true
+        }
         .toolbar {
             ToolbarItemGroup {
                 Button { zoom(by: 1 / Design.Layout.canvasZoomStep) } label: {
@@ -140,7 +212,105 @@ struct CanvasView: View {
     private var field: some View {
         GeometryReader { geometry in
             let centre = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
-            Canvas { context, _ in
+            animatedField(centre: centre)
+            .contentShape(Rectangle())
+            // One gesture, not three. Two `onTapGesture`s and a drag were being arbitrated
+            // by SwiftUI and the single click lost outright — clicking a node did nothing at
+            // all. A zero-distance drag reports both press and release, so a click is simply
+            // a drag that never went anywhere and there is nothing left to arbitrate.
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        if hypot(value.translation.width, value.translation.height)
+                            > Design.Layout.canvasClickSlop {
+                            dragging = true
+                            dragged = value.translation
+                        }
+                    }
+                    .onEnded { value in
+                        if dragging {
+                            offset.width += value.translation.width
+                            offset.height += value.translation.height
+                        } else {
+                            click(at: value.location, centre: centre)
+                        }
+                        dragging = false
+                        dragged = .zero
+                    }
+            )
+            .gesture(
+                MagnifyGesture()
+                    .onChanged { pinch = $0.magnification }
+                    .onEnded { value in
+                        zoom = min(
+                            max(zoom * value.magnification, Design.Layout.canvasMinZoom),
+                            Design.Layout.canvasMaxZoom
+                        )
+                        pinch = 1
+                    }
+            )
+            .accessibilityHidden(true)
+        }
+        // The picture is not reachable by keyboard, so the same information is offered as a
+        // list to anything that reads the screen.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(
+            "A map of \(canvas.graph.nodes.count) items from your history and "
+                + "\(canvas.graph.edges.count) connections between them. "
+                + "The same information is on Apps, Projects and Story."
+        )
+    }
+
+    /// The field, on a clock while it is arriving and off it once it has.
+    @ViewBuilder
+    private func animatedField(centre: CGPoint) -> some View {
+        if entranceDone || motion.reduced {
+            renderField(centre: centre, progress: 1)
+        } else {
+            // Qualified: this app has its own `TimelineView` — the Timeline surface — and
+            // it shadows SwiftUI's inside this module.
+            SwiftUI.TimelineView(.animation) { timeline in
+                renderField(centre: centre, progress: progress(at: timeline.date))
+            }
+        }
+    }
+
+    /// How far through its entrance the field is, 0 to 1, at a given instant.
+    private func progress(at date: Date) -> CGFloat {
+        let elapsed = date.timeIntervalSince(entranceStart)
+        return CGFloat(min(1, max(0, elapsed / Design.Motion.canvasEntranceSeconds)))
+    }
+
+    /// How far into its own entrance one node is.
+    ///
+    /// Staggered by weight rather than by index, so the busiest arrive first and the field
+    /// grows outward from what matters — which is the order the eye would find them in
+    /// anyway. Eased, so each one settles rather than snapping to full size.
+    private func entrance(_ node: CanvasGraph.Node, _ progress: CGFloat) -> CGFloat {
+        guard progress < 1 else { return 1 }
+        let rank = order[node.id] ?? 0
+        let start = min(
+            CGFloat(rank) * Design.Motion.canvasEntranceStagger,
+            Design.Motion.canvasEntranceStaggerCap
+        )
+        let local = (progress - start) / max(0.0001, 1 - start)
+        let clamped = min(1, max(0, local))
+        // Ease out: fast to most of its size, then settling.
+        return 1 - pow(1 - clamped, 3)
+    }
+
+    /// Each node's place in the entrance, busiest first. Computed once per graph rather than
+    /// per frame — this runs sixty times a second while the field assembles.
+    private var order: [String: Int] {
+        let ranked = canvas.graph.nodes.sorted { radius(for: $0) > radius(for: $1) }
+        var result: [String: Int] = [:]
+        for (rank, node) in ranked.enumerated() { result[node.id] = rank }
+        return result
+    }
+
+    /// Everything drawn, in one pass.
+    private func renderField(centre: CGPoint, progress: CGFloat) -> some View {
+        Canvas { context, _ in
                 func place(_ point: CGPoint) -> CGPoint {
                     CGPoint(
                         x: centre.x + (point.x * scale) + offset.width + dragged.width,
@@ -158,20 +328,21 @@ struct CanvasView: View {
                     let strength = edge.kind == .appApp && canvas.graph.maxAppWeight > 0
                         ? Double(edge.weight) / Double(canvas.graph.maxAppWeight)
                         : Design.Colour.canvasEdgeBase
+                    let weight: Double = (Design.Colour.canvasEdgeFloor
+                        + strength * Design.Colour.canvasEdgeRange) * Double(progress)
                     context.stroke(
                         path,
-                        with: .color(.secondary.opacity(
-                            Design.Colour.canvasEdgeFloor
-                                + strength * Design.Colour.canvasEdgeRange
-                        )),
+                        with: .color(.secondary.opacity(weight)),
                         lineWidth: Design.Layout.canvasEdgeWidth
                     )
                 }
 
                 for node in canvas.graph.nodes {
                     guard let point = canvas.positions[node.id] else { continue }
+                    let grown = entrance(node, progress)
+                    if grown <= 0.001 { continue }
                     let at = place(point)
-                    let radius = self.radius(for: node) * scale
+                    let radius = self.radius(for: node) * scale * grown
                     let box = CGRect(
                         x: at.x - radius, y: at.y - radius, width: radius * 2, height: radius * 2
                     )
@@ -297,46 +468,7 @@ struct CanvasView: View {
                         .foregroundStyle(.white)
                         .tag("badge:\(name)")
                 }
-            }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture()
-                    .onChanged { dragged = $0.translation }
-                    .onEnded { value in
-                        offset.width += value.translation.width
-                        offset.height += value.translation.height
-                        dragged = .zero
-                    }
-            )
-            .gesture(
-                MagnifyGesture()
-                    .onChanged { pinch = $0.magnification }
-                    .onEnded { value in
-                        zoom = min(
-                            max(zoom * value.magnification, Design.Layout.canvasMinZoom),
-                            Design.Layout.canvasMaxZoom
-                        )
-                        pinch = 1
-                    }
-            )
-            .onTapGesture(count: 2) { location in
-                if let node = node(at: location, centre: centre) { focus(on: node) }
-            }
-            .onTapGesture { location in
-                withAnimation(motion.animation(Design.Motion.settle)) {
-                    selected = node(at: location, centre: centre)
-                }
-            }
-            .accessibilityHidden(true)
         }
-        // The picture is not reachable by keyboard, so the same information is offered as a
-        // list to anything that reads the screen.
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(
-            "A map of \(canvas.graph.nodes.count) items from your history and "
-                + "\(canvas.graph.edges.count) connections between them. "
-                + "The same information is on Apps, Projects and Story."
-        )
     }
 
     /// The preview for whatever is selected, and the way into it.

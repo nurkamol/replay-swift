@@ -163,7 +163,7 @@ struct RootView: View {
             window
             paletteOverlay
         }
-        .animation(motion.animation(Design.Motion.settle), value: palette.open)
+        .animation(motion.animation(Design.Motion.palette), value: palette.open)
         // Escape closes it wherever focus happens to be — including inside the field, where
         // a `keyboardShortcut` on a button would never see the key. `nil` when it is shut,
         // so Escape still reaches whatever else wanted it.
@@ -271,7 +271,10 @@ struct RootView: View {
                 CommandPaletteView(palette: palette, onRun: run)
                     .padding(.top, Design.Layout.paletteTopInset)
             }
-            .transition(motion.transition(.opacity.combined(with: .move(edge: .top))))
+            // A fade and nothing else. The first version slid down from the top, and a
+            // palette you open by reflex should not make you wait for it to arrive — the
+            // fade is short enough to read as instant while still not being a hard cut.
+            .transition(.opacity)
         }
     }
 
