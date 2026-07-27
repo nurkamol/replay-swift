@@ -135,6 +135,13 @@ function now and live in `ReplayCore` where the suite can reach them.
   space, which is the smaller wrong: it keeps both apps saying the same thing, and the
   difference is a runtime's ICU version rather than a decision either app made. Any other
   formatter that prints a time is a candidate for the same fold.
+- **A "full backup" carries activity and nothing else.** The file holds the `events` table
+  only: notes, tags, bookmarks and reflections are not in it, so exporting a backup, wiping a
+  Mac and restoring returns your history and loses everything you wrote about it. Inherited —
+  the reference's export is the same shape and the two files are meant to be interchangeable —
+  but the Settings label says "Full backup", which oversells it. Pinned by a test that asserts
+  the absence deliberately, so it is a recorded fact rather than something discovered too
+  late. Worth fixing in the Glaze app first, since the format is shared.
 - **`Text` group-separates an `Int`.** `Text("\(year)")` renders 2026 as "2,026" — the
   interpolation is a `LocalizedStringKey`'s, and it formats numbers. Concatenating with `+`
   first makes it a plain `String` and avoids it, which is why most counts in this app were

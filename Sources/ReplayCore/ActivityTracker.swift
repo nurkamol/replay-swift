@@ -53,7 +53,14 @@ public final class ActivityTracker {
         self.onChange = onChange
     }
 
-    private func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
+    /// The clock, injectable so the recording rules can be tested against a controlled one.
+    ///
+    /// The tracker's whole job is *when* things happened, and every rule in it is a
+    /// comparison against the clock — a dedupe window, an idle threshold, a session's end.
+    /// None of that can be checked against a clock that keeps moving.
+    var clock: () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }
+
+    private func now() -> Int64 { clock() }
 
     // ── lifecycle ─────────────────────────────────────────────────────────────
 
@@ -119,6 +126,15 @@ public final class ActivityTracker {
 
     private func onActivate(_ app: NSRunningApplication?) {
         guard let app, let bundleID = app.bundleIdentifier else { return }
+        activate(bundleID: bundleID, app: info(for: app))
+    }
+
+    /// An application came to the front.
+    ///
+    /// Split from the notification handler so the rules can be exercised without an
+    /// `NSRunningApplication`, which a test cannot conjure. The handler's only remaining job
+    /// is turning the notification into these two values.
+    func activate(bundleID: String, app appInfo: AppInfo) {
         guard !Rules.ignoredBundleIDs.contains(bundleID) else { return }
         guard !excludedBundleIDs.contains(bundleID) else { return }
 
@@ -129,7 +145,6 @@ public final class ActivityTracker {
         if let awaySince { endAway(at: now(), from: awaySince, resume: false) }
 
         let at = now()
-        let appInfo = info(for: app)
         do {
             if let active { try store.closeSession(id: active.id, endedAt: at) }
             let id = try store.openSession(
@@ -144,6 +159,11 @@ public final class ActivityTracker {
 
     private func onPointEvent(_ type: EventType, _ app: NSRunningApplication?) {
         guard let app, let bundleID = app.bundleIdentifier else { return }
+        point(type, bundleID: bundleID, app: info(for: app))
+    }
+
+    /// An application launched or quit.
+    func point(_ type: EventType, bundleID: String, app appInfo: AppInfo) {
         guard !Rules.ignoredBundleIDs.contains(bundleID) else { return }
         guard !excludedBundleIDs.contains(bundleID) else { return }
 
@@ -155,7 +175,6 @@ public final class ActivityTracker {
         lastPointEvent[key] = at
         if lastPointEvent.count > 500 { lastPointEvent.removeAll() }
 
-        let appInfo = info(for: app)
         try? store.recordPointEvent(
             type: type, name: appInfo.name, bundleID: appInfo.bundleID,
             appPath: appInfo.appPath, at: at
@@ -211,7 +230,18 @@ public final class ActivityTracker {
     /// Resuming matters: if the user comes back to the app they left in front, no
     /// activation notification fires, so without this nothing would be recorded until
     /// they next switched apps.
-    private func endAway(at returnedAt: Int64, from awayStart: Int64, resume: Bool = true) {
+    /// Mark the user as away from a given instant. Reachable for tests; the idle timer is
+    /// what calls it in the app.
+    func beginAway(at: Int64) {
+        guard awaySince == nil else { return }
+        if let active {
+            parked = (active.bundleID, active.app)
+            closeActive(at: at)
+        }
+        awaySince = at
+    }
+
+    func endAway(at returnedAt: Int64, from awayStart: Int64, resume: Bool = true) {
         awaySince = nil
         try? store.recordAway(startedAt: awayStart, endedAt: returnedAt)
 
