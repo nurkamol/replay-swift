@@ -15,6 +15,8 @@ struct TodayView: View {
     @Bindable var preferences: Preferences
     /// Given so the card can lead somewhere rather than just informing.
     let onOpenDay: (Int64) -> Void
+    /// Watching a day is a whole-window thing, so the root is what raises it.
+    let onReplayDay: ([ActivitySession]) -> Void
 
     var body: some View {
         ScrollView {
@@ -90,6 +92,24 @@ struct TodayView: View {
             .pageContent()
         }
         .background(.background)
+        .toolbar {
+            ToolbarItem {
+                Button {
+                    // Raised at the root rather than here: `fullScreenCover` is iOS-only,
+                    // and an overlay inside this view would have the toolbar and the sidebar
+                    // drawing on top of it — the same mistake the welcome screen made.
+                    onReplayDay(
+                        model.timeline.compactMap {
+                            if case .session(let session) = $0 { return session } else { return nil }
+                        }
+                    )
+                } label: {
+                    Label("Replay Day", systemImage: "play.rectangle")
+                }
+                .disabled(model.timeline.isEmpty)
+                .help("Watch today play back")
+            }
+        }
         .navigationTitle("Today")
         .navigationSubtitle(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
         .onAppear {

@@ -134,5 +134,13 @@
     ],
     "minCustomMinutes": 15,
     "maxCustomMinutes": 960
+  },
+  "playback": {
+    "baseDurationMillis": 32000,
+    "speeds": [
+      1,
+      2,
+      5
+    ]
   }
 }

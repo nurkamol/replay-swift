@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 694 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 696 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -88,6 +88,8 @@ function now and live in `ReplayCore` where the suite can reach them.
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | done | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and all nine layers — five that choose which sessions appear, one that governs the gaps, and three that add rows among the days |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
+| Playback clock | done | `Playback` — the day's span mapped onto a fixed half-minute, and which moment a progress lands on. Its two constants are extracted from the reference and checked |
+| Replay Day | done | the day played back: one moment at a time, a filmstrip at their real places in the day, scrubbing, three speeds, space to pause, Escape to leave |
 | What's New | done | eleven releases, newest first, with the running version marked. Reachable from Help |
 | Help menu | done | Welcome, Replay Guide (⌘?), What's New. The app had no Help menu at all, which is also where macOS puts its own search |
 | Welcome | done | two pages: the things Replay will not do unasked, each off by default, and the privacy claim shown working rather than asserted |
@@ -213,12 +215,11 @@ still claiming 8 of 20 routes after fourteen of them had landed.
 **All 20 of the reference's routes exist.** What remains is depth inside them, plus the
 platform work the brief asks for and the one thing blocked on paperwork.
 
-1. **Replay Day** — a day played back as a short film.
+1. **Canvas** has no synced timeline side panel and no focus mode.
 2. **A window sizing trap, twice now.** `NSHostingController` sizes its window to the SwiftUI
    content unless told not to. The screensaver came out 1728×2888; the welcome screen grew the
    main window's *saved* frame to 980×5580, which then reloaded as a window mostly below the
    screen. `hosting.sizingOptions = []` on any window whose size is its own.
-3. **Canvas** has no synced timeline side panel and no focus mode.
 4. **Search** has no saved searches, no time-range chips, and does not highlight matches.
 5. **A past day** has no story or chapter context.
 6. **PDF export** — dropped deliberately after WebKit failed twice; the route worth trying

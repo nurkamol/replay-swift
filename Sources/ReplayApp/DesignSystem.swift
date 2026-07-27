@@ -156,6 +156,8 @@ enum Design {
         /// The screensaver, which is read from across a room rather than at a desk.
         static let screensaverHeading = Font.title.weight(.semibold)
         static let screensaverTitle = Font.title3.weight(.medium)
+        /// The one moment on screen while a day plays back.
+        static let playbackTitle = Font.largeTitle.weight(.semibold)
         static let screensaverKerning: CGFloat = 1.8
 
         /// Uppercase labels need loosening or they set too tight to read.
@@ -236,6 +238,10 @@ enum Design {
         /// A moment's grace before the screensaver will take a dismissal, so the click or
         /// keystroke that started it does not end it in the same breath.
         static let screensaverArmSeconds: TimeInterval = 0.5
+
+        /// How often the playhead advances. Sixty a second is more than the eye needs for a
+        /// bar and a cross-fade, and it is a timer running for half a minute.
+        static let playbackTick: TimeInterval = 1.0 / 30
 
         static let screensaverDriftSeconds: Double = 90
         static let screensaverSlowSeconds: Double = 240
@@ -419,6 +425,8 @@ enum Design {
         static let resume: CGFloat = 48
         /// The app's own icon, on the welcome screen.
         static let welcomeMark: CGFloat = 72
+        /// The application at the centre of a moment being played back.
+        static let playbackMark: CGFloat = 112
         /// The app's own icon, in About.
         static let about: CGFloat = 64
         /// A tinted tile in the Settings source list.
@@ -456,6 +464,10 @@ enum Design {
         /// The welcome screen's column, and its page dots.
         static let welcomeWidth: CGFloat = 520
         /// The What's New window, and the dot in front of one of its lines.
+        /// Playing a day back: the marks on the filmstrip, the playhead, the speed control.
+        static let filmstripMark: CGFloat = 3
+        static let playhead: CGFloat = 10
+        static let playbackSpeedWidth: CGFloat = 130
         static let whatsNewWidth: CGFloat = 620
         static let whatsNewHeight: CGFloat = 560
         static let bulletSize: CGFloat = 4

@@ -132,6 +132,12 @@ public enum ParityKit {
         public let backup: BackupInfo
         public let annotations: Annotations
         public let focusGoal: FocusGoal
+        public let playback: PlaybackConstants
+
+        public struct PlaybackConstants: Decodable, Sendable {
+            public let baseDurationMillis: Int
+            public let speeds: [Int]
+        }
         public let motion: Motion
     }
 
@@ -852,6 +858,9 @@ public enum ParityKit {
         equal(g1, "minSessionSeconds", Rules.minSessionSeconds, constants.derivation.minSessionSeconds)
         equal(g1, "maxTagLength", Rules.maxTagLength, constants.annotations.maxTagLength)
         equal(g1, "maxTags", Rules.maxTags, constants.annotations.maxTags)
+        equal(g1, "how long a day takes to play back",
+              Playback.baseDurationMillis, constants.playback.baseDurationMillis)
+        equal(g1, "and the speeds offered", Playback.speeds, constants.playback.speeds)
         equal(g1, "focus goal presets", Goals.presetMinutes, constants.focusGoal.presetMinutes)
         equal(g1, "minCustomGoalMinutes", Goals.minCustomMinutes, constants.focusGoal.minCustomMinutes)
         equal(g1, "maxCustomGoalMinutes", Goals.maxCustomMinutes, constants.focusGoal.maxCustomMinutes)

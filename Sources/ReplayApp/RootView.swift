@@ -149,6 +149,8 @@ struct RootView: View {
     let onOpenScreensaver: () -> Void
 
     @Environment(\.motion) private var motion
+    /// The day being watched, if one is. Held here because it fills the window.
+    @State private var replaying: [ActivitySession]?
 
     private var columnVisibility: Binding<NavigationSplitViewVisibility> {
         Binding(
@@ -166,7 +168,13 @@ struct RootView: View {
             // above it — "Today · Monday, July 27" and the sidebar button sitting on top of
             // a screen that has not been introduced yet, which read as the app already open
             // behind a sheet. A first run is the whole window.
-            if preferences.seenWelcome {
+            if let replaying {
+                ReplayDayView(
+                    sessions: replaying, label: "Today",
+                    onClose: { self.replaying = nil }
+                )
+                .transition(motion.transition(.opacity))
+            } else if preferences.seenWelcome {
                 ZStack(alignment: .top) {
                     window
                     paletteOverlay
@@ -184,6 +192,7 @@ struct RootView: View {
             }
         }
         .animation(motion.animation(Design.Motion.settle), value: preferences.seenWelcome)
+        .animation(motion.animation(Design.Motion.settle), value: replaying == nil)
         .animation(motion.animation(Design.Motion.palette), value: palette.open)
         // Escape closes it wherever focus happens to be — including inside the field, where
         // a `keyboardShortcut` on a button would never see the key. `nil` when it is shut,
@@ -491,7 +500,8 @@ struct RootView: View {
                 model: model, annotations: model.annotations,
                 export: export, memories: memories, contextual: contextual,
                 preferences: preferences,
-                onOpenDay: { navigation.open(day: $0) }
+                onOpenDay: { navigation.open(day: $0) },
+                onReplayDay: { replaying = $0 }
             )
         case .apps:
             AppsView(

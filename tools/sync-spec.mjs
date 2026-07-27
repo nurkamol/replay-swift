@@ -236,6 +236,21 @@ const constants = {
       maxCustomMinutes: constant(goals, "goals.ts", "MAX_CUSTOM_GOAL_MINUTES"),
     };
   })(),
+  /*
+   * How long a day takes to play back, and how much faster it can be asked to go.
+   *
+   * A whole day in half a minute regardless of how full it was, which is what makes it
+   * watchable — a playback proportional to the day would be four minutes for a heavy one
+   * and eight seconds for a quiet one.
+   */
+  playback: (() => {
+    const source = read("renderer/main/playback.tsx");
+    const speeds = source.match(/PLAYBACK_SPEEDS = \[([^\]]+)\]/);
+    return {
+      baseDurationMillis: constant(source, "playback.tsx", "BASE_DURATION_MS"),
+      speeds: speeds ? speeds[1].split(",").map((n) => Number(n.trim())) : [],
+    };
+  })(),
 };
 
 
