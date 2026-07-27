@@ -90,7 +90,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | An application's history | done | header, the four figures, which collections it appears in, the applications it works alongside, and its recent sessions |
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | done | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and all nine layers — five that choose which sessions appear, one that governs the gaps, and three that add rows among the days |
-| A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
+| A past day, reopened | done | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. Narrated by `DayStory`, and once a day is more than a week old it is placed in the chapter it belonged to with the four nearest days around it — `chapterContext`, tie-broken on `(distance, position)` because a day the same span either side ties exactly |
 | Playback clock | done | `Playback` — the day's span mapped onto a fixed half-minute, and which moment a progress lands on. Its two constants are extracted from the reference and checked |
 | Replay Day | done | the day played back: one moment at a time, a filmstrip at their real places in the day, scrubbing, three speeds, space to pause, Escape to leave |
 | What's New | done | eleven releases, newest first, with the running version marked. Reachable from Help |
@@ -121,6 +121,18 @@ prevent — CLAUDE.md's own words are that a ledger nobody trusts is worse than 
 row that says *later* about something finished is exactly how the trust goes. The habit that
 would have caught it is the one already written down: update the ledger in the same commit
 as the code.
+
+**And a ninth, found the same day by acting on it.** `A past day, reopened` was marked
+*partial* with "No story or chapter context". Both were built: the view narrates the day
+through `DayStory`, and `chapterContext` places any day over a week old in its chapter with
+the four nearest days around it — with the `(distance, position)` tie-break spelled out and
+three tests covering it, including the case where the day is too recent to have one. The row
+was believed over the code, and an afternoon was very nearly spent rebuilding a finished
+feature.
+
+That is the cost this document has now demonstrated twice in one day, so it is worth stating
+plainly: **an out-of-date ledger is not a tidiness problem, it is a source of wrong work.**
+Before building anything this file calls missing, check the code.
 
 ### Nothing responded to being pressed, and a green check said otherwise
 
