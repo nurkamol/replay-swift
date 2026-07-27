@@ -214,12 +214,14 @@ document starts lying, and this one has done it twice already — see the two no
   the scrolling content resolves it rather than trading between them: the key is pinned, the
   month labels still travel with the columns they name, and the scroll lands on today. The
   caption says the rest is off to the side, but only when it measurably is.
-- **Today's square is ringed but empty, in both apps.** Daily summaries are written for
-  completed days, so the day you are looking at has no headline yet and reads as zero. The
-  ring distinguishes it from a genuinely idle day and "Delete a single day" adds today from
-  the front for the same reason. Left matching; filling it would mean the heatmap reading
-  live sessions as well as the durable headlines, which is a second data source for one
-  square.
+- **Today's square is filled from the sessions, not from a headline.** Daily summaries are
+  written for days that have finished, so the day you are actually looking at has none and
+  its square read as an idle day — ringed, but empty, on an afternoon already three hours
+  old. The ring said "this is today" and the fill said "you did nothing", and the fill is
+  what people read. Upstream leaves it empty. Derived here through `computeDaySummary` over
+  the same events Today counts, with the same "began today" filter, so the square and the
+  headline at the top of Today cannot disagree. It is a second data source for one square,
+  which is why it was worth thinking about and is still worth having.
 - **Memories was the tallest page in the app.** Both card sections were a single column, so
   eight moments pushed "Browse by date" the better part of two screens down — and that
   section is the only navigation on the page; everything above it is a destination and the
