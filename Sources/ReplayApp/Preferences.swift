@@ -38,6 +38,52 @@ enum Appearance: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+/// The colour the app is tinted with.
+///
+/// `system` is the default and means "whatever this Mac's accent colour is" — the honest
+/// starting point, because an app that arrives with its own opinion about accent colour has
+/// overridden a choice the person already made in System Settings. The named options exist
+/// for the case that motivates this setting: wanting *this* app to look different from every
+/// other one, which the system accent cannot express.
+///
+/// The palette is macOS's own accent set rather than an invented one, so the choices here
+/// are the choices the Appearance pane offers and nothing looks foreign next to a standard
+/// control.
+enum ThemeColour: String, CaseIterable, Identifiable, Codable {
+    case system, blue, purple, pink, red, orange, yellow, green, graphite
+
+    var id: String { rawValue }
+
+    var label: String {
+        self == .system ? "Match System" : rawValue.capitalized
+    }
+
+    /// `nil` means "do not override", which is not the same as any particular colour: it is
+    /// what lets the app follow the accent live when the system's own changes.
+    var colour: Color? {
+        switch self {
+        case .system: nil
+        case .blue: .blue
+        case .purple: .purple
+        case .pink: .pink
+        case .red: .red
+        case .orange: .orange
+        case .yellow: .yellow
+        case .green: .green
+        // Not `.gray`: the system's Graphite is a near-neutral the controls are designed
+        // against, and plain gray reads as a disabled control rather than as a choice.
+        case .graphite: Color(nsColor: .systemGray)
+        }
+    }
+
+    /// A concrete colour for the places that cannot take a style — a `Canvas` fills with a
+    /// `Color`, not with `.tint`.
+    var resolved: Color { colour ?? .accentColor }
+
+    /// The swatch shown in the picker.
+    var swatch: Color { self == .system ? .accentColor : resolved }
+}
+
 /// Settings that outlive a launch.
 ///
 /// `UserDefaults` rather than the JSON file the reference keeps: the two apps do not share
@@ -49,6 +95,11 @@ enum Appearance: String, CaseIterable, Identifiable, Codable {
 final class Preferences {
     var appearance: Appearance {
         didSet { write(appearance.rawValue, "appearance") }
+    }
+
+    /// What the app is tinted with. See ``ThemeColour``.
+    var themeColour: ThemeColour {
+        didSet { write(themeColour.rawValue, "themeColour") }
     }
     var launchSurface: LaunchSurface {
         didSet { write(launchSurface.rawValue, "launchSurface") }
@@ -240,6 +291,7 @@ final class Preferences {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         appearance = (defaults.string(forKey: "appearance").flatMap(Appearance.init)) ?? .system
+        themeColour = (defaults.string(forKey: "themeColour").flatMap(ThemeColour.init)) ?? .system
         // Glass by default, because that is what the system does now.
         surfaceStyle = (defaults.string(forKey: "surfaceStyle")
             .flatMap(SurfaceStyle.init)) ?? .glass

@@ -187,12 +187,23 @@ function now and live in `ReplayCore` where the suite can reach them.
   wrong; building `DateComponents` with an out-of-range day and letting `date(from:)`
   normalise reproduces it. Pinned at three month-ends and a leap day.
 - **There is no PDF export, and that is a decision rather than an omission.** The reference
-  offers one; two attempts at it here failed in WebKit — an unattached `WKWebView` never
-  finishes loading, and once attached, `createPDF` hung with no timeout available on the
-  call itself. The reference's own PDF is capped at a single page and tells the reader to
-  use HTML for anything longer, so HTML is the format that actually carries a month. If PDF
-  returns, the route worth trying is an `NSPrintOperation` on a real window rather than
-  WebKit's PDF API. Until then the gap is stated here rather than half-built.
+  offers one; three attempts here have failed, all in WebKit:
+  1. An unattached `WKWebView` never finishes loading.
+  2. Attached, `createPDF` hung, with no timeout available on the call itself.
+  3. `printOperation(with:)` on an attached view — the route this ledger recommended
+     trying — *does* get past loading, and then paginates without end: `run()` never
+     returns and the file grows past 100 MB for a sixty-row document. Sizing the view to
+     `document.documentElement.scrollHeight` first, which is the usual fix, changes
+     nothing. `dataWithPDF(inside:)` on the same view returns an 838-byte empty page,
+     because WebKit renders out of process and the `NSView` has nothing to draw.
+
+  The reference's own PDF is capped at a single page and tells the reader to use HTML for
+  anything longer, so HTML is the format that actually carries a month. The next route
+  worth trying is not WebKit at all — a second document built as a SwiftUI view and
+  rendered through `ImageRenderer`'s CGContext — but that is a *second* report to keep in
+  step with the HTML one, which is the thing this port's one-body-one-stylesheet rule
+  exists to avoid. Until that trade is worth making, the gap is stated here rather than
+  half-built.
 - **Report text is compared with one deliberate fold.** Foundation and Node disagree on the
   space before a meridiem (U+202F vs U+0020) because they bundle different ICU versions.
   The comparison folds non-breaking spaces onto plain ones and nothing else.
@@ -212,28 +223,41 @@ function now and live in `ReplayCore` where the suite can reach them.
 Counted rather than estimated, and corrected — the previous version of this list was stale,
 still claiming 8 of 20 routes after fourteen of them had landed.
 
-**All 20 of the reference's routes exist.** What remains is depth inside them, plus the
-platform work the brief asks for and the one thing blocked on paperwork.
+**All 20 of the reference's routes exist.** What remains is the platform work the brief
+asks for, one format that has resisted three attempts, and the thing blocked on paperwork.
 
-1. **Canvas** has no synced timeline side panel and no focus mode.
-2. **A window sizing trap, twice now.** `NSHostingController` sizes its window to the SwiftUI
-   content unless told not to. The screensaver came out 1728×2888; the welcome screen grew the
-   main window's *saved* frame to 980×5580, which then reloaded as a window mostly below the
-   screen. `hosting.sizingOptions = []` on any window whose size is its own.
-4. **Search** has no saved searches, no time-range chips, and does not highlight matches.
-5. **A past day** has no story or chapter context.
-6. **PDF export** — dropped deliberately after WebKit failed twice; the route worth trying
-   next is `NSPrintOperation` on a real window.
-8. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
-    `SettingsModel` and `CollectionsModel` have none, and the tracker's live-state handling
-    is still only exercised by using the app.
-8. **The brief's platform integrations, none started**: App Intents, Widgets, Spotlight,
-    Quick Look, Handoff/`NSUserActivity`, multiple windows and tabs, Services, sound and
-    haptics.
-9. **Sign and notarise.** Blocked on a certificate rather than on code — this machine has
-    no Developer ID at all. A decision, not a task.
+1. **The brief's platform integrations, none started**: App Intents, Widgets, Spotlight,
+   Quick Look, Handoff/`NSUserActivity`, multiple windows and tabs, Services, sound and
+   haptics. Two of these — Widgets and App Intents — need extension targets that
+   SwiftPM plus a hand-rolled `make-app.sh` cannot produce, so they are a build-system
+   change before they are a feature.
+2. **PDF export** — see the divergence above. Three routes tried, all dead.
+3. **Sign and notarise.** Blocked on a certificate rather than on code — this machine has
+   no Developer ID at all. A decision, not a task.
+4. **A window sizing trap, three times now.** `NSHostingController` sizes its window to the
+   SwiftUI content unless told not to. `hosting.sizingOptions = []` on any window whose
+   size is its own. Kept here because it is the mistake most likely to be made again.
 
 Done and no longer blocking:
+- ~~Canvas had no focus mode and no synced timeline~~ — selecting a node now pulls the rest
+  of the field back, and a panel beside it lists the sessions behind that node, where a
+  session opens its day. Each node kind resolves differently and the undated moment is
+  pinned: it must find nothing rather than everything.
+- ~~A past day had no chapter context~~ — a day older than a week says which chapter it
+  belonged to and offers the days either side. Younger than that gets nothing, because a day
+  still inside its own chapter has no distance to be seen from.
+- ~~Search was well short of the reference~~ — collections, projects, reflections, a
+  date-phrase jump, span chips, saved searches and match highlighting all landed. The date
+  arithmetic is the part under test: "last month" on 31 March is 3 March in both apps.
+- ~~`ExportModel`, `SettingsModel` and `CollectionsModel` had no tests~~ — nine cases, all
+  verified by breaking the code they guard. Settings is the one that matters: it is the only
+  model that erases, and it erases on a promise.
+- ~~The app could only be tinted by the system accent~~ — a theme colour in Settings, macOS's
+  own accent palette, carried into every window. The trap was that `NSHostingController`
+  builds its `rootView` once, outside any body, so a `.tint` written there is read at
+  construction and never again; it takes a `View` (`Themed`) rather than a modifier.
+- ~~Replay Day only worked on today~~ — any past day, from the Timeline's ⋯ menu or a
+  reopened day's toolbar, with the label travelling alongside the sessions.
 - ~~The models were untestable~~ — they never were. This ledger recorded them as beyond
   reach "because they live in an executable target that no test can import", and that was
   simply false: `@testable import ReplayApp` works, and the only thing between those models

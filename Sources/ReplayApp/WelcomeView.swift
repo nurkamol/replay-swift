@@ -266,7 +266,7 @@ struct WelcomeView: View {
         HStack(spacing: Design.Space.snug) {
             ForEach(0..<2, id: \.self) { index in
                 Circle()
-                    .fill(index == page ? AnyShapeStyle(Color.accentColor) : Design.Colour.fill)
+                    .fill(index == page ? AnyShapeStyle(.tint) : Design.Colour.fill)
                     .frame(width: Design.Layout.welcomeDot, height: Design.Layout.welcomeDot)
             }
         }

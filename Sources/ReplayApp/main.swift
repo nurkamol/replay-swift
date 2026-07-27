@@ -423,13 +423,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !memories.loaded { memories.load() }
         let screen = NSScreen.main ?? window?.screen ?? NSScreen.screens.first
         let hosting = NSHostingController(
-            rootView: ScreensaverView(
-                model: model,
-                memories: memories,
-                preferences: preferences,
-                onExit: { [weak self] in self?.closeScreensaver() }
-            )
-            .preferredColorScheme(.dark)
+            rootView: Themed(preferences: preferences) {
+                ScreensaverView(
+                    model: model,
+                    memories: memories,
+                    preferences: preferences,
+                    onExit: { [weak self] in self?.closeScreensaver() }
+                )
+                .preferredColorScheme(.dark)
+            }
         )
         // Without this the SwiftUI content drives the window's size, and this content is a
         // deliberately very tall column — the first version produced a 1728x2888 window.
@@ -502,7 +504,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         let hosting = NSHostingController(
-            rootView: WhatsNewView(onClose: { [weak self] in self?.closeWhatsNew() })
+            rootView: Themed(preferences: preferences) {
+                WhatsNewView(onClose: { [weak self] in self?.closeWhatsNew() })
+            }
         )
         // Its size is its own, as everywhere else here — twice bitten.
         hosting.sizingOptions = []
@@ -587,11 +591,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         let hosting = NSHostingController(
-            rootView: SettingsView(
-                model: model, settings: settings, export: export,
-                preferences: preferences, contextual: contextual,
-                notifications: notifications, initialPane: settingsPane ?? .general
-            )
+            rootView: Themed(preferences: preferences) {
+                SettingsView(
+                    model: model, settings: settings, export: export,
+                    preferences: preferences, contextual: contextual,
+                    notifications: notifications, initialPane: settingsPane ?? .general
+                )
+            }
         )
         // The window takes its size from the pane rather than the other way round, so
         // switching tabs resizes it the way System Settings does — and a short pane is a

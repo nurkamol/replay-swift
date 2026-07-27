@@ -286,6 +286,7 @@ struct TodayInHistoryCard: View {
 /// way into any day of it. Empty squares are drawn rather than skipped: the gaps are the
 /// point as much as the fills.
 struct Heatmap: View {
+    @Environment(\.themeTint) private var tint
     let byDay: [Int64: Int]
     let onOpenDay: (Int64) -> Void
 
@@ -344,7 +345,7 @@ struct Heatmap: View {
         let weight = seconds == 0 ? 0 : Design.Colour.heatFloor
             + fraction.squareRoot() * Design.Colour.heatRange
         return RoundedRectangle(cornerRadius: Design.Radius.hair, style: .continuous)
-            .fill(seconds == 0 ? Design.Colour.fill : AnyShapeStyle(Color.accentColor.opacity(weight)))
+            .fill(seconds == 0 ? Design.Colour.fill : AnyShapeStyle(tint.opacity(weight)))
             .frame(width: Design.Layout.heatmapSquare, height: Design.Layout.heatmapSquare)
             // Days that have not happened yet are absent rather than empty.
             .opacity(day > today ? 0 : 1)

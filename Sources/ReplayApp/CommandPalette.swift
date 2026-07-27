@@ -201,6 +201,7 @@ final class CommandPaletteModel {
 
 /// The palette itself.
 struct CommandPaletteView: View {
+    @Environment(\.themeTint) private var tint
     @Bindable var palette: CommandPaletteModel
     let onRun: (CommandPaletteModel.Item.Action) -> Void
 
@@ -366,7 +367,7 @@ struct CommandPaletteView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: Design.Radius.control, style: .continuous)
-                    .fill(isChosen ? Design.Colour.paletteHighlight : AnyShapeStyle(.clear))
+                    .fill(isChosen ? AnyShapeStyle(tint.opacity(Design.Colour.paletteHighlightOpacity)) : AnyShapeStyle(.clear))
                     .padding(.horizontal, Design.Space.snug)
             )
             .contentShape(Rectangle())

@@ -219,6 +219,41 @@ private struct GeneralTab: View {
 
     private var keepsGoal: Bool { preferences.focusGoalMinutes != nil }
 
+    /// One colour, as a dot you can click.
+    ///
+    /// The chosen one is ringed rather than ticked: a checkmark drawn on a coloured disc is
+    /// unreadable on the pale ones and invisible on yellow.
+    private func swatch(_ choice: ThemeColour) -> some View {
+        let chosen = preferences.themeColour == choice
+        return Button {
+            preferences.themeColour = choice
+        } label: {
+            Circle()
+                .fill(choice.swatch)
+                .frame(width: Design.Layout.swatch, height: Design.Layout.swatch)
+                .overlay {
+                    // Only "Match System" says what it is on its face; the rest are the
+                    // colour and need no label.
+                    if choice == .system {
+                        Image(systemName: "desktopcomputer")
+                            .font(Design.Text.pillGlyph)
+                            .foregroundStyle(.white)
+                    }
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(.primary, lineWidth: Design.Layout.swatchRing)
+                        .padding(-Design.Layout.swatchRingGap)
+                        .opacity(chosen ? 1 : 0)
+                }
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(choice.label)
+        .accessibilityLabel(choice.label)
+        .accessibilityAddTraits(chosen ? [.isSelected] : [])
+    }
+
     var body: some View {
         PaneForm {
             Section {
@@ -227,6 +262,19 @@ private struct GeneralTab: View {
                 }
                 .pickerStyle(.inline)
                 .horizontalRadioGroupLayout()
+
+                // Swatches rather than a list of colour names, because the choice is the
+                // colour: reading "Pink" and picking it from a menu is a slower way to do
+                // what looking at a row of dots does at a glance. "Match System" leads,
+                // because following the accent already chosen in System Settings is the
+                // right default and the row should say so.
+                LabeledContent("Theme colour") {
+                    HStack(spacing: Design.Space.snug) {
+                        ForEach(ThemeColour.allCases) { choice in
+                            swatch(choice)
+                        }
+                    }
+                }
 
                 // Named rather than shown as a switch: three genuinely different looks, and
                 // "off" would imply glass is the app and the rest is its absence.

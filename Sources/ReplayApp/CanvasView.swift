@@ -18,6 +18,7 @@ struct CanvasView: View {
     let onOpenDay: (Int64) -> Void
 
     @Environment(\.motion) private var motion
+    @Environment(\.themeTint) private var tint
     @State private var offset = CGSize.zero
     @State private var dragged = CGSize.zero
     @State private var zoom: CGFloat = 1
@@ -407,52 +408,76 @@ struct CanvasView: View {
                         x: at.x - radius, y: at.y - radius, width: radius * 2, height: radius * 2
                     )
 
-                    // An application's own icon when there is one and there is room for it:
-                    // a field of real icons is recognisable at a glance in a way a field of
-                    // coloured dots never is. Clipped to the circle so the field keeps one
-                    // shape, and ringed so the node's *kind* survives wearing another
-                    // thing's face — a project built on Terminal must not read as Terminal.
+                    // Every node is a bubble with something inside it, and the something
+                    // has room around it. Before, an icon was clipped to the full circle:
+                    // a macOS icon is a squircle, so its corners were cut off, and a
+                    // collection's glyph ran edge to edge into its own ring. Inset, both
+                    // read as a thing *in* a bubble rather than a thing cropped by one.
+                    let inner = box.insetBy(
+                        dx: radius * Design.Layout.canvasIconInset,
+                        dy: radius * Design.Layout.canvasIconInset
+                    )
+                    // The bubble is quieter behind an icon than behind a glyph: the ring
+                    // already says what kind of thing this is, and a saturated disc under
+                    // every application read as a halo rather than as padding.
+                    let hasIcon = iconKey(for: node) != nil
+                    context.fill(
+                        Circle().path(in: box),
+                        with: .color(
+                            hasIcon
+                                ? colour(for: node).opacity(Design.Colour.canvasBubbleBehindIcon)
+                                : colour(for: node)
+                        )
+                    )
+
+                    // A field of real icons is recognisable at a glance in a way a field of
+                    // coloured dots never is. Ringed, so the node's *kind* survives wearing
+                    // another thing's face — a project built on Terminal must not read as
+                    // Terminal.
                     let icon = radius >= Design.Layout.canvasIconThreshold
-                        ? context.resolveSymbol(id: node.id)
+                        ? iconKey(for: node).flatMap { context.resolveSymbol(id: "icon:\($0)") }
                         : nil
                     if let icon {
                         context.drawLayer { layer in
-                            layer.clip(to: Circle().path(in: box))
-                            layer.draw(icon, in: box)
+                            // A squircle, not a circle: it is the shape the icon was drawn
+                            // as, and clipping a squircle to a circle is what took the
+                            // corners off in the first place.
+                            layer.clip(to: RoundedRectangle(
+                                cornerRadius: inner.width * Design.Radius.iconSquircleRatio,
+                                style: .continuous
+                            ).path(in: inner))
+                            layer.draw(icon, in: inner)
                         }
-                        context.stroke(
-                            Circle().path(in: box),
-                            with: .color(ring(for: node)),
-                            lineWidth: node.type == .app
-                                ? Design.Layout.canvasRingWidth
-                                : Design.Layout.canvasRingWidthStrong
-                        )
-                        // A project or a chapter is wearing its lead application's face, so
-                        // it says what it *is* in the corner. An application needs no badge:
-                        // its own icon is already the whole answer.
-                        if let badge = badgeSymbol(for: node),
-                           radius >= Design.Layout.canvasBadgeRadius * 2,
-                           let glyph = context.resolveSymbol(id: "badge:\(badge)") {
-                            let size = Design.Layout.canvasBadgeRadius
-                            let corner = CGPoint(
-                                x: box.maxX - size * 0.7, y: box.maxY - size * 0.7
-                            )
-                            let disc = CGRect(
-                                x: corner.x - size, y: corner.y - size,
-                                width: size * 2, height: size * 2
-                            )
-                            context.fill(Circle().path(in: disc), with: .color(ring(for: node)))
-                            context.draw(glyph, at: corner, anchor: .center)
-                        }
-                    } else {
-                        context.fill(Circle().path(in: box), with: .color(colour(for: node)))
+                    } else if node.type == .collection,
+                              radius >= Design.Layout.canvasIconThreshold,
+                              let glyph = context.resolveSymbol(id: "collection:\(node.ref)") {
                         // A collection has no application behind it, so it wears the glyph
-                        // it wears everywhere else in the app rather than a blank disc.
-                        if node.type == .collection,
-                           radius >= Design.Layout.canvasIconThreshold,
-                           let glyph = context.resolveSymbol(id: "collection:\(node.ref)") {
-                            context.draw(glyph, at: at, anchor: .center)
-                        }
+                        // it wears everywhere else in the app.
+                        context.draw(glyph, in: inner)
+                    }
+
+                    context.stroke(
+                        Circle().path(in: box),
+                        with: .color(ring(for: node)),
+                        lineWidth: node.type == .app
+                            ? Design.Layout.canvasRingWidth
+                            : Design.Layout.canvasRingWidthStrong
+                    )
+
+                    // A project or a chapter is wearing its lead application's face, so it
+                    // says what it *is* in the corner. An application needs no badge: its
+                    // own icon is already the whole answer.
+                    if icon != nil, let badge = badgeSymbol(for: node),
+                       radius >= Design.Layout.canvasBadgeRadius * 2,
+                       let glyph = context.resolveSymbol(id: "badge:\(badge)") {
+                        let size = Design.Layout.canvasBadgeRadius
+                        let corner = CGPoint(x: box.maxX - size * 0.7, y: box.maxY - size * 0.7)
+                        let disc = CGRect(
+                            x: corner.x - size, y: corner.y - size,
+                            width: size * 2, height: size * 2
+                        )
+                        context.fill(Circle().path(in: disc), with: .color(ring(for: node)))
+                        context.draw(glyph, at: corner, anchor: .center)
                     }
 
                     if node.id == selected?.id {
@@ -509,13 +534,13 @@ struct CanvasView: View {
                 // Declared once at a fixed size and resolved per frame from the cache, so
                 // panning does not re-rasterise anything. Only nodes that actually have an
                 // application behind them appear here; the rest fall back to a dot.
-                ForEach(canvas.graph.nodes.filter(hasIcon), id: \.id) { node in
+                ForEach(iconKeys, id: \.self) { key in
                     AppIcon(
-                        bundleID: node.bundleID,
-                        appPath: node.appPath,
+                        bundleID: iconSources[key]?.bundleID,
+                        appPath: iconSources[key]?.appPath,
                         size: Design.Layout.canvasSymbolSize
                     )
-                    .tag(node.id)
+                    .tag("icon:\(key)")
                 }
                 // A collection's own glyph, the same one it wears on the Collections
                 // surface, so the two read as the same thing.
@@ -675,9 +700,26 @@ struct CanvasView: View {
 
     /// Whether this node has an application to show. A collection is a kind of work rather
     /// than a thing you can open, and a moment only has one when it is about an application.
-    private func hasIcon(_ node: CanvasGraph.Node) -> Bool {
-        node.appPath != nil || node.bundleID != nil
+    /// What identifies a node's icon, rather than the node.
+    ///
+    /// Several nodes wear the same face — an application, the projects built on it, the
+    /// chapters those belong to. Rasterising per *node* drew the same icon a dozen times at
+    /// full size; keyed on the icon there is one of each.
+    private func iconKey(for node: CanvasGraph.Node) -> String? {
+        node.bundleID ?? node.appPath
     }
+
+    /// Every distinct icon in the field, and somewhere to resolve each from.
+    private var iconSources: [String: (bundleID: String?, appPath: String?)] {
+        var found: [String: (bundleID: String?, appPath: String?)] = [:]
+        for node in canvas.graph.nodes {
+            guard let key = iconKey(for: node), found[key] == nil else { continue }
+            found[key] = (node.bundleID, node.appPath)
+        }
+        return found
+    }
+
+    private var iconKeys: [String] { iconSources.keys.sorted() }
 
     /// What a node that borrows another thing's icon puts in its corner.
     private func badgeSymbol(for node: CanvasGraph.Node) -> String? {
@@ -694,17 +736,17 @@ struct CanvasView: View {
     private func ring(for node: CanvasGraph.Node) -> Color {
         switch node.type {
         case .app: .secondary.opacity(Design.Colour.canvasRingQuiet)
-        case .project: .accentColor
+        case .project: tint
         case .chapter: .orange
         case .moment: .yellow
-        case .collection: .accentColor
+        case .collection: tint
         }
     }
 
     private func colour(for node: CanvasGraph.Node) -> Color {
         switch node.type {
-        case .collection: .accentColor
-        case .project: .accentColor.opacity(Design.Colour.canvasProjectOpacity)
+        case .collection: tint
+        case .project: tint.opacity(Design.Colour.canvasProjectOpacity)
         case .chapter: .orange.opacity(Design.Colour.canvasChapterOpacity)
         case .moment: .yellow.opacity(Design.Colour.canvasMomentOpacity)
         case .app: .secondary.opacity(Design.Colour.canvasAppOpacity)

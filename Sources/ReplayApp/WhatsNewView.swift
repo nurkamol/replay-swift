@@ -8,6 +8,7 @@ import SwiftUI
 /// current version is marked so it is obvious where you are.
 struct WhatsNewView: View {
     let onClose: () -> Void
+    @Environment(\.themeTint) private var tint
 
     @Environment(\.motion) private var motion
 
@@ -49,9 +50,7 @@ struct WhatsNewView: View {
                                     .background(
                                         Capsule().fill(
                                             release.version == current
-                                                ? AnyShapeStyle(Color.accentColor.opacity(
-                                                    Design.Colour.markedOpacity
-                                                ))
+                                                ? AnyShapeStyle(tint.opacity(Design.Colour.markedOpacity))
                                                 : Design.Colour.fill
                                         )
                                     )

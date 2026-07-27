@@ -320,6 +320,9 @@ enum Design {
         static let canvasChapterOpacity: Double = 0.70
         static let canvasMomentOpacity: Double = 0.80
         static let canvasAppOpacity: Double = 0.55
+        /// How far the bubble's own colour is pulled back when an icon sits on it. Enough
+        /// to tint the padding, not enough to become a halo.
+        static let canvasBubbleBehindIcon: Double = 0.28
         /// A ring around an icon. An application wears a quiet one — its own icon already
         /// says what it is — and everything built on top of one wears a solid ring, so a
         /// project is never mistaken for the app whose icon it borrows.
@@ -332,7 +335,8 @@ enum Design {
         /// The row Return would activate. The accent rather than a grey fill: on a material
         /// panel a quaternary wash is almost invisible, and the whole point of the row is
         /// that you can see which one it is without looking for it.
-        static let paletteHighlight = AnyShapeStyle(Color.accentColor.opacity(0.30))
+        /// How far the tint is pulled back for the row Return would activate.
+        static let paletteHighlightOpacity: Double = 0.30
         /// How much of the sky a card carries. Enough to notice across a day, not enough to
         /// compete with what is written on it.
         static let skyOnCard: Double = 0.55
@@ -739,7 +743,24 @@ enum Design {
         static let canvasIconThreshold: CGFloat = 8
         /// The size icons are rasterised at, once. Large enough that the deepest zoom is
         /// still downscaling rather than stretching.
-        static let canvasSymbolSize: CGFloat = 96
+        /// How much of a node's disc is padding around what is in it, as a fraction of its
+        /// radius. Every node is a bubble *containing* something rather than a circle cut
+        /// out of it — which is what a full-bleed clip did to a squircle app icon and to a
+        /// collection's glyph, both of which ran into their own ring.
+        /// A colour choice in Settings, and the ring that marks the chosen one.
+        static let swatch: CGFloat = 20
+        static let swatchRing: CGFloat = 1.5
+        static let swatchRingGap: CGFloat = 3
+
+        static let canvasIconInset: CGFloat = 0.20
+        /// The size each icon is rasterised at for the field.
+        ///
+        /// Large enough that the biggest node at the deepest zoom is still scaling an image
+        /// *down*: `canvasMaxRadius × 2 × canvasMaxZoom`. At 96 it was upscaling roughly
+        /// twofold once anyone zoomed in, which is exactly when the icon is worth looking
+        /// at. Affordable only because the symbols are keyed on the icon rather than on the
+        /// node — a dozen nodes wearing one application's face share one raster.
+        static let canvasSymbolSize: CGFloat = 204
         /// A badge on a node that wears another thing's icon, and the glyph inside it.
         static let canvasBadgeRadius: CGFloat = 7
         static let canvasBadgeGlyph: CGFloat = 8
@@ -960,6 +981,14 @@ enum SurfaceStyle: String, CaseIterable, Identifiable, Sendable {
 extension EnvironmentValues {
     /// Set once at the root from the preference, so every card reads the same answer.
     @Entry var surfaceStyle: SurfaceStyle = .glass
+
+    /// The app's tint, resolved to a concrete colour.
+    ///
+    /// Almost everything reads the tint as a *style* (`.tint`), which `.tint(_:)` at the
+    /// root already carries. This exists for the handful of places that cannot: a `Canvas`
+    /// fills with a `Color`, and `AnyShapeStyle(Color.accentColor)` is baked at the point it
+    /// is written rather than resolved from the environment.
+    @Entry var themeTint: Color = .accentColor
 }
 
 private struct SettlesIn: ViewModifier {
@@ -983,5 +1012,27 @@ private struct SettlesIn: ViewModifier {
                     .opacity(reduced ? 1 : (phase.isIdentity ? 1 : 0.6))
                     .scaleEffect(reduced ? 1 : (phase.isIdentity ? 1 : 0.985))
             }
+    }
+}
+
+// ── the theme, on every window ────────────────────────────────────────────────
+
+/// Wraps a window's content so it follows the chosen appearance and tint.
+///
+/// A `View` rather than a modifier, and that distinction is the whole point. Each auxiliary
+/// window is its own `NSHostingController` whose `rootView` is built once, outside any body —
+/// so `.tint(preferences.themeColour.colour)` written there reads the preference at
+/// construction and never again. Picking a colour ringed the new swatch and changed nothing.
+/// Inside a body, the same read is an observation, and every window follows.
+@MainActor
+struct Themed<Content: View>: View {
+    let preferences: Preferences
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content
+            .tint(preferences.themeColour.colour)
+            .environment(\.themeTint, preferences.themeColour.resolved)
+            .environment(\.surfaceStyle, preferences.surfaceStyle)
     }
 }

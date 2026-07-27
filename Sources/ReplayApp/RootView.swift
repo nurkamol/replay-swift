@@ -214,6 +214,10 @@ struct RootView: View {
                 reload(new)
             }
             .preferredColorScheme(preferences.appearance.colorScheme)
+            // One tint for the whole window. Every control and every `.tint` style follows
+            // this; `themeTint` is the same colour for the few places that need it concrete.
+            .tint(preferences.themeColour.colour)
+            .environment(\.themeTint, preferences.themeColour.resolved)
             .environment(\.surfaceStyle, preferences.surfaceStyle)
     }
 
@@ -338,7 +342,15 @@ struct RootView: View {
     /// declared in.
     private func row(_ item: Navigation.Surface) -> some View {
         NavigationLink(value: item) {
-            Label(item.rawValue, systemImage: item.symbol)
+            // The icon is tinted explicitly rather than left to the `Label`'s default. A
+            // sidebar glyph is drawn with AppKit's `controlAccentColor`, which a SwiftUI
+            // `.tint` does not reach — so with a theme colour chosen, every other control
+            // in the window followed it and the sidebar alone stayed the system blue.
+            Label {
+                Text(item.rawValue)
+            } icon: {
+                Image(systemName: item.symbol).foregroundStyle(.tint)
+            }
         }
         .accessibilityHint(item.purpose)
     }

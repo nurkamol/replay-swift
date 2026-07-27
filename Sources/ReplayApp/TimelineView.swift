@@ -168,7 +168,7 @@ struct TimelineView: View {
                 .padding(.horizontal, Design.Pill.horizontal)
                 .padding(.vertical, Design.Pill.vertical)
                 .background(
-                    Capsule().fill(on ? AnyShapeStyle(Color.accentColor) : Design.Colour.surface)
+                    Capsule().fill(on ? AnyShapeStyle(.tint) : Design.Colour.surface)
                 )
                 .overlay(Capsule().strokeBorder(on ? AnyShapeStyle(.clear) : Design.Colour.border))
         }

@@ -178,7 +178,7 @@ struct ReplayDayView: View {
                 ForEach(sessions, id: \.startedAt) { session in
                     Capsule()
                         .fill(session.startedAt == current?.startedAt
-                              ? AnyShapeStyle(Color.accentColor)
+                              ? AnyShapeStyle(.tint)
                               : Design.Colour.fillStrong)
                         .frame(
                             width: Design.Layout.filmstripMark,
