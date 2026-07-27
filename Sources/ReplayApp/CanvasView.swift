@@ -84,6 +84,15 @@ struct CanvasView: View {
     /// that knows, so it has to be told.
     @State private var pointerAt: CGPoint?
     @State private var fieldCentre: CGPoint = .zero
+    /// The node under the pointer.
+    ///
+    /// The reference has this and the port did not: a field of a hundred things where none
+    /// of them reacts to being pointed at gives you no way to tell what is a target and what
+    /// is scenery, and no way to read a crowded node's name without clicking it. Upstream a
+    /// hovered node is *active* — the same state as the focused one and the tour's current
+    /// stop — so it wears a stronger ring, a brighter bubble, and keeps its label even where
+    /// collision would have dropped it.
+    @State private var hovered: String?
 
     /// How far the pointer sits from the middle of the field. Zero when it is not over the
     /// field at all, which makes an anchored zoom fall back to a centred one.
@@ -706,8 +715,17 @@ struct CanvasView: View {
                 if case .active(let location) = phase {
                     pointerInField = true
                     pointerAt = location
+                    // Not while dragging: the field is moving under the pointer then, and a
+                    // node lighting up because it happened to slide beneath it is noise.
+                    let under = dragging ? nil : node(at: location, centre: fieldCentre)?.id
+                    if under != hovered {
+                        withAnimation(motion.animation(Design.Motion.inPlace)) { hovered = under }
+                    }
                 } else {
                     pointerInField = false
+                    if hovered != nil {
+                        withAnimation(motion.animation(Design.Motion.inPlace)) { hovered = nil }
+                    }
                     // Deliberately kept: a pinch begins after the cursor has stopped moving,
                     // and on a trackpad it does not move during one. The last place it was
                     // is the anchor the gesture is aimed at.
@@ -873,11 +891,22 @@ struct CanvasView: View {
                     // already says what kind of thing this is, and a saturated disc under
                     // every application read as a halo rather than as padding.
                     let hasIcon = iconKey(for: node) != nil
+                    // Active is the reference's one word for three things: the node you
+                    // focused, the stop a story is resting on, and the node under the
+                    // pointer. They read alike because they mean alike — this is the one
+                    // being talked about.
+                    let isActive = node.id == selected?.id
+                        || node.id == tourStop
+                        || node.id == hovered
                     context.fill(
                         Circle().path(in: box),
                         with: .color(
                             hasIcon
-                                ? colour(for: node).opacity(Design.Colour.canvasBubbleBehindIcon)
+                                ? colour(for: node).opacity(
+                                    isActive
+                                        ? Design.Colour.canvasBubbleActive
+                                        : Design.Colour.canvasBubbleBehindIcon
+                                )
                                 : colour(for: node)
                         )
                     )
@@ -911,7 +940,10 @@ struct CanvasView: View {
                     context.stroke(
                         Circle().path(in: box),
                         with: .color(ring(for: node)),
-                        lineWidth: node.type == .app
+                        // An active node wears the heavier ring whatever it is. The
+                        // reference thickens by half and this port already has the two
+                        // widths in that ratio, so the strong one *is* the active one.
+                        lineWidth: node.type == .app && !isActive
                             ? Design.Layout.canvasRingWidth
                             : Design.Layout.canvasRingWidthStrong
                     )
@@ -974,10 +1006,15 @@ struct CanvasView: View {
                 // the *smaller* node's name is the choice a person would make. The selected
                 // node always keeps its own, whatever it collides with.
                 var placed: [CGRect] = []
+                // Whatever is being talked about goes first, so it claims its name before
+                // anything else can crowd it out.
+                let speaking: (CanvasGraph.Node) -> Bool = {
+                    $0.id == selected?.id || $0.id == hovered || $0.id == tourStop
+                }
                 let ordered = canvas.graph.nodes
-                    .filter { $0.id == selected?.id }
+                    .filter(speaking)
                     + canvas.graph.nodes
-                        .filter { $0.id != selected?.id }
+                        .filter { !speaking($0) }
                         .sorted { self.radius(for: $0) > self.radius(for: $1) }
                 for node in ordered {
                     guard let point = canvas.positions[node.id] else { continue }
@@ -998,8 +1035,12 @@ struct CanvasView: View {
                             dx: -Design.Layout.canvasLabelPadding,
                             dy: -Design.Layout.canvasLabelPadding
                         )
-                    let isSelected = node.id == selected?.id
-                    if !isSelected && placed.contains(where: { $0.intersects(box) }) { continue }
+                    // An active node always keeps its label, which is upstream's
+                    // `labelVisible` rule and the whole reason hover is worth having: it is
+                    // how you read a crowded node's name without clicking it.
+                    if !speaking(node) && placed.contains(where: { $0.intersects(box) }) {
+                        continue
+                    }
                     placed.append(box)
                     context.opacity = emphasis(node.id)
                     context.draw(text, at: origin, anchor: .topLeading)

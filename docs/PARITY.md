@@ -75,6 +75,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Today | done | headline, top app, a morning briefing before lunchtime, a moment quoted as one line, a contextual memory when there is one worth showing, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
 | Canvas | done | the graph drawn as a field of real application icons, with pan that keeps gliding after a flick, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
 | Replay Story | done | the camera travels through a memory and the heaviest five things around it, dwelling on each and coming home — narration by motion, no words. The path is `tourPath`, ordered as the reference orders it and tie-broken explicitly; the camera's numbers are contract-checked. The line drawing itself between stops, the breath each stop lets out, and the lean toward the next one are **this port's own** — see the divergences |
+| A node under the pointer | done | hover makes a node *active*, which upstream is one state covering three things — the focused node, a story's current stop, and the node being pointed at. Stronger ring, brighter bubble, and it keeps its label where collision would have dropped it, which is how a crowded node's name gets read without clicking it |
 | Clear focus | done | a chip opposite the card that drops the selection and lets the field come forward again, Escape bound to it. The reference has the same control in the same corner |
 | Command palette | done | ⌘K over surfaces, applications, projects, recent days and the actions that are not places. **The matcher has no reference counterpart** — upstream leans on a JavaScript library's scoring — so it is the one behaviour here that no fixture covers |
 | Screensaver | done | a slow drift through the day — the memory, today's sessions, the applications you keep. Borderless, on the screen Replay is on, Esc to leave. Not auto-started on a timer, unlike the reference |
@@ -259,6 +260,13 @@ the picture by 0.012 mean brightness — real in a diff, invisible to a person.
   and `paletteOpen` silently did not. It is mirrored into `@State` now. **Any long-lived
   closure in a SwiftUI view is suspect here**: it sees `@State` live and everything else
   frozen, and the failure is invisible — the guard is simply always the old answer.
+- **Canvas nodes have hover but deliberately no press.** An animation review flagged that
+  nodes never answered being pointed at *or* pressed, and Apple's guidance wants feedback on
+  pointer-down. Only half of that is parity: upstream binds `onPointerEnter` and makes a
+  hovered node active, and its `onPointerDown` does nothing but stop propagation. So hover is
+  ported and press is not. It leaves the app internally uneven — every row presses, no node
+  does — and that unevenness is the reference's, which is the tie-breaker CLAUDE.md names. If
+  a node should press, it should press in the Glaze app first.
 - **Scroll-zoom pinned the wrong point, and the reference says which.** `zoom(by:)` scaled
   the offset uniformly, which keeps the *view centre* still. That is right for the toolbar
   buttons — upstream's `zoomBy` does exactly the same, because a press of a button is not

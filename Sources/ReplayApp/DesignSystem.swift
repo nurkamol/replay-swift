@@ -412,6 +412,10 @@ enum Design {
         /// How far the bubble's own colour is pulled back when an icon sits on it. Enough
         /// to tint the padding, not enough to become a halo.
         static let canvasBubbleBehindIcon: Double = 0.28
+        /// The same bubble with the pointer on it. The reference lifts an active node's fill
+        /// from 0.09 to 0.16 — its own numbers describe a differently-composed bubble, so
+        /// what ports is the ratio rather than the value.
+        static let canvasBubbleActive: Double = 0.50
         /// The line the camera is travelling along during a Replay Story, and the breath the
         /// stop it lands on lets out. Brighter than an ordinary edge because for a second
         /// and a half it is the only thing being said.
