@@ -116,7 +116,12 @@ behaviour first and constants second, and generate anything that matches-by-luck
       `spec/narrative-copy.json`; 22 checks. Also: Story's rituals section vanished when
       empty rather than explaining itself — the same mistake Memories made — and the hub
       cards arrived as a block rather than one at a time.
-- [ ] Museum · My Story · App history · Relationships
+- [x] **Museum · My Story · App history · Relationships** — audited 2026-07-28. Twelve more
+      checks. **My Story was missing a whole section**: the reference has Years, *Growth* and
+      Favourite applications, and this port had two of the three — found by diffing the
+      section labels, not by reading the code. It also had no subtitle at all. Four of the
+      museum's five rooms were renamed, and both "nothing here" states said "the kept
+      history" where the reference names the window: thirty days.
 - [ ] Replay Day · Screensaver · Welcome
 
 ## 3 · Waiting on a decision, not on work

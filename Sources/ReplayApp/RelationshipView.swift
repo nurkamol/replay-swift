@@ -147,9 +147,9 @@ struct RelationshipView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("They have not met", systemImage: "arrow.left.arrow.right")
+            Label(NarrativeCopy.relationshipEmptyTitle, systemImage: "arrow.left.arrow.right")
         } description: {
-            Text("These two applications have not appeared in the same session in the kept history.")
+            Text(NarrativeCopy.relationshipEmptyDetail)
         }
     }
 }

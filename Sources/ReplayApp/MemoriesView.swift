@@ -48,32 +48,9 @@ final class MemoriesModel {
             moments: moments, summaries: all, bookmarkStarts: bookmarks, now: now
         )
 
-        byDay = Dictionary(
-            all.map { ($0.dayStart, $0.activeSeconds) },
-            uniquingKeysWith: { first, _ in first }
-        )
-
-        // Today, from the sessions rather than from a headline.
-        //
-        // Headlines are written for days that have finished, so the day you are actually
-        // looking at has none and its square read as an idle day — ringed, but empty, on a
-        // morning you had already spent three hours in. The ring said "this is today" and
-        // the fill said "you did nothing", and the fill is the part people read.
-        //
-        // Derived through `computeDaySummary` over the same events Today counts, and with
-        // the same "began today" filter, so the square and the headline at the top of Today
-        // can never disagree. It costs one more query on a screen that already makes four.
-        let todayStart = startOfLocalDay(now)
-        let todayEvents = ((try? model.store.sessions(
-            from: todayStart, to: todayStart + dayMillis
-        )) ?? []).filter { $0.startedAt >= todayStart }
-        let live = computeDaySummary(
-            events: todayEvents,
-            timeline: buildTimeline(todayEvents, now: now),
-            dayStart: todayStart,
-            now: now
-        ).activeSeconds
-        if live > 0 { byDay[todayStart] = live }
+        // Headlines plus today from the sessions — see `AppModel.activityByDay`. Shared
+        // with My Story's growth grid, which is the other place a year of days is drawn.
+        byDay = model.activityByDay()
 
         loaded = true
     }

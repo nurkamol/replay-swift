@@ -308,9 +308,29 @@ public enum ParityKit {
             public let emptyDetail: String
             public let footnote: String
         }
+        public struct Museum: Decodable, Sendable {
+            public let subtitle: String
+            public let sections: [String]
+            public let emptyTitle: String
+            public let emptyDetail: String
+        }
+        public struct Legacy: Decodable, Sendable {
+            public let subtitle: String
+            public let sections: [String]
+            public let emptyTitle: String
+            public let emptyDetail: String
+        }
+        public struct Empty: Decodable, Sendable {
+            public let emptyTitle: String
+            public let emptyDetail: String
+        }
         public let story: Story
         public let chapters: Chapters
         public let autobiography: Autobiography
+        public let museum: Museum
+        public let legacy: Legacy
+        public let appHistory: Empty
+        public let relationship: Empty
     }
 
     /// Day grouping and report text, run against the real Glaze code under a pinned clock,
@@ -1252,6 +1272,49 @@ public enum ParityKit {
         equal(
             gN, "where every sentence comes from",
             NarrativeCopy.autobiographyFootnote, narrative.autobiography.footnote
+        )
+
+        equal(gN, "Museum's subtitle", NarrativeCopy.museumSubtitle, narrative.museum.subtitle)
+        equal(
+            gN, "the museum's five rooms",
+            NarrativeCopy.museumSections, narrative.museum.sections
+        )
+        equal(
+            gN, "a museum with nothing in it",
+            NarrativeCopy.museumEmptyTitle, narrative.museum.emptyTitle
+        )
+        equal(
+            gN, "and what will fill it",
+            NarrativeCopy.museumEmptyDetail, narrative.museum.emptyDetail
+        )
+        equal(gN, "My Story's subtitle", NarrativeCopy.legacySubtitle, narrative.legacy.subtitle)
+        equal(
+            gN, "My Story's three sections",
+            NarrativeCopy.legacySections, narrative.legacy.sections
+        )
+        equal(
+            gN, "My Story before there is one",
+            NarrativeCopy.legacyEmptyTitle, narrative.legacy.emptyTitle
+        )
+        equal(
+            gN, "and what it will become",
+            NarrativeCopy.legacyEmptyDetail, narrative.legacy.emptyDetail
+        )
+        equal(
+            gN, "an application with no recent history",
+            NarrativeCopy.appHistoryEmptyTitle, narrative.appHistory.emptyTitle
+        )
+        equal(
+            gN, "and the window that explains it",
+            NarrativeCopy.appHistoryEmptyDetail, narrative.appHistory.emptyDetail
+        )
+        equal(
+            gN, "two applications that never met",
+            NarrativeCopy.relationshipEmptyTitle, narrative.relationship.emptyTitle
+        )
+        equal(
+            gN, "and the window that explains that",
+            NarrativeCopy.relationshipEmptyDetail, narrative.relationship.emptyDetail
         )
 
         // A week begins on Monday, everywhere in the app.

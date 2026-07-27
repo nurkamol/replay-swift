@@ -26,6 +26,36 @@
     "ritualsEmptyTitle": "Your rituals will appear here",
     "ritualsEmptyDetail": "As the days repeat, Replay notices the app you usually open first and the ones that tend to lead each part of your day."
   },
+  "museum": {
+    "subtitle": "A quiet walk through the best of your history — the memories, the deep focus, the things you kept.",
+    "sections": [
+      "Milestones",
+      "Greatest focus",
+      "Bookmarks",
+      "Reflections",
+      "Projects that mattered"
+    ],
+    "emptyTitle": "The museum is still filling",
+    "emptyDetail": "As you work, bookmark a session, and jot a reflection, the most meaningful pieces of your history gather here."
+  },
+  "legacy": {
+    "subtitle": "The whole of it, at a glance — how long you've been building this memory, and everything it holds.",
+    "sections": [
+      "Years",
+      "Growth",
+      "Favourite applications"
+    ],
+    "emptyTitle": "Your story is just beginning",
+    "emptyDetail": "As the days, chapters, and projects accumulate, this becomes a lasting archive of your digital history."
+  },
+  "appHistory": {
+    "emptyTitle": "No recent history",
+    "emptyDetail": "Replay hasn’t recorded this application in the last 30 days."
+  },
+  "relationship": {
+    "emptyTitle": "No shared history",
+    "emptyDetail": "These two apps haven’t been used together in the last 30 days."
+  },
   "chapters": {
     "subtitle": "Your history, divided into the eras it naturally fell into — and yours to name.",
     "emptyTitle": "No chapters yet",

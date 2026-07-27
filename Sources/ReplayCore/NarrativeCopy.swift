@@ -68,4 +68,44 @@ public enum NarrativeCopy {
     /// doing the telling, and this answers it.
     public static let autobiographyFootnote =
         "Every sentence is drawn only from your own local history. Nothing is invented."
+
+    // MARK: - Museum
+
+    public static let museumSubtitle =
+        "A quiet walk through the best of your history — the memories, the deep focus, the "
+        + "things you kept."
+    /// The five rooms, in order. Four of the five had been renamed in this port — "Things
+    /// you wrote" for *Reflections*, "The work that took the most" for *Projects that
+    /// mattered* — which reads as the same museum with different signage, and is not.
+    public static let museumSections = [
+        "Milestones", "Greatest focus", "Bookmarks", "Reflections", "Projects that mattered",
+    ]
+    public static let museumEmptyTitle = "The museum is still filling"
+    public static let museumEmptyDetail =
+        "As you work, bookmark a session, and jot a reflection, the most meaningful pieces "
+        + "of your history gather here."
+
+    // MARK: - My Story
+
+    public static let legacySubtitle =
+        "The whole of it, at a glance — how long you've been building this memory, and "
+        + "everything it holds."
+    /// Three sections. This port had two: **Growth** — the heatmap over the whole archive —
+    /// was missing outright, which is why the audit found it.
+    public static let legacySections = ["Years", "Growth", "Favourite applications"]
+    public static let legacyEmptyTitle = "Your story is just beginning"
+    public static let legacyEmptyDetail =
+        "As the days, chapters, and projects accumulate, this becomes a lasting archive of "
+        + "your digital history."
+
+    // MARK: - An application's own page, and a pair's
+
+    /// Both of these name the window — thirty days — rather than saying "the kept history".
+    /// The window is the answer to "why is this empty", and a reader cannot infer it.
+    public static let appHistoryEmptyTitle = "No recent history"
+    public static let appHistoryEmptyDetail =
+        "Replay hasn\u{2019}t recorded this application in the last 30 days."
+    public static let relationshipEmptyTitle = "No shared history"
+    public static let relationshipEmptyDetail =
+        "These two apps haven\u{2019}t been used together in the last 30 days."
 }

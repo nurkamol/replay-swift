@@ -8,12 +8,15 @@ import SwiftUI
 /// what makes it an archive rather than a view of the last month: the raw activity behind
 /// most of these days was pruned long ago, and the headline is what outlives it.
 struct LegacyView: View {
+    let model: AppModel
     let story: StoryModel
     let projects: ProjectsModel
     let onOpenApp: (String) -> Void
     let onOpenAutobiography: () -> Void
+    let onOpenDay: (Int64) -> Void
 
     @State private var legacy: Legacy?
+    @State private var byDay: [Int64: Int] = [:]
 
     var body: some View {
         ScrollView {
@@ -22,6 +25,7 @@ struct LegacyView: View {
                     headline(legacy)
                     tiles(legacy)
                     if !legacy.years.isEmpty { years(legacy) }
+                    if !byDay.isEmpty { growth }
                     if !legacy.favourites.isEmpty { favourites(legacy) }
                     Text("Everything here was recorded on this Mac and has never left it.")
                         .font(Design.Text.detail)
@@ -34,8 +38,10 @@ struct LegacyView: View {
         }
         .background(.background)
         .navigationTitle("My Story")
+        .navigationSubtitle(NarrativeCopy.legacySubtitle)
         .onAppear {
             if !story.loaded { story.load() }
+            byDay = model.activityByDay()
             if !projects.loaded { projects.load() }
             legacy = story.legacy()
         }
@@ -94,7 +100,7 @@ struct LegacyView: View {
 
     private func years(_ legacy: Legacy) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Years").sectionLabelStyle()
+            Text(NarrativeCopy.legacySections[0]).sectionLabelStyle()
             FlowRow(spacing: Design.Space.inline) {
                 ForEach(legacy.years, id: \.self) { year in
                     Button(action: onOpenAutobiography) {
@@ -118,7 +124,7 @@ struct LegacyView: View {
 
     private func favourites(_ legacy: Legacy) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Favourite applications").sectionLabelStyle()
+            Text(NarrativeCopy.legacySections[2]).sectionLabelStyle()
             VStack(spacing: 0) {
                 ForEach(legacy.favourites, id: \.key) { app in
                     Button {
@@ -158,14 +164,26 @@ struct LegacyView: View {
         .settlesIn(3)
     }
 
+    /// The archive as a grid of days.
+    ///
+    /// The reference has had this here all along and this port did not — found by comparing
+    /// its three section labels against our two. It belongs on this page more than anywhere
+    /// else: My Story is the surface *about* how long the record is, and a year of squares
+    /// says that in one look where a figure only asserts it.
+    private var growth: some View {
+        VStack(alignment: .leading, spacing: Design.Space.row) {
+            Text(NarrativeCopy.legacySections[1]).sectionLabelStyle()
+            Heatmap(byDay: byDay, onOpenDay: onOpenDay)
+                .padding(Design.Space.section)
+                .card(border: Design.Colour.borderQuiet)
+        }
+    }
+
     private var empty: some View {
         ContentUnavailableView {
-            Label("Your story is just beginning", systemImage: "archivebox")
+            Label(NarrativeCopy.legacyEmptyTitle, systemImage: "archivebox")
         } description: {
-            Text(
-                "As the days, chapters and projects accumulate, this becomes a lasting "
-                    + "archive of your own history."
-            )
+            Text(NarrativeCopy.legacyEmptyDetail)
         }
     }
 }

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 904 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 916 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -188,6 +188,25 @@ document starts lying, and this one has done it twice already — see the two no
   missing entirely, and they are the two sentences that say the feature is descriptive rather
   than invented. Generated into `spec/narrative-copy.json` and checked character for
   character. Found auditing the Story cluster on 2026-07-28.
+- **My Story was missing a whole section, and nobody had noticed.** The reference's page has
+  three — Years, **Growth**, Favourite applications — and this port had two. Growth is the
+  year grid over the whole archive, and it belongs on that page more than anywhere else: My
+  Story is the surface *about* how long the record is, and a year of squares says that in one
+  look where a figure only asserts it. Found by diffing the section labels against ours, not
+  by reading the code — which is the argument for contracting labels and not only prose. The
+  page also had no subtitle at all.
+- **Four of the museum's five rooms had been renamed.** "Things you wrote" for *Reflections*,
+  "The work that took the most" for *Projects that mattered*, "Your deepest focus" for
+  *Greatest focus*, "The ones you kept" for *Bookmarks*. Only Milestones matched. The same
+  museum with different signage, which is not the same museum.
+- **Two empty states said "the kept history" where the reference says "the last 30 days".**
+  An application's page and a pair's. The window is the answer to "why is this empty", and a
+  reader cannot infer it from a phrase — so this port was withholding the one fact the
+  sentence exists to give.
+- **Two heatmaps were about to disagree about today.** Memories fixed the missing live day
+  inline; My Story's new grid would have shipped reading headlines alone and showing today as
+  idle. Both go through `AppModel.activityByDay()` now — one definition, and the same
+  `computeDaySummary` the headline at the top of Today uses, so no grid can contradict it.
 - **Story's rituals section vanished when it was empty.** Same shape as the Memories finding
   a few hours earlier: emptiness handled by omission, so the only person who ever sees that
   state — someone new — got three hub cards and no hint that a fourth thing was coming. The

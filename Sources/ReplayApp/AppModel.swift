@@ -122,6 +122,34 @@ final class AppModel {
     ///
     /// Applied live rather than at the next launch: excluding an app is a privacy action,
     /// and one that only takes effect after a restart is not one.
+    /// Active seconds per day for a heatmap, headlines plus today from the sessions.
+    ///
+    /// One definition because there are two grids — Memories' "Browse by date" and My
+    /// Story's "Growth" — and they were about to disagree: headlines are written for days
+    /// that have finished, so a grid reading only headlines shows today as an idle day.
+    /// Memories had a fix for that inline and My Story would have shipped without one.
+    ///
+    /// Today goes through `computeDaySummary` over the same events Today counts, with the
+    /// same "began today" filter, so no grid can disagree with the headline at the top of
+    /// Today either.
+    func activityByDay() -> [Int64: Int] {
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        let todayStart = startOfLocalDay(now)
+        let summaries = (try? store.dailySummaries(from: 0, to: todayStart + dayMillis)) ?? []
+        var byDay = Dictionary(
+            summaries.map { ($0.dayStart, $0.activeSeconds) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let events = ((try? store.sessions(from: todayStart, to: todayStart + dayMillis)) ?? [])
+            .filter { $0.startedAt >= todayStart }
+        let live = computeDaySummary(
+            events: events, timeline: buildTimeline(events, now: now),
+            dayStart: todayStart, now: now
+        ).activeSeconds
+        if live > 0 { byDay[todayStart] = live }
+        return byDay
+    }
+
     func applyExclusions(_ bundleIDs: Set<String>) {
         tracker?.excludedBundleIDs = bundleIDs
     }

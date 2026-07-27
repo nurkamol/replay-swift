@@ -828,6 +828,45 @@ const narrativeCopy = (() => {
       ritualsEmptyDetail: prose(story, "story-view.tsx",
         /(As the days repeat,[\s\S]*?)<\/Text>/, "the rituals empty detail"),
     },
+    museum: (() => {
+      const src = view("museum-view.tsx");
+      const labels = [...src.matchAll(/<SectionLabel>([^<]+)<\/SectionLabel>/g)]
+        .map((m) => m[1].trim());
+      if (labels.length !== 5) {
+        problems.push(`museum-view.tsx: expected 5 section labels, found ${labels.length}`);
+      }
+      return {
+        subtitle: attr(src, "museum-view.tsx", "subtitle", "the page subtitle"),
+        sections: labels,
+        // Index 2: the ScrollArea's title and the PageHeader's are both "Museum".
+        emptyTitle: attr(src, "museum-view.tsx", "title", "the empty title", 2),
+        emptyDetail: attr(src, "museum-view.tsx", "description", "the empty detail"),
+      };
+    })(),
+    legacy: (() => {
+      const src = view("legacy-view.tsx");
+      return {
+        subtitle: attr(src, "legacy-view.tsx", "subtitle", "the page subtitle"),
+        sections: [...src.matchAll(/<SectionLabel>([^<]+)<\/SectionLabel>/g)].map((m) => m[1].trim()),
+        // Index 2: the ScrollArea's title and the PageHeader's are both "My Story".
+        emptyTitle: attr(src, "legacy-view.tsx", "title", "the empty title", 2),
+        emptyDetail: attr(src, "legacy-view.tsx", "description", "the empty detail"),
+      };
+    })(),
+    appHistory: (() => {
+      const src = view("app-history-view.tsx");
+      return {
+        emptyTitle: attr(src, "app-history-view.tsx", "title", "the empty title"),
+        emptyDetail: attr(src, "app-history-view.tsx", "description", "the empty detail"),
+      };
+    })(),
+    relationship: (() => {
+      const src = view("relationship-view.tsx");
+      return {
+        emptyTitle: attr(src, "relationship-view.tsx", "title", "the empty title"),
+        emptyDetail: attr(src, "relationship-view.tsx", "description", "the empty detail"),
+      };
+    })(),
     chapters: {
       subtitle: attr(chapters, "chapters-view.tsx", "subtitle", "the page subtitle"),
       // Index 2: the ScrollArea's title and the PageHeader's are both "Chapters".

@@ -476,9 +476,10 @@ struct RootView: View {
             )
         case .legacy:
             LegacyView(
-                story: story, projects: projects,
+                model: model, story: story, projects: projects,
                 onOpenApp: { navigation.open(app: $0) },
-                onOpenAutobiography: { navigation.open(story: .autobiography) }
+                onOpenAutobiography: { navigation.open(story: .autobiography) },
+                onOpenDay: { navigation.open(day: $0) }
             )
         }
     }

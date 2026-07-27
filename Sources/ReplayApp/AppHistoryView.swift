@@ -169,9 +169,11 @@ struct AppHistoryView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("No recent history", systemImage: "clock")
+            Label(NarrativeCopy.appHistoryEmptyTitle, systemImage: "clock")
         } description: {
-            Text("Nothing was recorded for this application in the last thirty days.")
+            // Names the window. "The kept history" is not something a reader can put a
+            // number to, and the number is the answer to "why is this empty".
+            Text(NarrativeCopy.appHistoryEmptyDetail)
         }
     }
 }
