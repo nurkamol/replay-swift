@@ -152,94 +152,11 @@ The highlight opacities were measured rather than chosen. A card carries a trans
 of its own, which absorbs most of what is put behind it: at the first value the hover moved
 the picture by 0.012 mean brightness — real in a diff, invisible to a person.
 
-## Roadmap — deliberately not done yet
+## What is left
 
-| what | why it is waiting |
-|---|---|
-| **Signing and notarisation** | Blocked on a Developer ID, not on code. The app is ad-hoc signed by `scripts/make-app.sh`, which is enough to run it locally and not enough to hand to anybody. Everything else on this list is smaller than it |
-| PDF export | Three WebKit routes tried and dead, recorded below. The reference's own PDF is one capped page that tells you to use HTML |
-| A reopened day's story and chapter context | The one place a past day is thinner than the reference |
-| A test that covers scroll routing | The command-palette scroll bug reached a person because nothing exercises which view a scroll lands in. Would need a UI test target this project does not have |
-
-### Timeline and Search: the behaviour was right, nothing held the words
-
-Audited both. Neither had its behaviour wrong — all nine Timeline layers are present in the
-reference's order, `sessionMatches` is already hash-guarded, and concept detection, saved
-searches, highlighting and the four search spans all matched. What they had was constants and
-copy that nothing checked.
-
-`TimeRange` reproduced `TIME_RANGE_CONFIG` exactly, subtitles word for word, and none of it
-was in the contract. It is in `ReplayCore` now rather than in a view model, so the suite can
-compare it directly instead of through another mirror, and `spec/constants.json` carries a
-generated `timeline` block. Changing one word of "Your last seven days, newest first." now
-fails the suite by name — verified by doing it.
-
-One thing had already gone wrong. Upstream gives search results **their own** stagger — ten
-milliseconds a row, capped at 220, "snapping in under the fingers" — separate from the app's
-general entrance stagger of 28 and 560. This port used the general one for both, so the
-twentieth result arrived at 560ms where the reference puts it at 200: nearly three times
-slower, on the one surface a person types into and reads immediately. Both numbers are the
-reference's and both are checked.
-
-### Today and Canvas, audited
-
-Five of six findings ported. The sixth is below, unported and waiting on a decision.
-
-**Today asked the wrong question.** The reference's reflection prompt is two sentences, not
-one: "What would you like to remember about today?" until six in the evening, and "Before the
-day ends — what would you like to remember about it?" after it. This port had a single prompt
-whose wording was neither. `ReflectionPrompt` lives in `ReplayCore` and both strings come from
-the contract, compared character for character.
-
-**The Canvas field's own drawing rules had been left out of the contract** when its camera was
-generated in, and one had already drifted: an unconnected node was dimmed to 0.14 where the
-reference dims it to 0.1. Two more rules were missing outright. Applications now fall back to
-0.32 below 0.7 zoom, so pulling out leaves the collections, projects and chapters holding the
-picture; and an application or moment is named only from 1.15, where the reference's
-`labelVisible` names it. The greedy collision test stays on top of that rule — it is this
-port's own, and answers a question the reference never has to.
-
-### Living Home: Today leads with one card
-
-Ported. The reference's own idea and its own words for it — *"instead of stacking every memory
-card, Today features one — a single hero chosen for the day and rotated so the screen never
-feels static."* This port had been showing the quote, the resume card and today-in-history all
-at once, on top of the briefing and the contextual memory, so a rich day opened with a column
-of cards before the day itself began.
-
-`pickTodayHero` is in `ReplayCore` with the two rules the reference has. A session you stepped
-away from within six hours always leads, because it puts *now* within reach at the top of the
-screen. Otherwise the available candidates rotate on the day number, so the choice holds from
-midnight to midnight and changes tomorrow — deterministic rather than random, because a home
-screen that reshuffles every time you look at it is busy rather than restful.
-
-The fourth candidate arrived with it: a reflection you wrote on an earlier day, offered back.
-It is the only one of the four that is your own words rather than the app's.
-
-Four behaviour cases cover it, including the one that matters — that the freshness rule
-actually overrides. The first version of that test asserted a stale resume target was *not*
-chosen, which passed for the wrong reason: with all four available the rotation happened to
-land on resume anyway. It picks a day the rotation lands elsewhere now, so the two halves
-differ only because of the rule under test.
-
-### This Week and Apps, audited
-
-The thinnest audit of the set, and that is the result rather than a shortcut. Both surfaces
-match: pinned favourites in pin order, the peak sentence word for word, the five most-used
-applications, the four recurring combinations, the arc's four ticks, and the three windows'
-day counts. Nothing behavioural was wrong.
-
-What was missing was the same thing as everywhere else — nothing held any of it.
-`AppsModel.Window` reproduced `APP_RANGES` labels and subtitles word for word, which is the
-identical shape to `TimeRange`; contracting the Timeline's ranges and missing the parallel
-type on Apps is how a rule gets applied once and forgotten. It is `AppWindow` in `ReplayCore`
-now, checked directly. The week's three limits are named in `WeekSummary` and checked too.
-
-**One word is left deliberately.** The week's stat group says "applications" where the
-reference says "Apps" — but the reference says "application"/"applications" on its own daily
-memory card, so it is inconsistent with itself and this port is not. Left as it is rather than
-matched to whichever of the two upstream happened to type here, and recorded so the choice is
-visible. Worth deciding, not worth guessing.
+In [BACKLOG.md](BACKLOG.md), not here. This file records what the port *is*; that one records
+what it is *not yet*, in the order it is worth doing. Two lists of the same thing is how a
+document starts lying, and this one has done it twice already — see the two notes above.
 
 ## Known divergences to keep an eye on
 
