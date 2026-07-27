@@ -178,12 +178,12 @@ Installed at `~/.claude/skills/`: `apple-design`, `animation-vocabulary`,
 `find-animation-opportunities`, `improve-animations`. All web-oriented — the principles carry,
 the implementation guidance does not.
 
-- [ ] **`improve-animations` across the app.** Read-only; produces a prioritised audit and
-      plans. Worth running *now* and not before: the canvas camera, both staggers and the
-      field constants are contract-checked, so a proposal that moves a pinned value fails
-      loudly rather than landing silently.
-- [ ] **`apple-design` on Replay Day's scrubbing and the screensaver's drift.** The two
-      surfaces with real gesture work that have had none of the treatment the Canvas got.
+- [x] **`improve-animations` across the app.** Run 2026-07-28. Three of eight categories
+      produced nothing; three findings survived vetting and all three are applied. Plans and
+      the reasoning — including what was deliberately left alone — are in `plans/`.
+- [x] **`apple-design` on Replay Day's scrubbing and the screensaver's drift.** Run
+      2026-07-28. The screensaver came back clean. The scrubber answered a drag but never
+      said it had been grabbed, and was a 12-point target; both fixed.
 - [ ] **Hold `find-animation-opportunities`.** It proposes *new* motion, and the Canvas gained
       four moving things on 27 July that nobody has lived with yet. Revisit once they have
       been used for a while.
