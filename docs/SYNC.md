@@ -129,3 +129,24 @@ Native: Welcome ▸ Import from Replay for Glaze     →  same rows, same ids dr
 
 Import merges and never overwrites, keyed on `(type, started_at, bundle_identifier)`,
 so running it twice is a no-op. Keep that property.
+
+
+## Bodies this tool copies by hand
+
+Four things the contract checks are not exported from a module upstream — they live inside a
+React hook or a view — so `tools/sync-spec.mjs` re-declares their bodies character for
+character. That is the one place the contract can rot in silence: if the original changes,
+the copy keeps asserting the old rule and the suite stays green while the two apps diverge.
+
+Each copied region is hashed at generation time into `spec/redeclared.json`. A change
+upstream stops the tool and names which one moved. It cannot say *what* changed — read the
+diff — only that something did, which is the part nobody would otherwise notice.
+
+When the change is real: update the copy in `sync-spec.mjs`, port it, then
+
+```bash
+node tools/sync-spec.mjs --accept-redeclared
+```
+
+which records the new hash. Without that flag the tool would deadlock — the failure blocks
+the write that would record the new hash.

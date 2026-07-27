@@ -1,0 +1,22 @@
+{
+  "sessionMatches": {
+    "file": "renderer/main/views/search-view.tsx",
+    "why": "the search predicate, copied into the bundle because the view keeps it private",
+    "sha256": "1eb81fc88d272e44"
+  },
+  "computeLegacy": {
+    "file": "renderer/main/views/legacy-view.tsx",
+    "why": "the archive's figures, computed inside the legacy view rather than in a module",
+    "sha256": "406a7df7e2e9c72b"
+  },
+  "buildMorningBriefing": {
+    "file": "renderer/lib/morning-briefing.ts",
+    "why": "the briefing, assembled inside its hook",
+    "sha256": "12c004f88c96adb9"
+  },
+  "surprisePool": {
+    "file": "renderer/lib/surprise.ts",
+    "why": "the pool a surprise is drawn from, built inside its hook",
+    "sha256": "6ea240c12571dc0d"
+  }
+}

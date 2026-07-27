@@ -24,7 +24,8 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -236,6 +237,111 @@ const constants = {
     };
   })(),
 };
+
+
+/*
+ * Drift guard for the bodies this tool re-declares.
+ *
+ * Four things it checks are not exported from a module upstream — they live inside a React
+ * hook or a view — so their bodies are copied into the bundle character for character. That
+ * is the one place the contract can rot silently: if the original changes, the copy keeps
+ * asserting the old rule and the suite stays green while the two apps diverge.
+ *
+ * So each copied region is hashed at generation time and the hash is recorded in `spec/`.
+ * A change upstream makes this tool stop and say which one moved, which turns a silent
+ * failure into a loud one. It cannot tell you *what* changed — read the diff — only that
+ * something did, which is the part nobody would otherwise notice.
+ */
+const REDECLARED = [
+  {
+    name: "sessionMatches",
+    file: "renderer/main/views/search-view.tsx",
+    from: "function sessionMatches(",
+    why: "the search predicate, copied into the bundle because the view keeps it private",
+  },
+  {
+    name: "computeLegacy",
+    file: "renderer/main/views/legacy-view.tsx",
+    from: "  const stats = React.useMemo(() => {",
+    why: "the archive's figures, computed inside the legacy view rather than in a module",
+  },
+  {
+    name: "buildMorningBriefing",
+    file: "renderer/lib/morning-briefing.ts",
+    from: "  return React.useMemo(() => {",
+    why: "the briefing, assembled inside its hook",
+  },
+  {
+    name: "surprisePool",
+    file: "renderer/lib/surprise.ts",
+    from: "  return React.useCallback(() => {",
+    why: "the pool a surprise is drawn from, built inside its hook",
+  },
+];
+
+/** The source of one re-declared region: from its anchor to the line that closes it. */
+function redeclaredSource(entry) {
+  const text = read(entry.file);
+  const start = text.indexOf(entry.from);
+  if (start === -1) {
+    problems.push(
+      `${entry.file}: could not find the start of ${entry.name} — the anchor has moved, ` +
+        "which is itself a drift worth looking at",
+    );
+    return null;
+  }
+  // To the first line at the anchor's own indentation that closes a block. Crude, and
+  // deliberately so: it only has to be stable, not to parse TypeScript.
+  const indent = entry.from.match(/^\s*/)[0];
+  const closer = `\n${indent}}`;
+  const end = text.indexOf(closer, start);
+  return end === -1 ? text.slice(start) : text.slice(start, end + closer.length);
+}
+
+function redeclaredHashes() {
+  const out = {};
+  for (const entry of REDECLARED) {
+    const source = redeclaredSource(entry);
+    if (source === null) continue;
+    out[entry.name] = {
+      file: entry.file,
+      why: entry.why,
+      sha256: createHash("sha256").update(source).digest("hex").slice(0, 16),
+    };
+  }
+  return out;
+}
+
+/**
+ * Compare against what was recorded, and stop if any of them moved.
+ *
+ * `--accept-redeclared` is the way through once the copy has actually been updated. Without
+ * it this would deadlock: the failure blocks the write that would record the new hash, so
+ * there would be no way to accept a legitimate change. Found by hitting it.
+ */
+function checkRedeclaredDrift(current) {
+  const path = join(SPEC, "redeclared.json");
+  if (!existsSync(path)) return;
+  const accept = process.argv.includes("--accept-redeclared");
+  const previous = JSON.parse(readFileSync(path, "utf8"));
+  for (const [name, entry] of Object.entries(current)) {
+    const was = previous[name];
+    if (!was || was.sha256 === entry.sha256) continue;
+    if (accept) {
+      console.log(
+        `  · accepting the new ${name} (${entry.file}) — make sure the copy in this file ` +
+          "matches it",
+      );
+      continue;
+    }
+    problems.push(
+      `${name} changed upstream (${entry.file}). Its body is copied into this tool ` +
+        "character for character, so the copy is now asserting a rule the reference no " +
+        "longer follows. Update the copy in sync-spec.mjs and port the change, then run " +
+        "with --accept-redeclared to record the new hash.",
+    );
+  }
+}
 
 // ── golden fixtures for session derivation ────────────────────────────────────
 //
@@ -1768,6 +1874,11 @@ try {
   problems.push(`could not run the Glaze grouping/export code: ${error.message.split("\n")[0]}`);
 }
 
+// Before the gate, so a body that moved upstream stops this tool rather than being
+// recorded as if nothing had happened.
+const redeclared = redeclaredHashes();
+checkRedeclaredDrift(redeclared);
+
 if (problems.length > 0) {
   console.error("sync-spec failed:\n" + problems.map((p) => `  · ${p}`).join("\n"));
   console.error(`\nGlaze sources: ${GLAZE}`);
@@ -1778,6 +1889,12 @@ const provenance = `Generated by tools/sync-spec.mjs — do not edit by hand.
 Glaze app version ${glazeVersion}, commit ${glazeCommit}.`;
 
 mkdirSync(join(SPEC, "fixtures"), { recursive: true });
+
+writeFileSync(
+  join(SPEC, "redeclared.json"),
+  JSON.stringify(redeclared, null, 2) + "\n",
+);
+
 
 writeFileSync(
   join(SPEC, "schema.sql"),
