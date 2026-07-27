@@ -158,6 +158,12 @@ public enum ParityKit {
             public let arcTicks: [Int]
         }
 
+        public let deletion: DeletionConstants
+
+        public struct DeletionConstants: Decodable, Sendable {
+            public let deletableDaysWindow: Int
+        }
+
         public let dockBadge: DockBadgeConstants
 
         public struct DockBadgeConstants: Decodable, Sendable {
@@ -1090,6 +1096,10 @@ public enum ParityKit {
         )
         equal(g1, "the hours the day-arc is marked at", WeekSummary.arcTicks, constants.week.arcTicks)
 
+        equal(
+            g1, "how far back a single day can be deleted from Settings",
+            deletableDaysWindow, constants.deletion.deletableDaysWindow
+        )
         equal(
             g1, "the Dock badge's unit",
             DockBadgeLabel.hourSeconds, constants.dockBadge.hourSeconds

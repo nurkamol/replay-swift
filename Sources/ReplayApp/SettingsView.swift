@@ -751,6 +751,10 @@ private struct DataTab: View {
     @Bindable var preferences: Preferences
 
     @State private var confirmingClear = false
+    @State private var confirmingReset = false
+    @State private var confirmingDayDelete = false
+    /// `0` is "none chosen", so the button beside it stays disabled until a day is picked.
+    @State private var dayToDelete: Int64 = 0
     @State private var scope: Report.Scope = .week
     @State private var format: Report.Format = .markdown
 
@@ -810,7 +814,26 @@ private struct DataTab: View {
                 .onChange(of: preferences.retentionDays) { _, _ in settings.applyRetention() }
                     .explains(.keepActivityFor)
 
-                LabeledContent("Compact database") {
+                // A day at a time, between the retention rule that removes many and the
+                // clear that removes everything. Reachable from the Timeline's ⋯ too, which
+                // can reach *any* day — this one is bounded, because a picker is scrolled and
+                // a list of every day Replay has seen is a worse way to find last Tuesday.
+                LabeledContent(SettingsRow.deleteASingleDay.label) {
+                    HStack(spacing: Design.Space.snug) {
+                        Picker("", selection: $dayToDelete) {
+                            Text("Choose a day").tag(Int64(0))
+                            ForEach(settings.deletableDays, id: \.dayStart) { day in
+                                Text(day.label).tag(day.dayStart)
+                            }
+                        }
+                        .labelsHidden()
+                        Button("Delete…", role: .destructive) { confirmingDayDelete = true }
+                            .disabled(dayToDelete == 0)
+                    }
+                }
+                .explains(.deleteASingleDay)
+
+                LabeledContent(SettingsRow.compactDatabase.label) {
                     Button(settings.busy ? "Compacting…" : "Compact") { settings.compact() }
                         .disabled(settings.busy)
                 }
@@ -826,6 +849,10 @@ private struct DataTab: View {
                 LabeledContent("Activity history") {
                     Button("Clear History…", role: .destructive) { confirmingClear = true }
                 }
+                LabeledContent(SettingsRow.resetReplay.label) {
+                    Button("Reset…", role: .destructive) { confirmingReset = true }
+                }
+                .explains(.resetReplay)
             } footer: {
                 Footnote("Deletes every event, headline, note and bookmark. There is no undo.")
             }
@@ -839,20 +866,52 @@ private struct DataTab: View {
                     + "headline, note and bookmark. This can't be undone."
             )
         }
+        // Both name what they will take before they take it (SPEC §8). The day dialog names
+        // the day, because "delete a day" is only a safe thing to confirm if you can see
+        // which one you picked.
+        .alert(
+            "Delete \(settings.deletableDays.first { $0.dayStart == dayToDelete }?.label ?? "this day")?",
+            isPresented: $confirmingDayDelete
+        ) {
+            Button("Delete Day", role: .destructive) {
+                settings.deleteDay(dayToDelete)
+                dayToDelete = 0
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(
+                "This takes that day's sessions, its summary, its reflection and anything you "
+                    + "wrote about it. Every other day is untouched, and this can't be undone."
+            )
+        }
+        .alert("Reset Replay?", isPresented: $confirmingReset) {
+            Button("Reset Replay", role: .destructive) {
+                settings.resetEverything(preferences: preferences)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(
+                "This deletes all activity, every setting and every preference, and returns "
+                    + "Replay to the welcome screen. This can't be undone."
+            )
+        }
     }
 
     /// Deliberately different when there is nothing to reclaim: "at least" is the honest
     /// word for a freelist figure, and a compaction still repacks partly-filled pages.
+    /// What a compaction would actually reclaim.
+    ///
+    /// The retention sentence that used to open this has gone: "Keep activity for" now
+    /// carries the reference's own line directly under it, and repeating it here said the
+    /// same thing twice in two different wordings a few points apart.
     private var compactFooter: String {
-        let keep = "Older raw events are removed past this window; day-by-day headlines are "
-            + "kept either way. "
-        guard let info = settings.info else { return keep }
+        guard let info = settings.info else { return "" }
         if info.reclaimableBytes > 0 {
-            return keep + "At least \(formatBytes(info.reclaimableBytes)) would come back from "
-                + "a compaction. A copy is taken first and checked before it is removed."
+            return "At least \(formatBytes(info.reclaimableBytes)) would come back from a "
+                + "compaction. A copy is taken first and checked before it is removed."
         }
-        return keep + "Every page is holding live data, so there is little to recover — "
-            + "compaction has real work to do after you delete history."
+        return "Every page is holding live data, so there is little to recover — compaction "
+            + "has real work to do after you delete history."
     }
 }
 

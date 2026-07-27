@@ -251,3 +251,11 @@ public enum DockBadgeLabel {
         return hours >= minimumHours ? "\(hours)h" : nil
     }
 }
+
+/// How far back Settings will offer to delete a single day.
+///
+/// Sixty days, the reference's own window. Not the whole history: this is a picker somebody
+/// scrolls, and a list of every day Replay has ever seen is a worse way to find last Tuesday
+/// than the Timeline, which can delete any day at all from its own ⋯ menu.
+public let deletableDaysWindow = 60
+

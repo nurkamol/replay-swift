@@ -357,6 +357,85 @@ final class Preferences {
 
     var excludedBundleIDs: Set<String> { Set(excludedApps.map(\.bundleID)) }
 
+
+    /// Every key this type persists, so a reset removes exactly those and no others.
+    private static let ownKeys = [
+        "appearance",
+        "archivedMemories",
+        "chapterNames",
+        "contextualMemories",
+        "dailySummary",
+        "dailySummaryHour",
+        "dismissedBriefings",
+        "dismissedMemories",
+        "dockBadge",
+        "excludedApps",
+        "focusGoalMinutes",
+        "lastSurface",
+        "launchSurface",
+        "memoryThreshold",
+        "menuBarOnly",
+        "morningBriefing",
+        "onThisDayNotice",
+        "pinnedApps",
+        "projectNames",
+        "retentionDays",
+        "savedSearches",
+        "screensaverExitOnClick",
+        "screensaverExitOnKey",
+        "screensaverExitOnMouseMove",
+        "screensaverIdleMinutes",
+        "seenWelcome",
+        "surfaceStyle",
+        "themeColour",
+        "todayInHistory",
+        "weeklyRecap",
+    ]
+
+    /// Back to a first run: every stored preference forgotten and re-read at its default.
+    ///
+    /// Key by key rather than `removePersistentDomain`, which would also take what
+    /// `UserDefaults` keeps on the app's behalf — window frames, split positions, the things
+    /// nobody thinks of as settings and nobody asked to lose.
+    ///
+    /// The values are copied from a freshly built instance rather than restated here, so the
+    /// defaults live in exactly one place: this cannot drift from `init`, because it *is*
+    /// `init`.
+    func reset() {
+        for key in Self.ownKeys { defaults.removeObject(forKey: key) }
+        let fresh = Preferences(defaults: defaults)
+        appearance = fresh.appearance
+        themeColour = fresh.themeColour
+        launchSurface = fresh.launchSurface
+        retentionDays = fresh.retentionDays
+        excludedApps = fresh.excludedApps
+        menuBarOnly = fresh.menuBarOnly
+        lastSurface = fresh.lastSurface
+        focusGoalMinutes = fresh.focusGoalMinutes
+        pinnedApps = fresh.pinnedApps
+        savedSearches = fresh.savedSearches
+        projectNames = fresh.projectNames
+        chapterNames = fresh.chapterNames
+        todayInHistory = fresh.todayInHistory
+        contextualMemories = fresh.contextualMemories
+        memoryThreshold = fresh.memoryThreshold
+        dismissedMemories = fresh.dismissedMemories
+        archivedMemories = fresh.archivedMemories
+        morningBriefing = fresh.morningBriefing
+        dismissedBriefings = fresh.dismissedBriefings
+        surfaceStyle = fresh.surfaceStyle
+        dockBadge = fresh.dockBadge
+        screensaverIdleMinutes = fresh.screensaverIdleMinutes
+        screensaverExitOnMouseMove = fresh.screensaverExitOnMouseMove
+        screensaverExitOnClick = fresh.screensaverExitOnClick
+        screensaverExitOnKey = fresh.screensaverExitOnKey
+        dailySummaryHour = fresh.dailySummaryHour
+        dailySummary = fresh.dailySummary
+        weeklyRecap = fresh.weeklyRecap
+        onThisDayNotice = fresh.onThisDayNotice
+        seenWelcome = fresh.seenWelcome
+    }
+
     private func write(_ value: Any, _ key: String) { defaults.set(value, forKey: key) }
 
     private func writeJSON<T: Encodable>(_ value: T, _ key: String) {

@@ -143,6 +143,9 @@
       5
     ]
   },
+  "deletion": {
+    "deletableDaysWindow": 60
+  },
   "dockBadge": {
     "hourSeconds": 3600,
     "minimumHours": 1

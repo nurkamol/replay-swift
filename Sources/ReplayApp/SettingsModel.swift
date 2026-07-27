@@ -152,6 +152,52 @@ final class SettingsModel {
         }
     }
 
+    /// The days Settings will offer to delete, newest first.
+    ///
+    /// Read from the durable per-day headlines rather than from the events, so only days
+    /// Replay actually holds a record of are listed. Today is added from the front because it
+    /// is never summarised while it is still being written — a day in progress has no
+    /// headline yet, and leaving it out would mean the one day you might most want to drop is
+    /// the one day missing from the list.
+    var deletableDays: [(dayStart: Int64, label: String)] {
+        let today = startOfLocalDay(now())
+        let from = today - Int64(deletableDaysWindow - 1) * dayMillis
+        let summaries = (try? store.dailySummaries(from: from, to: today)) ?? []
+        let days = ([today] + summaries.map(\.dayStart).filter { $0 < today })
+            .reduce(into: [Int64]()) { seen, day in if !seen.contains(day) { seen.append(day) } }
+            .sorted(by: >)
+        return days.map { ($0, relativeDayLabel($0, now: now())) }
+    }
+
+    /// Delete one day and everything written about it.
+    func deleteDay(_ dayStart: Int64) {
+        do {
+            let removed = try store.deleteDay(dayStart: dayStart)
+            status = "Deleted \(removed) recorded rows"
+            refreshAfterChange()
+        } catch {
+            errorMessage = "\(error)"
+        }
+    }
+
+    /// Back to a first run: the history, every setting, and the welcome screen.
+    ///
+    /// The reference resets its own settings file; this port keeps preferences in
+    /// `UserDefaults`, so `Preferences.reset()` is what corresponds. Deliberately not a
+    /// wipe of the whole domain — that would take things `UserDefaults` holds on the app's
+    /// behalf, like window frames, which nobody asked to lose.
+    func resetEverything(preferences: Preferences) {
+        do {
+            _ = try store.clearAllHistory()
+            try store.compactIfWasteful()
+            preferences.reset()
+            status = "Replay is back to a first run"
+            refreshAfterChange()
+        } catch {
+            errorMessage = "\(error)"
+        }
+    }
+
     private func refreshAfterChange() {
         model.reload()
         history.reload()

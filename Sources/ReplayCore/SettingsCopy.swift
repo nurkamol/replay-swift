@@ -42,6 +42,8 @@ public enum SettingsRow: String, CaseIterable, Sendable {
     case activityHistory = "Activity history"
     case fullBackup = "Full backup"
     case keepActivityFor = "Keep activity for"
+    case deleteASingleDay = "Delete a single day"
+    case resetReplay = "Reset Replay"
     case compactDatabase = "Compact database"
 
     public var label: String { rawValue }
@@ -107,6 +109,14 @@ public enum SettingsRow: String, CaseIterable, Sendable {
             "Older raw events are removed past this window. Keeping everything "
                 + "never deletes a thing; your day-by-day headlines are kept either "
                 + "way, so history and streaks survive."
+        case .deleteASingleDay:
+            "Takes that day's sessions, summary, reflection, and any notes or "
+                + "bookmarks with it, and leaves every other day untouched. Any day "
+                + "can also be deleted — or exported on its own — from the ⋯ menu on "
+                + "its divider in the Timeline."
+        case .resetReplay:
+            "Deletes all activity, settings, and preferences, then returns to "
+                + "the welcome screen."
         case .compactDatabase:
             "There is no undo — export a backup first if you want to keep your "
                 + "timeline."

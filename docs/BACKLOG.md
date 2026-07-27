@@ -54,7 +54,11 @@ the product.
       today-in-history from the hero rotation, which is not what either switch means.
       · Found by diffing the reference's row labels against ours.
 
-- [ ] **Reset Replay.** `M`
+- [x] **Reset Replay.** `M` — done 2026-07-28. `Preferences.reset()` forgets every key this
+      type owns — not `removePersistentDomain`, which would also take window frames and the
+      other things `UserDefaults` keeps on the app's behalf.
+
+      ~~Was:~~ `M`
       "Deletes all activity, settings, and preferences, then returns to the welcome screen."
       This port has Clear History, which removes activity and leaves every preference behind,
       so there is no way back to a first run. Destructive, so it wants the same confirmation
@@ -74,7 +78,11 @@ the product.
       running in the menu bar", "Appears once you've been active an hour". This port has 12
       footnotes and tooltips between them. Every control works and most are unexplained.
 
-- [ ] **Delete a specific day, from Settings.** `M`
+- [x] **Delete a specific day, from Settings.** `M` — done 2026-07-28. A bounded picker in
+      Data ▸ Storage, days read from the durable headlines with today added from the front,
+      `deletableDaysWindow` contract-checked at the reference's 60.
+
+      ~~Was:~~ `M`
       `deleteDay` exists in the store and the model and is reachable from exactly one place:
       the Timeline's per-day ⋯ menu. So removing a day means finding it in a list first. The
       reference puts a picker in **Privacy ▸ Your data** listing only days it has a record
@@ -167,6 +175,8 @@ Kept rather than deleted, so the list shows its own history.
       reference's. 2026-07-28.
 - [x] **Every Settings row explains itself**, all 29 of the reference's descriptions,
       and What's New on the About tab. 2026-07-28.
+- [x] **Delete a single day, and Reset Replay** — the last two rows Settings was missing.
+      2026-07-28.
 - [x] **The Dock badge shows whole hours**, as the reference does — it had been formatted
       with hours *and* minutes. 2026-07-28.
 - [x] **A reopened day's story and chapter context** — found already built while starting to

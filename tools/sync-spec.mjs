@@ -270,6 +270,17 @@ const constants = {
     };
   })(),
   /*
+   * How far back the "delete a single day" picker can reach.
+   */
+  deletion: (() => {
+    const src = read("renderer/settings/settings-view.tsx");
+    const [days] = inline(
+      src, "settings-view.tsx", "how many days the delete picker offers",
+      /const DELETABLE_DAYS_WINDOW = (\d+)/,
+    );
+    return { deletableDaysWindow: days };
+  })(),
+  /*
    * The Dock badge: what it shows, and when it starts showing it.
    */
   dockBadge: (() => {
