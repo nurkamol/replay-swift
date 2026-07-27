@@ -249,6 +249,14 @@ private struct GeneralTab: View {
             }
 
             Section {
+                LabeledContent("Welcome screen") {
+                    Button("Show Welcome") { preferences.seenWelcome = false }
+                }
+            } footer: {
+                Footnote("Shows the introduction again in the main window.")
+            }
+
+            Section {
                 Toggle("Dock badge", isOn: $preferences.dockBadge)
                     .onChange(of: preferences.dockBadge) { _, on in
                         DockBadge.update(model, enabled: on)

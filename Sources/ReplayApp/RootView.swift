@@ -140,6 +140,7 @@ struct RootView: View {
     let contextual: ContextualMemoryModel
     @Bindable var palette: CommandPaletteModel
     let timelineLayers: TimelineLayersModel
+    let notifications: NotificationsModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -163,6 +164,19 @@ struct RootView: View {
         ZStack(alignment: .top) {
             window
             paletteOverlay
+            // Over everything and not dismissible by clicking away: this is the one screen
+            // that has to be read, and it is shown exactly once.
+            if !preferences.seenWelcome {
+                WelcomeView(
+                    model: model, preferences: preferences, notifications: notifications,
+                    onFinish: {
+                        withAnimation(motion.animation(Design.Motion.settle)) {
+                            preferences.seenWelcome = true
+                        }
+                    }
+                )
+                .transition(motion.transition(.opacity))
+            }
         }
         .animation(motion.animation(Design.Motion.palette), value: palette.open)
         // Escape closes it wherever focus happens to be — including inside the field, where

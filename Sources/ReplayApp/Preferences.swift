@@ -203,6 +203,11 @@ final class Preferences {
         didSet { write(onThisDayNotice, "onThisDayNotice") }
     }
 
+    /// Whether the welcome has been through once. Settings can put it back.
+    var seenWelcome: Bool {
+        didSet { write(seenWelcome, "seenWelcome") }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -217,6 +222,7 @@ final class Preferences {
             .flatMap { try? JSONDecoder().decode([ExcludedApp].self, from: $0) } ?? []
         menuBarOnly = defaults.bool(forKey: "menuBarOnly")
         dockBadge = defaults.object(forKey: "dockBadge") as? Bool ?? false
+        seenWelcome = defaults.bool(forKey: "seenWelcome")
         screensaverIdleMinutes = defaults.integer(forKey: "screensaverIdleMinutes")
         // Mouse movement is off by default, so a screensaver you started by hand stays until
         // you reach for it rather than vanishing when the pointer twitches.

@@ -343,10 +343,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 contextual: contextual,
                 palette: palette,
                 timelineLayers: timelineLayers,
+                notifications: notifications,
                 onOpenSettings: { [weak self] in self?.openSettings() },
                 onOpenScreensaver: { [weak self] in self?.openScreensaver() }
             )
         )
+        // The window's size is its own. Without this the SwiftUI content drives it, and a
+        // tall overlay — the welcome screen — grew the saved frame to 980x5580, which then
+        // came back on the next launch as a window mostly off the bottom of the screen.
+        // Same failure the screensaver had; the same one line fixes it.
+        hosting.sizingOptions = []
         let window = NSWindow(contentViewController: hosting)
         window.title = "Replay"
         window.setContentSize(

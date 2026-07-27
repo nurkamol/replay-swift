@@ -88,7 +88,8 @@ function now and live in `ReplayCore` where the suite can reach them.
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | done | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and all nine layers — five that choose which sessions appear, one that governs the gaps, and three that add rows among the days |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
-| Settings | partial | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. **No Welcome screen** to re-show, and the Shortcuts table is written out by hand rather than derived, so it can drift from what is actually bound |
+| Welcome | done | two pages: the things Replay will not do unasked, each off by default, and the privacy claim shown working rather than asserted |
+| Settings | partial | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is written out by hand rather than derived, so it can drift from what is actually bound |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
 | Dock badge | later | |
@@ -210,10 +211,11 @@ still claiming 8 of 20 routes after fourteen of them had landed.
 **All 20 of the reference's routes exist.** What remains is depth inside them, plus the
 platform work the brief asks for and the one thing blocked on paperwork.
 
-1. **Welcome / onboarding**, which Settings' "Show Welcome" button would re-open — the
-   button is absent because the surface is.
-2. **Whole surfaces the reference has and this does not**: the Welcome/onboarding flow,
-   What's New, and Replay Day (a day played back as a short film).
+1. **What's New**, and **Replay Day** — a day played back as a short film.
+2. **A window sizing trap, twice now.** `NSHostingController` sizes its window to the SwiftUI
+   content unless told not to. The screensaver came out 1728×2888; the welcome screen grew the
+   main window's *saved* frame to 980×5580, which then reloaded as a window mostly below the
+   screen. `hosting.sizingOptions = []` on any window whose size is its own.
 3. **Canvas** has no synced timeline side panel and no focus mode.
 4. **Search** has no saved searches, no time-range chips, and does not highlight matches.
 5. **A past day** has no story or chapter context.

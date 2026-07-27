@@ -22,6 +22,10 @@ enum Design {
 
     /// How long the window may sit untouched before the screensaver drifts in.
     static let screensaverIdleChoices = [2, 5, 10, 20]
+    /// What the welcome screen sets when its two numeric offers are accepted. Round rather
+    /// than clever: someone agreeing to a goal on a first run has no basis for a precise one.
+    static let welcomeGoalMinutes = 180
+    static let welcomeIdleMinutes = 5
     /// The hours a daily recap can be delivered at. Evening-weighted, because a recap of a
     /// day is worth reading once the day has happened.
     static let notificationHours = [12, 15, 17, 18, 19, 20, 21, 22]
@@ -413,6 +417,8 @@ enum Design {
         static let screensaverFavourite: CGFloat = 44
         /// The app you are being offered to return to, on the resume card.
         static let resume: CGFloat = 48
+        /// The app's own icon, on the welcome screen.
+        static let welcomeMark: CGFloat = 72
         /// The app's own icon, in About.
         static let about: CGFloat = 64
         /// A tinted tile in the Settings source list.
@@ -447,6 +453,9 @@ enum Design {
         /// The widest a column of text is allowed to get. Beyond this a line is tiring to
         /// read, however wide the window is.
         static let readableWidth: CGFloat = 760
+        /// The welcome screen's column, and its page dots.
+        static let welcomeWidth: CGFloat = 520
+        static let welcomeDot: CGFloat = 7
 
         /// The least width a card in a grid gets before the grid drops to one column.
         static let cardMinWidth: CGFloat = 320
