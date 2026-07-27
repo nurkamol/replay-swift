@@ -270,6 +270,20 @@ const constants = {
     };
   })(),
   /*
+   * The Dock badge: what it shows, and when it starts showing it.
+   */
+  dockBadge: (() => {
+    const src = read("main/services/dock-badge.ts");
+    const f = "dock-badge.ts";
+    const [threshold] = inline(
+      src, f, "the badge's unit and its floor", /const HOUR_SECONDS = (\d+)/,
+    );
+    const [minimumHours] = inline(
+      src, f, "how many hours before it appears", /hours >= (\d+) \? /,
+    );
+    return { hourSeconds: threshold, minimumHours };
+  })(),
+  /*
    * Today's reflection prompt, which is two sentences rather than one.
    *
    * The words are the product (SPEC §8) and these change with the hour: from six in the

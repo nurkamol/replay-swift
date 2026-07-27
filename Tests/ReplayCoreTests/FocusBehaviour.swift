@@ -340,3 +340,22 @@ struct TodayHeroBehaviour {
         #expect(Memories.pickFeatured([]) == nil)
     }
 }
+
+/// What the Dock badge says.
+@Suite("Dock badge")
+struct DockBadgeBehaviour {
+    @Test("Whole hours only, and nothing under one")
+    func wholeHours() {
+        // The case that prompted this: 56 minutes of a new day shows nothing at all, which
+        // reads as broken and is the rule working.
+        #expect(DockBadgeLabel.text(activeSeconds: 56 * 60) == nil)
+        #expect(DockBadgeLabel.text(activeSeconds: 0) == nil)
+        // The minute it crosses the hour, and not before.
+        #expect(DockBadgeLabel.text(activeSeconds: 3599) == nil)
+        #expect(DockBadgeLabel.text(activeSeconds: 3600) == "1h")
+        // Minutes are dropped rather than rounded: at a glance "4h" is the honest reading of
+        // four hours and fifty-nine minutes, and "5h" would not be.
+        #expect(DockBadgeLabel.text(activeSeconds: 4 * 3600 + 59 * 60) == "4h")
+        #expect(DockBadgeLabel.text(activeSeconds: 12 * 3600) == "12h")
+    }
+}

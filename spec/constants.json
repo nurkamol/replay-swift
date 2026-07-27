@@ -143,6 +143,10 @@
       5
     ]
   },
+  "dockBadge": {
+    "hourSeconds": 3600,
+    "minimumHours": 1
+  },
   "today": {
     "eveningFromHour": 18,
     "eveningPrompt": "Before the day ends — what would you like to remember about it?",

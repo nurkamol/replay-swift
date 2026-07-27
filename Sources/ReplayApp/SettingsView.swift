@@ -282,6 +282,7 @@ private struct GeneralTab: View {
                 }
                 .pickerStyle(.inline)
                 .horizontalRadioGroupLayout()
+                    .explains(.theme)
 
                 // Swatches rather than a list of colour names, because the choice is the
                 // colour: reading "Pink" and picking it from a menu is a slower way to do
@@ -305,6 +306,7 @@ private struct GeneralTab: View {
                 Picker(SettingsRow.openTo.label, selection: $preferences.launchSurface) {
                     ForEach(LaunchSurface.allCases) { Text($0.label).tag($0) }
                 }
+                    .explains(.openTo)
 
                 Toggle(SettingsRow.menuBarMode.label, isOn: $preferences.menuBarOnly)
                     .explains(.menuBarMode)
@@ -345,6 +347,7 @@ private struct GeneralTab: View {
                         Text("\(minutes) minutes").tag(minutes)
                     }
                 }
+                    .explains(.autoStartWhenIdle)
                 Toggle(SettingsRow.exitOnMouseMovement.label, isOn: $preferences.screensaverExitOnMouseMove)
                     .explains(.exitOnMouseMovement)
                 Toggle(SettingsRow.exitOnClick.label, isOn: $preferences.screensaverExitOnClick)
@@ -422,6 +425,7 @@ private struct GeneralTab: View {
                 }
                 .disabled(!preferences.contextualMemories)
                 .onChange(of: preferences.memoryThreshold) { _, _ in contextual.load() }
+                    .explains(.howOftenToSpeak)
 
                 Toggle(SettingsRow.morningBriefing.label, isOn: $preferences.morningBriefing)
                     .explains(.morningBriefing)
@@ -456,6 +460,7 @@ private struct GeneralTab: View {
                         Text(Goals.format(goal)).tag(goal)
                     }
                 }
+                    .explains(.dailyFocus)
 
                 // Disabled with no goal set. Before, typing here silently *created* one —
                 // a control that changed a setting it appeared unrelated to.
@@ -486,6 +491,7 @@ private struct GeneralTab: View {
                     get: { model.isRecording },
                     set: { model.setTracking($0) }
                 ))
+                    .explains(.activityTracking)
             } header: {
                 Text("Recording")
             } footer: {
@@ -735,6 +741,7 @@ private struct DataTab: View {
                     }
                 }
                 .onChange(of: preferences.retentionDays) { _, _ in settings.applyRetention() }
+                    .explains(.keepActivityFor)
 
                 LabeledContent("Compact database") {
                     Button(settings.busy ? "Compacting…" : "Compact") { settings.compact() }
@@ -868,6 +875,17 @@ private struct AboutTab: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, Design.Space.tight)
+
+            // The same window the Help menu opens. Here as well because About is where
+            // somebody looks to find out what version they have, and "what changed in it" is
+            // the next thing they want — the reference puts it in both places for that reason.
+            Button {
+                (NSApp.delegate as? AppDelegate)?.openWhatsNew()
+            } label: {
+                Label("What's New", systemImage: "sparkles")
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.top, Design.Space.inline)
         }
         .padding(Design.Space.page)
         .frame(minWidth: Design.Layout.settingsDetailWidth)

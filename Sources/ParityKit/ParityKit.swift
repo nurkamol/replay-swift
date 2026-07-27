@@ -158,6 +158,13 @@ public enum ParityKit {
             public let arcTicks: [Int]
         }
 
+        public let dockBadge: DockBadgeConstants
+
+        public struct DockBadgeConstants: Decodable, Sendable {
+            public let hourSeconds: Int
+            public let minimumHours: Int
+        }
+
         public let today: TodayConstants
 
         public struct TodayConstants: Decodable, Sendable {
@@ -1082,6 +1089,15 @@ public enum ParityKit {
             WeekSummary.workflowLimit, constants.week.workflowLimit
         )
         equal(g1, "the hours the day-arc is marked at", WeekSummary.arcTicks, constants.week.arcTicks)
+
+        equal(
+            g1, "the Dock badge's unit",
+            DockBadgeLabel.hourSeconds, constants.dockBadge.hourSeconds
+        )
+        equal(
+            g1, "how long before the Dock badge appears",
+            DockBadgeLabel.minimumHours, constants.dockBadge.minimumHours
+        )
 
         // Settings row names. Only the rows this port has — the contract carries all of the
         // reference's, and the difference is the backlog rather than a failure.

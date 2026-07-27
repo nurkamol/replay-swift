@@ -231,3 +231,23 @@ public func startOfLocalDay(_ epochMillis: Int64, calendar: Calendar = .current)
 }
 
 public let dayMillis: Int64 = 24 * 60 * 60 * 1000
+
+/// What the Dock badge says, and whether it says anything at all.
+///
+/// Whole hours only — "1h", "4h" — and nothing under one. The reference's own reasoning is
+/// that a badge is read at a glance from across a desk: minutes are noise at that distance,
+/// and a badge reading "4h 23m" is a figure you have to stop and parse. This port had been
+/// formatting it with `formatDurationShort`, which is right everywhere a number is read
+/// deliberately and wrong here.
+///
+/// Pure, so the rule can be tested without a Dock.
+public enum DockBadgeLabel {
+    public static let hourSeconds = 3600
+    public static let minimumHours = 1
+
+    /// `nil` when the day has not earned a badge yet.
+    public static func text(activeSeconds: Int) -> String? {
+        let hours = activeSeconds / hourSeconds
+        return hours >= minimumHours ? "\(hours)h" : nil
+    }
+}

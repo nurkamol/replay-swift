@@ -60,7 +60,10 @@ the product.
       so there is no way back to a first run. Destructive, so it wants the same confirmation
       Clear History has — SPEC §8: name what it will remove.
 
-- [ ] **Seven controls still say nothing.** `S`
+- [x] **Seven controls still say nothing.** `S` — done 2026-07-28. All eighteen named
+      controls render the reference's line now.
+
+      ~~Was:~~ `S`
       All 29 of the reference's descriptions are in `spec/settings-copy.json` and in
       `SettingsRow.explanation`, checked character for character. **Eleven of the eighteen
       named controls render theirs**; the remaining seven are `Picker`s and multi-line
@@ -81,9 +84,7 @@ the product.
       · Asked for directly in the Glaze history, prompt 83.
       · This is a missing *route* to an existing capability, not new machinery.
 
-- [ ] **About has no What's New button.** `S`
-      Upstream puts one on the About tab; here it is reachable only from the Help menu.
-      `WhatsNewView` already exists, so this is wiring rather than building.
+- [x] **About has no What's New button.** `S` — done 2026-07-28.
 
 ## 2 · Surfaces nobody has audited
 
@@ -164,5 +165,9 @@ Kept rather than deleted, so the list shows its own history.
 - [x] **The Guide's sixteen answers**, generated rather than retyped. 2026-07-28.
 - [x] **Settings row labels**, eight of them wrong, now checked against all 36 of the
       reference's. 2026-07-28.
+- [x] **Every Settings row explains itself**, all 29 of the reference's descriptions,
+      and What's New on the About tab. 2026-07-28.
+- [x] **The Dock badge shows whole hours**, as the reference does — it had been formatted
+      with hours *and* minutes. 2026-07-28.
 - [x] **A reopened day's story and chapter context** — found already built while starting to
       rebuild it. The ledger was wrong, not the code. 2026-07-28.

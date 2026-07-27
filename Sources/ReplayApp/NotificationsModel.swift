@@ -141,10 +141,12 @@ final class NotificationsModel {
 @MainActor
 enum DockBadge {
     static func update(_ model: AppModel, enabled: Bool) {
-        guard enabled, let summary = model.summary, summary.activeSeconds >= 3600 else {
+        guard enabled, let summary = model.summary else {
             NSApp.dockTile.badgeLabel = nil
             return
         }
-        NSApp.dockTile.badgeLabel = formatDurationShort(summary.activeSeconds)
+        // `nil` under an hour, which is the same as clearing it — the badge appears when the
+        // day has earned it and not before. See `DockBadgeLabel` for why whole hours.
+        NSApp.dockTile.badgeLabel = DockBadgeLabel.text(activeSeconds: summary.activeSeconds)
     }
 }

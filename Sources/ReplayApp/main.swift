@@ -490,7 +490,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow = nil
     }
 
-    @objc private func openWhatsNew() {
+    /// Not private: Settings ▸ About offers the same thing, and the window is raised by the
+    /// delegate because it is a window rather than a sheet.
+    @objc func openWhatsNew() {
         if let whatsNewWindow {
             whatsNewWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
