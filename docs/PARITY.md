@@ -380,6 +380,16 @@ visible. Worth deciding, not worth guessing.
   running. It ticks at a third of the display's rate while the sway is all that is moving,
   and at full rate during the entrance or a story. That is a real cost this surface did not
   used to carry, and it is worth remembering before adding a fifth moving thing.
+- **The number keys follow this port's sidebar, not the reference's.** Upstream the sidebar
+  is a flat list of ten — Today, Apps, This Week, Timeline, Canvas, Memories, Story,
+  Collections, Projects, Search — and ⌘1–⌘9 are near-positional in *that* order. This port
+  groups the ten into three sections instead, which is its own decision and a deliberate one,
+  but it had kept the reference's numbers: ⌘5 sat on Search at the second row and ⌘2 on Apps
+  at the fifth, so the column read 1, 5, 3, 4, 2, 8, 7, 6, 9 top to bottom. The digits run
+  1–9 down the sidebar now, and the View menu is ordered and separated to match. A shortcut
+  column nobody can predict is worse than one nobody can see — and the keys were only
+  coherent in an arrangement this app does not use. **If the sidebar is ever flattened to the
+  reference's order, this should go back.**
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
   `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, `detectWorkflows`,
   `computeWeekSummary`, and both orderings in `Collections.compute`. Fixtures cover each — the collections one is built so two

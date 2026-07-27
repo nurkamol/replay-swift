@@ -79,8 +79,18 @@ enum Shortcuts {
         }
     }
 
-    /// The View menu, in the order it is built. Separators are part of the order because the
-    /// grouping is a decision — Today and the palette lead, the numbered surfaces follow.
+    /// The View menu, in the order it is built, which is the order the sidebar shows.
+    ///
+    /// The digits run 1–9 straight down the sidebar, and getting there meant parting from the
+    /// reference's assignment. Upstream the sidebar is a flat list of ten in a different
+    /// order — Today, Apps, This Week, Timeline, Canvas, Memories, Story, Collections,
+    /// Projects, Search — and its keys are near-positional in *that* arrangement. This port
+    /// groups the ten into three sections instead, which is its own decision and a good one,
+    /// but it had kept the reference's numbers: ⌘5 sat on Search at the second row and ⌘2 on
+    /// Apps at the fifth, so the column read 1, 5, 3, 4, 2, 8, 7, 6, 9 top to bottom.
+    ///
+    /// A shortcut column nobody can predict is worse than one nobody can see. The separators
+    /// mirror the sidebar's own sections, so the menu reads the way the sidebar does.
     static let menu: [Entry] = [
         Entry(
             menuTitle: "Hide Sidebar", label: "Show or hide the sidebar", key: "s",
@@ -94,36 +104,36 @@ enum Shortcuts {
             menuTitle: "Go to Anything…", label: "Go to anything", key: "k",
             command: .palette, group: .around
         ),
+        // Search is ⌘2 rather than ⌘F: ⌘F is Find, and `.searchable` binds it to focus the
+        // field — a menu item that stole it switched surfaces and then swallowed the
+        // keystrokes meant for the search box.
         Entry(
-            menuTitle: "Apps", label: "Apps", key: "2",
-            command: .apps, group: .around, surface: .apps, separatorBefore: true
+            menuTitle: "Search", label: "Search", key: "2",
+            command: .search, group: .around, surface: .search
         ),
         Entry(
             menuTitle: "This Week", label: "This Week", key: "3",
-            command: .week, group: .around, surface: .week
+            command: .week, group: .around, surface: .week, separatorBefore: true
         ),
         Entry(
             menuTitle: "Timeline", label: "Timeline", key: "4",
             command: .timeline, group: .around, surface: .timeline
         ),
-        // Numbered in sidebar order. Search is ⌘5 rather than ⌘F: ⌘F is Find, and
-        // `.searchable` binds it to focus the field — a menu item that stole it switched
-        // surfaces and then swallowed the keystrokes meant for the search box.
         Entry(
-            menuTitle: "Search", label: "Search", key: "5",
-            command: .search, group: .around, surface: .search
+            menuTitle: "Apps", label: "Apps", key: "5",
+            command: .apps, group: .around, surface: .apps, separatorBefore: true
         ),
         Entry(
-            menuTitle: "Memories", label: "Memories", key: "6",
-            command: .memories, group: .around, surface: .memories
+            menuTitle: "Projects", label: "Projects", key: "6",
+            command: .projects, group: .around, surface: .projects
         ),
         Entry(
             menuTitle: "Collections", label: "Collections", key: "7",
             command: .collections, group: .around, surface: .collections
         ),
         Entry(
-            menuTitle: "Projects", label: "Projects", key: "8",
-            command: .projects, group: .around, surface: .projects
+            menuTitle: "Memories", label: "Memories", key: "8",
+            command: .memories, group: .around, surface: .memories, separatorBefore: true
         ),
         Entry(
             menuTitle: "Story", label: "Story", key: "9",
