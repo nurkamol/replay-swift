@@ -222,8 +222,25 @@ private struct HeadlineCard: View {
         }
         .padding(Design.Space.block)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Design.Colour.surfaceRaised, in: RoundedRectangle(cornerRadius: Design.Radius.surface))
+        // The hour, behind the day's own figure. It shifts across the day, so the card is
+        // quietly different at nine in the morning and at nine at night — the number is
+        // describing a time, and this is that time. Held back to a fraction of its strength:
+        // a full sky under a hero figure would be a poster.
+        .background {
+            RoundedRectangle(cornerRadius: Design.Radius.surface, style: .continuous)
+                .fill(Design.Colour.surfaceRaised)
+                .overlay {
+                    Sky(at: now, strength: Design.Colour.skyOnCard)
+                        .clipShape(RoundedRectangle(
+                            cornerRadius: Design.Radius.surface, style: .continuous
+                        ))
+                }
+        }
     }
+
+    /// Re-read on every draw rather than held: the card already redraws every thirty seconds
+    /// as the day's total moves, and the sky only has to keep up with that.
+    private var now: Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
 
     private struct Stat: View {
         let value: String

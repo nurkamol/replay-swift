@@ -90,13 +90,18 @@ struct ScreensaverView: View {
 
             HStack {
                 Spacer()
+                // Same fix as Replay Day: the disc is the target, not the glyph in it.
                 Button(action: onExit) {
                     Image(systemName: "xmark")
                         .font(Design.Text.detail)
-                        .padding(Design.Space.row)
+                        .frame(
+                            width: Design.Layout.closeButton,
+                            height: Design.Layout.closeButton
+                        )
+                        .background(.thinMaterial, in: Circle())
+                        .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .background(.thinMaterial, in: Circle())
                 .opacity(Design.Colour.screensaverExitOpacity)
                 .padding(Design.Space.page)
                 .keyboardShortcut(.escape, modifiers: [])

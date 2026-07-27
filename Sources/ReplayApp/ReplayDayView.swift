@@ -27,7 +27,10 @@ struct ReplayDayView: View {
 
     var body: some View {
         ZStack {
-            Design.Colour.screensaverBackground.ignoresSafeArea()
+            // The hour the playhead is on, so watching a day back passes through its own
+            // light — late night, dawn, the middle of the afternoon, evening.
+            Sky(at: Playback.time(at: progress, in: sessions))
+                .ignoresSafeArea()
 
             if let current {
                 moment(current)
@@ -42,13 +45,21 @@ struct ReplayDayView: View {
             VStack {
                 HStack {
                     Spacer()
+                    // The hit area is the whole disc, not the glyph inside it. The first
+                    // version put the material *behind* a plain button, so only the ✕ itself
+                    // was clickable — a 12-point target that looked like a 34-point one, and
+                    // in practice only Escape worked.
                     Button(action: onClose) {
                         Image(systemName: "xmark")
                             .font(Design.Text.detail)
-                            .padding(Design.Space.row)
+                            .frame(
+                                width: Design.Layout.closeButton,
+                                height: Design.Layout.closeButton
+                            )
+                            .background(.thinMaterial, in: Circle())
+                            .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
-                    .background(.thinMaterial, in: Circle())
                     .keyboardShortcut(.escape, modifiers: [])
                     .help("Close")
                     .accessibilityLabel("Close")

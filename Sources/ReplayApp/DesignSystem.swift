@@ -243,6 +243,10 @@ enum Design {
         /// bar and a cross-fade, and it is a timer running for half a minute.
         static let playbackTick: TimeInterval = 1.0 / 30
 
+        /// How long the sky takes to move between two hours. Long, because the point is that
+        /// you notice it has changed rather than watching it change.
+        static let skySeconds: Double = 1.4
+
         static let screensaverDriftSeconds: Double = 90
         static let screensaverSlowSeconds: Double = 240
     }
@@ -323,6 +327,9 @@ enum Design {
         /// that you can see which one it is without looking for it.
         static let paletteHighlight = AnyShapeStyle(Color.accentColor.opacity(0.30))
         /// A day in the heatmap. Floored so a day with anything in it is visibly not empty.
+        /// How much of the sky a card carries. Enough to notice across a day, not enough to
+        /// compete with what is written on it.
+        static let skyOnCard: Double = 0.55
         static let heatFloor: Double = 0.25
         static let heatRange: Double = 0.70
 
@@ -467,6 +474,8 @@ enum Design {
         /// Playing a day back: the marks on the filmstrip, the playhead, the speed control.
         static let filmstripMark: CGFloat = 3
         static let playhead: CGFloat = 10
+        /// A round close button over a full-window surface. The whole disc is the target.
+        static let closeButton: CGFloat = 34
         static let playbackSpeedWidth: CGFloat = 130
         static let whatsNewWidth: CGFloat = 620
         static let whatsNewHeight: CGFloat = 560
