@@ -245,20 +245,6 @@ private func categoryWord(_ category: SessionCategory) -> String {
     }
 }
 
-/// The local-midnight Monday that starts the week a moment falls in.
-private func startOfWeek(_ millis: Int64, calendar: Calendar) -> Int64 {
-    let day = startOfLocalDay(millis, calendar: calendar)
-    let date = Date(timeIntervalSince1970: Double(day) / 1000)
-    // `weekday` is 1-based with Sunday at 1; the reference works from a 0-based Sunday and
-    // shifts so Monday is zero.
-    let sinceMonday = (calendar.component(.weekday, from: date) - 1 + 6) % 7
-    var parts = calendar.dateComponents([.year, .month, .day], from: date)
-    parts.day! -= sinceMonday
-    // Built from components rather than by subtracting milliseconds, so a week that crosses
-    // a daylight-saving boundary still starts at midnight.
-    guard let start = calendar.date(from: parts) else { return day }
-    return Int64((start.timeIntervalSince1970 * 1000).rounded())
-}
 
 /// Local midnight for a date given in components, allowing day 0 to mean "the last day of
 /// the previous month" as `new Date(y, m + 1, 0)` does.

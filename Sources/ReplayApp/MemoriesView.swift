@@ -546,7 +546,7 @@ struct Heatmap: View {
         let calendar = Calendar.current
         let month = calendar.dateComponents([.year, .month], from: Date(timeIntervalSince1970: Double(today) / 1000))
         let first = calendar.date(from: month) ?? Date()
-        let start = weekStart(startOfLocalDay(Int64(first.timeIntervalSince1970 * 1000)))
+        let start = startOfWeek(Int64(first.timeIntervalSince1970 * 1000))
         let cells = (0..<ReplayCore.Heatmap.monthCells).map { startOfLocalDay(start + Int64($0) * dayMillis) }
         let columns = Array(
             repeating: GridItem(.fixed(Design.Layout.heatmapMonthCell), spacing: Design.Space.snug),
@@ -653,8 +653,8 @@ struct Heatmap: View {
 
     private func date(_ millis: Int64) -> Date { Date(timeIntervalSince1970: Double(millis) / 1000) }
 
-    /// Whole weeks *ending* with the one today falls in, aligned to the week's own first
-    /// day so the rows are weekdays rather than an arbitrary seven-day slice.
+    /// Whole weeks *ending* with the one today falls in, aligned to Monday so the rows are
+    /// weekdays rather than an arbitrary seven-day slice.
     ///
     /// Counted backwards from today deliberately. The reference counts forwards: it goes
     /// back `yearBackDays`, snaps to a week boundary, then draws 53 columns — and 53 weeks
@@ -667,7 +667,7 @@ struct Heatmap: View {
     /// history. It is only anchored at the end that matters instead of the end that does not.
     private var yearWeeks: [[Int64]] {
         let gridStart = startOfLocalDay(
-            weekStart(today) - Int64((ReplayCore.Heatmap.yearWeeks - 1) * 7) * dayMillis
+            startOfWeek(today) - Int64((ReplayCore.Heatmap.yearWeeks - 1) * 7) * dayMillis
         )
         return (0..<ReplayCore.Heatmap.yearWeeks).map { week in
             (0..<7).map { startOfLocalDay(gridStart + Int64(week * 7 + $0) * dayMillis) }
@@ -688,25 +688,18 @@ struct Heatmap: View {
         return calendar.shortMonthSymbols[month - 1]
     }
 
-    /// The first day of the week `day` falls in, in the locale's own terms.
+    /// The locale's own weekday initials, starting on Monday.
     ///
-    /// Not "back up to Sunday", which is what both grids did first: the labels above them
-    /// already followed `firstWeekday`, so on a Monday-first locale the header read
-    /// M T W T F S S over a Sunday-aligned grid and every column named the wrong day.
-    private func weekStart(_ day: Int64) -> Int64 {
-        let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: date(day))
-        let offset = (weekday - calendar.firstWeekday + 7) % 7
-        return startOfLocalDay(day - Int64(offset) * dayMillis)
-    }
-
-    /// The locale's own weekday initials, in the locale's own order — not a hard-coded
-    /// S M T W T F S, which is only right in English and only in a Sunday-first week.
+    /// The letters are the locale's — never a hard-coded S M T W T F S, which is only right
+    /// in English — but the *order* is the app's, not the locale's. `ReplayCore.startOfWeek`
+    /// begins a week on Monday everywhere else in Replay, so a grid that began on Sunday
+    /// because en-US says so drew the same seven days a different way from the rest of the
+    /// app. One definition of a week, and this reads from it.
     private var weekdayInitials: [String] {
-        let calendar = Calendar.current
-        let symbols = calendar.veryShortStandaloneWeekdaySymbols
-        let firstIndex = calendar.firstWeekday - 1
-        return (0..<7).map { symbols[($0 + firstIndex) % 7] }
+        let symbols = Calendar.current.veryShortStandaloneWeekdaySymbols
+        // `veryShortStandaloneWeekdaySymbols` is Sunday-first regardless of locale, so
+        // Monday is index 1.
+        return (0..<7).map { symbols[($0 + 1) % 7] }
     }
 
     private func weekdayShort(_ day: Int64) -> String {

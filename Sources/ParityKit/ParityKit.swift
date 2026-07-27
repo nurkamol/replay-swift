@@ -1165,6 +1165,19 @@ public enum ParityKit {
             TodayHero.allCases.map(\.rawValue), constants.today.heroOrder
         )
 
+        // A week begins on Monday, everywhere in the app.
+        //
+        // The reference settles this in `startOfWeek` — `(d.getDay() + 6) % 7`, "days since
+        // Monday" — and it is not the locale's answer: en-US says Sunday. It lived privately
+        // in `Autobiography` until the heatmap needed one and reached for `firstWeekday`
+        // instead, so the grid drew a week the rest of the app did not recognise. Checked
+        // across all seven weekdays, in whatever calendar the suite is running under.
+        let mondayProbe = startOfLocalDay(1_785_092_400_000)  // a Monday
+        for offset in 0..<7 {
+            let day = startOfLocalDay(mondayProbe + Int64(offset) * dayMillis)
+            equal(g1, "day \(offset) of the week starts on its Monday", startOfWeek(day), mondayProbe)
+        }
+
         // The heatmap's steps. Shading against fixed amounts rather than against the busiest
         // day in the window is the whole claim the grid makes, so the boundaries are checked
         // from both sides — a second under a threshold and a second over it.

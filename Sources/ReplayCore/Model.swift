@@ -232,6 +232,29 @@ public func startOfLocalDay(_ epochMillis: Int64, calendar: Calendar = .current)
 
 public let dayMillis: Int64 = 24 * 60 * 60 * 1000
 
+/// The local-midnight **Monday** that starts the week a moment falls in.
+///
+/// Monday deliberately, and not `Calendar.firstWeekday`. The reference settled this in
+/// `startOfWeek` — `(d.getDay() + 6) % 7`, commented "days since Monday" — and the whole app
+/// has to agree with itself about where a week begins or two surfaces will draw the same
+/// seven days differently. It lived privately in `Autobiography` until the memory heatmap
+/// needed one too and reached for the locale's answer instead, which is Sunday in en-US: the
+/// grid's columns then meant something the rest of the app did not.
+///
+/// Built from date components rather than by subtracting milliseconds, so a week crossing a
+/// daylight-saving boundary still starts at midnight.
+public func startOfWeek(_ millis: Int64, calendar: Calendar = .current) -> Int64 {
+    let day = startOfLocalDay(millis, calendar: calendar)
+    let date = Date(timeIntervalSince1970: Double(day) / 1000)
+    // `weekday` is 1-based with Sunday at 1; the reference works from a 0-based Sunday and
+    // shifts so Monday is zero.
+    let sinceMonday = (calendar.component(.weekday, from: date) - 1 + 6) % 7
+    var parts = calendar.dateComponents([.year, .month, .day], from: date)
+    parts.day! -= sinceMonday
+    guard let start = calendar.date(from: parts) else { return day }
+    return Int64((start.timeIntervalSince1970 * 1000).rounded())
+}
+
 /// What the Dock badge says, and whether it says anything at all.
 ///
 /// Whole hours only — "1h", "4h" — and nothing under one. The reference's own reasoning is

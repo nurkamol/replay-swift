@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 875 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 882 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -177,6 +177,13 @@ document starts lying, and this one has done it twice already — see the two no
   enough for the grid to scroll, it silently pushed the weekday column and the first five
   week-columns off the left. The grid appeared to begin in September and had no key at all,
   and it looked deliberate. It reads from its start now, as the reference's does.
+- **The app had two definitions of a week, and the heatmap picked the wrong one.**
+  `startOfWeek` is Monday-based in both ports — the reference writes `(d.getDay() + 6) % 7`
+  and comments it "days since Monday" — but it lived privately inside `Autobiography`, so
+  when the heatmap needed a week boundary it reached for `Calendar.firstWeekday` instead.
+  That is Sunday in en-US, so the grid drew a week the rest of the app did not recognise.
+  Promoted to `ReplayCore.startOfWeek` and read from there by both, with all seven weekdays
+  checked. The weekday *letters* are still the locale's; only the order is the app's.
 - **Backing up "to Sunday" is not the same as backing up to the start of the week.** Both
   heatmap grids computed their first column as `weekday - 1` days back, while the labels
   above them came from `Calendar.firstWeekday`. In an en-US locale the two agree and nothing
