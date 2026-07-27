@@ -1086,8 +1086,18 @@ public enum ParityKit {
         // Settings row names. Only the rows this port has — the contract carries all of the
         // reference's, and the difference is the backlog rather than a failure.
         let referenceLabels = Set(settingsCopy.rows.map(\.label))
+        let referenceCopy = Dictionary(
+            settingsCopy.rows.map { ($0.label, $0.description) }, uniquingKeysWith: { a, _ in a }
+        )
         for row in SettingsRow.allCases {
             equal(g1, "Settings row: \(row.rawValue)", referenceLabels.contains(row.label), true)
+            // The line under it, where the reference writes one. This is the half a person
+            // reads when they are unsure what a switch does, which is the only time they read
+            // Settings at all.
+            equal(
+                g1, "Settings copy: \(row.rawValue)",
+                row.explanation, referenceCopy[row.label] ?? nil
+            )
         }
 
         // The Guide, word for word. Sixteen answers a person reads, which SPEC §8 calls the

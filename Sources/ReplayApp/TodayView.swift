@@ -129,7 +129,10 @@ struct TodayView: View {
             hasFeaturedMemory: Memories.pickFeatured(memories.memories) != nil,
             hasRecentReflection: contextual.pastReflection != nil,
             hasQuote: contextual.quote != nil,
-            historyEnabled: preferences.contextualMemories
+            // `todayInHistory`, not `contextualMemories`. The two were conflated, so turning
+            // off the quiet contextual card also dropped today-in-history out of the
+            // rotation — which is neither switch's meaning.
+            historyEnabled: preferences.todayInHistory
         )
     }
 

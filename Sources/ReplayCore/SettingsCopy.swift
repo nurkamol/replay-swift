@@ -22,6 +22,7 @@ public enum SettingsRow: String, CaseIterable, Sendable {
     case welcomeScreen = "Welcome screen"
     case dailyFocus = "Daily focus"
     case customTarget = "Custom target"
+    case todayInHistory = "Today in History"
     case surfaceMemories = "Surface memories"
     case howOftenToSpeak = "How often to speak"
     case morningBriefing = "Morning briefing"
@@ -44,4 +45,71 @@ public enum SettingsRow: String, CaseIterable, Sendable {
     case compactDatabase = "Compact database"
 
     public var label: String { rawValue }
+
+    /// The line under the row, as the reference writes it. `nil` where it has none —
+    /// the readouts on the Privacy tab are figures rather than settings, and a figure that
+    /// needs explaining is the wrong figure.
+    public var explanation: String? {
+        switch self {
+        case .theme: "Match the system or lock to a single appearance."
+        case .openTo: "The view Replay shows when the window opens."
+        case .menuBarMode: "Hide the Dock icon and keep Replay running in the menu bar."
+        case .dockBadge:
+            "Show today's active hours on the Dock icon. Appears once you've "
+                + "been active an hour."
+        case .welcomeScreen: "Show the introduction again in the main window."
+        case .dailyFocus: "How much focused time you're aiming for each day."
+        case .customTarget: nil
+        case .todayInHistory:
+            "Show the memory card on Today, and the Memories view in the "
+                + "sidebar."
+        case .surfaceMemories:
+            "Show the occasional inline memory on Today when the moment fits. "
+                + "Each one can be dismissed."
+        case .howOftenToSpeak:
+            "How sure Replay must be before surfacing a memory. Higher means "
+                + "rarer, but only when it truly matters."
+        case .morningBriefing:
+            "A calm look back at yesterday when you open Replay in the morning "
+                + "— and one memory to carry into today."
+        case .autoStartWhenIdle:
+            "Drift the screensaver in after this long with no activity, while "
+                + "Replay is focused. Any key or movement wakes it."
+        case .exitOnMouseMovement:
+            "Dismiss the screensaver when the pointer moves. Off by default, so "
+                + "a hand-started screensaver stays until you reach for it."
+        case .exitOnClick: "Dismiss the screensaver on a mouse click or tap."
+        case .exitOnKeyPress:
+            "Dismiss the screensaver on any key. Esc and the ✕ always close it, "
+                + "whatever these are set to."
+        case .dailySummary: "A recap of the day's focus, delivered at the time you choose."
+        case .weeklyRecap: "A look back every Sunday evening at the week just gone."
+        case .onThisDay:
+            "A once-a-day reminder of what you were doing on this date in the "
+                + "past."
+        case .tracked: nil
+        case .excluded: nil
+        case .events: nil
+        case .onDisk:
+            "Replay reads which app is frontmost through macOS’s standard "
+                + "signal — it needs no Accessibility, Automation, or App Management "
+                + "permission to do it, and never looks inside your windows. The "
+                + "links are only for verifying, or a locked-down Mac."
+        case .activityTracking: "Observe which apps you use to build your private timeline."
+        case .excludedApplications:
+            "Choose apps Replay should never record. Excluding one also removes "
+                + "its history."
+        case .activityHistory: "Permanently delete every event Replay has recorded on this Mac."
+        case .fullBackup:
+            "Export the entire database as JSON, or import one — importing "
+                + "merges, never overwrites."
+        case .keepActivityFor:
+            "Older raw events are removed past this window. Keeping everything "
+                + "never deletes a thing; your day-by-day headlines are kept either "
+                + "way, so history and streaks survive."
+        case .compactDatabase:
+            "There is no undo — export a backup first if you want to keep your "
+                + "timeline."
+        }
+    }
 }

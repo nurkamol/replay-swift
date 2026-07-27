@@ -539,7 +539,9 @@ struct RootView: View {
                     row(.collections)
                 }
                 Section("Looking back") {
-                    row(.memories)
+                    // Gone from the sidebar when looking back is switched off, as upstream:
+                    // a surface for a thing you have asked not to see is a dead end.
+                    if preferences.todayInHistory { row(.memories) }
                     row(.story)
                     row(.canvas)
                 }

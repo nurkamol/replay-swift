@@ -41,7 +41,11 @@ the product.
       and `SettingsRow` in `ReplayCore` carries the 27 this port has; the suite checks every
       one belongs. Comparing the two lists is what surfaced the two items below.
 
-- [ ] **A separate "Today in History" toggle.** `S`
+- [x] **A separate "Today in History" toggle.** `S` — done 2026-07-28. Two independent
+      switches now, Living Home reads the right one, and Memories leaves the sidebar when
+      looking back is off, as upstream.
+
+      ~~Original entry:~~ `S`
       Upstream has two independent switches where this port has one. `todayInHistory` shows
       the memory card on Today and the Memories view in the sidebar; `contextualMemories` is
       the quieter thing that surfaces a memory when it becomes relevant. This port has only
@@ -56,10 +60,14 @@ the product.
       so there is no way back to a first run. Destructive, so it wants the same confirmation
       Clear History has — SPEC §8: name what it will remove.
 
-- [ ] **Almost no row says what it does.** `M`
-      The 29 that exist are already in `spec/settings-copy.json` beside their labels, so this
-      is now rendering rather than transcribing.
-      The reference carries **29** per-row descriptions — "Hide the Dock icon and keep Replay
+- [ ] **Seven controls still say nothing.** `S`
+      All 29 of the reference's descriptions are in `spec/settings-copy.json` and in
+      `SettingsRow.explanation`, checked character for character. **Eleven of the eighteen
+      named controls render theirs**; the remaining seven are `Picker`s and multi-line
+      controls that `.explains(_:)` was not applied to, because appending a modifier to a
+      one-line `Toggle` is a safe mechanical edit and reaching into a picker's body is not.
+      Nothing is missing from the contract — this is finishing the rendering.
+      · Was: the reference carries **29** per-row descriptions — "Hide the Dock icon and keep Replay
       running in the menu bar", "Appears once you've been active an hour". This port has 12
       footnotes and tooltips between them. Every control works and most are unexplained.
 

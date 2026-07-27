@@ -205,6 +205,18 @@ final class Preferences {
 
     /// Whether Replay may surface a memory on Today at all. The master switch, on by
     /// default — the feature is the product, not an add-on.
+    /// Whether Replay looks back at all: the memory card on Today, and Memories in the
+    /// sidebar.
+    ///
+    /// Separate from ``contextualMemories`` because they are different offers. This one is
+    /// *today in history* — the same date, earlier years — and it is either shown or it is
+    /// not. The other is the quieter thing that speaks only when something becomes relevant.
+    /// The reference keeps two switches; this port had one, and read the wrong one, so
+    /// turning the quiet thing off silently removed today-in-history as well.
+    var todayInHistory: Bool {
+        didSet { write(todayInHistory, "todayInHistory") }
+    }
+
     var contextualMemories: Bool {
         didSet { write(contextualMemories, "contextualMemories") }
     }
@@ -296,6 +308,9 @@ final class Preferences {
         surfaceStyle = (defaults.string(forKey: "surfaceStyle")
             .flatMap(SurfaceStyle.init)) ?? .glass
         launchSurface = (defaults.string(forKey: "launchSurface").flatMap(LaunchSurface.init)) ?? .today
+        // On by default, as upstream. Looking back is what the app is for; the setting exists
+        // to turn it off, not to ask permission for it.
+        todayInHistory = defaults.object(forKey: "todayInHistory") as? Bool ?? true
         retentionDays = defaults.integer(forKey: "retentionDays")
         excludedApps = (defaults.data(forKey: "excludedApps"))
             .flatMap { try? JSONDecoder().decode([ExcludedApp].self, from: $0) } ?? []

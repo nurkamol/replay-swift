@@ -125,6 +125,26 @@ private struct PaneForm<Content: View>: View {
     }
 }
 
+extension View {
+    /// The reference's own line under a control.
+    ///
+    /// A `Form` puts this where macOS puts it — under the row, secondary, wrapping to the
+    /// content column. The port had 12 of these against the reference's 29, so most controls
+    /// worked and said nothing about what they did.
+    func explains(_ row: SettingsRow) -> some View {
+        VStack(alignment: .leading, spacing: Design.Space.hairline) {
+            self
+            if let text = row.explanation {
+                Text(text)
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+}
+
 /// A section's footnote, aligned the way the system aligns them.
 ///
 /// `Form` centres a footer by default in this configuration, which reads as a caption for
@@ -287,6 +307,7 @@ private struct GeneralTab: View {
                 }
 
                 Toggle(SettingsRow.menuBarMode.label, isOn: $preferences.menuBarOnly)
+                    .explains(.menuBarMode)
                     .onChange(of: preferences.menuBarOnly) { _, on in
                         // Applied immediately: a setting that needs a restart to mean
                         // anything is a setting the user cannot trust.
@@ -297,8 +318,7 @@ private struct GeneralTab: View {
                 Footnote(
                     preferences.surfaceStyle.detail
                         + " Reduce Transparency in System Settings overrides this and makes "
-                        + "every surface solid. Menu bar only hides the Dock icon; Replay "
-                        + "keeps recording either way."
+                        + "every surface solid."
                 )
             }
 
@@ -307,19 +327,15 @@ private struct GeneralTab: View {
                     Button("Show Welcome") { preferences.seenWelcome = false }
                 }
             } footer: {
-                Footnote("Shows the introduction again in the main window.")
             }
 
             Section {
                 Toggle(SettingsRow.dockBadge.label, isOn: $preferences.dockBadge)
+                    .explains(.dockBadge)
                     .onChange(of: preferences.dockBadge) { _, on in
                         DockBadge.update(model, enabled: on)
                     }
             } footer: {
-                Footnote(
-                    "Today's active hours on the Dock icon, once there is an hour to show. "
-                        + "A badge reading a few minutes is noise."
-                )
             }
 
             Section {
@@ -330,8 +346,11 @@ private struct GeneralTab: View {
                     }
                 }
                 Toggle(SettingsRow.exitOnMouseMovement.label, isOn: $preferences.screensaverExitOnMouseMove)
+                    .explains(.exitOnMouseMovement)
                 Toggle(SettingsRow.exitOnClick.label, isOn: $preferences.screensaverExitOnClick)
+                    .explains(.exitOnClick)
                 Toggle(SettingsRow.exitOnKeyPress.label, isOn: $preferences.screensaverExitOnKey)
+                    .explains(.exitOnKeyPress)
             } header: {
                 Text("Screensaver")
             } footer: {
@@ -344,6 +363,7 @@ private struct GeneralTab: View {
 
             Section {
                 Toggle(SettingsRow.dailySummary.label, isOn: $preferences.dailySummary)
+                    .explains(.dailySummary)
                     .onChange(of: preferences.dailySummary) { _, on in
                         Task { await enableNotification(on) }
                     }
@@ -358,10 +378,12 @@ private struct GeneralTab: View {
                 }
 
                 Toggle(SettingsRow.weeklyRecap.label, isOn: $preferences.weeklyRecap)
+                    .explains(.weeklyRecap)
                     .onChange(of: preferences.weeklyRecap) { _, on in
                         Task { await enableNotification(on) }
                     }
                 Toggle(SettingsRow.onThisDay.label, isOn: $preferences.onThisDayNotice)
+                    .explains(.onThisDay)
                     .onChange(of: preferences.onThisDayNotice) { _, on in
                         Task { await enableNotification(on) }
                     }
@@ -379,7 +401,16 @@ private struct GeneralTab: View {
             }
 
             Section {
+                // Two switches, not one. This is looking back at all — the same date in
+                // earlier years, on Today and as its own surface. The one below is the
+                // quieter thing that speaks when something becomes relevant, and they are
+                // independent: someone can want their own history and not want to be spoken
+                // to about it.
+                Toggle(SettingsRow.todayInHistory.label, isOn: $preferences.todayInHistory)
+                    .explains(.todayInHistory)
+
                 Toggle(SettingsRow.surfaceMemories.label, isOn: $preferences.contextualMemories)
+                    .explains(.surfaceMemories)
                     .onChange(of: preferences.contextualMemories) { _, _ in contextual.load() }
 
                 // The threshold is the user's control over how often Replay speaks, so it is
@@ -393,6 +424,7 @@ private struct GeneralTab: View {
                 .onChange(of: preferences.memoryThreshold) { _, _ in contextual.load() }
 
                 Toggle(SettingsRow.morningBriefing.label, isOn: $preferences.morningBriefing)
+                    .explains(.morningBriefing)
                     .onChange(of: preferences.morningBriefing) { _, _ in contextual.load() }
 
                 if !preferences.dismissedMemories.isEmpty {
