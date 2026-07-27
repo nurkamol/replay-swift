@@ -371,26 +371,39 @@ struct RootView: View {
     /// The column is what makes the labels line up. A `Label` sizes its icon to the glyph,
     /// and SF Symbols are not one width — a magnifier is narrower than a bar chart — so
     /// without it every row began at a slightly different place.
-    private func sidebarLabel(_ title: String, _ glyph: String) -> some View {
+    private func sidebarLabel(_ title: String, _ glyph: String, selected: Bool = false) -> some View {
         Label {
             // One line, always. A sidebar row that wraps breaks the even rhythm the column
             // is read by, and the sidebar is resizable, so any row is one drag from being
             // too narrow for its own name.
             Text(title).lineLimit(1)
         } icon: {
-            // Tinted explicitly rather than left to the `Label`'s default: a sidebar glyph
-            // is drawn with AppKit's `controlAccentColor`, which a SwiftUI `.tint` does not
-            // reach — so with a theme colour chosen, every other control in the window
-            // followed it and the sidebar alone stayed the system blue.
-            Image(systemName: glyph)
-                .foregroundStyle(.tint)
-                .frame(width: Design.Icon.sidebarColumn, alignment: .center)
+            Group {
+                if selected {
+                    // Left alone on the selected row, and that is the fix rather than the
+                    // omission. The tint below is the theme colour; a selected row's
+                    // background *is* the theme colour, so tinting the glyph painted it onto
+                    // itself and the icon vanished — the row read as a label with a gap
+                    // where its symbol should be. SwiftUI already knows what to draw on a
+                    // selection, including when the window is not key and the selection is
+                    // grey rather than coloured, which a hard-coded white would get wrong.
+                    Image(systemName: glyph)
+                } else {
+                    // Tinted explicitly rather than left to the `Label`'s default: a sidebar
+                    // glyph is drawn with AppKit's `controlAccentColor`, which a SwiftUI
+                    // `.tint` does not reach — so with a theme colour chosen, every other
+                    // control in the window followed it and the sidebar alone stayed the
+                    // system blue.
+                    Image(systemName: glyph).foregroundStyle(.tint)
+                }
+            }
+            .frame(width: Design.Icon.sidebarColumn, alignment: .center)
         }
     }
 
     private func row(_ item: Navigation.Surface) -> some View {
         NavigationLink(value: item) {
-            sidebarLabel(item.rawValue, item.symbol)
+            sidebarLabel(item.rawValue, item.symbol, selected: navigation.surface == item)
         }
         .accessibilityHint(item.purpose)
     }

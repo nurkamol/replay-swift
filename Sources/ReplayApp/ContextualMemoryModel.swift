@@ -16,6 +16,9 @@ final class ContextualMemoryModel {
     private(set) var briefing: MorningBriefing?
     /// The moment to quote today — one line, under the briefing.
     private(set) var quote: Moment?
+    /// Something you wrote on an earlier day, offered back. One of the four things Today can
+    /// lead with, and the only one that is your own words rather than the app's.
+    private(set) var pastReflection: Reflection?
     private(set) var loaded = false
 
     private let model: AppModel
@@ -32,6 +35,7 @@ final class ContextualMemoryModel {
         loaded = true
         guard preferences.contextualMemories else {
             memory = nil
+            pastReflection = nil
             return
         }
 
@@ -60,6 +64,14 @@ final class ContextualMemoryModel {
         let reflections = ((try? model.store.reflections(
             from: today - 366 * 2 * dayMillis, to: today + dayMillis
         )) ?? []).map { DatedText(dayStart: $0.dayStart, text: $0.text) }
+        // The newest thing you wrote before today, from the last thirty days. Today's own
+        // reflection is excluded — offering back what you have just written is not a memory.
+        pastReflection = ((try? model.store.reflections(
+            from: today - Int64(todayHeroReflectionLookbackDays) * dayMillis, to: today
+        )) ?? [])
+            .filter { $0.dayStart < today && !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .max { $0.dayStart < $1.dayStart }
+
         let bookmarks = ((try? model.store.annotations(from: 0, to: now + dayMillis)) ?? [])
             .filter(\.bookmarked)
         let seed = try? model.store.momentSeed()

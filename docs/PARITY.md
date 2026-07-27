@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 745 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 748 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -199,24 +199,28 @@ picture; and an application or moment is named only from 1.15, where the referen
 `labelVisible` names it. The greedy collision test stays on top of that rule — it is this
 port's own, and answers a question the reference never has to.
 
-### Today shows every card; the reference shows one — **not ported**
+### Living Home: Today leads with one card
 
-The reference calls it Living Home and documents the intent: "instead of stacking every memory
+Ported. The reference's own idea and its own words for it — *"instead of stacking every memory
 card, Today features one — a single hero chosen for the day and rotated so the screen never
-feels static." The pick is `candidates[floor(todayStart / DAY) % candidates.length]` over
-resume, today-in-history, reflection and quote — deterministic by date, so it holds for a day
-and changes tomorrow — with one override: a resume target whose session ended within six hours
-always leads. This port renders the briefing, the quote, the contextual memory, the resume
-card, the reflection and today-in-history all at once.
+feels static."* This port had been showing the quote, the resume card and today-in-history all
+at once, on top of the briefing and the contextual memory, so a rich day opened with a column
+of cards before the day itself began.
 
-It is the largest behavioural divergence in the port and it is deliberate for now, because
-adopting it makes Today considerably quieter and that is a judgement about the product rather
-than a correctness fix.
+`pickTodayHero` is in `ReplayCore` with the two rules the reference has. A session you stepped
+away from within six hours always leads, because it puts *now* within reach at the top of the
+screen. Otherwise the available candidates rotate on the day number, so the choice holds from
+midnight to midnight and changes tomorrow — deterministic rather than random, because a home
+screen that reshuffles every time you look at it is busy rather than restful.
 
-A related piece is blocked on the same decision: `recentReflection` — the most recent non-empty
-reflection from the thirty days before today — is one of the four hero candidates. Porting it
-on its own would add a seventh card to a surface the reference limits to one, which is the
-opposite of what it is for.
+The fourth candidate arrived with it: a reflection you wrote on an earlier day, offered back.
+It is the only one of the four that is your own words rather than the app's.
+
+Four behaviour cases cover it, including the one that matters — that the freshness rule
+actually overrides. The first version of that test asserted a stale resume target was *not*
+chosen, which passed for the wrong reason: with all four available the rotation happened to
+land on resume anyway. It picks a day the rotation lands elsewhere now, so the two halves
+differ only because of the rule under test.
 
 ## Known divergences to keep an eye on
 

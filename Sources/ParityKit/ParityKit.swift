@@ -144,6 +144,9 @@ public enum ParityKit {
             public let eveningFromHour: Int
             public let eveningPrompt: String
             public let prompt: String
+            public let heroRecentHours: Int
+            public let reflectionLookbackDays: Int
+            public let heroOrder: [String]
         }
 
         public let search: SearchConstants
@@ -1013,6 +1016,20 @@ public enum ParityKit {
         equal(
             g1, "and what it asks once the day is ending",
             ReflectionPrompt.evening, constants.today.eveningPrompt
+        )
+
+        // Living Home: what Today leads with, and how it is chosen.
+        equal(
+            g1, "how fresh a resume target has to be to lead",
+            Int(todayHeroRecentSeconds / 3600), constants.today.heroRecentHours
+        )
+        equal(
+            g1, "how far back Today looks for a reflection",
+            todayHeroReflectionLookbackDays, constants.today.reflectionLookbackDays
+        )
+        equal(
+            g1, "the order the heroes rotate in",
+            TodayHero.allCases.map(\.rawValue), constants.today.heroOrder
         )
 
         let c = CanvasTokens.self

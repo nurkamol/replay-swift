@@ -50,11 +50,6 @@ struct TodayView: View {
                             onDismiss: { contextual.dismissBriefing() }
                         )
                     }
-                    if let quote = contextual.quote {
-                        QuoteLine(moment: quote, onOpen: {
-                            if let day = quote.dayStart { onOpenDay(day) }
-                        })
-                    }
                     // Above everything it could interrupt, and absent far more often than
                     // present — most days Replay has nothing worth saying, and says nothing.
                     if let memory = contextual.memory {
@@ -69,21 +64,14 @@ struct TodayView: View {
                                 : nil
                         )
                     }
-                    // Above the reflection: this is the one card that leads somewhere
-                    // other than into the app, and burying it under a text field would
-                    // make it a footnote to the day rather than an offer about it.
-                    if let target = findResumeTarget(model.timeline, now: model.now) {
-                        ResumeCard(target: target, now: model.now)
-                    }
+
+                    // One of them, not all of them. See `pickTodayHero`: the quote, the
+                    // resume card, today-in-history and a reflection worth rereading used to
+                    // appear together, so a rich day opened with a column of cards before
+                    // the day itself. Now the day picks one and keeps it until midnight.
+                    hero
+
                     reflection
-                    // The nearest one only, and only when there is one. Today is about
-                    // today; a gallery of the past belongs on its own surface.
-                    if let memory = memories.memories.first {
-                        TodayInHistoryCard(
-                            memory: memory,
-                            onOpen: { onOpenDay(memory.range.dayStart) }
-                        )
-                    }
                     sessionList
                 } else {
                     quietDay.centredInPage()
@@ -124,6 +112,53 @@ struct TodayView: View {
             Label("A quiet day", systemImage: "moon.stars")
         } description: {
             Text("Nothing recorded yet. Your sessions will appear here as you work.")
+        }
+    }
+
+    /// What the day is currently offering, in the order `pickTodayHero` walks.
+    private var offer: TodayHeroOffer {
+        TodayHeroOffer(
+            resumeEndedAt: findResumeTarget(model.timeline, now: model.now)?.session.endedAt,
+            hasFeaturedMemory: Memories.pickFeatured(memories.memories) != nil,
+            hasRecentReflection: contextual.pastReflection != nil,
+            hasQuote: contextual.quote != nil,
+            historyEnabled: preferences.contextualMemories
+        )
+    }
+
+    /// The one card Today leads with.
+    @ViewBuilder
+    private var hero: some View {
+        let chosen = pickTodayHero(
+            offer, now: model.now, todayStart: startOfLocalDay(model.now)
+        )
+        switch chosen {
+        case .resume:
+            if let target = findResumeTarget(model.timeline, now: model.now) {
+                ResumeCard(target: target, now: model.now)
+            }
+        case .todayInHistory:
+            if let memory = Memories.pickFeatured(memories.memories) {
+                TodayInHistoryCard(
+                    memory: memory,
+                    onOpen: { onOpenDay(memory.range.dayStart) }
+                )
+            }
+        case .reflection:
+            if let past = contextual.pastReflection {
+                PastReflectionCard(
+                    reflection: past, now: model.now,
+                    onOpen: { onOpenDay(past.dayStart) }
+                )
+            }
+        case .quote:
+            if let quote = contextual.quote {
+                QuoteLine(moment: quote, onOpen: {
+                    if let day = quote.dayStart { onOpenDay(day) }
+                })
+            }
+        case nil:
+            EmptyView()
         }
     }
 
@@ -863,5 +898,47 @@ struct QuoteLine: View {
         .disabled(moment.dayStart == nil)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(moment.detail)
+    }
+}
+
+/// Something you wrote on an earlier day, offered back.
+///
+/// The only one of Today's four heroes that is the person's own words rather than the app's,
+/// which is why it is set as prose and quoted rather than summarised. Replay does not have an
+/// opinion about what you wrote; it just puts it where you will see it again.
+struct PastReflectionCard: View {
+    let reflection: Reflection
+    /// Passed in rather than read here, so "yesterday" is the same yesterday the rest of the
+    /// surface is talking about.
+    let now: Int64
+    let onOpen: () -> Void
+
+    var body: some View {
+        Button(action: onOpen) {
+            HStack(spacing: Design.Space.card) {
+                Image(systemName: "quote.opening")
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("YOU WROTE, \(relativeDayLabel(reflection.dayStart, now: now).uppercased())")
+                        .font(Design.Text.cardLabel)
+                        .foregroundStyle(.tertiary)
+                        .kerning(Design.Text.labelKerning)
+                    Text(reflection.text)
+                        .font(.callout)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: Design.Space.tight)
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(Design.Space.cardRoomy)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.row)
+        .card(background: Design.Colour.surface, border: Design.Colour.fill)
+        .accessibilityHint("Opens the day you wrote it on")
     }
 }

@@ -146,7 +146,15 @@
   "today": {
     "eveningFromHour": 18,
     "eveningPrompt": "Before the day ends — what would you like to remember about it?",
-    "prompt": "What would you like to remember about today?"
+    "prompt": "What would you like to remember about today?",
+    "heroRecentHours": 6,
+    "reflectionLookbackDays": 30,
+    "heroOrder": [
+      "resume",
+      "today-in-history",
+      "reflection",
+      "quote"
+    ]
   },
   "search": {
     "resultStepMs": 10,

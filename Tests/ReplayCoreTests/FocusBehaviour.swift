@@ -259,3 +259,84 @@ struct FocusBehaviour {
         #expect(chapterContext(for: Self.at(2026, 7, 1, 0), now: now, chapters: chapters) == nil)
     }
 }
+
+/// Living Home: which single card Today leads with.
+@Suite("Today's hero")
+struct TodayHeroBehaviour {
+    private static let day = 86_400_000 as Int64
+
+    /// A Thursday midnight, so the day number is a known one.
+    private static func midnight(_ daysSinceEpoch: Int64) -> Int64 { daysSinceEpoch * day }
+
+    @Test("A session you just stepped away from always leads")
+    func freshResumeWins() {
+        // Day 20,601 with all four available rotates to today-in-history — which is the
+        // point of picking it: if the freshness rule did nothing, both halves below would
+        // come back the same, and the test would pass while proving nothing.
+        let today = Self.midnight(20_601)
+        let now = today + 10 * 3_600_000
+        let all = TodayHeroOffer(
+            hasFeaturedMemory: true, hasRecentReflection: true, hasQuote: true
+        )
+
+        var fresh = all
+        fresh.resumeEndedAt = now - 3_600_000
+        #expect(pickTodayHero(fresh, now: now, todayStart: today) == .resume)
+
+        // Seven hours old is past the six-hour window, so it stops overriding and takes its
+        // turn with the rest.
+        var stale = all
+        stale.resumeEndedAt = now - 7 * 3_600_000
+        #expect(pickTodayHero(stale, now: now, todayStart: today) == .todayInHistory)
+    }
+
+    @Test("The choice holds for a day and changes the next")
+    func rotatesByDay() {
+        let offer = TodayHeroOffer(
+            hasFeaturedMemory: true, hasRecentReflection: true, hasQuote: true
+        )
+        // Three candidates, so the rotation has period three and every one is reached.
+        let picks = (0..<6).map { index -> TodayHero? in
+            let today = Self.midnight(20_600 + Int64(index))
+            return pickTodayHero(offer, now: today + 1, todayStart: today)
+        }
+        #expect(Set(picks.compactMap { $0 }).count == 3)
+        #expect(picks[0] == picks[3])
+        #expect(picks[1] == picks[4])
+        #expect(picks[0] != picks[1])
+
+        // And it does not change through the day it was chosen for.
+        let today = Self.midnight(20_600)
+        let morning = pickTodayHero(offer, now: today + 3_600_000, todayStart: today)
+        let night = pickTodayHero(offer, now: today + 23 * 3_600_000, todayStart: today)
+        #expect(morning == night)
+    }
+
+    @Test("History off leaves only what is yours, and nothing is a real answer")
+    func historyOffAndEmpty() {
+        let today = Self.midnight(20_600)
+        // The quote and today-in-history are memories; a reflection is your own writing.
+        let offer = TodayHeroOffer(
+            hasFeaturedMemory: true, hasRecentReflection: true, hasQuote: true,
+            historyEnabled: false
+        )
+        #expect(pickTodayHero(offer, now: today + 1, todayStart: today) == .reflection)
+
+        // Most days there is nothing to lead with, and Today leads with nothing.
+        #expect(pickTodayHero(TodayHeroOffer(), now: today + 1, todayStart: today) == nil)
+    }
+
+    @Test("The featured memory is the fullest day, ties keeping the nearer one")
+    func featuredIsFullest() {
+        func memory(_ dayStart: Int64, _ seconds: Int) -> Memories.Memory {
+            Memories.Memory(
+                range: Memories.Range(key: "m\(dayStart)", label: "", dayStart: dayStart),
+                summary: DailySummary(dayStart: dayStart, activeSeconds: seconds)
+            )
+        }
+        let memories = [memory(1, 600), memory(2, 900), memory(3, 900)]
+        // 2 and 3 tie; the earlier in the list wins, which is the nearer offset to today.
+        #expect(Memories.pickFeatured(memories)?.range.dayStart == 2)
+        #expect(Memories.pickFeatured([]) == nil)
+    }
+}

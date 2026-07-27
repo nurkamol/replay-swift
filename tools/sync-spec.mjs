@@ -285,10 +285,24 @@ const constants = {
       problems.push("today-view.tsx: the reflection prompt is written differently now");
       return {};
     }
+    // Living Home: the one card Today leads with, and how it is chosen.
+    const [heroRecentHours] = inline(
+      src, "today-view.tsx", "how fresh a resume target has to be to lead",
+      /const RECENT = (\d+) \* 60 \* 60 \* 1000/,
+    );
+    const [reflectionLookbackDays] = inline(
+      src, "today-view.tsx", "how far back Today looks for a reflection",
+      /useReflections\(todayStart - (\d+) \* DAY/,
+    );
     return {
       eveningFromHour: Number(match[1]),
       eveningPrompt: match[2],
       prompt: match[3],
+      heroRecentHours,
+      reflectionLookbackDays,
+      // The order the candidates are pushed in, which is the order the rotation walks and so
+      // decides which hero a given day lands on.
+      heroOrder: [...src.matchAll(/candidates\.push\("([\w-]+)"\)/g)].map((m) => m[1]),
     };
   })(),
   /*
