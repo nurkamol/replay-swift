@@ -139,6 +139,7 @@ struct RootView: View {
     let canvas: CanvasModel
     let contextual: ContextualMemoryModel
     @Bindable var palette: CommandPaletteModel
+    let timelineLayers: TimelineLayersModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -487,6 +488,7 @@ struct RootView: View {
         case .timeline:
             TimelineView(
                 history: history,
+                overlays: timelineLayers,
                 annotations: model.annotations,
                 export: export,
                 onOpenDay: { navigation.open(day: $0) }

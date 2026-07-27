@@ -86,7 +86,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Apps | done | ranked by time, with a Today/This Week/This Month window, pinned favourites, and a row leading into that application's own history |
 | An application's history | done | header, the four figures, which collections it appears in, the applications it works alongside, and its recent sessions |
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
-| Timeline (days, dividers, ⋯ menus) | partial | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and five layers (Sessions, Bookmarks, Notes, Collections, Activity). **Four layers short** of the reference: Projects, Reflections, Moments and Memories are overlay *rows* rather than filters and are not built |
+| Timeline (days, dividers, ⋯ menus) | done | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and all nine layers — five that choose which sessions appear, one that governs the gaps, and three that add rows among the days |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
 | Settings | partial | General, Privacy, Data, Guide, About in their own window, with the focus goal, backup export/import and menu-bar-only mode. No Shortcuts tab (no custom shortcuts yet), no digests |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
@@ -210,25 +210,22 @@ still claiming 8 of 20 routes after fourteen of them had landed.
 **All 20 of the reference's routes exist.** What remains is depth inside them, plus the
 platform work the brief asks for and the one thing blocked on paperwork.
 
-1. **Four Timeline layers.** Projects, Reflections, Moments and Memories are overlay *rows*
-   among the days rather than filters over them — a different mechanism from the five that
-   are built. This is the largest visible gap against the reference's own screenshots.
-2. **Settings**: no Shortcuts tab, no notification digests, no Dock badge, no welcome
+1. **Settings**: no Shortcuts tab, no notification digests, no Dock badge, no welcome
    screen, and none of the screensaver's auto-start or exit-condition options.
-3. **Whole surfaces the reference has and this does not**: the Welcome/onboarding flow,
+2. **Whole surfaces the reference has and this does not**: the Welcome/onboarding flow,
    What's New, and Replay Day (a day played back as a short film).
-4. **Canvas** has no synced timeline side panel and no focus mode.
-5. **Search** has no saved searches, no time-range chips, and does not highlight matches.
-6. **A past day** has no story or chapter context.
-7. **PDF export** — dropped deliberately after WebKit failed twice; the route worth trying
+3. **Canvas** has no synced timeline side panel and no focus mode.
+4. **Search** has no saved searches, no time-range chips, and does not highlight matches.
+5. **A past day** has no story or chapter context.
+6. **PDF export** — dropped deliberately after WebKit failed twice; the route worth trying
    next is `NSPrintOperation` on a real window.
 8. **Widen the model suite.** Nine cases cover the sharp edges; `ExportModel`,
     `SettingsModel` and `CollectionsModel` have none, and the tracker's live-state handling
     is still only exercised by using the app.
-9. **The brief's platform integrations, none started**: App Intents, Widgets, Spotlight,
+8. **The brief's platform integrations, none started**: App Intents, Widgets, Spotlight,
     Quick Look, Handoff/`NSUserActivity`, multiple windows and tabs, Services, sound and
     haptics.
-10. **Sign and notarise.** Blocked on a certificate rather than on code — this machine has
+9. **Sign and notarise.** Blocked on a certificate rather than on code — this machine has
     no Developer ID at all. A decision, not a task.
 
 Done and no longer blocking:

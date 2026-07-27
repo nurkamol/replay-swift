@@ -8,29 +8,43 @@ import SwiftUI
 /// legible. It describes; it does not grade. A day with nothing on it simply is not there.
 /// A lens on the same days.
 ///
-/// Two kinds. **Sessions**, **Bookmarks**, **Notes** and **Collections** choose *which*
-/// sessions appear — a session shows if any active one keeps it. **Activity** is the gaps
-/// between them, which the plain timeline shows and any narrowing hides.
+/// Two kinds. **Sessions**, **Projects**, **Collections**, **Bookmarks** and **Notes** choose
+/// *which* sessions appear — a session shows if any active one keeps it — and **Activity** is
+/// the gaps between them, which the plain timeline shows and any narrowing hides.
 ///
-/// Fewer than the reference's nine: Projects, Reflections, Moments and Memories are overlay
-/// rows rather than filters, and none is built here yet. Recorded on the ledger rather than
-/// stubbed, so the row does not offer something that does nothing.
+/// **Reflections**, **Moments** and **Memories** do the opposite: they add rows among the
+/// days, and each keeps a day on screen even when every session in it has been filtered
+/// away. A day you only wrote about is still a day worth seeing.
 enum Layer: String, CaseIterable, Hashable {
-    case sessions, bookmarks, notes, collections, activity
+    case sessions, projects, collections, bookmarks, notes, activity
+    case reflections, moments, memories
 
     var label: String {
         switch self {
         case .sessions: "Sessions"
+        case .projects: "Projects"
+        case .collections: "Collections"
         case .bookmarks: "Bookmarks"
         case .notes: "Notes"
-        case .collections: "Collections"
         case .activity: "Activity"
+        case .reflections: "Reflections"
+        case .moments: "Moments"
+        case .memories: "Memories"
+        }
+    }
+
+    /// Whether this one *adds* rows rather than choosing which sessions appear.
+    var isOverlay: Bool {
+        switch self {
+        case .reflections, .moments, .memories: true
+        default: false
         }
     }
 }
 
 struct TimelineView: View {
     let history: HistoryModel
+    let overlays: TimelineLayersModel
     let annotations: AnnotationsModel
     let export: ExportModel
     /// Given so a day can be opened from its ⋯ menu.
@@ -59,13 +73,16 @@ struct TimelineView: View {
                     }
                 } else {
                     ForEach(filtered) { day in
-                        DaySection(
-                            day: day,
-                            history: history,
-                            annotations: annotations,
-                            export: export,
-                            onOpenDay: onOpenDay
-                        )
+                        VStack(alignment: .leading, spacing: Design.Space.row) {
+                            DaySection(
+                                day: day,
+                                history: history,
+                                annotations: annotations,
+                                export: export,
+                                onOpenDay: onOpenDay
+                            )
+                            overlayRows(for: day.dayStart)
+                        }
                     }
                 }
             }
@@ -74,6 +91,7 @@ struct TimelineView: View {
         .background(.background)
         .navigationTitle("Timeline")
         .navigationSubtitle(history.range.subtitle)
+        .onAppear { if !overlays.loaded { overlays.load() } }
         .toolbar {
             // The range belongs in the chrome rather than the content: it governs the whole
             // surface, and a control that scrolls away with what it controls is a control
@@ -173,11 +191,72 @@ struct TimelineView: View {
                    !categories.contains(sessionFilterCategory(session)) { return false }
                 return keeps(session)
             }
-            guard !items.isEmpty else { return nil }
+            // An overlay keeps a day even when its sessions are all gone: a day you only
+            // wrote about, or that only echoes an earlier year, is still worth showing.
+            guard !items.isEmpty || hasOverlay(day.dayStart) else { return nil }
             var narrowed = day
             narrowed.items = items
             return narrowed
         }
+    }
+
+    /// The rows the overlay layers add to a day.
+    @ViewBuilder
+    private func overlayRows(for day: Int64) -> some View {
+        VStack(spacing: Design.Space.snug) {
+            if layers.contains(.reflections), let text = overlays.reflections[day] {
+                overlayRow("quote.opening", "Reflection", text, day: day)
+            }
+            if layers.contains(.moments) {
+                ForEach(overlays.moments[day] ?? [], id: \.key) { moment in
+                    overlayRow("sparkles", moment.title, moment.detail, day: day)
+                }
+            }
+            if layers.contains(.memories), let earlier = overlays.earlierYears[day] {
+                overlayRow(
+                    "clock.arrow.circlepath", "On this date before",
+                    "\(fullDayLabel(earlier.dayStart))"
+                        + (earlier.topApp.map { " · mostly \($0)" } ?? ""),
+                    day: earlier.dayStart
+                )
+            }
+        }
+    }
+
+    private func overlayRow(
+        _ glyph: String, _ label: String, _ detail: String, day: Int64
+    ) -> some View {
+        Button {
+            onOpenDay(day)
+        } label: {
+            HStack(alignment: .top, spacing: Design.Space.card) {
+                Image(systemName: glyph)
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.tint)
+                    .frame(width: Design.Icon.glyphColumn)
+                VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                    Text(label).cardLabelStyle()
+                    Text(detail)
+                        .font(Design.Text.body)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: Design.Space.inline)
+            }
+            .padding(Design.Space.section)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .card(border: Design.Colour.borderQuiet)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// Whether any day has something for the active overlay layers to show.
+    private func hasOverlay(_ day: Int64) -> Bool {
+        (layers.contains(.reflections) && overlays.reflections[day] != nil)
+            || (layers.contains(.moments) && !(overlays.moments[day] ?? []).isEmpty)
+            || (layers.contains(.memories) && overlays.earlierYears[day] != nil)
     }
 
     /// Whether any active selection layer keeps this session.
@@ -192,7 +271,10 @@ struct TimelineView: View {
                 if !annotations.annotation(for: session.startedAt).note.isEmpty { wanted = true }
             case .collections:
                 if Collections.isCollectable(session.category) { wanted = true }
-            case .activity:
+            case .projects:
+                if overlays.projectSessions.contains(session.startedAt) { wanted = true }
+            // These add rows rather than choosing sessions, so they keep none by themselves.
+            case .activity, .reflections, .moments, .memories:
                 break
             }
         }

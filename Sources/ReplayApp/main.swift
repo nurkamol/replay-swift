@@ -41,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var canvas = CanvasModel(model: model, projects: projects, story: story)
     private lazy var contextual = ContextualMemoryModel(model: model, projects: projects, preferences: preferences)
     private lazy var palette = CommandPaletteModel(model: model, apps: apps, projects: projects)
+    private lazy var timelineLayers = TimelineLayersModel(model: model)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -304,6 +305,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 canvas: canvas,
                 contextual: contextual,
                 palette: palette,
+                timelineLayers: timelineLayers,
                 onOpenSettings: { [weak self] in self?.openSettings() },
                 onOpenScreensaver: { [weak self] in self?.openScreensaver() }
             )
