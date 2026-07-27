@@ -11,6 +11,7 @@ struct TodayView: View {
     let annotations: AnnotationsModel
     let export: ExportModel
     let memories: MemoriesModel
+    let contextual: ContextualMemoryModel
     @Bindable var preferences: Preferences
     /// Given so the card can lead somewhere rather than just informing.
     let onOpenDay: (Int64) -> Void
@@ -35,6 +36,17 @@ struct TodayView: View {
                             ),
                             goalMinutes: goal,
                             onSetGoal: { preferences.focusGoalMinutes = $0 }
+                        )
+                    }
+                    // Above everything it could interrupt, and absent far more often than
+                    // present — most days Replay has nothing worth saying, and says nothing.
+                    if let memory = contextual.memory {
+                        ContextualMemoryCard(
+                            memory: memory,
+                            onOpen: {
+                                if let day = memory.dayStart { onOpenDay(day) }
+                            },
+                            onDismiss: { contextual.dismiss(memory) }
                         )
                     }
                     // Above the reflection: this is the one card that leads somewhere
@@ -62,7 +74,10 @@ struct TodayView: View {
         .background(.background)
         .navigationTitle("Today")
         .navigationSubtitle(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
-        .onAppear { if !memories.loaded { memories.load() } }
+        .onAppear {
+            if !memories.loaded { memories.load() }
+            contextual.load()
+        }
     }
 
 
@@ -551,6 +566,75 @@ struct ResumeCard: View {
             if let error {
                 Task { @MainActor in failure = error.localizedDescription }
             }
+        }
+    }
+}
+
+/// The one memory Replay has decided is worth a word today.
+///
+/// Quiet by construction: a line, sometimes a second line, a way in and a way to make it go
+/// away. No score is shown — the confidence is how the card earned its place, not something
+/// the reader should have to weigh — and nothing here is a suggestion about what to do next.
+struct ContextualMemoryCard: View {
+    let memory: MemoryCandidate
+    let onOpen: () -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.motion) private var motion
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: Design.Space.card) {
+            AppIcon(
+                bundleID: memory.bundleID, appPath: memory.appPath, size: Design.Icon.feature
+            )
+            VStack(alignment: .leading, spacing: Design.Space.tight) {
+                Text(label).cardLabelStyle()
+                Text(memory.headline)
+                    .font(Design.Text.prose)
+                    .lineSpacing(Design.Text.proseLineSpacing)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let detail = memory.detail {
+                    Text(detail)
+                        .font(Design.Text.detail)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: Design.Space.inline)
+            // Visible on hover: a dismiss button always on screen invites dismissal, and the
+            // point of the card is that it is worth reading.
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(Design.Text.micro)
+                    .foregroundStyle(.tertiary)
+            }
+            .buttonStyle(.plain)
+            .opacity(hovering ? 1 : 0)
+            .help("Put this memory away")
+            .accessibilityLabel("Put this memory away")
+        }
+        .padding(Design.Space.section)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onTapGesture { if memory.dayStart != nil { onOpen() } }
+        .onHover { hovering = $0 }
+        .card(border: Design.Colour.markedBorder)
+        .settlesIntoView(reduced: motion.reduced)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label). \(memory.headline) \(memory.detail ?? "")")
+        .accessibilityHint(memory.dayStart != nil ? "Opens that day" : "")
+    }
+
+    /// What kind of memory this is, in the app's own words rather than the type's name.
+    private var label: String {
+        switch memory.kind {
+        case .rightTime: "Since last time"
+        case .anniversary: "A year ago"
+        case .forgotten: "You had kept this"
+        case .echo: "This feels familiar"
+        case .threadUpdate: "Picked back up"
+        case .todayInHistory: "On this day"
         }
     }
 }

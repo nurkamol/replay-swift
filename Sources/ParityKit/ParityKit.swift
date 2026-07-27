@@ -329,6 +329,98 @@ public enum ParityKit {
             public let expected: Graph
         }
 
+        public struct MemoryCase: Decodable, Sendable {
+            public struct Part: Decodable, Sendable {
+                public let signal: Double
+                public let weight: Double
+            }
+            public struct SessionInput: Decodable, Sendable {
+                public let activeSeconds: Int
+                public let bookmarked: Bool?
+                public let hasNote: Bool?
+            }
+            public struct ProjectInput: Decodable, Sendable {
+                public let totalSeconds: Int
+                public let sessionCount: Int
+            }
+            public struct Cases: Decodable, Sendable {
+                public let clamp: [Double]
+                public let ramps: [[Double]]
+                public let freshness: [[Double]]
+                public let blends: [[Part]]
+                public let days: [[Int64]]
+                public let sessions: [SessionInput]
+                public let projects: [ProjectInput]
+                public let thresholds: [Double]
+            }
+            public struct Scoring: Decodable, Sendable {
+                public let clamp: [Double]
+                public let ramps: [Double]
+                public let freshness: [Double]
+                public let blends: [Double]
+                public let days: [Double]
+                public let sessions: [Double]
+                public let projects: [Double]
+                public let labels: [String]
+            }
+            public struct Candidate: Decodable, Sendable {
+                public let id: String
+                public let confidence: Double
+            }
+            public struct Options: Decodable, Sendable {
+                public let threshold: Double
+                public let dismissed: [String]?
+                public let archived: [String]?
+            }
+            public struct SelectionInput: Decodable, Sendable {
+                public let name: String
+                public let candidates: [Candidate]
+                public let options: Options
+            }
+            public struct SelectionResult: Decodable, Sendable {
+                public let name: String
+                public let eligible: [String]
+                public let chosen: String?
+            }
+            public struct App: Decodable, Sendable {
+                public let applicationName: String
+                public let bundleIdentifier: String?
+                public let seconds: Int
+            }
+            public struct ProjectFixture: Decodable, Sendable {
+                public struct Session: Decodable, Sendable { public let startedAt: Int64 }
+                public let id: String
+                public let name: String
+                public let apps: [App]
+                public let totalSeconds: Int
+                public let sessionCount: Int
+                public let firstSeen: Int64
+                public let lastActive: Int64
+                public let sessions: [Session]
+            }
+            public struct Produced: Decodable, Sendable {
+                public let id: String
+                public let kind: String
+                public let confidence: Double
+                public let headline: String
+                public let detail: String?
+            }
+            public struct Producers: Decodable, Sendable {
+                public let rightTime: Produced?
+                public let thread: Produced?
+                public let echo: Produced?
+            }
+            public let scoringCases: Cases
+            public let scoring: Scoring
+            public let selectionCases: [SelectionInput]
+            public let selection: [SelectionResult]
+            public let projects: [ProjectFixture]
+            public let now: Int64
+            public let rightTimeEvents: [Fixture.Event]
+            public let echoEvents: [Fixture.Event]
+            public let producers: Producers
+        }
+
         public struct MomentsCase: Decodable, Sendable {
             public struct Seed: Decodable, Sendable {
                 public struct FirstSeen: Decodable, Sendable {
@@ -589,6 +681,8 @@ public enum ParityKit {
         public let relationships: RelationshipsCase
         /// The memories worth rediscovering.
         public let moments: MomentsCase
+        /// Contextual memory: the scoring, the selector, and the producers.
+        public let memory: MemoryCase
         /// The graph behind the memory space.
         public let canvas: CanvasCase
         public let report: ReportCase
@@ -1280,6 +1374,99 @@ public enum ParityKit {
               graph.edges.map(\.weight), cvx.expected.edges.map(\.weight))
         equal(cvg, "and the same strongest application tie",
               graph.maxAppWeight, cvx.expected.maxAppWeight)
+
+        // Contextual memory. The scoring first: every producer scores in this vocabulary,
+        // so if the arithmetic drifts, every memory in the app drifts with it.
+        let mig = "memory scoring"
+        let mc = fixture.memory
+        func close(_ a: [Double], _ b: [Double]) -> Bool {
+            a.count == b.count && zip(a, b).allSatisfy { abs($0 - $1) < 0.0001 }
+        }
+        check(mig, "clamped the same", close(mc.scoringCases.clamp.map(clamp01), mc.scoring.clamp))
+        check(mig, "ramps, at both ends and between",
+              close(mc.scoringCases.ramps.map { ramp($0[0], $0[1], $0[2]) }, mc.scoring.ramps))
+        check(mig, "freshness decays the same",
+              close(mc.scoringCases.freshness.map { freshness(ageDays: $0[0], halfLifeDays: $0[1]) },
+                    mc.scoring.freshness))
+        check(mig, "a blend averages only the signals actually present",
+              close(mc.scoringCases.blends.map { parts in
+                  blendConfidence(parts.map { (signal: $0.signal, weight: $0.weight) })
+              }, mc.scoring.blends))
+        check(mig, "days between", close(mc.scoringCases.days.map { daysBetween($0[0], $0[1]) },
+                                          mc.scoring.days))
+        check(mig, "what a session's own attributes argue",
+              close(mc.scoringCases.sessions.map {
+                  sessionMeaning(
+                      activeSeconds: $0.activeSeconds,
+                      bookmarked: $0.bookmarked ?? false, hasNote: $0.hasNote ?? false
+                  )
+              }, mc.scoring.sessions))
+        check(mig, "and what a project's weight argues",
+              close(mc.scoringCases.projects.map {
+                  projectMeaning(totalSeconds: $0.totalSeconds, sessionCount: $0.sessionCount)
+              }, mc.scoring.projects))
+        equal(mig, "each threshold reads the same",
+              mc.scoringCases.thresholds.map(confidenceThresholdLabel), mc.scoring.labels)
+
+        // Selection, including the one that matters most: nothing clears the bar.
+        let msg = "memory selection"
+        for (input, expected) in zip(mc.selectionCases, mc.selection) {
+            let candidates = input.candidates.map {
+                MemoryCandidate(id: $0.id, kind: .echo, confidence: $0.confidence, headline: $0.id)
+            }
+            let options = MemorySelection(
+                threshold: input.options.threshold,
+                dismissed: Set(input.options.dismissed ?? []),
+                archived: Set(input.options.archived ?? [])
+            )
+            equal(msg, "\(expected.name): the same candidates survive",
+                  eligibleMemories(candidates, options).map(\.id), expected.eligible)
+            equal(msg, "\(expected.name): and the same one is chosen",
+                  selectLivingMemory(candidates, options)?.id, expected.chosen)
+        }
+
+        // The producers, each over a case built to make it speak.
+        let mpg = "memory producers"
+        let memoryProjects = mc.projects.map { fixture in
+            MemoryProject(
+                id: fixture.id, name: fixture.name,
+                apps: fixture.apps.map {
+                    Project.App(
+                        applicationName: $0.applicationName,
+                        bundleIdentifier: $0.bundleIdentifier,
+                        appPath: nil, seconds: $0.seconds
+                    )
+                },
+                totalSeconds: fixture.totalSeconds, sessionCount: fixture.sessionCount,
+                firstSeen: fixture.firstSeen, lastActive: fixture.lastActive,
+                sessionStarts: fixture.sessions.map(\.startedAt)
+            )
+        }
+        func compare(_ what: String, _ got: MemoryCandidate?, _ want: GroupingAndExport.MemoryCase.Produced?) {
+            equal(mpg, "\(what): the same id", got?.id, want?.id)
+            equal(mpg, "\(what): the same kind", got?.kind.rawValue, want?.kind)
+            equal(mpg, "\(what): told the same", got?.headline, want?.headline)
+            equal(mpg, "\(what): and supported the same", got?.detail, want?.detail)
+            check(mpg, "\(what): scored the same",
+                  abs((got?.confidence ?? -1) - (want?.confidence ?? -1)) < 0.0001)
+        }
+        compare("a long gap since you last opened something",
+                detectRightTime(
+                    events: mc.rightTimeEvents.map(event), projects: memoryProjects,
+                    now: mc.now, calendar: calendar
+                ),
+                mc.producers.rightTime)
+        compare("a thread picked back up",
+                detectThreadUpdate(
+                    memoryProjects, now: mc.now, calendar: calendar, locale: environment.locale
+                ),
+                mc.producers.thread)
+        compare("today echoing older work",
+                detectEcho(
+                    events: mc.echoEvents.map(event), projects: memoryProjects,
+                    now: mc.now, calendar: calendar, locale: environment.locale
+                ),
+                mc.producers.echo)
 
         // Rituals — the quiet patterns in a run of days. A part of the day only counts once
         // the same app has led it more than once, which is the guard against a single

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 623 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 656 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -35,6 +35,11 @@ Legend: **done** verified · **partial** works, gaps noted · **todo** not start
 | Backup export | done | `Backup.encode` — every row, snake_case as the reference writes it; round-trips through this app's own reader |
 | Constellation | done | `buildConstellation` — applications as stars, tied by direct switches, pairs under two dropped |
 | Canvas graph | done | `buildCanvas` — every node and every edge compared, including the subtitles. 16 checks |
+| Memory confidence & selection | done | `memory-intelligence` — the scoring vocabulary, the selector, and silence as a valid answer. 18 checks |
+| Right-time / threads / echoes | done | three producers, each scored and each returning nothing far more often than something. 15 checks |
+| Anniversaries / forgotten | todo | the other two producers of the same cluster |
+| Morning briefing | todo | |
+| Surprise me | todo | |
 | Moments | done | `detectMoments` + `pickDailyQuote` — seven kinds, each with a threshold, compared as text. 7 checks |
 | The archive | done | `computeLegacy` — first day, active days, years, and the applications behind all of it. 9 checks. Its figures live inside a view upstream, so the fixture re-declares them, as `sessionMatches` does |
 | App relationships | done | `computeWorkflowPartners` + `computeRelationship` — switches, shared sessions, direction and average length. A pair must have been switched between twice to count. 11 checks |
@@ -65,7 +70,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Menu bar item | done | current app, today's total, pause/resume, Open Today/Timeline, Settings, Quit |
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
-| Today | done | headline, top app, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
+| Today | done | headline, top app, a contextual memory when there is one worth showing, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
 | Canvas | done | the graph drawn as a field of real application icons, with pan, pinch-zoom, selection and a way into whatever a node is. Layout is a force simulation run once, seeded from each node's id so the same history lays out the same way |
 | Screensaver | done | a slow drift through the day — the memory, today's sessions, the applications you keep. Borderless, on the screen Replay is on, Esc to leave. Not auto-started on a timer, unlike the reference |
 | Museum | done | the day's featured moment, the milestones, the deepest stretches, what was bookmarked, what was written, and the work that took the most |
@@ -117,6 +122,10 @@ function now and live in `ReplayCore` where the suite can reach them.
   application came to the front — so Firefox reads "575 sessions" for a week in which Today
   would call the same span three. Inherited: the reference uses the same word for the same
   number. Left alone for the same reason as the workflow titles.
+- **A comment that contradicts its own code.** `selectLivingMemory` upstream is documented
+  as breaking ties "deterministically by id"; the code sorts by confidence alone, and
+  JavaScript's stable sort means input order survives. This port was written to the comment,
+  and the fixture failed on the one case built to tie. Follow the code — it is what ships.
 - **Narrow no-break space before AM/PM.** Current macOS formats "2:14 AM" with U+202F;
   the ICU the reference runs against emits an ordinary space. The two strings look identical
   in a terminal and the fixture caught them differing. `Moments.clockLabel` folds U+202F to a

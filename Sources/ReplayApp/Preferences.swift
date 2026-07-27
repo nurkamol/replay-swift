@@ -125,6 +125,26 @@ final class Preferences {
         didSet { writeJSON(chapterNames, "chapterNames") }
     }
 
+    /// Whether Replay may surface a memory on Today at all. The master switch, on by
+    /// default — the feature is the product, not an add-on.
+    var contextualMemories: Bool {
+        didSet { write(contextualMemories, "contextualMemories") }
+    }
+
+    /// How sure Replay has to be before it says anything. Higher means quieter.
+    var memoryThreshold: Double {
+        didSet { write(memoryThreshold, "memoryThreshold") }
+    }
+
+    /// Memories put away, by id.
+    var dismissedMemories: [String] {
+        didSet { writeJSON(dismissedMemories, "dismissedMemories") }
+    }
+
+    var archivedMemories: [String] {
+        didSet { writeJSON(archivedMemories, "archivedMemories") }
+    }
+
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
@@ -141,6 +161,16 @@ final class Preferences {
             .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
         chapterNames = (defaults.data(forKey: "chapterNames"))
             .flatMap { try? JSONDecoder().decode([String: String].self, from: $0) } ?? [:]
+        // Absent means on: a fresh install should have the feature, not have to find it.
+        contextualMemories = defaults.object(forKey: "contextualMemories") as? Bool ?? true
+        // Balanced by default. Zero and absent both mean "never set", which is not the same
+        // as "show me everything".
+        let threshold = defaults.double(forKey: "memoryThreshold")
+        memoryThreshold = threshold > 0 ? threshold : 0.55
+        dismissedMemories = (defaults.data(forKey: "dismissedMemories"))
+            .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
+        archivedMemories = (defaults.data(forKey: "archivedMemories"))
+            .flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
         lastSurface = defaults.string(forKey: "lastSurface") ?? ""
         // Zero and absent both mean "no goal", so an unset default reads as off.
         let goal = defaults.integer(forKey: "focusGoalMinutes")

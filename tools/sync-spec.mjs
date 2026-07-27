@@ -474,6 +474,12 @@ function buildExportFixtures() {
        export { detectChapters, chapterDefaultName } from ${JSON.stringify(join(GLAZE, "renderer/lib/chapters.ts"))};
        export { listPeriods, summarizePeriod } from ${JSON.stringify(join(GLAZE, "renderer/lib/autobiography.ts"))};
        export { detectMoments, pickDailyQuote } from ${JSON.stringify(join(GLAZE, "renderer/lib/moments.ts"))};
+       export { clamp01, ramp, freshness, blendConfidence, daysBetween, sessionMeaning,
+                projectMeaning, eligibleMemories, selectLivingMemory,
+                confidenceThresholdLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/memory-intelligence.ts"))};
+       export { detectRightTime } from ${JSON.stringify(join(GLAZE, "renderer/lib/right-time.ts"))};
+       export { detectThreadUpdate } from ${JSON.stringify(join(GLAZE, "renderer/lib/threads.ts"))};
+       export { detectEcho } from ${JSON.stringify(join(GLAZE, "renderer/lib/echoes.ts"))};
        export { buildConstellation } from ${JSON.stringify(join(GLAZE, "renderer/lib/constellation.ts"))};
        export { buildCanvas } from ${JSON.stringify(join(GLAZE, "renderer/lib/canvas.ts"))};
        export { historyTargets, findMemories, relativeDayLabel, shortDateLabel } from ${JSON.stringify(join(GLAZE, "renderer/lib/history.ts"))};
@@ -554,6 +560,9 @@ function buildExportFixtures() {
                detectChapters, chapterDefaultName, listPeriods, summarizePeriod,
                computeLegacy, computeWorkflowPartners, computeRelationship,
                detectMoments, pickDailyQuote, buildConstellation, buildCanvas,
+               clamp01, ramp, freshness, blendConfidence, daysBetween, sessionMeaning,
+               projectMeaning, eligibleMemories, selectLivingMemory,
+               confidenceThresholdLabel, detectRightTime, detectThreadUpdate, detectEcho,
                findResumeTarget, formatWhen, computeAppStats, excludeIdleStretches,
                computeCollections, COLLECTION_CATEGORIES,
                buildDayStory } = await import(${JSON.stringify(bundle)});
@@ -655,6 +664,39 @@ function buildExportFixtures() {
        }));
 
        const legacy = computeLegacy(input.chapterSummaries, new Map());
+
+       // The confidence primitives. Every producer scores in this vocabulary, so if the
+       // arithmetic drifts every memory in the app drifts with it.
+       const scoring = {
+         clamp: input.scoringCases.clamp.map(clamp01),
+         ramps: input.scoringCases.ramps.map(([v, z, f]) => ramp(v, z, f)),
+         freshness: input.scoringCases.freshness.map(([age, half]) => freshness(age, half)),
+         blends: input.scoringCases.blends.map((parts) => blendConfidence(parts)),
+         days: input.scoringCases.days.map(([a, b]) => daysBetween(a, b)),
+         sessions: input.scoringCases.sessions.map(sessionMeaning),
+         projects: input.scoringCases.projects.map(projectMeaning),
+         labels: input.scoringCases.thresholds.map(confidenceThresholdLabel),
+       };
+
+       // Selection, including the case that matters most: nothing clears the bar.
+       const selection = input.selectionCases.map((c) => ({
+         name: c.name,
+         eligible: eligibleMemories(c.candidates, c.options).map((m) => m.id),
+         chosen: selectLivingMemory(c.candidates, c.options)?.id ?? null,
+       }));
+
+       // The producers, each over a case built to make it speak.
+       const memoryProjects = detectProjects(workflowSessions).map((p) => ({
+         ...p,
+         name: projectDefaultName(p),
+         named: false,
+       }));
+       const producers = {
+         rightTime: detectRightTime(input.rightTimeEvents, input.memoryProjects, input.memoryNow),
+         thread: detectThreadUpdate(input.memoryProjects, input.memoryNow),
+         echo: detectEcho(input.echoEvents, input.memoryProjects, input.memoryNow),
+         projectCount: memoryProjects.length,
+       };
 
        // The memories worth rediscovering. Prose again, so compared as text.
        const moments = detectMoments(
@@ -782,6 +824,9 @@ function buildExportFixtures() {
          chapters,
          autobiography,
          legacy,
+         scoring,
+         selection,
+         producers,
          moments,
          quoteKey: quote ? quote.key : null,
          constellation,
@@ -1119,6 +1164,124 @@ function buildExportFixtures() {
     ];
 
     /*
+     * The confidence primitives, sampled at every boundary that matters: a ramp below
+     * its zero, at both ends and between; a reversed ramp; a blend where one signal is
+     * absent (weight 0) rather than zero, which is the distinction the whole design
+     * rests on; and every band of the threshold label.
+     */
+    const scoringCases = {
+      clamp: [-0.5, 0, 0.25, 1, 1.5],
+      ramps: [[0, 10, 20], [10, 10, 20], [15, 10, 20], [20, 10, 20], [30, 10, 20],
+              [5, 20, 10], [15, 20, 10], [7, 5, 5]],
+      freshness: [[0, 30], [30, 30], [60, 30], [-1, 30], [10, 0]],
+      blends: [
+        [{ signal: 1, weight: 1 }, { signal: 0, weight: 0 }],
+        [{ signal: 0.5, weight: 1 }, { signal: 1, weight: 1.4 }],
+        [{ signal: 2, weight: 1 }],
+        [{ signal: 1, weight: 0 }],
+        [],
+      ],
+      days: [[0, 86_400_000], [86_400_000, 0], [0, 0]],
+      sessions: [
+        { activeSeconds: 60 },
+        { activeSeconds: 3600 },
+        { activeSeconds: 3600, bookmarked: true },
+        { activeSeconds: 600, hasNote: true },
+        { activeSeconds: 7200, bookmarked: true, hasNote: true },
+      ],
+      projects: [
+        { totalSeconds: 600, sessionCount: 1 },
+        { totalSeconds: 3600, sessionCount: 2 },
+        { totalSeconds: 36_000, sessionCount: 8 },
+      ],
+      thresholds: [0, 0.34, 0.35, 0.54, 0.55, 0.74, 0.75, 1],
+    };
+
+    /*
+     * Selection. The important case is the last one: nothing clears the bar, and the
+     * answer is nothing rather than the best of a bad lot.
+     */
+    const candidate = (id, confidence) => ({ id, kind: "echo", confidence, headline: id });
+    const selectionCases = [
+      {
+        name: "the most confident wins",
+        candidates: [candidate("b", 0.6), candidate("a", 0.9)],
+        options: { threshold: 0.5 },
+      },
+      {
+        name: "a tie is broken by id, so the choice is stable",
+        candidates: [candidate("b", 0.7), candidate("a", 0.7)],
+        options: { threshold: 0.5 },
+      },
+      {
+        name: "dismissed is gone entirely",
+        candidates: [candidate("a", 0.9), candidate("b", 0.6)],
+        options: { threshold: 0.5, dismissed: ["a"] },
+      },
+      {
+        name: "archived too",
+        candidates: [candidate("a", 0.9), candidate("b", 0.6)],
+        options: { threshold: 0.5, archived: ["a"] },
+      },
+      {
+        name: "nothing clears the bar, so nothing is shown",
+        candidates: [candidate("a", 0.4), candidate("b", 0.3)],
+        options: { threshold: 0.8 },
+      },
+    ];
+
+    /*
+     * The producers. `memoryNow` sits on a day whose events make right-time and echo
+     * fire; the projects are hand-built so their weight and dormancy are exact rather
+     * than whatever the derivation happens to produce.
+     */
+    const memoryDay = 1_770_076_800_000;
+    const md = (h, m = 0) => memoryDay + h * 3_600_000 + m * 60_000;
+    const memoryNow = md(15);
+    const app = (name, bundle, seconds) => ({
+      applicationName: name, bundleIdentifier: bundle, appPath: null, seconds,
+    });
+    const memoryProjects = [
+      {
+        id: "proj-editor",
+        name: "Development · Code",
+        category: "Development",
+        apps: [app("Code", "com.microsoft.VSCode", 20_000), app("Terminal", "com.apple.Terminal", 9_000)],
+        totalSeconds: 29_000,
+        sessionCount: 9,
+        firstSeen: memoryDay - 200 * DAY,
+        // Dormant for forty days: past the twelve that make a return an echo.
+        lastActive: memoryDay - 40 * DAY,
+        sessions: [
+          { startedAt: memoryDay - 40 * DAY },
+          { startedAt: memoryDay - 44 * DAY },
+        ],
+      },
+      {
+        // Touched today after a long gap: a thread that resumed.
+        id: "proj-writing",
+        name: "Writing · Notes",
+        category: "Writing",
+        apps: [app("Notes", "com.apple.Notes", 8_000), app("Safari", "com.apple.Safari", 4_000)],
+        totalSeconds: 12_000,
+        sessionCount: 5,
+        firstSeen: memoryDay - 150 * DAY,
+        lastActive: md(11),
+        sessions: [{ startedAt: md(11) }, { startedAt: memoryDay - 21 * DAY }],
+      },
+    ];
+    // Today: mostly the editor project's tools, so it echoes them.
+    const rightTimeEvents = [
+      // A use 30 days ago, then today — a real gap for the right-time note.
+      ev(1000, "Code", "com.microsoft.VSCode", memoryDay - 30 * DAY + 9 * 3_600_000, 1500),
+      ev(1001, "Code", "com.microsoft.VSCode", md(14), 900),
+    ];
+    const echoEvents = [
+      ev(1010, "Code", "com.microsoft.VSCode", md(9), 1500),
+      ev(1011, "Terminal", "com.apple.Terminal", md(10), 1200),
+    ];
+
+    /*
      * Moments. Each kind has a threshold, and the fixture crosses every one it can with
      * a single day of rows: a stretch past twenty minutes, eight distinct applications,
      * and something at 2 AM. The streak and the peak day come from the chapter summaries
@@ -1237,6 +1400,12 @@ function buildExportFixtures() {
     const json = execFileSync(
       "node",
       [runner, JSON.stringify({
+        scoringCases,
+        selectionCases,
+        memoryProjects,
+        memoryNow,
+        rightTimeEvents,
+        echoEvents,
         momentEvents,
         momentNow,
         momentSeed,
@@ -1320,6 +1489,17 @@ function buildExportFixtures() {
       canvas: {
         constellation: result.constellation,
         expected: result.canvas,
+      },
+      memory: {
+        scoringCases,
+        scoring: result.scoring,
+        selectionCases: selectionCases.map((c) => ({ name: c.name, ...c })),
+        selection: result.selection,
+        projects: memoryProjects,
+        now: memoryNow,
+        rightTimeEvents,
+        echoEvents,
+        producers: result.producers,
       },
       moments: {
         events: momentEvents,

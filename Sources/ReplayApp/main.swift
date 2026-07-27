@@ -39,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var relationships = RelationshipsModel(model: model)
     private lazy var museum = MuseumModel(model: model, projects: projects)
     private lazy var canvas = CanvasModel(model: model, projects: projects, story: story)
+    private lazy var contextual = ContextualMemoryModel(model: model, projects: projects, preferences: preferences)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var window: NSWindow?
@@ -295,6 +296,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 relationships: relationships,
                 museum: museum,
                 canvas: canvas,
+                contextual: contextual,
                 onOpenSettings: { [weak self] in self?.openSettings() },
                 onOpenScreensaver: { [weak self] in self?.openScreensaver() }
             )
@@ -455,7 +457,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let hosting = NSHostingController(
             rootView: SettingsView(
-                model: model, settings: settings, export: export, preferences: preferences
+                model: model, settings: settings, export: export,
+                preferences: preferences, contextual: contextual
             )
         )
         // The window takes its size from the pane rather than the other way round, so

@@ -137,6 +137,7 @@ struct RootView: View {
     let relationships: RelationshipsModel
     let museum: MuseumModel
     let canvas: CanvasModel
+    let contextual: ContextualMemoryModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -402,7 +403,8 @@ struct RootView: View {
         case .today:
             TodayView(
                 model: model, annotations: model.annotations,
-                export: export, memories: memories, preferences: preferences,
+                export: export, memories: memories, contextual: contextual,
+                preferences: preferences,
                 onOpenDay: { navigation.open(day: $0) }
             )
         case .apps:

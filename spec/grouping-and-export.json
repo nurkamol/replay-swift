@@ -1917,6 +1917,522 @@
       "maxAppWeight": 2
     }
   },
+  "memory": {
+    "scoringCases": {
+      "clamp": [
+        -0.5,
+        0,
+        0.25,
+        1,
+        1.5
+      ],
+      "ramps": [
+        [
+          0,
+          10,
+          20
+        ],
+        [
+          10,
+          10,
+          20
+        ],
+        [
+          15,
+          10,
+          20
+        ],
+        [
+          20,
+          10,
+          20
+        ],
+        [
+          30,
+          10,
+          20
+        ],
+        [
+          5,
+          20,
+          10
+        ],
+        [
+          15,
+          20,
+          10
+        ],
+        [
+          7,
+          5,
+          5
+        ]
+      ],
+      "freshness": [
+        [
+          0,
+          30
+        ],
+        [
+          30,
+          30
+        ],
+        [
+          60,
+          30
+        ],
+        [
+          -1,
+          30
+        ],
+        [
+          10,
+          0
+        ]
+      ],
+      "blends": [
+        [
+          {
+            "signal": 1,
+            "weight": 1
+          },
+          {
+            "signal": 0,
+            "weight": 0
+          }
+        ],
+        [
+          {
+            "signal": 0.5,
+            "weight": 1
+          },
+          {
+            "signal": 1,
+            "weight": 1.4
+          }
+        ],
+        [
+          {
+            "signal": 2,
+            "weight": 1
+          }
+        ],
+        [
+          {
+            "signal": 1,
+            "weight": 0
+          }
+        ],
+        []
+      ],
+      "days": [
+        [
+          0,
+          86400000
+        ],
+        [
+          86400000,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "sessions": [
+        {
+          "activeSeconds": 60
+        },
+        {
+          "activeSeconds": 3600
+        },
+        {
+          "activeSeconds": 3600,
+          "bookmarked": true
+        },
+        {
+          "activeSeconds": 600,
+          "hasNote": true
+        },
+        {
+          "activeSeconds": 7200,
+          "bookmarked": true,
+          "hasNote": true
+        }
+      ],
+      "projects": [
+        {
+          "totalSeconds": 600,
+          "sessionCount": 1
+        },
+        {
+          "totalSeconds": 3600,
+          "sessionCount": 2
+        },
+        {
+          "totalSeconds": 36000,
+          "sessionCount": 8
+        }
+      ],
+      "thresholds": [
+        0,
+        0.34,
+        0.35,
+        0.54,
+        0.55,
+        0.74,
+        0.75,
+        1
+      ]
+    },
+    "scoring": {
+      "clamp": [
+        0,
+        0,
+        0.25,
+        1,
+        1
+      ],
+      "ramps": [
+        0,
+        0,
+        0.5,
+        1,
+        1,
+        1,
+        0.5,
+        1
+      ],
+      "freshness": [
+        1,
+        0.5,
+        0.25,
+        1,
+        0.0009765625
+      ],
+      "blends": [
+        1,
+        0.7916666666666666,
+        1,
+        0,
+        0
+      ],
+      "days": [
+        1,
+        1,
+        0
+      ],
+      "sessions": [
+        0,
+        0.4,
+        0.75,
+        0.5,
+        1
+      ],
+      "projects": [
+        0,
+        0,
+        1
+      ],
+      "labels": [
+        "Show nearly everything",
+        "Show nearly everything",
+        "Show more memories",
+        "Show more memories",
+        "Balanced",
+        "Balanced",
+        "Only the most meaningful",
+        "Only the most meaningful"
+      ]
+    },
+    "selectionCases": [
+      {
+        "name": "the most confident wins",
+        "candidates": [
+          {
+            "id": "b",
+            "kind": "echo",
+            "confidence": 0.6,
+            "headline": "b"
+          },
+          {
+            "id": "a",
+            "kind": "echo",
+            "confidence": 0.9,
+            "headline": "a"
+          }
+        ],
+        "options": {
+          "threshold": 0.5
+        }
+      },
+      {
+        "name": "a tie is broken by id, so the choice is stable",
+        "candidates": [
+          {
+            "id": "b",
+            "kind": "echo",
+            "confidence": 0.7,
+            "headline": "b"
+          },
+          {
+            "id": "a",
+            "kind": "echo",
+            "confidence": 0.7,
+            "headline": "a"
+          }
+        ],
+        "options": {
+          "threshold": 0.5
+        }
+      },
+      {
+        "name": "dismissed is gone entirely",
+        "candidates": [
+          {
+            "id": "a",
+            "kind": "echo",
+            "confidence": 0.9,
+            "headline": "a"
+          },
+          {
+            "id": "b",
+            "kind": "echo",
+            "confidence": 0.6,
+            "headline": "b"
+          }
+        ],
+        "options": {
+          "threshold": 0.5,
+          "dismissed": [
+            "a"
+          ]
+        }
+      },
+      {
+        "name": "archived too",
+        "candidates": [
+          {
+            "id": "a",
+            "kind": "echo",
+            "confidence": 0.9,
+            "headline": "a"
+          },
+          {
+            "id": "b",
+            "kind": "echo",
+            "confidence": 0.6,
+            "headline": "b"
+          }
+        ],
+        "options": {
+          "threshold": 0.5,
+          "archived": [
+            "a"
+          ]
+        }
+      },
+      {
+        "name": "nothing clears the bar, so nothing is shown",
+        "candidates": [
+          {
+            "id": "a",
+            "kind": "echo",
+            "confidence": 0.4,
+            "headline": "a"
+          },
+          {
+            "id": "b",
+            "kind": "echo",
+            "confidence": 0.3,
+            "headline": "b"
+          }
+        ],
+        "options": {
+          "threshold": 0.8
+        }
+      }
+    ],
+    "selection": [
+      {
+        "name": "the most confident wins",
+        "eligible": [
+          "a",
+          "b"
+        ],
+        "chosen": "a"
+      },
+      {
+        "name": "a tie is broken by id, so the choice is stable",
+        "eligible": [
+          "b",
+          "a"
+        ],
+        "chosen": "b"
+      },
+      {
+        "name": "dismissed is gone entirely",
+        "eligible": [
+          "b"
+        ],
+        "chosen": "b"
+      },
+      {
+        "name": "archived too",
+        "eligible": [
+          "b"
+        ],
+        "chosen": "b"
+      },
+      {
+        "name": "nothing clears the bar, so nothing is shown",
+        "eligible": [],
+        "chosen": null
+      }
+    ],
+    "projects": [
+      {
+        "id": "proj-editor",
+        "name": "Development · Code",
+        "category": "Development",
+        "apps": [
+          {
+            "applicationName": "Code",
+            "bundleIdentifier": "com.microsoft.VSCode",
+            "appPath": null,
+            "seconds": 20000
+          },
+          {
+            "applicationName": "Terminal",
+            "bundleIdentifier": "com.apple.Terminal",
+            "appPath": null,
+            "seconds": 9000
+          }
+        ],
+        "totalSeconds": 29000,
+        "sessionCount": 9,
+        "firstSeen": 1752796800000,
+        "lastActive": 1766620800000,
+        "sessions": [
+          {
+            "startedAt": 1766620800000
+          },
+          {
+            "startedAt": 1766275200000
+          }
+        ]
+      },
+      {
+        "id": "proj-writing",
+        "name": "Writing · Notes",
+        "category": "Writing",
+        "apps": [
+          {
+            "applicationName": "Notes",
+            "bundleIdentifier": "com.apple.Notes",
+            "appPath": null,
+            "seconds": 8000
+          },
+          {
+            "applicationName": "Safari",
+            "bundleIdentifier": "com.apple.Safari",
+            "appPath": null,
+            "seconds": 4000
+          }
+        ],
+        "totalSeconds": 12000,
+        "sessionCount": 5,
+        "firstSeen": 1757116800000,
+        "lastActive": 1770116400000,
+        "sessions": [
+          {
+            "startedAt": 1770116400000
+          },
+          {
+            "startedAt": 1768262400000
+          }
+        ]
+      }
+    ],
+    "now": 1770130800000,
+    "rightTimeEvents": [
+      {
+        "id": 1000,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1767517200000,
+        "endedAt": 1767518700000,
+        "duration": 1500
+      },
+      {
+        "id": 1001,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770127200000,
+        "endedAt": 1770128100000,
+        "duration": 900
+      }
+    ],
+    "echoEvents": [
+      {
+        "id": 1010,
+        "type": "activated",
+        "applicationName": "Code",
+        "bundleIdentifier": "com.microsoft.VSCode",
+        "appPath": null,
+        "startedAt": 1770109200000,
+        "endedAt": 1770110700000,
+        "duration": 1500
+      },
+      {
+        "id": 1011,
+        "type": "activated",
+        "applicationName": "Terminal",
+        "bundleIdentifier": "com.apple.Terminal",
+        "appPath": null,
+        "startedAt": 1770112800000,
+        "endedAt": 1770114000000,
+        "duration": 1200
+      }
+    ],
+    "producers": {
+      "rightTime": {
+        "id": "right-time:com.microsoft.VSCode:1770076800000",
+        "kind": "right-time",
+        "confidence": 0.47510288065843626,
+        "headline": "The last time you opened Code was 4 weeks ago, while working on Development · Code.",
+        "detail": "You'd spent 8h 3m on it across 9 sessions.",
+        "dayStart": 1767484800000,
+        "appPath": null,
+        "bundleId": "com.microsoft.VSCode"
+      },
+      "thread": {
+        "id": "thread-update:proj-writing:1770076800000",
+        "kind": "thread-update",
+        "confidence": 0.33930211202938476,
+        "headline": "You picked Writing · Notes back up today, after 3 weeks away.",
+        "detail": "5 sessions since September 2025 · 3h 20m in all.",
+        "projectId": "proj-writing",
+        "appPath": null,
+        "bundleId": "com.apple.Notes"
+      },
+      "echo": {
+        "id": "echo:proj-editor:2026-02-03",
+        "kind": "echo",
+        "confidence": 0.8176954732510286,
+        "headline": "Today echoes your Development · Code work.",
+        "detail": "The same tools you were in dec 25 — worth a look back.",
+        "projectId": "proj-editor",
+        "appPath": null,
+        "bundleId": "com.microsoft.VSCode"
+      },
+      "projectCount": 2
+    }
+  },
   "moments": {
     "events": [
       {

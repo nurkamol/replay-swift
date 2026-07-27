@@ -16,6 +16,17 @@ public struct Project: Equatable, Sendable {
         public var bundleIdentifier: String?
         public var appPath: String?
         public var seconds: Int
+
+        /// Public so a memory producer, or the parity suite, can build one from a fixture
+        /// rather than deriving a whole project to reach it.
+        public init(
+            applicationName: String, bundleIdentifier: String?, appPath: String?, seconds: Int
+        ) {
+            self.applicationName = applicationName
+            self.bundleIdentifier = bundleIdentifier
+            self.appPath = appPath
+            self.seconds = seconds
+        }
     }
 
     /// The signature — sorted top-app keys, joined. Stable across runs, which is what makes

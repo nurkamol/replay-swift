@@ -16,6 +16,10 @@ import SwiftUI
 /// written next to it. The point of a scale is that the next person picks from it instead
 /// of measuring.
 enum Design {
+    /// The thresholds the setting offers, one per band of `confidenceThresholdLabel`. Values
+    /// rather than a slider: four named choices are easier to mean than a continuum.
+    static let memoryThresholds: [Double] = [0.2, 0.4, 0.55, 0.8]
+
 
     // ── spacing ───────────────────────────────────────────────────────────────
 

@@ -20,6 +20,7 @@ struct SettingsView: View {
     let settings: SettingsModel
     let export: ExportModel
     @Bindable var preferences: Preferences
+    let contextual: ContextualMemoryModel
 
     /// The panes, in the order they are worth reaching for.
     private enum Pane: String, CaseIterable, Identifiable, Hashable {
@@ -82,7 +83,7 @@ struct SettingsView: View {
         } detail: {
             Group {
                 switch pane {
-                case .general: GeneralTab(model: model, preferences: preferences)
+                case .general: GeneralTab(model: model, preferences: preferences, contextual: contextual)
                 case .privacy:
                     PrivacyTab(model: model, settings: settings, preferences: preferences)
                 case .data: DataTab(settings: settings, export: export, preferences: preferences)
@@ -157,6 +158,9 @@ private struct StatusFooter: View {
 private struct GeneralTab: View {
     let model: AppModel
     @Bindable var preferences: Preferences
+    /// Reloaded when a memory setting changes, so the card on Today reflects the choice
+    /// immediately rather than at the next launch.
+    let contextual: ContextualMemoryModel
 
     /// Zero is how "no goal" is spelled in the picker; `nil` is how it is stored.
     private var goalSelection: Binding<Int> {
@@ -203,6 +207,35 @@ private struct GeneralTab: View {
                     }
             } footer: {
                 Footnote("Menu bar only hides the Dock icon. Replay keeps recording either way.")
+            }
+
+            Section {
+                Toggle("Surface memories on Today", isOn: $preferences.contextualMemories)
+                    .onChange(of: preferences.contextualMemories) { _, _ in contextual.load() }
+
+                // The threshold is the user's control over how often Replay speaks, so it is
+                // named in words rather than shown as a number. "0.55" tells nobody anything.
+                Picker("How sure Replay must be", selection: $preferences.memoryThreshold) {
+                    ForEach(Design.memoryThresholds, id: \.self) { threshold in
+                        Text(confidenceThresholdLabel(threshold)).tag(threshold)
+                    }
+                }
+                .disabled(!preferences.contextualMemories)
+                .onChange(of: preferences.memoryThreshold) { _, _ in contextual.load() }
+
+                if !preferences.dismissedMemories.isEmpty {
+                    LabeledContent("Put away") {
+                        Button("Bring back \(preferences.dismissedMemories.count)") {
+                            preferences.dismissedMemories = []
+                            contextual.load()
+                        }
+                    }
+                }
+            } footer: {
+                Footnote(
+                    "Replay shows at most one memory a day, and most days it shows none. "
+                        + "Everything it says is read from your own history on this Mac."
+                )
             }
 
             Section {
