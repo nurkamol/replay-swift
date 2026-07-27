@@ -307,6 +307,13 @@ document starts lying, and this one has done it twice already — see the two no
   column nobody can predict is worse than one nobody can see — and the keys were only
   coherent in an arrangement this app does not use. **If the sidebar is ever flattened to the
   reference's order, this should go back.**
+- **The calendar picker was asked for and never built — here or upstream.** The Glaze
+  history specifies Time Travel as "Today / Yesterday / Last 7 Days / Last 30 Days /
+  Calendar Picker" (prompt 18). The reference has the four ranges and no calendar picker
+  anywhere in its sources. It was dropped without a note, and this port inherited the four
+  ranges without it. Recorded so the absence reads as a decision rather than an oversight:
+  **building it here would mean shipping something the reference does not have**, which is
+  the wrong direction for a port. If it is ever wanted, it belongs in the Glaze app first.
 - **Sort stability.** JavaScript's sort is stable; Swift's is not. The port sorts on
   `(value, originalOffset)` in `summarizeApps`, `buildTimeline`, `detectWorkflows`,
   `computeWeekSummary`, and both orderings in `Collections.compute`. Fixtures cover each — the collections one is built so two

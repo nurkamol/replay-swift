@@ -167,3 +167,27 @@ When there is nothing worth saying, the app says nothing rather than filling spa
 Destructive actions are confirmed, name what they will remove, and are kept out of the
 places people type. Numbers explain themselves — "452 KB, all in use" rather than a
 figure that invites "why doesn't that go down?".
+
+### Where the voice comes from
+
+The rules above were reconstructed from the shipped code. The *reasoning* behind them was
+not in the code — it was in the 110 prompts that built the Glaze app over three days, now
+kept at `~/coding/glaze-app/Replay-prompt-history.md`. They repeat a small set of
+constraints so consistently that they are worth stating as rules rather than as taste:
+
+- **Never gamify.** Stated four separate times. Memory cards for a first session or a
+  longest focus are *memories, not rewards* — "never create artificial achievements", "never
+  celebrate with confetti", "keep the tone reflective".
+- **Never judge the user.** The weekly view was specified with "avoid productivity scores,
+  do not judge the user — the goal is remembering, not measuring".
+- **Never fabricate.** "Never invent. Never hallucinate. Never exaggerate." Every sentence
+  the app writes has to summarise data it actually holds, which is why the autobiography and
+  the day stories are assembled from verified figures rather than phrased freely.
+- **Never interrupt.** Contextual memories were specified as "never interrupt, never display
+  popups — subtle inline cards", always dismissable, always disableable.
+- **Extend, do not redesign.** Three of the four large feature specs open by saying so.
+
+This matters for the port because these are the questions the source cannot answer. When a
+change proposes a streak, a score, a badge, or a sentence the data does not support, the
+answer is here.
+

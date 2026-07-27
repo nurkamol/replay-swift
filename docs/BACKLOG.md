@@ -45,6 +45,16 @@ the product.
       running in the menu bar", "Appears once you've been active an hour". This port has 12
       footnotes and tooltips between them. Every control works and most are unexplained.
 
+- [ ] **Delete a specific day, from Settings.** `M`
+      `deleteDay` exists in the store and the model and is reachable from exactly one place:
+      the Timeline's per-day ⋯ menu. So removing a day means finding it in a list first. The
+      reference puts a picker in **Privacy ▸ Your data** listing only days it has a record
+      of — read from the durable headlines, with today added from the front because today is
+      never summarised while it is still being written — bounded by its own
+      `DELETABLE_DAYS_WINDOW = 60`, which is uncontracted.
+      · Asked for directly in the Glaze history, prompt 83.
+      · This is a missing *route* to an existing capability, not new machinery.
+
 - [ ] **About has no What's New button.** `S`
       Upstream puts one on the About tab; here it is reachable only from the Help menu.
       `WhatsNewView` already exists, so this is wiring rather than building.
@@ -86,8 +96,13 @@ These are not blocked by difficulty. They are blocked because they are somebody'
       which runs locally and cannot be handed to anybody. Everything else here is smaller.
 - [ ] **PDF export.** Three WebKit routes tried and dead — recorded in the ledger's
       divergences so a fourth person does not repeat them. Reviving it means leaving WebKit
-      and drawing the report into a `CGContext` by hand. `L`, and genuinely optional: the
-      reference's own PDF is one capped page that tells you to use HTML.
+      and drawing the report into a `CGContext` by hand. `L`.
+      · **Weightier than it looks.** Six of the 110 prompts that built the Glaze app are
+        about the PDF and nothing else — pagination, items overflowing the canvas,
+        overwriting an existing file, a footer note. That is more attention than any other
+        single feature in that history. It does not change the recommendation, since the
+        three WebKit routes really are dead, but "one capped page nobody uses" understates
+        what it cost upstream and how much it was wanted.
 
 ## 5 · The animation skills, and when to spend them
 
