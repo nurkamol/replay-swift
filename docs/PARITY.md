@@ -88,6 +88,8 @@ function now and live in `ReplayCore` where the suite can reach them.
 | This Week | done | the week's figures, a seven-row rhythm strip on a shared hour axis, the plain-language peak, the recurring application combinations, and the five most-used applications with how many days each appeared on |
 | Timeline (days, dividers, ⋯ menus) | done | days newest-first, day-part dividers, range picker, per-day ⋯, filter chips by kind of work, and all nine layers — five that choose which sessions appear, one that governs the gaps, and three that add rows among the days |
 | A past day, reopened | partial | filters to runs that began that day (SPEC §5); reflection card and export; says so when a day's rows are pruned but its headline survives. No story or chapter context |
+| What's New | done | eleven releases, newest first, with the running version marked. Reachable from Help |
+| Help menu | done | Welcome, Replay Guide (⌘?), What's New. The app had no Help menu at all, which is also where macOS puts its own search |
 | Welcome | done | two pages: the things Replay will not do unasked, each off by default, and the privacy claim shown working rather than asserted |
 | Settings | partial | General, Privacy, Data, Shortcuts, Guide, About. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is written out by hand rather than derived, so it can drift from what is actually bound |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
@@ -211,7 +213,7 @@ still claiming 8 of 20 routes after fourteen of them had landed.
 **All 20 of the reference's routes exist.** What remains is depth inside them, plus the
 platform work the brief asks for and the one thing blocked on paperwork.
 
-1. **What's New**, and **Replay Day** — a day played back as a short film.
+1. **Replay Day** — a day played back as a short film.
 2. **A window sizing trap, twice now.** `NSHostingController` sizes its window to the SwiftUI
    content unless told not to. The screensaver came out 1728×2888; the welcome screen grew the
    main window's *saved* frame to 980×5580, which then reloaded as a window mostly below the

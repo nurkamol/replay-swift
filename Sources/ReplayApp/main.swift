@@ -49,6 +49,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var screensaverWindow: NSWindow?
     private var idleWatch: Timer?
+    private var whatsNewWindow: NSWindow?
+    /// Which Settings pane to show when it next opens.
+    private var settingsPane: SettingsView.Pane?
     /// Kept so its title can say what it will do rather than what it is.
     private var sidebarMenuItem: NSMenuItem?
     private var menuRefresh: Timer?
@@ -282,6 +285,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowItem.submenu = windowMenu
         main.addItem(windowItem)
 
+        // macOS adds its own search field to any menu named "Help", and expects one to
+        // exist. This app had none at all, so there was nowhere to reach the welcome, the
+        // guide or the release notes from the menu bar.
+        let helpItem = NSMenuItem()
+        let helpMenu = NSMenu(title: "Help")
+        helpMenu.addItem(
+            withTitle: "Welcome to Replay", action: #selector(showWelcome), keyEquivalent: ""
+        ).target = self
+        helpMenu.addItem(
+            withTitle: "Replay Guide", action: #selector(openGuide), keyEquivalent: "?"
+        ).target = self
+        helpMenu.addItem(.separator())
+        helpMenu.addItem(
+            withTitle: "What's New", action: #selector(openWhatsNew), keyEquivalent: ""
+        ).target = self
+        helpItem.submenu = helpMenu
+        main.addItem(helpItem)
+        NSApp.helpMenu = helpMenu
+
         NSApp.mainMenu = main
         NSApp.windowsMenu = windowMenu
     }
@@ -451,6 +473,58 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         showWindow()
     }
 
+    /// Put the welcome back. The window comes forward with it, since it replaces what is in
+    /// there rather than opening beside it.
+    @objc private func showWelcome() {
+        preferences.seenWelcome = false
+        showWindow()
+    }
+
+    /// Settings, on the pane that answers questions.
+    @objc private func openGuide() {
+        // Set before opening, since the window is built from it. Cleared afterwards so the
+        // next plain ⌘, opens on General as it should.
+        settingsPane = .guide
+        closeSettings()
+        openSettings()
+        settingsPane = nil
+    }
+
+    private func closeSettings() {
+        settingsWindow?.close()
+        settingsWindow = nil
+    }
+
+    @objc private func openWhatsNew() {
+        if let whatsNewWindow {
+            whatsNewWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let hosting = NSHostingController(
+            rootView: WhatsNewView(onClose: { [weak self] in self?.closeWhatsNew() })
+        )
+        // Its size is its own, as everywhere else here — twice bitten.
+        hosting.sizingOptions = []
+        let window = NSWindow(contentViewController: hosting)
+        window.title = "What's New"
+        window.setContentSize(
+            NSSize(width: Design.Layout.whatsNewWidth, height: Design.Layout.whatsNewHeight)
+        )
+        window.styleMask = [.titled, .closable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        whatsNewWindow = window
+    }
+
+    private func closeWhatsNew() {
+        whatsNewWindow?.orderOut(nil)
+        whatsNewWindow = nil
+    }
+
     @objc private func openPalette() {
         showWindow()
         palette.open = true
@@ -516,7 +590,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             rootView: SettingsView(
                 model: model, settings: settings, export: export,
                 preferences: preferences, contextual: contextual,
-                notifications: notifications
+                notifications: notifications, initialPane: settingsPane ?? .general
             )
         )
         // The window takes its size from the pane rather than the other way round, so

@@ -455,6 +455,10 @@ enum Design {
         static let readableWidth: CGFloat = 760
         /// The welcome screen's column, and its page dots.
         static let welcomeWidth: CGFloat = 520
+        /// The What's New window, and the dot in front of one of its lines.
+        static let whatsNewWidth: CGFloat = 620
+        static let whatsNewHeight: CGFloat = 560
+        static let bulletSize: CGFloat = 4
         static let welcomeDot: CGFloat = 7
 
         /// The least width a card in a grid gets before the grid drops to one column.

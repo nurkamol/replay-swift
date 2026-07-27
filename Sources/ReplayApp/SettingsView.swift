@@ -24,7 +24,8 @@ struct SettingsView: View {
     let notifications: NotificationsModel
 
     /// The panes, in the order they are worth reaching for.
-    private enum Pane: String, CaseIterable, Identifiable, Hashable {
+    /// Not private: the Help menu opens Settings on a chosen pane.
+    enum Pane: String, CaseIterable, Identifiable, Hashable {
         case general = "General", privacy = "Privacy", data = "Data"
         case shortcuts = "Shortcuts", guide = "Guide", about = "About"
 
@@ -56,6 +57,10 @@ struct SettingsView: View {
         }
     }
 
+    /// Which pane to show. Given by the caller so Help ▸ Replay Guide lands on the Guide
+    /// rather than on General with the guide one click away.
+    var initialPane: Pane = .general
+
     @State private var pane: Pane = .general
 
     var body: some View {
@@ -83,6 +88,7 @@ struct SettingsView: View {
                 }
             }
             .navigationSplitViewColumnWidth(Design.Layout.settingsSidebarWidth)
+            .onAppear { pane = initialPane }
         } detail: {
             Group {
                 switch pane {
