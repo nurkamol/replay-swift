@@ -882,6 +882,14 @@ enum Design {
         /// this is read from across a room, and at that distance ordinary spacing reads as
         /// one block of text rather than as two things.
         static let ambientGap: CGFloat = 56
+        /// The clock above the day's total. Big enough to read from where the screen is,
+        /// small enough that the figure underneath is still the headline — this is a display
+        /// you glance at, and on a glance the question is usually "what time is it".
+        static let ambientClock: CGFloat = 40
+        /// The screensaver's clock. Smaller than ambient mode's, because that screen is
+        /// *for* being read and this one is passed by — big enough to catch from a doorway,
+        /// small enough not to become the thing on screen.
+        static let screensaverClock: CGFloat = 30
         static let playbackSpeedWidth: CGFloat = 130
         static let whatsNewWidth: CGFloat = 620
         static let whatsNewHeight: CGFloat = 560

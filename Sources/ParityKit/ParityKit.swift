@@ -1207,6 +1207,20 @@ public enum ParityKit {
             )
         }
 
+        // And the rows that are this port's own, checked the other way round: they must
+        // *not* exist upstream. A name collision would mean two settings called the same
+        // thing meaning different things, which is the failure this list exists to prevent.
+        for row in OwnSettingsRow.allCases {
+            equal(
+                g1, "own Settings row is not the reference's: \(row.rawValue)",
+                referenceLabels.contains(row.label), false
+            )
+            equal(
+                g1, "own Settings row explains itself: \(row.rawValue)",
+                row.explanation.isEmpty, false
+            )
+        }
+
         // The Guide, word for word. Sixteen answers a person reads, which SPEC §8 calls the
         // product — and the place a paraphrase would be least visible and most costly, since
         // nobody re-reads a help page against its source.

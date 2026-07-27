@@ -123,3 +123,50 @@ public enum SettingsRow: String, CaseIterable, Sendable {
         }
     }
 }
+
+/// Settings rows this port has and the reference does not.
+///
+/// A deliberately separate list from ``SettingsRow``, and the parity suite checks it in the
+/// *opposite* direction: every `SettingsRow` label must exist upstream, and every one of
+/// these must **not**. That way an addition here can never quietly shadow a row the
+/// reference already has a word for, and if upstream ever ships a setting by one of these
+/// names the suite says so rather than letting the two meanings drift apart under one label.
+///
+/// There is one group so far. Ambient mode upstream has no settings at all — it shows what
+/// it shows — and two of these exist for a reason that only applies to a native app on a
+/// desk: an ambient screen is usually a *second* screen, and a second screen is often one
+/// other people can see.
+/// The raw value is a *key*, not the label — unlike ``SettingsRow``, where the raw value is
+/// the reference's own wording and that is the point. Here two rows are legitimately called
+/// the same thing: the screensaver and ambient mode each offer to show the time, in their own
+/// section, and "Show the time (ambient)" would be a label written for a programmer.
+public enum OwnSettingsRow: String, CaseIterable, Sendable {
+    case screensaverClock
+    case ambientClock
+    case ambientCurrentApp
+    case ambientCurrentSession
+
+    public var label: String {
+        switch self {
+        case .screensaverClock, .ambientClock: "Show the time"
+        case .ambientCurrentApp: "Show the current application"
+        case .ambientCurrentSession: "Show the current session"
+        }
+    }
+
+    public var explanation: String {
+        switch self {
+        case .screensaverClock:
+            "A quiet clock in the corner. The one thing you are likely to want from a "
+                + "screen you are walking past."
+        case .ambientClock:
+            "A clock above the day's total, for a screen you glance at rather than sit in "
+                + "front of."
+        case .ambientCurrentApp:
+            "The application you are in right now, with its icon. Turn it off for a screen "
+                + "other people can see."
+        case .ambientCurrentSession:
+            "What Replay is calling this stretch of work, and when it began."
+        }
+    }
+}

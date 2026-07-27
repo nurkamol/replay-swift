@@ -27,6 +27,11 @@ struct SettingsView: View {
     /// Not private: the Help menu opens Settings on a chosen pane.
     enum Pane: String, CaseIterable, Identifiable, Hashable {
         case general = "General", privacy = "Privacy", data = "Data"
+        // "Display" rather than "Tweaks" or "Addons": these are two whole features, not
+        // optional extras or plugins, and the app already has a word for the pair — the
+        // command palette groups the screensaver and ambient mode under Display, which is
+        // the reference's own grouping. One word for one idea, wherever it appears.
+        case display = "Display"
         case shortcuts = "Shortcuts", guide = "Guide", about = "About"
 
         var id: String { rawValue }
@@ -36,6 +41,7 @@ struct SettingsView: View {
             case .general: "gearshape"
             case .privacy: "hand.raised"
             case .data: "internaldrive"
+            case .display: "display"
             case .shortcuts: "keyboard"
             case .guide: "questionmark.circle"
             case .about: "info.circle"
@@ -50,6 +56,7 @@ struct SettingsView: View {
             case .general: .gray
             case .privacy: .blue
             case .data: .indigo
+            case .display: .orange
             case .shortcuts: .purple
             case .guide: .teal
             case .about: .secondary
@@ -99,6 +106,7 @@ struct SettingsView: View {
                         notifications: notifications
                     )
                 case .data: DataTab(settings: settings, export: export, preferences: preferences)
+                case .display: DisplayTab(preferences: preferences)
                 case .shortcuts: ShortcutsTab()
                 case .guide: GuideTab()
                 case .about: AboutTab()
@@ -134,6 +142,20 @@ extension View {
     /// A `Form` puts this where macOS puts it — under the row, secondary, wrapping to the
     /// content column. The port had 12 of these against the reference's 29, so most controls
     /// worked and said nothing about what they did.
+    /// The same, for a row this port has and the reference does not. A separate entry
+    /// point rather than an overload taking a protocol: the two lists are deliberately
+    /// different things, and a call site should say which one it is reaching for.
+    func explains(own row: OwnSettingsRow) -> some View {
+        VStack(alignment: .leading, spacing: Design.Space.hairline) {
+            self
+            Text(row.explanation)
+                .font(Design.Text.detail)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     func explains(_ row: SettingsRow) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.hairline) {
             self
@@ -341,30 +363,6 @@ private struct GeneralTab: View {
                         DockBadge.update(model, enabled: on)
                     }
             } footer: {
-            }
-
-            Section {
-                Picker(SettingsRow.autoStartWhenIdle.label, selection: $preferences.screensaverIdleMinutes) {
-                    Text("Never").tag(0)
-                    ForEach(Design.screensaverIdleChoices, id: \.self) { minutes in
-                        Text("\(minutes) minutes").tag(minutes)
-                    }
-                }
-                    .explains(.autoStartWhenIdle)
-                Toggle(SettingsRow.exitOnMouseMovement.label, isOn: $preferences.screensaverExitOnMouseMove)
-                    .explains(.exitOnMouseMovement)
-                Toggle(SettingsRow.exitOnClick.label, isOn: $preferences.screensaverExitOnClick)
-                    .explains(.exitOnClick)
-                Toggle(SettingsRow.exitOnKeyPress.label, isOn: $preferences.screensaverExitOnKey)
-                    .explains(.exitOnKeyPress)
-            } header: {
-                Text("Screensaver")
-            } footer: {
-                Footnote(
-                    "Drifts in only while Replay's own window is in front, so it never "
-                        + "appears over another app. Escape and the close button always "
-                        + "dismiss it, whatever these say."
-                )
             }
 
             Section {
@@ -1057,5 +1055,82 @@ private struct ShortcutsTab: View {
                 }
             }
         }
+    }
+}
+
+/// Display — the two surfaces that take the whole screen.
+///
+/// One pane rather than two sections buried in General, and named for what the pair *are*
+/// rather than for how optional they feel. The command palette already groups them under
+/// Display, following the reference; a settings tab called Tweaks or Addons would have said
+/// these are extras, and they are two of the app's features.
+///
+/// The screensaver is for when you have gone. Ambient mode is for while you are here. They
+/// are the only things in Replay that cover the menu bar, which is the whole reason they
+/// belong together.
+private struct DisplayTab: View {
+    @Bindable var preferences: Preferences
+
+    var body: some View {
+        Form {
+            Section {
+                Picker(
+                    SettingsRow.autoStartWhenIdle.label,
+                    selection: $preferences.screensaverIdleMinutes
+                ) {
+                    Text("Never").tag(0)
+                    ForEach(Design.screensaverIdleChoices, id: \.self) { minutes in
+                        Text("\(minutes) minutes").tag(minutes)
+                    }
+                }
+                .explains(.autoStartWhenIdle)
+                Toggle(
+                    SettingsRow.exitOnMouseMovement.label,
+                    isOn: $preferences.screensaverExitOnMouseMove
+                )
+                .explains(.exitOnMouseMovement)
+                Toggle(SettingsRow.exitOnClick.label, isOn: $preferences.screensaverExitOnClick)
+                    .explains(.exitOnClick)
+                Toggle(SettingsRow.exitOnKeyPress.label, isOn: $preferences.screensaverExitOnKey)
+                    .explains(.exitOnKeyPress)
+                Toggle(
+                    OwnSettingsRow.screensaverClock.label, isOn: $preferences.screensaverClock
+                )
+                .explains(own: .screensaverClock)
+            } header: {
+                Text("Screensaver")
+            } footer: {
+                Footnote(
+                    "Drifts in only while Replay's own window is in front, so it never "
+                        + "appears over another app. Escape and the close button always "
+                        + "dismiss it, whatever these say."
+                )
+            }
+
+            Section {
+                Toggle(OwnSettingsRow.ambientClock.label, isOn: $preferences.ambientClock)
+                    .explains(own: .ambientClock)
+                Toggle(
+                    OwnSettingsRow.ambientCurrentApp.label,
+                    isOn: $preferences.ambientCurrentApp
+                )
+                .explains(own: .ambientCurrentApp)
+                Toggle(
+                    OwnSettingsRow.ambientCurrentSession.label,
+                    isOn: $preferences.ambientCurrentSession
+                )
+                .explains(own: .ambientCurrentSession)
+            } header: {
+                Text("Ambient mode")
+            } footer: {
+                Footnote(
+                    "The day's total is always shown — it is what the screen is for. These "
+                        + "are the things around it, and two of them are here because an "
+                        + "ambient screen is usually a second screen, and a second screen "
+                        + "is often one other people can see."
+                )
+            }
+        }
+        .formStyle(.grouped)
     }
 }

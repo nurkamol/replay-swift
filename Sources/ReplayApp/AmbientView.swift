@@ -14,6 +14,7 @@ import SwiftUI
 /// glanceable surface that asks to be ignored most of the time is doing its job.
 struct AmbientView: View {
     let model: AppModel
+    let preferences: Preferences
     let onExit: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -52,13 +53,24 @@ struct AmbientView: View {
                 Design.Colour.screensaverBackground.ignoresSafeArea()
 
                 VStack(spacing: 0) {
+                    // The time first, then the date, then the day's total. The order is the
+                    // order the questions come in: what time is it, what day is it, how has
+                    // it gone. It sat at the foot of the screen next to the exit hint, which
+                    // is where a footnote goes and not where a clock does.
+                    if preferences.ambientClock {
+                        Text(now.formatted(.dateTime.hour().minute()))
+                            .font(.system(size: Design.Layout.ambientClock, weight: .light))
+                            .monospacedDigit()
+                            .foregroundStyle(.white.opacity(Design.Colour.ambientHeadline))
+                            .padding(.bottom, Design.Space.card)
+                    }
                     eyebrow
                     headline(in: geometry.size.width)
                         .padding(.top, Design.Space.block)
-                    if let app = currentApp {
+                    if preferences.ambientCurrentApp, let app = currentApp {
                         nowPlaying(app).padding(.top, Design.Layout.ambientGap)
                     }
-                    if let session = currentSession {
+                    if preferences.ambientCurrentSession, let session = currentSession {
                         Text(
                             "\(session.title) · since "
                                 + shortTimeLabel(session.startedAt)
@@ -98,7 +110,7 @@ struct AmbientView: View {
                         .accessibilityLabel("Exit ambient mode")
                     }
                     Spacer()
-                    clock
+                    exitHint
                 }
                 .padding(Design.Space.page)
             }
@@ -207,10 +219,11 @@ struct AmbientView: View {
         .accessibilityLabel("Now in \(app.name)")
     }
 
-    private var clock: some View {
-        Text("\(now.formatted(.dateTime.hour().minute())) · press Esc to exit")
+    /// The way out, and nothing else. The time used to share this line; it has gone to the
+    /// top, where a clock belongs, and this is a footnote again.
+    private var exitHint: some View {
+        Text("Press Esc to exit")
             .font(Design.Text.micro)
-            .monospacedDigit()
             .foregroundStyle(.white.opacity(Design.Colour.ambientHint))
     }
 

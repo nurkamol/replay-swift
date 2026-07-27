@@ -275,6 +275,30 @@ final class Preferences {
         didSet { write(screensaverExitOnKey, "screensaverExitOnKey") }
     }
 
+    /// What ambient mode shows. All three on to begin with, because a display you have to
+    /// configure before it says anything is not a display.
+    ///
+    /// These have no counterpart upstream — the reference's ambient mode has no settings —
+    /// which is why they are `OwnSettingsRow` rather than `SettingsRow`. Two of them are
+    /// there for one reason: an ambient screen is often a *second* screen, and a second
+    /// screen is often one other people can see. What you are working on is the part you
+    /// might not want on it.
+    var screensaverClock: Bool {
+        didSet { write(screensaverClock, "screensaverClock") }
+    }
+
+    var ambientClock: Bool {
+        didSet { write(ambientClock, "ambientClock") }
+    }
+
+    var ambientCurrentApp: Bool {
+        didSet { write(ambientCurrentApp, "ambientCurrentApp") }
+    }
+
+    var ambientCurrentSession: Bool {
+        didSet { write(ambientCurrentSession, "ambientCurrentSession") }
+    }
+
     /// A recap of the day, at an hour of your choosing. Off until asked for, and asking is
     /// what prompts macOS for permission — nothing is requested before then.
     var dailySummaryHour: Int {
@@ -323,6 +347,10 @@ final class Preferences {
         screensaverExitOnMouseMove = defaults.bool(forKey: "screensaverExitOnMouseMove")
         screensaverExitOnClick = defaults.object(forKey: "screensaverExitOnClick") as? Bool ?? true
         screensaverExitOnKey = defaults.object(forKey: "screensaverExitOnKey") as? Bool ?? true
+        screensaverClock = defaults.object(forKey: "screensaverClock") as? Bool ?? true
+        ambientClock = defaults.object(forKey: "ambientClock") as? Bool ?? true
+        ambientCurrentApp = defaults.object(forKey: "ambientCurrentApp") as? Bool ?? true
+        ambientCurrentSession = defaults.object(forKey: "ambientCurrentSession") as? Bool ?? true
         let hour = defaults.integer(forKey: "dailySummaryHour")
         dailySummaryHour = hour == 0 ? 18 : hour
         dailySummary = defaults.bool(forKey: "dailySummary")
@@ -383,6 +411,10 @@ final class Preferences {
         "savedSearches",
         "screensaverExitOnClick",
         "screensaverExitOnKey",
+        "screensaverClock",
+        "ambientClock",
+        "ambientCurrentApp",
+        "ambientCurrentSession",
         "screensaverExitOnMouseMove",
         "screensaverIdleMinutes",
         "seenWelcome",
@@ -429,6 +461,10 @@ final class Preferences {
         screensaverExitOnMouseMove = fresh.screensaverExitOnMouseMove
         screensaverExitOnClick = fresh.screensaverExitOnClick
         screensaverExitOnKey = fresh.screensaverExitOnKey
+        screensaverClock = fresh.screensaverClock
+        ambientClock = fresh.ambientClock
+        ambientCurrentApp = fresh.ambientCurrentApp
+        ambientCurrentSession = fresh.ambientCurrentSession
         dailySummaryHour = fresh.dailySummaryHour
         dailySummary = fresh.dailySummary
         weeklyRecap = fresh.weeklyRecap

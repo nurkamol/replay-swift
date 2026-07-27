@@ -465,7 +465,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let screen = NSScreen.main ?? window?.screen ?? NSScreen.screens.first
         let hosting = NSHostingController(
             rootView: Themed(preferences: preferences) {
-                AmbientView(model: model, onExit: { [weak self] in self?.closeAmbient() })
+                AmbientView(
+                    model: model, preferences: preferences,
+                    onExit: { [weak self] in self?.closeAmbient() }
+                )
                     .preferredColorScheme(.dark)
             }
         )

@@ -20,6 +20,10 @@ struct ScreensaverView: View {
     @State private var drift = false
     @State private var height: CGFloat = 0
     @State private var exitMonitor: Any?
+    /// Only ticked while the clock is shown, and only once a minute — the screensaver
+    /// already redraws a drifting column, and a second timer for a figure that changes
+    /// sixty times an hour would be the wrong trade.
+    @State private var now = Date()
     /// Loaded once, before the first layout.
     ///
     /// This was `@State` set in `onAppear` at first, and the loop came apart: the column was
@@ -52,32 +56,48 @@ struct ScreensaverView: View {
         ZStack(alignment: .top) {
             Design.Colour.screensaverBackground.ignoresSafeArea()
 
-            // No `GeometryReader` around this. One was wrapped here first and the layout
-            // fell apart: a `GeometryReader` proposes its own full height to its child, so
-            // the two columns were squeezed into one screen and their titles overlapped the
-            // icons beneath them. `fixedSize` vertically is what makes the stack take the
-            // height it actually wants, which is also the height the drift has to travel.
-            VStack(spacing: 0) {
-                column
-                column
-            }
-            .frame(width: Design.Layout.screensaverColumnWidth)
-            .fixedSize(horizontal: false, vertical: true)
-            // Measured rather than assumed, and tracked rather than sampled once: the drift
-            // has to be exactly one copy's height or the loop shows its seam.
-            .onGeometryChange(for: CGFloat.self) { $0.size.height / 2 } action: { measured in
-                if abs(measured - height) > 0.5 { height = measured }
-            }
-            .offset(y: drift ? -height : 0)
-            .animation(
-                .linear(duration: reduceMotion
-                    ? Design.Motion.screensaverSlowSeconds
-                    : Design.Motion.screensaverDriftSeconds)
-                    .repeatForever(autoreverses: false),
-                value: drift
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .clipped()
+            // The column hangs in an *overlay* of a screen-filling `Color.clear` rather
+            // than sitting in the stack beside everything else.
+            //
+            // That is not a stylistic choice. `fixedSize(vertical:)` makes the doubled
+            // column take its true height — thousands of points, which is what the drift
+            // needs to know — and a `ZStack` sizes itself to its tallest child. So the whole
+            // stack became column-height and was centred in the window, which put every
+            // other thing in it far above and below the screen: **the close button and the
+            // "Press Esc" hint had never been visible.** Nobody noticed because Escape works
+            // and a screensaver is mostly looked at rather than used. Found while adding the
+            // clock, which landed in the same nowhere.
+            //
+            // An overlay is sized by its parent and does not feed its own size back, so the
+            // stack is the window again and the chrome lands where it was always written to.
+            //
+            // Still no `GeometryReader`: one was wrapped here first and squeezed the two
+            // columns into a single screen, overlapping their titles with the icons beneath.
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay(alignment: .top) {
+                    VStack(spacing: 0) {
+                        column
+                        column
+                    }
+                    .frame(width: Design.Layout.screensaverColumnWidth)
+                    .fixedSize(horizontal: false, vertical: true)
+                    // Measured rather than assumed, and tracked rather than sampled once:
+                    // the drift has to be exactly one copy's height or the loop shows its
+                    // seam.
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height / 2 } action: { measured in
+                        if abs(measured - height) > 0.5 { height = measured }
+                    }
+                    .offset(y: drift ? -height : 0)
+                    .animation(
+                        .linear(duration: reduceMotion
+                            ? Design.Motion.screensaverSlowSeconds
+                            : Design.Motion.screensaverDriftSeconds)
+                            .repeatForever(autoreverses: false),
+                        value: drift
+                    )
+                }
+                .clipped()
 
             // Content dissolves at the edges rather than clipping.
             VStack {
@@ -102,11 +122,35 @@ struct ScreensaverView: View {
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
+                // The only focusable thing on screen, so it takes the focus ring by
+                // default — a blue halo on a surface that is meant to be restful. Escape
+                // still leaves and the disc is still clickable.
+                .focusEffectDisabled()
                 .opacity(Design.Colour.screensaverExitOpacity)
                 .padding(Design.Space.page)
                 .keyboardShortcut(.escape, modifiers: [])
                 .help("Exit")
                 .accessibilityLabel("Exit the screensaver")
+            }
+
+            // Bottom-left, diagonally opposite the close disc, so the two pieces of
+            // chrome balance rather than crowd. A corner and not the centre: the column
+            // drifts up the middle of the screen for as long as this is open, and a clock
+            // laid over moving content is a clock you read twice. It also sits inside the
+            // bottom fade, where there is least to read anyway.
+            if preferences.screensaverClock {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Text(now.formatted(.dateTime.hour().minute()))
+                            .font(.system(size: Design.Layout.screensaverClock, weight: .light))
+                            .monospacedDigit()
+                            .foregroundStyle(.white.opacity(Design.Colour.screensaverTertiary))
+                        Spacer()
+                    }
+                    .padding(Design.Space.page)
+                }
+                .allowsHitTesting(false)
             }
 
             VStack {
@@ -127,6 +171,11 @@ struct ScreensaverView: View {
         // are wired separately and always work, which is why the hint can promise Escape
         // whatever these are set to.
         .onAppear { armExit() }
+        .onReceive(
+            Timer.publish(every: Design.Motion.ambientTick, on: .main, in: .common).autoconnect()
+        ) { tick in
+            if preferences.screensaverClock { now = tick }
+        }
         .onDisappear {
             if let exitMonitor { NSEvent.removeMonitor(exitMonitor) }
             exitMonitor = nil
