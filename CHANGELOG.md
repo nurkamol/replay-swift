@@ -19,6 +19,67 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## 0.9.1 — 2026-07-28
+
+Everything below happened after 0.9.0 was tagged the same day. Two of them are the reason to
+take this build rather than that one: a data-loss bug, and the last functional gap against
+the reference closing.
+
+### Added
+
+- **PDF export**, which the ledger had recorded as a decision rather than an omission after
+  three WebKit routes died. The fourth route is not WebKit: `ImageRenderer` returns a
+  `CGContext`, a PDF context *is* a `CGContext`, and a SwiftUI view draws straight into a page
+  with no browser and nothing to paginate. Every earlier failure was a pagination failure, and
+  the reference caps its own PDF at one page — so the honest shape is a summary that counts
+  the whole span and names what it left off, rather than the HTML report again.
+- **A menu bar popover** in place of the menu. The menu answered two questions well and could
+  not answer more, because a menu is rows of text. This adds the day's total, the focus goal
+  as a bar, the last three sessions with their applications' icons, and a pause control.
+- **`tools/screenshots.sh`** — every surface captured in one command, about two minutes. Not a
+  UI test and it makes no assertions: 951 contract checks had never caught a layout bug, and
+  the bottleneck was never whether to look but that looking cost a dozen commands each time.
+- **Localisation, to the point where it needs a translator rather than a task.** Every string
+  a reader sees goes through `Loc`, whose key *is* the English text — so a missing translation
+  falls back to correct English rather than a raw identifier, and the contract keeps comparing
+  the strings it always did. `tools/strings-audit.mjs` holds it there.
+- **A landing page** at `nurkamol.github.io/replay-swift`, and a **v0.9.0 release** with a
+  zipped app, since Homebrew and a source build are not routes everyone has.
+
+### Fixed
+
+- **Two copies of Replay could zero each other's live session.** `ActivityStore.open()` closes
+  any session left with no end — right after a crash, destructive while another copy is
+  running, since it sets `ended_at = started_at, duration = 0` on the first instance's
+  in-flight session. Both then wrote to one SQLite file with no busy timeout, so a contended
+  write returned `SQLITE_BUSY` and the event was lost with no error anywhere. A second launch
+  now hands the front to the first and exits; the store waits five seconds for a lock. **Found
+  from a question, not from a check** — whether running the Glaze app alongside this one could
+  explain a crash. It could not. This was underneath the question.
+- **The menu bar panel opened mid-sentence.** The popover is reused so the button can toggle
+  it and remembered its last size, while the content changes height — so taller content was
+  clipped off the *top*, taking the header and the day's total with it.
+- **The year heatmap's weekday key sat a hundred points from the year it labelled.** The grid
+  anchors trailing so it opens on today, which is right; applied unconditionally it also shoves
+  a grid that *fits* against the right edge. True at every window from about 1000pt, which is
+  every default window, and found by the first light-mode render in the project's history.
+- **The week's rhythm strip left a dead gap** before the durations at any wide window. Its
+  560pt cap was redundant — the page measure already bounds the row — and was concealing that
+  the strip is twenty-four bars that each want to fill, so removing the cap pushed the duration
+  column off the edge entirely until it was given layout priority.
+- **A page never grew with its window**: every surface was capped at the *prose* measure and
+  pinned left, so widening the window grew a dead column against the scroll bar.
+- **The Canvas field is still.** Its sway was this port's own, cost a permanent 30fps redraw,
+  and diverged from a reference whose graph does not move.
+
+### Known gaps
+
+- **Still not signed.** The download is a zip and macOS will refuse it once; the release notes
+  say why and how. Homebrew and a source build avoid it entirely.
+- **One language.** The mechanism is built and every string goes through it; nobody has
+  translated anything. `Loc.count` has two plural forms, which is English — Russian needs
+  three, Arabic six. A `.stringsdict` is the seam waiting for a language to be chosen.
+
 ## 0.9.0 — 2026-07-28
 
 Feature-complete: every route the reference has, both of its display modes, and the whole of

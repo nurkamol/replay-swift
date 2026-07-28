@@ -64,7 +64,7 @@ Then link the app once, so Spotlight and the Dock can find it:
 ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
 ```
 
-That builds v0.9.0. Add `--HEAD` to either one to build the current `main` instead.
+That builds v0.9.1. Add `--HEAD` to either one to build the current `main` instead.
 
 ### Or from source
 
@@ -201,9 +201,12 @@ scripts/make-dmg.sh      a disk image; --release signs, notarises and staples it
 scripts/icon-probe.sh    the sandbox experiment behind docs/FINDINGS.md
 ```
 
-**Feature-complete at 0.9.0.** Every route the reference has, both of its display modes —
-the screensaver and ambient mode — and the whole of its Settings. The core was finished and
-verified early; the interface was the bulk of the work, as
+**Feature-complete at 0.9.0, and past the reference at 0.9.1.** Every route the reference
+has, both of its display modes — the screensaver and ambient mode — and the whole of its
+Settings. Since then: PDF export, which closes the last format the reference had and this did
+not; a menu bar popover and an update check, neither of which the reference has anywhere; and
+a localisation layer every string now goes through. The core was finished and verified early;
+the interface was the bulk of the work, as
 [docs/PORTING-MAP.md](docs/PORTING-MAP.md) predicted it would be.
 
 Nine rather than ten because it still cannot be installed by anyone but the person who
