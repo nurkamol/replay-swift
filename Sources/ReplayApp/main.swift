@@ -400,7 +400,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menuBarPopover = new
             return new
         }()
-        popover.contentViewController = NSHostingController(
+        let hosting = NSHostingController(
             rootView: MenuBarPopoverView(
                 model: model,
                 preferences: preferences,
@@ -420,6 +420,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .tint(preferences.themeColour.colour)
             .preferredColorScheme(preferences.appearance.colorScheme)
         )
+        // Size the panel to what is actually in it, every time it opens.
+        //
+        // The `NSPopover` is reused so the button can toggle it, and it remembers the content
+        // size it was last given. The content does not stay one size: three recent sessions
+        // is taller than none, a focus goal adds a bar, "Tracking paused" removes a row. So a
+        // panel opened once while short stayed short, and taller content was clipped — off
+        // the *top*, which took the header and the day's total with it and left the panel
+        // opening mid-sentence.
+        //
+        // `.preferredContentSize` alone was not enough, because the size is asked for before
+        // SwiftUI has laid the content out. Measuring the fitting size and setting it
+        // explicitly is what makes it right on the first open as well as the fifth.
+        hosting.sizingOptions = [.preferredContentSize]
+        hosting.view.layoutSubtreeIfNeeded()
+        popover.contentViewController = hosting
+        popover.contentSize = hosting.view.fittingSize
+
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         // Without this the popover opens behind whatever you were in, because a status item
         // click does not activate the app.
