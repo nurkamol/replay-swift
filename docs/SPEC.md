@@ -111,6 +111,21 @@ away stretch may have begun before the window and reach into it), so a view show
 single day **must filter to runs that began that day**. The Glaze app shipped without
 that filter and a session spanning midnight appeared on two days at once.
 
+### And a week begins on Monday
+
+Not the locale's answer. `Calendar.firstWeekday` is Sunday in en-US, and the reference
+settles the question itself — `startOfWeek` is `(d.getDay() + 6) % 7`, commented "days since
+Monday". Every surface that groups by week has to agree, or two of them draw the same seven
+days differently.
+
+This one had already gone wrong once. `startOfWeek` was private to the autobiography, so
+when the memory heatmap needed a week boundary it reached for `firstWeekday` instead and
+drew a grid the rest of the app did not recognise. There is one `ReplayCore.startOfWeek`
+now, and the suite checks all seven weekdays land on their Monday.
+
+**Locale is not timezone.** CI runs in four timezones and would never have caught this: the
+grid was wrong in a Monday-first *locale*, at any hour, in any zone.
+
 ## 6. Deletion, at three grains
 
 | grain | what goes |

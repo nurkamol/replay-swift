@@ -5,6 +5,35 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## The Timeline's wait was layout, not data
+
+**Date:** 2026-07-28 · **Reproduce:** the numbers below, against a 4,002-row database ·
+**Verdict:** do not change the default range
+
+Reported as "Last 7 Days loads a bit longer", with a proposal to default the Timeline to
+Yesterday instead. The default range is contract-checked — `spec/constants.json` says `7d`
+because the Glaze app says `7d` — so trading it away is a real cost and worth measuring
+first.
+
+| range | `store.sessions` | derivation | total |
+|---|---|---|---|
+| Today | 0.9 ms | 0.9 ms | **~2 ms** |
+| Yesterday | 2.2 ms | 3.7 ms | **~6 ms** |
+| Last 7 Days | 9.0 ms | 13.4 ms | **~22 ms** |
+
+Twenty-two milliseconds is about 1.3 frames. Application icons were the other suspect and
+are already cached twice over, by source and by drawn size.
+
+The cost was the layout. `TimelineView` used a plain `VStack` inside a `ScrollView`, which
+builds *every* child up front — so opening on Last 7 Days constructed all ~280 rows, every
+session card and icon and annotation lookup, before one was on screen. It scaled with the
+range exactly the way a slow query would, which is why it read as one. A `LazyVStack` builds
+what is near the viewport, so the cost now scales with the window.
+
+**The general lesson:** a symptom that scales with the amount of data is not evidence that
+the data layer is slow. Measure the layers separately before spending a contracted value to
+work around one of them.
+
 ## App icons survive App Sandbox — no entitlement needed
 
 **Date:** 2026-07-26 · **Reproduce:** `./scripts/icon-probe.sh` · **Verdict:** not a risk

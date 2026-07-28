@@ -36,18 +36,21 @@ swift run replay-parity
 Expected, when the two agree:
 
 ```
-Checking this port against Glaze 2.3.1 (9dcd1bb)
+Checking this port against Glaze 2.3.2 (d355ba2)
 
-✓ constants — 11 checks
+✓ constants — 226 checks
+✓ narrative copy — 34 checks
 ✓ category table — 7 checks
 ✓ schema — 1 checks
+✓ store round-trip — 7 checks
+✓ annotations — 15 checks
+✓ maintenance — 12 checks
 ✓ session derivation
    ✓ one-session-two-apps — Consecutive rows with no gap form a single session…
    ✓ away-row-splits-session — A measured idle row is a break, and splits the run…
    … 8 scenarios …
-✓ store round-trip — 7 checks
 
-PARITY OK — 188 checks against Glaze 2.3.1
+PARITY OK — 931 checks against Glaze 2.3.2
 ```
 
 ## What is here
@@ -58,22 +61,38 @@ Sources/ReplayCore/
   ActivityStore.swift    SQLite: storage, headlines, deletion, compaction
   SessionBuilder.swift   the derivation — rows → named sessions and breaks
   ActivityTracker.swift  NSWorkspace + idle time → recorded sessions
-Sources/ParityKit/       the parity suite — 188 checks against the reference
+Sources/ParityKit/       the parity suite — 931 checks against the reference
 Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
-Sources/ReplayApp/       placeholder; the UI is not started
+Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
 Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
+Tests/ReplayAppTests/    61 behaviour cases over the app's own models
 spec/                    GENERATED contract — never hand-edit
 tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
 tools/port-queue.mjs     lists Glaze commits this port still owes
+tools/design-audit.mjs   fails if a view spells a visual constant
+tools/shortcut-audit.mjs fails if a bound key is undocumented, or documented and unbound
 Resources/AppIcon.icns   the product's icon, carried over from the Glaze app
 docs/                    read these
 scripts/make-app.sh      assemble a runnable .app
 scripts/icon-probe.sh    the sandbox experiment behind docs/FINDINGS.md
 ```
 
-**The core is done and verified.** Storage, session derivation, and the tracker are
-ported and checked against the reference implementation. The UI has not been started —
-that is the bulk of the work, and [docs/PORTING-MAP.md](docs/PORTING-MAP.md) scopes it.
+**Feature-complete at 0.9.0.** Every route the reference has, both of its display modes —
+the screensaver and ambient mode — and the whole of its Settings. The core was finished and
+verified early; the interface was the bulk of the work, as
+[docs/PORTING-MAP.md](docs/PORTING-MAP.md) predicted it would be.
+
+Nine rather than ten because it still cannot be installed by anyone but the person who
+built it: `scripts/make-app.sh` signs ad-hoc, and a Developer ID is the only thing between
+that and a build you could hand to somebody. What is left is in
+[docs/BACKLOG.md](docs/BACKLOG.md), which is short and mostly not code.
+
+**A caveat worth reading before trusting the number.** 931 checks cover the core and the
+values behind the interface, and nothing exercises the interface itself. Three bugs in this
+release were invisible to every automated check and were found by looking at the app: a
+Settings toggle bound to the wrong `Bool`, chrome laid out off-screen, and a test suite
+leaking a `UserDefaults` domain per fixture. A high check count is evidence about what it
+covers, not about what it does not.
 
 ## Documentation
 
@@ -82,9 +101,12 @@ that is the bulk of the work, and [docs/PORTING-MAP.md](docs/PORTING-MAP.md) sco
 | [docs/SPEC.md](docs/SPEC.md) | **what Replay does** — the invariants a port gets wrong at the design level |
 | [docs/SYNC.md](docs/SYNC.md) | **how the two stay honest** — the generated contract and the loop |
 | [docs/PORTING-MAP.md](docs/PORTING-MAP.md) | every Glaze API → native equivalent, costs, and the two real risks |
-| [docs/PARITY.md](docs/PARITY.md) | feature-by-feature status ledger |
+| [docs/PARITY.md](docs/PARITY.md) | feature-by-feature status ledger, and every known divergence |
+| [docs/BACKLOG.md](docs/BACKLOG.md) | **the only list of remaining work**, in the order it is worth doing |
 | [docs/FINDINGS.md](docs/FINDINGS.md) | questions that decided something, with the evidence |
+| [plans/](plans/) | animation audit findings and the plans they became |
 | [docs/GLAZE-CHANGELOG.md](docs/GLAZE-CHANGELOG.md) | the reference implementation's release history (a copy) |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | retired — kept as history; the backlog supersedes it |
 
 Read SPEC.md before writing any feature code. The constants are checked automatically;
 the invariants in that file are the ones that will bite.
