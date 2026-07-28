@@ -857,9 +857,23 @@ enum Design {
         static let sheetWidth: CGFloat = 460
         static let sheetHeight: CGFloat = 420
 
-        /// The widest a column of text is allowed to get. Beyond this a line is tiring to
-        /// read, however wide the window is.
+        /// The widest a column of *text* is allowed to get. Beyond this a line is tiring to
+        /// read, however wide the window is. This is the measure for prose — the
+        /// autobiography, the museum, the legacy — and the three of them apply it to their
+        /// own paragraphs, inside whatever width the page gives them.
         static let readableWidth: CGFloat = 760
+        /// The widest a *page* is allowed to get, which is a different question.
+        ///
+        /// A page here is cards: a headline, a row of figures, sessions with a duration on
+        /// the right. None of that is a line of prose, and holding it to the prose measure
+        /// was what put a dead column against the scroll bar on a wide window. So the page
+        /// grows with the window and stops here, which at a maximised 1500pt leaves a real
+        /// margin either side rather than a gap on one.
+        ///
+        /// There is no matching minimum because the window already has one: 720pt of window
+        /// less a 170pt sidebar and the page gutter still leaves a column wider than the
+        /// widest card minimum, so nothing here can be squeezed into overlapping.
+        static let pageWidth: CGFloat = 1080
         /// The welcome screen's column, and its page dots.
         static let welcomeWidth: CGFloat = 520
         /// The What's New window, and the dot in front of one of its lines.
@@ -1174,11 +1188,31 @@ extension View {
     /// The measure matters more since the window gained a sidebar. Without it a card runs
     /// the full width of a maximised display, and a line of forty words is tiring to read
     /// however much room there is for it.
+    ///
+    /// **It grows with the window, and it is centred.** Two things were wrong and they hid
+    /// each other. The cap was the *prose* measure, 760pt, applied to pages that are cards
+    /// rather than paragraphs; and the column was pinned to `.topLeading`, so every pixel of
+    /// slack collected on one side. Widening the window grew a dead strip against the scroll
+    /// bar, and the page read as content that had failed to load. Now the page takes the
+    /// width it is given up to `pageWidth`, and what is left over is split into two margins.
+    /// Prose is unaffected: the three surfaces that have any hold their own paragraphs to
+    /// `readableWidth` inside this, which is where that limit belongs.
+    /// A paragraph, held to the measure a paragraph wants.
+    ///
+    /// The page grows with the window; a sentence must not. Without this the day's story ran
+    /// the full width of a maximised page — a hundred and fifty characters to a line, which
+    /// is the length at which the eye loses its place coming back for the next one. Use it on
+    /// narrative text that sits inside a card, since the card is right to be as wide as the
+    /// page and the text inside it is not.
+    func proseColumn() -> some View {
+        frame(maxWidth: Design.Layout.readableWidth, alignment: .leading)
+    }
+
     func pageContent() -> some View {
         self
             .padding(Design.Space.page)
-            .frame(maxWidth: Design.Layout.readableWidth, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(maxWidth: Design.Layout.pageWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .top)
     }
 }
 

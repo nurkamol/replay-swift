@@ -736,6 +736,7 @@ struct ContextualMemoryCard: View {
                     .font(Design.Text.prose)
                     .lineSpacing(Design.Text.proseLineSpacing)
                     .fixedSize(horizontal: false, vertical: true)
+                    .proseColumn()
                 if let detail = memory.detail {
                     Text(detail)
                         .font(Design.Text.detail)

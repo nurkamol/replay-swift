@@ -498,6 +498,7 @@ struct DayView: View {
                             .font(Design.Text.prose)
                             .lineSpacing(Design.Text.proseLineSpacing)
                             .fixedSize(horizontal: false, vertical: true)
+                            .proseColumn()
                     }
                     .padding(Design.Space.section)
                     .frame(maxWidth: .infinity, alignment: .leading)
