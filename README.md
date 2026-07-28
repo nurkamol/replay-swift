@@ -64,7 +64,7 @@ Then link the app once, so Spotlight and the Dock can find it:
 ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
 ```
 
-That builds v0.9.2. Add `--HEAD` to either one to build the current `main` instead.
+That builds v0.9.3. Add `--HEAD` to either one to build the current `main` instead.
 
 ### Or from source
 
@@ -121,11 +121,23 @@ and would promise something this cannot yet deliver, and because the release not
 carry the Gatekeeper instructions rather than let somebody meet that dialog cold. What the
 workflow will not do is attach an unsigned `.dmg`.
 
-Automatic updates are half-built and deliberately stop short. Replay can check GitHub for a
-newer version — opt-in, off by default, Settings ▸ About — and tells you rather than
-installing anything. Self-update is the part that needs a signature to verify before it
-swaps a running app, so it waits for the same certificate. Not Sparkle: that is an external
-dependency and this project has none, on purpose. See [docs/BACKLOG.md](docs/BACKLOG.md) §6.
+**Updates install themselves, and what that rests on is worth reading.** Replay can check
+GitHub for a newer version — opt-in, off by default, Settings ▸ About — and the banner's
+button installs it: it downloads the zip, fetches the SHA-256 the release publishes beside
+it, hashes the download and compares, then checks the bundle is signed, is this application,
+and is the version that was offered, before replacing itself and restarting.
+
+The trust is **HTTPS to this repository, plus that checksum** — the same model as a Homebrew
+formula with a `sha256`. It proves the bytes are the ones the release carries; it does *not*
+prove the release is trustworthy, because there is no Developer ID signature to establish
+authorship. Anyone who can publish to this repository can publish an update. If that is not a
+trust you want to extend, leave the check off and use Homebrew, which has exactly the same
+property and says so more loudly.
+
+It refuses in three cases rather than doing damage: a copy installed by Homebrew is left to
+`brew upgrade`; a copy macOS is running from its read-only translocation mount has nothing to
+replace; and a read-only location refuses rather than half-installing. Not Sparkle — that is
+an external dependency and this project has none, on purpose.
 
 ## Quickstart
 

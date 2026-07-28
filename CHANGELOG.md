@@ -19,6 +19,31 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## 0.9.3 — 2026-07-29
+
+### Added
+
+- **Updates install themselves.** The banner's button was a link to a release page, which
+  left somebody to download a zip and drag a bundle over the one they were running. It now
+  downloads the zip, fetches the SHA-256 the release publishes beside it, hashes the download
+  and compares, extracts with `ditto`, checks the bundle is signed and is *this* application
+  and is the version that was advertised, then replaces itself and restarts.
+- **What the trust rests on, said out loud:** HTTPS to a repository named in the source, plus
+  a checksum published in the same release — the Homebrew-formula model. It proves the bytes
+  are the ones that release carries, not that the release is trustworthy. Anyone who can
+  publish to the repository can publish an update. A Developer ID would add authorship and is
+  still the thing worth buying.
+- **It refuses more often than it installs**, which is the design rather than a limitation. A
+  Homebrew copy is left to `brew upgrade`, since replacing the bundle would leave `brew`
+  believing it has a version it no longer has. A copy running from macOS's read-only
+  translocation mount — what an app still sitting in Downloads gets — has nothing to replace.
+  A read-only location refuses rather than half-installing.
+
+### Fixed
+
+- **Rate limiting says something useful.** Testing exhausted GitHub's sixty-per-hour
+  unauthenticated cap, and "GitHub replied 403" tells nobody anything they can act on.
+
 ## 0.9.2 — 2026-07-28
 
 **0.9.1 shipped an app that would not open.** This is that fixed, and the check that should
