@@ -161,6 +161,28 @@ document starts lying, and this one has done it twice already — see the two no
 
 ## Known divergences to keep an eye on
 
+- **The year grid's key sat a hundred points from the year, and nobody had rendered light
+  mode.** The grid anchors trailing so it opens on today — right, and recorded below. But the
+  anchor was unconditional, and a grid that *fits* its viewport has nothing to scroll, so the
+  anchor simply pushed it to the right edge and left the pinned weekday key stranded. It fits
+  at any window from about a thousand points, which is every default window, so this was true
+  from the day the key was pinned. Found on 2026-07-28 by the first run of
+  `tools/screenshots.sh` in light mode at 1600 — a combination nothing had ever drawn, since
+  every screenshot ever taken of this app had been dark. Fixed with a minimum content width;
+  `yearContentWidth` was corrected in the same place, having counted the pinned key against a
+  viewport that excludes it.
+- **Light mode, swept for the first time.** Fourteen surfaces at 1280 and 1600, both themes.
+  Only the one bug above. Two things were checked and deliberately left: This Week's rhythm
+  strip stops well short of the row, which `arcMaxWidth` caps on purpose ("twenty-four bars
+  stretched across a full-screen window stop being a strip and become a row of blocks"); and
+  Collections listing "Replay, Replay", which is correct — the Glaze reference and this port
+  are two different applications that share a display name, and the grouping keys on bundle
+  identifier. **One near-miss worth recording:** the session cards looked like they had no
+  separation from the page in light mode, and a measurement agreed — one luminance step of
+  fill against dark's nineteen. At 1:1 they have a clear edge. The impression came from
+  judging a 50%-downscaled render, which averages a seven-step hairline away entirely.
+  Contrast is judged at actual size or not at all.
+
 - **This port has a network request and the reference has none — so the claim moved, not the
   feature.** The Glaze version updates through the Glaze Store, so "no network" costs it
   nothing to say. A direct-download port has no such channel, and the honest options were to
