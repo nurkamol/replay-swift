@@ -1,13 +1,24 @@
 import Foundation
 
-/// This build's version, for the two places that need one when `Info.plist` is not there.
+/// This build's version.
 ///
-/// `scripts/make-app.sh` is the source of truth — it writes `CFBundleShortVersionString`,
-/// and everything reads that first. This is the fallback for running the binary outside a
-/// bundle, and it existed twice as a literal `"0.1.0"` in two different files, which is
-/// exactly how a version number goes stale in one place and not the other.
+/// **Reads `Info.plist` first, and that is a correction rather than a refinement.** The
+/// comment here used to say "everything reads that first" and it was not true: this literal
+/// was what `UpdateModel` compared against, so a 0.9.2 build believed it was 0.9.0, told its
+/// owner "you have 0.9.0", and would have offered an update to a version it was already
+/// running. `scripts/make-app.sh` writes the plist and nothing wrote this, which is exactly
+/// the drift the old comment claimed to have prevented.
+///
+/// The literal survives as the fallback for running the binary outside a bundle — the CLI,
+/// the parity suite — and `tools/version-audit.mjs` fails the build when it disagrees with
+/// `make-app.sh`, the changelog, or the in-app release list.
 public enum Replay {
-    public static let version = "0.9.0"
+    public static let version: String =
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
+            ?? fallbackVersion
+
+    /// The version in the source, for when there is no bundle to ask.
+    public static let fallbackVersion = "0.9.3"
 }
 
 /// What each version of Replay actually gained.
@@ -34,6 +45,33 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.3",
+        title: "Updates that install themselves",
+        changes: [
+            "**Replay can update itself.** When a newer version exists, the banner\u{2019}s button downloads it, checks it against the checksum published beside it, makes sure it is signed and is this application and is the version it claimed to be, and then replaces itself and restarts.",
+            "What that trust rests on is worth knowing: a secure connection to Replay\u{2019}s own repository, and that published checksum. It proves the download is the one the release carries \u{2014} not that the release is trustworthy, because Replay has no Apple Developer ID to prove who made it. Leave the check off if that is not a trust you want to extend.",
+            "It declines rather than doing damage in three cases: a copy installed by Homebrew is left to `brew upgrade`, a copy macOS is running from its temporary read-only folder has nothing to replace, and a read-only location refuses rather than half-installing.",
+        ]
+    ),
+    Release(
+        version: "0.9.2",
+        title: "The app opens",
+        changes: [
+            "0.9.1 shipped a build that would not launch: it could not find the file holding its own text, and stopped rather than carrying on in English. It carries on in English now.",
+            "The release is checked by running it before it is published, which is the only way to catch a build that passes every test and still cannot open.",
+        ]
+    ),
+    Release(
+        version: "0.9.1",
+        title: "PDF, the menu bar, and a record that cannot corrupt itself",
+        changes: [
+            "**Export as PDF** \u{2014} one page, with a line telling you where the rest is when a span is longer than that. Export as HTML for the whole of it.",
+            "**The menu bar opens rather than dropping down.** What you are in and for how long, the day\u{2019}s total, the focus goal, the last three sessions, and a pause control \u{2014} without opening the window.",
+            "**Two copies of Replay could zero each other\u{2019}s live session.** Opening a second copy while one was recording set the stretch you were in the middle of to nothing. A second copy now hands the first one the front and leaves.",
+            "The year grid\u{2019}s weekday key sat a hundred points from the year it labelled, the week\u{2019}s rhythm left a dead gap before its durations, and a page never grew with its window. All three were only ever visible, and all three are fixed.",
+        ]
+    ),
     Release(
         version: "0.9.0",
         title: "Everything, on your own Mac",

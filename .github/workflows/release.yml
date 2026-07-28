@@ -77,6 +77,9 @@ jobs:
             exit 1
           fi
           node tools/release-notes.mjs "$VERSION" --check
+          # …and the two places that check does not reach: the version compiled into the
+          # binary, and the in-app release history.
+          node tools/version-audit.mjs
 
       # The same checks `parity.yml` runs. A release is the one build where "we ran the
       # tests on the branch" is not good enough — this is the artefact, so it is checked.

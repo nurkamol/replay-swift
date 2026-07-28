@@ -77,6 +77,12 @@ jobs:
       - name: Localised files stay localised
         run: node tools/strings-audit.mjs
 
+      # The version is written in four places and nothing compared them. One of the four is
+      # what the update check compares against, so a stale value there offers an update to
+      # the version already running — which shipped, and which every other check passed.
+      - name: The version agrees with itself
+        run: node tools/version-audit.mjs
+
       - name: Build
         run: swift build
 

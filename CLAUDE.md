@@ -32,6 +32,7 @@ node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token
 ./tools/screenshots.sh          # every surface captured to build/screenshots/, plus a contact sheet
 node tools/strings-audit.mjs    # how much copy a translator can reach; --list for all of it
+node tools/version-audit.mjs    # the version agrees in all four places it is written down
 node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or documented and unbound
 ./tools/cli-audit.sh            # the CLI's exit codes, stream discipline and --json shape
 swift run replay -- today       # the record from a shell; `replay help` for the rest
