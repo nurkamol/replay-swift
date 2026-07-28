@@ -67,6 +67,24 @@ and since macOS 15 the Control-click-to-open bypass is gone, so the only route i
 Settings ▸ Privacy & Security ▸ Open Anyway, or `xattr -d com.apple.quarantine` in a
 terminal.
 
+**Measured, three ways, 2026-07-28.** The idea that an archive can be prepared "without
+quarantine" does not survive contact:
+
+| shipped as | after the user extracts it | `spctl` |
+|---|---|---|
+| `.zip` (`ditto`) | quarantine **propagated** to the app | rejected |
+| `.tar.gz` (command-line `tar`) | quarantine **propagated** | rejected |
+| `.dmg` | clean *inside* the mounted volume, **propagated on copy-out** | rejected |
+
+The flag is not stored in the archive. It is applied on the *recipient's* machine by whatever
+downloaded it, and macOS propagates it into anything a quarantined process extracts — so tar
+is not the loophole it is sometimes said to be. Nothing done before uploading can prevent it.
+
+**And a worked example.** `gityeop/FlowClip` ships a plain `FlowClip.zip` on its releases page
+and it opens fine. Inspected: `Authority=Developer ID Application: Sang Yeop Lim (79Q5RV23F9)`,
+`source=Notarized Developer ID`, `accepted`. It is not a packaging trick — they paid for a
+Developer ID and notarised. That is what every project shipping an openable download has done.
+
 **And there is no way around it.** A `.zip` carries the same quarantine; a `.pkg` needs a
 *Developer ID Installer* certificate from the same paid programme; a self-signed certificate
 is rejected identically because Gatekeeper trusts Apple's chain and nothing else; and

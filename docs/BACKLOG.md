@@ -343,6 +343,32 @@ because it is still a product decision nobody has taken.
         at once. The first one will surface every structural assumption; the second will be
         a tenth of the work.
 
+- [ ] **In-app updates from GitHub releases.** `M` — **and it is the first feature that would
+      put network code in this app**, which is the part to decide before any of the rest.
+      · The shape asked for: check on launch, or once a day; if a newer release exists, show
+        what changed and offer to install it.
+      · **Gated on signing twice over.** There is nothing to download until releases exist,
+        and a self-update that replaces a working app with an unsigned one would break the
+        install rather than improve it. Whatever it fetches has to be verified — signature,
+        team identifier, notarisation — *before* anything is swapped, and the old bundle kept
+        until the new one has launched once.
+      · **Not Sparkle.** It is the obvious choice and an external dependency, which CLAUDE.md
+        forbids. A version check is one `URLSession` call against
+        `api.github.com/repos/…/releases/latest`; the interesting part is the safety, not the
+        fetching.
+      · **The tension is real and belongs in the open.** README and SPEC say this app has no
+        network code, no account, nothing that leaves the Mac. A daily update check is an
+        outbound request on a schedule that tells GitHub an IP address and, by inference,
+        that someone is running Replay. That is small, and it is not nothing, and it is the
+        exact claim the app is sold on.
+      · So if it is built: **opt-in, off by default, and checking only** — tell the user a
+        version exists and link to it, rather than downloading and replacing on their behalf.
+        Self-update is where the risk lives and it buys the least. And say plainly in Settings
+        what the check sends and when.
+      · Worth knowing: **anyone who installed with Homebrew already has updates** —
+        `brew upgrade` does this, verifiably, with no network code in the app at all. The
+        in-app updater only serves people who took a direct download, and there are none yet.
+
 - [ ] **A richer menu bar popover.** `S` The item exists and shows the current app and
       today's total. A small popover — the last few sessions, the goal, a pause control —
       is cheap and does not need signing to try.
