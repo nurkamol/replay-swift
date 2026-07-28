@@ -24,6 +24,40 @@ enum LaunchSurface: String, CaseIterable, Identifiable, Codable {
     var label: String { self == .today ? "Today" : "Timeline" }
 }
 
+/// Which full-screen display drifts in after a spell of quiet.
+///
+/// The reference has both of these modes — `AmbientMode = "ambient" | "screensaver"` — but
+/// its idle timer only ever raises the screensaver: `openAmbient("screensaver")` is written
+/// into `useScreensaverAutoStart` with nothing to change it. This is the choice that was
+/// missing, and the default is the reference's behaviour so nothing moves unless it is
+/// asked to.
+enum IdleDisplay: String, CaseIterable, Identifiable, Codable {
+    case screensaver, ambient
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .screensaver: "Screensaver"
+        case .ambient: "Ambient mode"
+        }
+    }
+
+    /// The line under "Auto-start when idle", which depends on what it will start.
+    ///
+    /// The screensaver's is the reference's own sentence rather than a copy of it, so the
+    /// contract keeps the two in step and the wording cannot drift here. The ambient one is
+    /// this port's, written to the same shape because it describes the same delay.
+    var idleExplanation: String {
+        switch self {
+        case .screensaver: SettingsRow.autoStartWhenIdle.explanation ?? ""
+        case .ambient:
+            "Drift ambient mode in after this long with no activity, while Replay is "
+                + "focused. Any key or movement wakes it."
+        }
+    }
+}
+
 enum Appearance: String, CaseIterable, Identifiable, Codable {
     case system, light, dark
     var id: String { rawValue }
@@ -255,11 +289,74 @@ final class Preferences {
         didSet { write(dockBadge, "dockBadge") }
     }
 
-    /// How long the window must sit untouched before the screensaver drifts in. Zero is off,
+    /// How long the window must sit untouched before a display drifts in. Zero is off,
     /// and off is the default — a thing that takes over the screen on its own should be
     /// asked for.
+    ///
+    /// The key keeps the reference's name because it is the reference's setting, and because
+    /// renaming it would silently forget the delay every existing install has chosen. What it
+    /// starts is ``idleDisplay``.
     var screensaverIdleMinutes: Int {
         didSet { write(screensaverIdleMinutes, "screensaverIdleMinutes") }
+    }
+
+    /// Which of the two the delay above raises. See ``IdleDisplay``.
+    var idleDisplay: IdleDisplay {
+        didSet { write(idleDisplay.rawValue, "idleDisplay") }
+    }
+
+    /// Whether the drift is confined to a span of the day, and which span.
+    ///
+    /// Off by default: a delay somebody set is an answer to "when", and adding a second
+    /// "when" they did not ask for would make the first one wrong. The hours are stored
+    /// whether or not the limit is on, so turning it off and on again does not forget them.
+    var idleHoursLimited: Bool {
+        didSet { write(idleHoursLimited, "idleHoursLimited") }
+    }
+
+    var idleFromHour: Int {
+        didSet { write(idleFromHour, "idleFromHour") }
+    }
+
+    var idleUntilHour: Int {
+        didSet { write(idleUntilHour, "idleUntilHour") }
+    }
+
+    /// The screen the screensaver and ambient mode take, by its own name.
+    ///
+    /// Empty means "wherever the keyboard is", which is what the app did before this existed
+    /// and stays the default. A name is kept even while that display is unplugged — the
+    /// alternative is a setting that silently forgets what you asked for the moment you
+    /// close the laptop.
+    var displayScreenName: String {
+        didSet { write(displayScreenName, "displayScreenName") }
+    }
+
+    /// How often Replay writes a full backup on its own, and where.
+    ///
+    /// Off with no folder until somebody chooses both. The path is stored as a plain path
+    /// rather than a bookmark because this app is not sandboxed — see the note in
+    /// ``AutoBackupModel``, which is where that will have to change if it ever is.
+    var autoBackupCadence: AutoBackup.Cadence {
+        didSet { write(autoBackupCadence.rawValue, "autoBackupCadence") }
+    }
+
+    var autoBackupFolder: String {
+        didSet { write(autoBackupFolder, "autoBackupFolder") }
+    }
+
+    /// When the last unattended backup was written. Nil until one has been.
+    var lastAutoBackup: Date? {
+        didSet { defaults.set(lastAutoBackup, forKey: "lastAutoBackup") }
+    }
+
+    /// Whether ambient mode is a thing you leave up.
+    ///
+    /// Only takes effect when it opens on a screen other than the one Replay's window is on;
+    /// see `showAmbient`. A display that covers the screen you are typing in and refuses to
+    /// leave is not a feature.
+    var ambientStaysOpen: Bool {
+        didSet { write(ambientStaysOpen, "ambientStaysOpen") }
     }
 
     /// What dismisses it. Escape and the close button always do, whatever these say.
@@ -373,6 +470,25 @@ final class Preferences {
         dockBadge = defaults.object(forKey: "dockBadge") as? Bool ?? false
         seenWelcome = defaults.bool(forKey: "seenWelcome")
         screensaverIdleMinutes = defaults.integer(forKey: "screensaverIdleMinutes")
+        // The screensaver unless somebody says otherwise, which is what the reference does
+        // with the same delay.
+        idleDisplay = (defaults.string(forKey: "idleDisplay").flatMap(IdleDisplay.init))
+            ?? .screensaver
+        idleHoursLimited = defaults.bool(forKey: "idleHoursLimited")
+        // Nine to six when nothing has been chosen — a span somebody would actually pick,
+        // so switching the limit on does something sensible before it is adjusted. Zero and
+        // absent are indistinguishable in `UserDefaults`, and midnight is a real hour, so
+        // the pair is read as "set" only once the limit itself has been.
+        let storedFrom = defaults.object(forKey: "idleFromHour") as? Int
+        let storedUntil = defaults.object(forKey: "idleUntilHour") as? Int
+        idleFromHour = storedFrom ?? 9
+        idleUntilHour = storedUntil ?? 18
+        displayScreenName = defaults.string(forKey: "displayScreenName") ?? ""
+        ambientStaysOpen = defaults.bool(forKey: "ambientStaysOpen")
+        autoBackupCadence = (defaults.string(forKey: "autoBackupCadence")
+            .flatMap(AutoBackup.Cadence.init)) ?? .off
+        autoBackupFolder = defaults.string(forKey: "autoBackupFolder") ?? ""
+        lastAutoBackup = defaults.object(forKey: "lastAutoBackup") as? Date
         // Mouse movement is off by default, so a screensaver you started by hand stays until
         // you reach for it rather than vanishing when the pointer twitches.
         screensaverExitOnMouseMove = defaults.bool(forKey: "screensaverExitOnMouseMove")
@@ -456,6 +572,15 @@ final class Preferences {
         "skippedUpdate",
         "screensaverExitOnMouseMove",
         "screensaverIdleMinutes",
+        "idleDisplay",
+        "idleHoursLimited",
+        "idleFromHour",
+        "idleUntilHour",
+        "displayScreenName",
+        "ambientStaysOpen",
+        "autoBackupCadence",
+        "autoBackupFolder",
+        "lastAutoBackup",
         "seenWelcome",
         "surfaceStyle",
         "themeColour",
@@ -497,6 +622,15 @@ final class Preferences {
         surfaceStyle = fresh.surfaceStyle
         dockBadge = fresh.dockBadge
         screensaverIdleMinutes = fresh.screensaverIdleMinutes
+        idleDisplay = fresh.idleDisplay
+        idleHoursLimited = fresh.idleHoursLimited
+        idleFromHour = fresh.idleFromHour
+        idleUntilHour = fresh.idleUntilHour
+        displayScreenName = fresh.displayScreenName
+        ambientStaysOpen = fresh.ambientStaysOpen
+        autoBackupCadence = fresh.autoBackupCadence
+        autoBackupFolder = fresh.autoBackupFolder
+        lastAutoBackup = fresh.lastAutoBackup
         screensaverExitOnMouseMove = fresh.screensaverExitOnMouseMove
         screensaverExitOnClick = fresh.screensaverExitOnClick
         screensaverExitOnKey = fresh.screensaverExitOnKey

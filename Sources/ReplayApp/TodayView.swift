@@ -575,6 +575,11 @@ struct AppIcon: View {
             }
         }
         .frame(width: size, height: size)
+        // Decoration, everywhere it appears — the application's name is always beside it, in
+        // the row, the card, the palette and the menu bar panel. Without this VoiceOver reads
+        // an unlabelled image before every one of those names, which on the Timeline means
+        // three of them per session before the session is named.
+        .accessibilityHidden(true)
     }
 }
 

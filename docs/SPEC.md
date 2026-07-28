@@ -26,6 +26,16 @@ generated check ever enforced. The reference has no equivalent, because it updat
 the Glaze Store; see `Guide.ownEntries` for how that difference is stated to the user
 without editing the reference's own words.
 
+**The record is written outside the container in exactly one case, and only when asked
+for.** Since 0.9.4 Replay can write its own full backup on a schedule into a folder the
+user chooses (`AutoBackup` / `AutoBackupModel`) — the same JSON the export panel has always
+produced, in a place they named, on a disk they own. It is off until both a folder and a
+schedule are set, it deletes only files matching its own naming pattern, and it is still
+local: a copy of the record moving from one folder to another on the same Mac is not the
+invariant above being bent. Written down here because "one SQLite file in the app's own
+container" stopped being the whole sentence the moment this shipped, and a spec that quietly
+stays a version behind is how a claim becomes untrue.
+
 This is not a modesty claim, it is the product. It is why the app needs **no
 permissions at all** — no Accessibility, no Automation, no Screen Recording — and that
 is the property to defend above any feature. Concretely:

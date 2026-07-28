@@ -23,6 +23,7 @@ struct SettingsView: View {
     let contextual: ContextualMemoryModel
     let notifications: NotificationsModel
     let updates: UpdateModel
+    let backups: AutoBackupModel
 
     /// The panes, in the order they are worth reaching for.
     /// Not private: the Help menu opens Settings on a chosen pane.
@@ -106,7 +107,11 @@ struct SettingsView: View {
                         model: model, settings: settings, preferences: preferences,
                         notifications: notifications
                     )
-                case .data: DataTab(settings: settings, export: export, preferences: preferences)
+                case .data:
+                    DataTab(
+                        settings: settings, export: export, preferences: preferences,
+                        backups: backups
+                    )
                 case .display: DisplayTab(preferences: preferences)
                 case .shortcuts: ShortcutsTab()
                 case .guide: GuideTab()
@@ -157,6 +162,23 @@ extension View {
         }
     }
 
+    /// The same line, for the one row whose description depends on what it will do.
+    ///
+    /// Only "Auto-start when idle" uses this: it is the reference's row, and the reference's
+    /// sentence describes the screensaver — which is only half true once the choice above it
+    /// can point the same delay at ambient mode. The screensaver's wording still comes from
+    /// ``SettingsRow`` rather than being restated here, so the contract keeps it honest.
+    func explains(text: String) -> some View {
+        VStack(alignment: .leading, spacing: Design.Space.hairline) {
+            self
+            Text(Loc.t(text))
+                .font(Design.Text.detail)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     func explains(_ row: SettingsRow) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.hairline) {
             self
@@ -169,6 +191,19 @@ extension View {
             }
         }
     }
+}
+
+/// "6:00 PM" — a plain hour, in the locale's own clock.
+///
+/// Shared: the daily recap's hour and the span the displays are confined to are the same
+/// question asked twice, and a second copy of this would be the place the two clocks quietly
+/// stopped agreeing — one 24-hour, one not, on the same pane.
+func hourLabel(_ hour: Int) -> String {
+    var parts = DateComponents()
+    parts.hour = hour
+    parts.minute = 0
+    guard let date = Calendar.current.date(from: parts) else { return "\(hour):00" }
+    return date.formatted(.dateTime.hour().minute())
 }
 
 /// A section's footnote, aligned the way the system aligns them.
@@ -231,15 +266,6 @@ private struct GeneralTab: View {
             }
         }
         await notifications.reschedule()
-    }
-
-    /// "6:00 PM" — a plain hour, in the locale's own clock.
-    private static func hourLabel(_ hour: Int) -> String {
-        var parts = DateComponents()
-        parts.hour = hour
-        parts.minute = 0
-        guard let date = Calendar.current.date(from: parts) else { return "\(hour):00" }
-        return date.formatted(.dateTime.hour().minute())
     }
 
     /// Zero is how "no goal" is spelled in the picker; `nil` is how it is stored.
@@ -374,7 +400,7 @@ private struct GeneralTab: View {
                     }
                 Picker(Loc.t("At"), selection: $preferences.dailySummaryHour) {
                     ForEach(Design.notificationHours, id: \.self) { hour in
-                        Text(Self.hourLabel(hour)).tag(hour)
+                        Text(hourLabel(hour)).tag(hour)
                     }
                 }
                 .disabled(!preferences.dailySummary)
@@ -748,6 +774,7 @@ private struct DataTab: View {
     let settings: SettingsModel
     let export: ExportModel
     @Bindable var preferences: Preferences
+    let backups: AutoBackupModel
 
     @State private var confirmingClear = false
     @State private var confirmingReset = false
@@ -791,6 +818,7 @@ private struct DataTab: View {
                         Button(Loc.t("Import…")) { export.importBackup() }
                     }
                 }
+                .explains(.fullBackup)
 
                 StatusFooter(export: export)
             } header: {
@@ -801,6 +829,59 @@ private struct DataTab: View {
                 Text(
                     "\(matching == 1 ? "1 session" : "\(matching) sessions") in \(scope.label). "
                         + "A backup restores; a report is for reading."
+                )
+            }
+
+            Section {
+                Picker(
+                    OwnSettingsRow.automaticBackup.label,
+                    selection: $preferences.autoBackupCadence
+                ) {
+                    ForEach(AutoBackup.Cadence.allCases, id: \.self) { cadence in
+                        Text(Loc.t(cadence.label)).tag(cadence)
+                    }
+                }
+                .explains(own: .automaticBackup)
+                // Only once there is a schedule: a folder chosen for a backup that will never
+                // be taken is a control that does nothing, and the pane already has enough
+                // rows without one.
+                if preferences.autoBackupCadence != .off {
+                    LabeledContent(OwnSettingsRow.backupFolder.label) {
+                        HStack(spacing: Design.Space.inline) {
+                            Text(backups.folderLabel ?? Loc.t("None chosen"))
+                                .foregroundStyle(
+                                    backups.folderLabel == nil ? .secondary : .primary
+                                )
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Button(Loc.t("Choose…")) { backups.chooseFolder() }
+                            Button(Loc.t("Back up now")) { backups.runNow() }
+                                .disabled(backups.folderLabel == nil)
+                        }
+                    }
+                    .explains(own: .backupFolder)
+                }
+                if let error = backups.errorMessage {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.red)
+                        .font(Design.Text.detail)
+                } else if let status = backups.status {
+                    Text(status).foregroundStyle(.secondary).font(Design.Text.detail)
+                }
+            } header: {
+                // Not "Automatic backup": that is the row's own name, and a section headed
+                // with the same words as its first row reads as a stutter.
+                Text(Loc.t("On a schedule"))
+            } footer: {
+                Footnote(
+                    backups.lastRunLabel.map {
+                        String(format: Loc.t("Last written %@."), $0)
+                    } ?? Loc.t(
+                        "Nothing has been written yet. Choosing a folder with a schedule set "
+                            + "writes the first copy straight away, and the rest arrive "
+                            + "while Replay is running — it is a background courtesy, not a "
+                            + "daemon, so a Mac that was off has nothing to catch up."
+                    )
                 )
             }
 
@@ -1112,19 +1193,110 @@ private struct ShortcutsTab: View {
 private struct DisplayTab: View {
     @Bindable var preferences: Preferences
 
+    /// The screens attached right now, by the names the system gives them.
+    ///
+    /// Kept in state and refreshed on `didChangeScreenParameters` rather than read inside
+    /// `body`: plugging a display in while Settings is open should add it to the list, and a
+    /// view that reads `NSScreen.screens` as it draws only happens to be right.
+    @State private var screens: [String] = NSScreen.screens.map(\.localizedName)
+
+    /// The choices the picker offers: the keyboard's screen, every attached one, and — when
+    /// the chosen screen is not here — the chosen one, so the setting still shows what it
+    /// says rather than falling blank the moment a laptop is undocked.
+    private var screenChoices: [String] {
+        let chosen = preferences.displayScreenName
+        return chosen.isEmpty || screens.contains(chosen) ? screens : screens + [chosen]
+    }
+
+    private func screenLabel(_ name: String) -> String {
+        screens.contains(name)
+            ? name
+            : String(format: Loc.t("%@ (not connected)"), name)
+    }
+
     var body: some View {
         Form {
+            // Auto-start first, because it is the only thing on this pane that can happen
+            // without being asked for a second time — everything below it is a detail of a
+            // display you have already chosen to open.
             Section {
+                Picker(
+                    OwnSettingsRow.idleDisplay.label, selection: $preferences.idleDisplay
+                ) {
+                    ForEach(IdleDisplay.allCases) { mode in
+                        Text(Loc.t(mode.label)).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .explains(own: .idleDisplay)
                 Picker(
                     SettingsRow.autoStartWhenIdle.label,
                     selection: $preferences.screensaverIdleMinutes
                 ) {
                     Text(Loc.t("Never")).tag(0)
-                    ForEach(Design.screensaverIdleChoices, id: \.self) { minutes in
+                    ForEach(Design.idleStartChoices, id: \.self) { minutes in
                         Text(String(format: Loc.t("%@ minutes"), "\(minutes)")).tag(minutes)
                     }
                 }
-                .explains(.autoStartWhenIdle)
+                // The line under this row says which display it will raise, because with
+                // the choice above it the reference's own sentence is only true for one of
+                // the two. The screensaver's wording still comes from the contract.
+                .explains(text: preferences.idleDisplay.idleExplanation)
+                Toggle(
+                    OwnSettingsRow.idleHours.label, isOn: $preferences.idleHoursLimited
+                )
+                .explains(own: .idleHours)
+                if preferences.idleHoursLimited {
+                    Picker(Loc.t("From"), selection: $preferences.idleFromHour) {
+                        ForEach(Design.hoursOfTheDay, id: \.self) { hour in
+                            Text(hourLabel(hour)).tag(hour)
+                        }
+                    }
+                    Picker(Loc.t("Until"), selection: $preferences.idleUntilHour) {
+                        ForEach(Design.hoursOfTheDay, id: \.self) { hour in
+                            Text(hourLabel(hour)).tag(hour)
+                        }
+                    }
+                }
+            } header: {
+                Text(Loc.t("Auto-start"))
+            } footer: {
+                Footnote(
+                    "Either drifts in only while Replay's own window is in front, so it "
+                        + "never appears over another app. Never means neither does, and "
+                        + "both can still be opened by hand from the sidebar, the View menu "
+                        + "or ⌘K. What starts on its own leaves the way it came: any key, "
+                        + "click or movement returns you — including in ambient mode, which "
+                        + "stays put when you open it yourself, since that is the point of "
+                        + "it."
+                )
+            }
+
+            Section {
+                Picker(
+                    OwnSettingsRow.displayScreen.label,
+                    selection: $preferences.displayScreenName
+                ) {
+                    Text(Loc.t("Wherever the keyboard is")).tag("")
+                    ForEach(screenChoices, id: \.self) { name in
+                        Text(screenLabel(name)).tag(name)
+                    }
+                }
+                .explains(own: .displayScreen)
+            } header: {
+                Text(Loc.t("The screen"))
+            }
+            // A display plugged in or unplugged while this pane is open changes the answer,
+            // and the picker is the one place in the app where that has to show immediately.
+            .onReceive(
+                NotificationCenter.default.publisher(
+                    for: NSApplication.didChangeScreenParametersNotification
+                )
+            ) { _ in
+                screens = NSScreen.screens.map(\.localizedName)
+            }
+
+            Section {
                 Toggle(
                     SettingsRow.exitOnMouseMovement.label,
                     isOn: $preferences.screensaverExitOnMouseMove
@@ -1142,15 +1314,20 @@ private struct DisplayTab: View {
                 Text(Loc.t("Screensaver"))
             } footer: {
                 Footnote(
-                    "Drifts in only while Replay's own window is in front, so it never "
-                        + "appears over another app — or over ambient mode, which is a "
-                        + "screen you are deliberately reading. Opening either of the two "
-                        + "closes the other; they are never both up. Escape and the close "
-                        + "button always dismiss whichever is, whatever these say."
+                    "These three are the screensaver's own, and apply however it was "
+                        + "started. Opening either of the two displays closes the other; "
+                        + "they are never both up, and neither ever covers the one you are "
+                        + "deliberately reading. Escape and the close button always dismiss "
+                        + "whichever is up, whatever these say."
                 )
             }
 
             Section {
+                Toggle(
+                    OwnSettingsRow.ambientStaysOpen.label,
+                    isOn: $preferences.ambientStaysOpen
+                )
+                .explains(own: .ambientStaysOpen)
                 Toggle(OwnSettingsRow.ambientClock.label, isOn: $preferences.ambientClock)
                     .explains(own: .ambientClock)
                 Toggle(
@@ -1172,7 +1349,9 @@ private struct DisplayTab: View {
                     "The day's total is always shown — it is what the screen is for. These "
                         + "are the things around it, and two of them are here because an "
                         + "ambient screen is usually a second screen, and a second screen "
-                        + "is often one other people can see."
+                        + "is often one other people can see. A screen left open takes no "
+                        + "keyboard, so Escape does not reach it: close it with ⇧⌘A, the "
+                        + "View menu, or the ✕ in its corner."
                 )
             }
         }

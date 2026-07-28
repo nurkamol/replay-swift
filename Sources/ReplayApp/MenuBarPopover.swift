@@ -24,11 +24,24 @@ struct MenuBarPopoverView: View {
     var onOpenTimeline: () -> Void
     var onToggleTracking: () -> Void
     var onOpenSettings: () -> Void
+    var onAddNote: () -> Void
     var onQuit: () -> Void
 
     /// Ticks the "focused for" line without asking the tracker for anything.
     @State private var now = Date()
     private let clock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    /// The stretch being lived in — the newest session the day has.
+    ///
+    /// The one a note or a bookmark can be about, because it is the only one this panel is
+    /// *about*. Anything older is a row in the window, where there is room to choose which.
+    private var currentSession: ActivitySession? {
+        model.sessions.max { $0.startedAt < $1.startedAt }
+    }
+
+    private var currentAnnotation: SessionAnnotation? {
+        currentSession.map { model.annotations.annotation(for: $0.startedAt) }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -219,6 +232,7 @@ struct MenuBarPopoverView: View {
                 title: MenuBar.Popover.trackingLabel(isRecording: model.isRecording),
                 action: onToggleTracking
             )
+            annotate
             rowDivider
             MenuBarRow(glyph: "square.grid.2x2", title: "Open Replay", shortcut: "⌘1", action: onOpenToday)
             MenuBarRow(glyph: "calendar.day.timeline.left", title: "Timeline", shortcut: "⌘4", action: onOpenTimeline)
@@ -230,6 +244,51 @@ struct MenuBarPopoverView: View {
         // which reads as "armed, press Return" on something whose first item pauses
         // recording. A menu does not open with an item selected, and neither should this.
         .focusEffectDisabled()
+    }
+
+    // MARK: - Marking the stretch you are in
+
+    /// A bookmark and a note, on the session in progress, without opening the window.
+    ///
+    /// The reason this belongs here and not only on a card: the moment worth marking is the
+    /// one you are *in*, and it passes. Reaching it meant ⌘1, finding the session, expanding
+    /// it, typing — four steps, by which time the thought has gone and the session may have
+    /// ended and become two. This is the same two writes the card does, through the same
+    /// shared model, so a bookmark set here is already true when Today next draws.
+    ///
+    /// The bookmark does not close the panel — it is the one thing here you do *to*
+    /// something rather than a way out, and being thrown out the instant you mark something
+    /// is how you lose track of whether it worked. The note does, because it opens a window
+    /// of its own: a text field cannot live in a popover, which does not take the keyboard.
+    /// See ``NoteView``.
+    @ViewBuilder
+    private var annotate: some View {
+        if let session = currentSession {
+            let annotation = model.annotations.annotation(for: session.startedAt)
+            MenuBarRow(
+                glyph: annotation.bookmarked ? "bookmark.fill" : "bookmark",
+                title: annotation.bookmarked
+                    ? Loc.t("Bookmarked")
+                    : Loc.t("Bookmark this session"),
+                action: {
+                    model.annotations.setBookmarked(session.startedAt, !annotation.bookmarked)
+                }
+            )
+            MenuBarRow(
+                glyph: "square.and.pencil",
+                title: annotation.note.isEmpty ? Loc.t("Add a note…") : Loc.t("Edit the note"),
+                action: onAddNote
+            )
+            if !annotation.note.isEmpty {
+                Text(annotation.note)
+                    .font(Design.Text.micro)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Design.Space.cardRoomy)
+                    .padding(.bottom, Design.Space.snug)
+            }
+        }
     }
 
     private var rowDivider: some View {
@@ -263,6 +322,8 @@ private struct MenuBarRow: View {
                     // are the first thing that makes a list look unmade.
                     .frame(width: Design.Icon.sidebarColumn)
                     .foregroundStyle(hovering ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+                    // The row's title says what it does; the glyph repeats it in pictures.
+                    .accessibilityHidden(true)
                 Text(title).font(Design.Text.itemTitle)
                 Spacer(minLength: Design.Space.inline)
                 if let shortcut {

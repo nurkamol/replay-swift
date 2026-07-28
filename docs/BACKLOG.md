@@ -322,6 +322,62 @@ because it is still a product decision nobody has taken.
         would tell us whether the core's API is actually pleasant to call from outside the
         app, which nothing has tested.
 
+- [x] **Auto-start could raise either display, not only the screensaver.** Built 2026-07-29.
+      `IdleDisplay` in `Preferences.swift`, a picker at the head of Settings ▸ Display, and the
+      idle watch in `main.swift` switching on it. The reference hard-codes
+      `openAmbient("screensaver")` in `useScreensaverAutoStart`, so this is additive and
+      defaults to its behaviour. An auto-started ambient screen dismisses on any input; a
+      hand-started one does not, which is the distinction upstream's "never auto-dismisses"
+      comment is really making. Found `acceptsMouseMovedEvents` unset on both full-screen
+      windows on the way through — "Exit on mouse movement" had never worked.
+
+- [x] **Which screen a display opens on, and ambient mode left open on it.** Built 2026-07-29.
+      `Show on` names the screen; ambient mode on a screen other than the window's becomes a
+      non-activating window that stays up while you work. Verified on a two-display desk: the
+      main window kept the keyboard with ambient mode up on the other screen.
+
+- [x] **Quiet hours for the idle drift.** Built 2026-07-29. `IdleWindow` in the core, five
+      behaviour cases, the midnight-wrapping span among them.
+
+- [x] **Scheduled backups.** Built 2026-07-29. `AutoBackup` decides when one is due, what it
+      is called and which old ones go; `AutoBackupModel` writes it. Verified end to end: a
+      4,616-row file written unattended at launch, and a ninth copy pruning the oldest while
+      an unrelated `taxes.json` in the same folder was left alone.
+
+- [x] **A note and a bookmark from the menu bar.** Built 2026-07-29. The bookmark is a row in
+      the panel; the note opens a small panel of its own, because an `NSPopover` never becomes
+      key and a text field in one eats its first keystroke and then dismisses the panel. That
+      cost an hour and is written down in `PARITY.md` so it costs nobody else one.
+
+- [x] **The light-mode pass.** Run 2026-07-29 with `./tools/screenshots.sh --appearance light`.
+      It found the appearance setting reaching two windows out of six — see the ledger. The
+      surfaces themselves came back clean.
+
+- [ ] **A border beam, in the one place it would be information.** `S` for the effect, and the
+      decision is the whole of the work. `border-beam` (jakubantalik) ships a SwiftUI package —
+      `.package(url: "https://github.com/Jakubantalik/border-beam.git", from: "1.4.0")`,
+      `import BorderBeamKit`, `BorderBeam(size: .md) { … }` or `.borderBeam(.md, colorVariant:
+      .ocean)`. A light travelling around a rounded border.
+      · **Taking the package means changing a rule.** CLAUDE.md says no external dependencies,
+        and that rule is why this project has nothing to resolve and nothing to vendor. The
+        package also advertises iOS 17+, so its macOS support would have to be established
+        before it could build here at all. The effect itself is an `AngularGradient` rotated
+        by a `phaseAnimator` and masked to a rounded-rect stroke — about thirty lines, with
+        its values in `DesignSystem.swift` where the design audit can see them. Reimplementing
+        is almost certainly the right call; adopting is a decision somebody should take
+        deliberately rather than by `swift package add`.
+      · **Where it fits is the narrow part.** SPEC §8 — never gamify, never celebrate, nothing
+        asks for attention — rules out the goal card when a goal is met, streaks, session
+        cards, and ambient mode, which has exactly one moving thing on purpose. The honest use
+        is *work in progress with no known length*: the update banner while it downloads,
+        checks and installs.
+      · **Do the thing underneath it first.** `SettingsModel.compact()` sets `busy = true` and
+        runs `compactSafely()` synchronously on the main actor with `defer { busy = false }`,
+        so the flag is never true for a drawn frame — "Compacting…" on that button cannot
+        appear, and the window simply freezes for the length of a `VACUUM`. Backup import has
+        the same shape. No indicator of any kind, beam or spinner, can help until that work
+        moves off the main actor.
+
 - [ ] **A widget.** `L` Today's total, the application in front, the streak. The right shape
       for this product — it is a glanceable figure the app already computes, and ambient mode
       is evidence somebody wants that figure without opening a window.

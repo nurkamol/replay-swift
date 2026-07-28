@@ -295,6 +295,27 @@ public enum DockBadgeLabel {
     }
 }
 
+/// The hours of the day a display is allowed to start itself in.
+///
+/// Pure, so the rule can be tested without a clock — and it needs testing, because the case
+/// that matters is the one that reads wrong: a span that runs *through* midnight. "From 22
+/// until 7" is a real answer to "when am I at this desk", and the naïve `hour >= from &&
+/// hour < until` is false for every hour of it.
+///
+/// Half-open on purpose, like every other span in this app: `from` is inside, `until` is not,
+/// so 9–18 ends as six o'clock strikes rather than at 18:59. `from == until` means the whole
+/// day rather than nothing — a picker can be left with both ends equal by accident, and a
+/// setting that silently switches the feature off is worse than one that ignores itself.
+public enum IdleWindow {
+    public static func allows(hour: Int, from: Int, until: Int) -> Bool {
+        guard (0..<24).contains(hour) else { return false }
+        if from == until { return true }
+        if from < until { return hour >= from && hour < until }
+        // Wrapped: from 22 until 7 is 22, 23, 0 … 6.
+        return hour >= from || hour < until
+    }
+}
+
 /// How far back Settings will offer to delete a single day.
 ///
 /// Sixty days, the reference's own window. Not the whole history: this is a picker somebody

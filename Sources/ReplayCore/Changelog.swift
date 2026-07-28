@@ -18,7 +18,7 @@ public enum Replay {
             ?? fallbackVersion
 
     /// The version in the source, for when there is no bundle to ask.
-    public static let fallbackVersion = "0.9.3"
+    public static let fallbackVersion = "0.9.4"
 }
 
 /// What each version of Replay actually gained.
@@ -45,6 +45,17 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.4",
+        title: "A second screen, and backups you never take",
+        changes: [
+            "**Ambient mode can be left open on another screen.** It stops taking the keyboard and stops closing when you type, which is what a display on a second monitor is for. Only on a screen other than the one Replay\u{2019}s window is on \u{2014} a display that covers your work and answers no keys is a trap rather than a feature.",
+            "**Settings \u{25B8} Display says which screen** the screensaver and ambient mode take, and which of the two drifts in when you go quiet \u{2014} after how long, and only between hours you choose if you would rather it kept to an evening.",
+            "**Replay can keep its own backups.** The same full backup, every day or every week, into a folder you choose: written whole or not at all, eight kept, and only its own older copies removed. Off until you choose a folder; nothing leaves this Mac, as ever.",
+            "**Mark the stretch you are in from the menu bar**, or with \u{21E7}\u{2318}N from anywhere \u{2014} a bookmark, or a note in a small panel. The moment worth writing down is the one you are in, and it passes while you are finding the session in a window.",
+            "**\u{201C}Theme: Light\u{201D} left half the app dark.** The appearance reached the main window and the menu bar panel and no others, so Settings and What\u{2019}s New followed the system instead. Fixed in the one place every window reads it from.",
+        ]
+    ),
     Release(
         version: "0.9.3",
         title: "Updates that install themselves",

@@ -132,15 +132,27 @@ public enum SettingsRow: String, CaseIterable, Sendable {
 /// reference already has a word for, and if upstream ever ships a setting by one of these
 /// names the suite says so rather than letting the two meanings drift apart under one label.
 ///
-/// There is one group so far. Ambient mode upstream has no settings at all — it shows what
-/// it shows — and two of these exist for a reason that only applies to a native app on a
-/// desk: an ambient screen is usually a *second* screen, and a second screen is often one
-/// other people can see.
+/// Ambient mode upstream has no settings at all — it shows what it shows — and two of these
+/// exist for a reason that only applies to a native app on a desk: an ambient screen is
+/// usually a *second* screen, and a second screen is often one other people can see.
+///
+/// ``idleDisplay`` is the one that changes what an existing reference setting *means*.
+/// Upstream, `screensaverIdleMinutes` starts the screensaver and nothing else —
+/// `renderer/main/ambient.tsx` hard-codes `openAmbient("screensaver")` — so this row is the
+/// switch that lets the same delay raise ambient mode instead. It defaults to the
+/// screensaver, which is the reference's behaviour, so the divergence exists only for
+/// somebody who asked for it.
 /// The raw value is a *key*, not the label — unlike ``SettingsRow``, where the raw value is
 /// the reference's own wording and that is the point. Here two rows are legitimately called
 /// the same thing: the screensaver and ambient mode each offer to show the time, in their own
 /// section, and "Show the time (ambient)" would be a label written for a programmer.
 public enum OwnSettingsRow: String, CaseIterable, Sendable {
+    case idleDisplay
+    case idleHours
+    case displayScreen
+    case ambientStaysOpen
+    case automaticBackup
+    case backupFolder
     case screensaverClock
     case ambientClock
     case ambientCurrentApp
@@ -150,6 +162,12 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
 
     public var label: String {
         switch self {
+        case .idleDisplay: "When idle, show"
+        case .idleHours: "Only at certain hours"
+        case .displayScreen: "Show on"
+        case .ambientStaysOpen: "Leave it open while you work"
+        case .automaticBackup: "Automatic backup"
+        case .backupFolder: "Backup folder"
         case .screensaverClock, .ambientClock: "Show the time"
         case .ambientCurrentApp: "Show the current application"
         case .ambientCurrentSession: "Show the current session"
@@ -160,6 +178,30 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
 
     public var explanation: String {
         switch self {
+        case .idleDisplay:
+            "Which of the two takes the screen when the delay below runs out. The "
+                + "screensaver drifts through the day you have had; ambient mode holds "
+                + "today's total still, in type you can read from across the room."
+        case .idleHours:
+            "Keep the drift to a span of the day — an evening, or the hours you are at "
+                + "this desk. Outside it nothing starts on its own, and both can still be "
+                + "opened by hand."
+        case .displayScreen:
+            "Which screen the screensaver and ambient mode take. Replay follows the "
+                + "keyboard unless you name one; a named screen that is unplugged falls "
+                + "back to the keyboard's and is remembered for when it returns."
+        case .ambientStaysOpen:
+            "Keep ambient mode up while you carry on working, instead of it closing the "
+                + "moment you touch the keyboard. It takes the whole screen it is on, so "
+                + "this only applies when that is a screen other than the one Replay's "
+                + "window is on — otherwise there would be nothing to work in."
+        case .automaticBackup:
+            "Write the same full backup on a schedule, without being asked. Nothing leaves "
+                + "this Mac — it is a file in a folder you choose, and Replay keeps the "
+                + "eight most recent and removes its own older ones."
+        case .backupFolder:
+            "Where those copies go. Somewhere that is itself backed up is the point: a "
+                + "second copy on the same disk survives a mistake, not a failure."
         case .screensaverClock:
             "A quiet clock in the corner. The one thing you are likely to want from a "
                 + "screen you are walking past."

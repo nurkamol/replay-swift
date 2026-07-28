@@ -25,7 +25,7 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 951 parity checks + 115 behaviour cases
+swift test                      # 955 parity checks + 115 behaviour cases
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
@@ -38,7 +38,7 @@ node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or docum
 swift run replay -- today       # the record from a shell; `replay help` for the rest
 ./scripts/make-app.sh           # assemble a runnable .app
 ./scripts/make-dmg.sh           # a disk image; --release signs, notarises and staples it
-node tools/release-notes.mjs 0.9.3 --check   # the tag, the build and the changelog agree
+node tools/release-notes.mjs 0.9.4 --check   # the tag, the build and the changelog agree
 ```
 
 ## Rules for working here
@@ -84,7 +84,7 @@ node tools/release-notes.mjs 0.9.3 --check   # the tag, the build and the change
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 951 checks. **The UI is largely built**: an application menu, a menu bar item,
+Glaze app — 965 checks. **The UI is largely built**: an application menu, a menu bar item,
 Today (headline, focus goal, reflection), the Timeline, a reopened past day, Search, Memories, Collections, a
 session's notes/tags/bookmarks, Settings, and export — reports as Markdown, CSV, JSON or
 HTML, plus full backups, and a screensaver. Counted against the reference's own router, this port has **all 20 of its routes**, and since

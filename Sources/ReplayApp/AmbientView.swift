@@ -15,11 +15,30 @@ import SwiftUI
 struct AmbientView: View {
     let model: AppModel
     let preferences: Preferences
+    /// Whether coming back should end it.
+    ///
+    /// False when a person opened this — ambient mode is made to be left on a second monitor,
+    /// and upstream says so in as many words: "the 'now' ambient view never auto-dismisses".
+    /// True only when the idle timer raised it, and then it is not really the same surface:
+    /// something that arrived without being asked has to leave without being asked too, or a
+    /// screen you never chose sits over your work until you find the key that clears it.
+    var dismissOnActivity: Bool = false
+    /// Whether this window can take the keyboard at all.
+    ///
+    /// False for an ambient screen left open on another display, and it decides two things.
+    /// Escape is not offered, because it would not arrive — and worse, it *would*: a local
+    /// event monitor sees the whole application's events, so an Escape typed in the main
+    /// window would reach up and close a display on another screen for no reason a person
+    /// could see. So the monitor is not installed, and the hint names what does work.
+    var takesKeyboard: Bool = true
     let onExit: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var now = Date()
     @State private var exitMonitor: Any?
+    /// Separate from ``exitMonitor`` because they are removed together but armed for
+    /// different reasons: Escape always leaves, activity only leaves what activity started.
+    @State private var activityMonitor: Any?
     /// The last application seen in front, held across going idle.
     ///
     /// `tracker.current` is nil while away or paused, and *ambient mode is the one surface
@@ -123,15 +142,20 @@ struct AmbientView: View {
         .onAppear {
             // Escape leaves, wherever focus happens to be — a borderless window at this
             // level has no title bar and no other way out but the disc.
-            exitMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                guard event.keyCode == 53 else { return event }
-                onExit()
-                return nil
+            if takesKeyboard {
+                exitMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                    guard event.keyCode == 53 else { return event }
+                    onExit()
+                    return nil
+                }
             }
+            armActivityExit()
         }
         .onDisappear {
             if let exitMonitor { NSEvent.removeMonitor(exitMonitor) }
             exitMonitor = nil
+            if let activityMonitor { NSEvent.removeMonitor(activityMonitor) }
+            activityMonitor = nil
         }
         // A minute is the resolution of everything on this screen — the clock shows minutes
         // and the total is formatted in minutes — so anything faster would be redrawing to
@@ -145,6 +169,27 @@ struct AmbientView: View {
         }
         .onChange(of: model.current?.applicationName, initial: true) { _, _ in
             if let seen = currentApp { lastApp = seen }
+        }
+    }
+
+    /// End an ambient screen that started itself, the moment its owner is back.
+    ///
+    /// Every kind of input, not a chosen few: the screensaver's three switches exist because
+    /// a screensaver you started by hand is something you might want to sit and watch, and
+    /// nothing here was started by hand. The same short arm delay as the screensaver, for the
+    /// same reason — the timer fires while the pointer may still be settling, and a display
+    /// that vanishes in the frame it appeared in reads as a flicker rather than as a feature.
+    private func armActivityExit() {
+        guard dismissOnActivity, activityMonitor == nil else { return }
+        let mask: NSEvent.EventTypeMask = [
+            .mouseMoved, .scrollWheel, .leftMouseDown, .rightMouseDown, .keyDown,
+        ]
+        let armedAt = Date()
+        activityMonitor = NSEvent.addLocalMonitorForEvents(matching: mask) { event in
+            if Date().timeIntervalSince(armedAt) > Design.Motion.screensaverArmSeconds {
+                onExit()
+            }
+            return event
         }
     }
 
@@ -231,10 +276,18 @@ struct AmbientView: View {
 
     /// The way out, and nothing else. The time used to share this line; it has gone to the
     /// top, where a clock belongs, and this is a footnote again.
+    ///
+    /// It names whichever way out this window actually has. A screen left open on another
+    /// display never takes the keyboard, so promising Escape there would be a lie in the one
+    /// place a person looks when they want out.
     private var exitHint: some View {
-        Text(Loc.t("Press Esc to exit"))
-            .font(Design.Text.micro)
-            .foregroundStyle(.white.opacity(Design.Colour.ambientHint))
+        Text(
+            takesKeyboard
+                ? Loc.t("Press Esc to exit")
+                : String(format: Loc.t("%@ to close"), Shortcuts.ambientKeys)
+        )
+        .font(Design.Text.micro)
+        .foregroundStyle(.white.opacity(Design.Colour.ambientHint))
     }
 
     /// The time a session began, in the locale's own short form.

@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 951 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 965 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -79,7 +79,13 @@ function now and live in `ReplayCore` where the suite can reach them.
 | A node under the pointer | done | hover makes a node *active*, which upstream is one state covering three things — the focused node, a story's current stop, and the node being pointed at. Stronger ring, brighter bubble, and it keeps its label where collision would have dropped it, which is how a crowded node's name gets read without clicking it |
 | Clear focus | done | a chip opposite the card that drops the selection and lets the field come forward again, Escape bound to it. The reference has the same control in the same corner |
 | Command palette | done | ⌘K over surfaces, applications, projects, recent days and the actions that are not places. **The matcher has no reference counterpart** — upstream leans on a JavaScript library's scoring — so it is the one behaviour here that no fixture covers |
-| Screensaver | done | a slow drift through the day — the memory, today's sessions, the applications you keep. Borderless, on the screen Replay is on, Esc to leave. Not auto-started on a timer, unlike the reference |
+| Screensaver | done | a slow drift through the day — the memory, today's sessions, the applications you keep. Borderless, on the screen Replay is on, Esc to leave. Auto-started after a chosen span of quiet, as the reference does, and only while Replay's own window is in front |
+| Which screen a display takes | done, this port's own | `Show on` in Settings ▸ Display, resolved by `localizedName` at open time. The reference always uses the screen with the keyboard; a named screen that is absent falls back to that one and is remembered |
+| Ambient mode left open | done, this port's own | on a screen other than the main window's, ambient mode becomes a non-activating window: it takes no keyboard, stays up while you work, and is closed with ⇧⌘A or its ✕. Refused on the screen the window is on, where it would cover the work with no way out |
+| Quiet hours for auto-start | done, this port's own | `IdleWindow.allows(hour:from:until:)` in the core, spans through midnight included, with behaviour cases |
+| Scheduled backups | done, this port's own | `AutoBackup` — daily or weekly, atomic write into a chosen folder, eight kept, and only files matching its own pattern ever removed. Off until asked for |
+| A note or bookmark on the session in progress | done, this port's own | from the menu bar panel or ⇧⌘N. The note is written in a small panel rather than in the popover: an `NSPopover` never becomes key, so a field in one eats its first keystroke and dismisses the panel |
+| Auto-start when idle | done, and more than the reference | the reference's idle timer only ever raises the screensaver. Here a picker in Settings ▸ Display decides which of the two displays the same delay raises, and an ambient screen that started itself leaves on any key, click or movement — a hand-started one still stays, which is what ambient mode is for. See the divergences |
 | Museum | done | the day's featured moment, the milestones, the deepest stretches, what was bookmarked, what was written, and the work that took the most |
 | My Story | done | the archive at a glance: how long, how much, which years, and the applications that ran through it |
 | App relationships | done | reached from an application's "works alongside" list — which way the switching runs, and every session the two shared |
@@ -97,7 +103,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | What's New | done | eleven releases, newest first, with the running version marked. Reachable from Help |
 | Help menu | done | Welcome, Replay Guide (⌘?), What's New. The app had no Help menu at all, which is also where macOS puts its own search |
 | Welcome | done | two pages, and two verification links rather than three — "Privacy & Security" was the parent of the other two and a third button under a green tick reads as a third thing to do. Two pages: the things Replay will not do unasked, each off by default, and the privacy claim shown working rather than asserted |
-| Settings | done | General, Privacy, Data, Shortcuts, Guide, About. The Guide is the reference's sixteen questions and answers, generated into `spec/guide.json` and compared character for character. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is rendered from `Shortcuts.swift`, the same catalogue the View menu is built from, and `tools/shortcut-audit.mjs` checks the keys a view binds against it in both directions |
+| Settings | done | General, Privacy, Data, Display, Shortcuts, Guide, About. The Guide is the reference's sixteen questions and answers, generated into `spec/guide.json` and compared character for character. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, which display drifts in when idle and after how long, the screensaver's exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is rendered from `Shortcuts.swift`, the same catalogue the View menu is built from, and `tools/shortcut-audit.mjs` checks the keys a view binds against it in both directions |
 | Press and hover feedback | done | `RowButtonStyle` on 25 rows and cards — the reference's own `active:scale-[0.99]` at 90ms and `hover:bg-control-subtle` at 180ms, both on `easeStandard`. Reduced motion keeps the highlight and drops the give |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
 | Export a day / a session | done | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON, HTML or **PDF**, carrying notes and tags. Scope selection and report text checked against the reference's own output |
@@ -263,6 +269,35 @@ document starts lying, and this one has done it twice already — see the two no
   missing entirely, and they are the two sentences that say the feature is descriptive rather
   than invented. Generated into `spec/narrative-copy.json` and checked character for
   character. Found auditing the Story cluster on 2026-07-28.
+- **The idle timer can raise ambient mode, which upstream's cannot.** `useScreensaverAutoStart`
+  in `renderer/main/ambient.tsx` calls `openAmbient("screensaver")` with nothing to change it,
+  so upstream's one delay has one outcome. Here `IdleDisplay` decides, and the default is the
+  reference's, so nothing moves for anybody who does not go looking. Two consequences worth
+  writing down. The reference's own row keeps the reference's own sentence — the line under
+  "Auto-start when idle" comes from `SettingsRow` when the screensaver is chosen and from this
+  port's parallel sentence when ambient mode is — so the contract still owns the wording it
+  owns. And an ambient screen that started *itself* dismisses on any key, click or movement,
+  which contradicts upstream's comment that "the 'now' ambient view never auto-dismisses" —
+  correctly: that comment is about a screen somebody opened and left on a second monitor, and
+  a screen nobody asked for has to be as easy to clear as a screensaver. One opened by hand
+  still stays until it is closed.
+- **The appearance setting reached two of the app's six windows.** `preferredColorScheme` was
+  applied by `RootView` and by the menu bar panel and nowhere else, so with Theme set to Light
+  the Settings window, What's New and the note panel followed the *system* — dark, on a dark
+  Mac, beside a light main window. It lives in `Themed` now, which every window already wraps
+  its content in, with an explicit `forcing: .dark` for the screensaver and ambient mode
+  because those are black by design rather than by theme. Found by running
+  `./tools/screenshots.sh --appearance light` and looking at the images: the light-mode
+  screenshots had never been taken, and the whole suite passed either way.
+- **Application icons were unlabelled images to VoiceOver.** `AppIcon` appears beside a name
+  in every list in the app, and a session card shows three of them — so a Timeline read aloud
+  announced three images before each session's title. Marked `accessibilityHidden`, which is
+  what a decoration beside its own label should be.
+- **`acceptsMouseMovedEvents` was never set on either full-screen window**, so "Exit on mouse
+  movement" had nothing to listen to: AppKit does not deliver `.mouseMoved` to a window that
+  has not asked for it, and the local monitor watching for it could never fire. Off by default,
+  which is why a broken switch went unnoticed. Found while giving ambient mode the same
+  behaviour.
 - **Ambient mode reads the frontmost app's name from the tracker and its icon from the
   sessions.** The tracker carries the application's name and when it came forward, and not a
   bundle identifier or a path — so there is nothing to draw an icon from. The name is matched

@@ -37,7 +37,7 @@ What it never does:
 - **It describes rather than grades.** No score, no productivity rating, no "distracting" label
   on anything. A day that was mostly a browser is described as a day mostly in a browser.
 
-These are checked, not promised. `swift test` runs 951 contract checks against the reference
+These are checked, not promised. `swift test` runs 965 contract checks against the reference
 implementation, and the claims above are the ones the design is built around — see
 [docs/SPEC.md](docs/SPEC.md), which is the file to read before changing anything.
 
@@ -64,7 +64,7 @@ Then link the app once, so Spotlight and the Dock can find it:
 ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
 ```
 
-That builds v0.9.3. Add `--HEAD` to either one to build the current `main` instead.
+That builds v0.9.4. Add `--HEAD` to either one to build the current `main` instead.
 
 ### Or from source
 
@@ -186,7 +186,7 @@ Checking this port against Glaze 2.3.2 (d355ba2)
    ✓ away-row-splits-session — A measured idle row is a break, and splits the run…
    … 8 scenarios …
 
-PARITY OK — 951 checks against Glaze 2.3.2
+PARITY OK — 965 checks against Glaze 2.3.2
 ```
 
 ## What is here
@@ -197,7 +197,7 @@ Sources/ReplayCore/
   ActivityStore.swift    SQLite: storage, headlines, deletion, compaction
   SessionBuilder.swift   the derivation — rows → named sessions and breaks
   ActivityTracker.swift  NSWorkspace + idle time → recorded sessions
-Sources/ParityKit/       the parity suite — 951 checks against the reference
+Sources/ParityKit/       the parity suite — 965 checks against the reference
 Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
 Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
 Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
@@ -284,13 +284,17 @@ that you spent four hours in an editor and nothing whatsoever about what you wro
 **How do I update it?**
 `brew upgrade nurkamol/tap/replay-app` (add `--fetch-HEAD` if you installed with
 `--HEAD`), or `git pull && ./scripts/make-app.sh
-release` from a clone. The in-app check only tells you a version exists; it never replaces a
-running app behind your back.
+release` from a clone. Since 0.9.3 the in-app banner can install it for you — it downloads the
+zip, checks it against the SHA-256 published beside it, and replaces itself only when you press
+the button. The check that finds it is off until you turn it on, and a Homebrew copy is left to
+`brew upgrade`.
 
 **Where is my data, and how do I get it out?**
 `~/Library/Application Support/app.replay.native/replay.db`, a plain SQLite file you can open
 with any tool. Settings ▸ Data exports a slice as Markdown, HTML, PDF, CSV or JSON, or the
-whole database as a backup. Nothing is locked in, and deleting the folder deletes everything.
+whole database as a backup — and since 0.9.4 it can write that backup for you every day or
+every week into a folder you name, keeping the eight most recent. Nothing is locked in, and
+deleting the folder deletes everything.
 
 **Does it run on Intel?**
 It should — there is nothing architecture-specific in it — but it has only ever been tested

@@ -19,6 +19,54 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## 0.9.4 — 2026-07-29
+
+### Added
+
+- **A screen to show them on.** Settings ▸ Display ▸ Show on names which display the
+  screensaver and ambient mode take. Replay follows the keyboard unless told otherwise, and a
+  named screen that is unplugged falls back to the keyboard's without forgetting the choice.
+- **Ambient mode can be left open while you work.** On a screen other than the one Replay's
+  window is on, it stops taking the keyboard and stops closing when you type — the second
+  monitor the mode was always for. It never applies on the screen you are working in, because
+  a display that covers your work and takes no keys is a trap rather than a feature.
+- **Quiet hours.** The idle drift can be kept to a span of the day. Spans that run through
+  midnight work, which is the case the obvious implementation gets wrong.
+- **Backups nobody has to remember.** Settings ▸ Data writes the same full backup every day or
+  every week into a folder you choose, atomically, keeping the eight most recent and removing
+  only its own older ones. Off until a folder and a schedule are chosen; nothing leaves the Mac.
+- **A note and a bookmark on the stretch you are in, from the menu bar** — or ⇧⌘N from
+  anywhere. The moment worth marking is the one you are in, and it passes while you are
+  finding the session in a window.
+- **Ambient mode can drift in on its own.** The idle delay used to have one outcome — the
+  screensaver — because that is the only thing the reference's timer raises
+  (`openAmbient("screensaver")`, hard-coded). Settings ▸ Display now opens with an **Auto-start**
+  section: which of the two displays the delay raises, then the delay itself. The default is
+  the screensaver, so an existing install behaves exactly as it did.
+- **What starts on its own leaves on its own.** An ambient screen raised by the timer
+  dismisses on any key, click or movement. One opened by hand still stays, which is the whole
+  point of a display left on a second monitor — upstream says so in as many words, and this is
+  the case that comment does not cover.
+
+### Fixed
+
+- **"Theme: Light" left half the app dark.** The appearance was applied by the main window and
+  the menu bar panel and by nothing else, so Settings, What's New and the note panel followed
+  the system instead of the setting. It is applied once now, where every window picks it up.
+  Found by looking at the light-mode screenshots; every check in the suite passed throughout.
+- **VoiceOver read an unlabelled image before every application name** — three of them per
+  session on the Timeline. Application icons are decoration beside a name that is always
+  there, and are marked as such.
+- **"Exit on mouse movement" had nothing to listen to.** Neither full-screen window set
+  `acceptsMouseMovedEvents`, and AppKit does not deliver `.mouseMoved` to a window that has not
+  asked for it — so the monitor watching for it could never fire. The switch is off by default,
+  which is why a setting that did nothing survived this long.
+
+### Changed
+
+- The line under "Auto-start when idle" now says which display it will raise. The screensaver's
+  wording is still the reference's, read from the contract rather than restated.
+
 ## 0.9.3 — 2026-07-29
 
 ### Added

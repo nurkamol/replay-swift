@@ -28,7 +28,7 @@ EXTRA_FLAGS=("$@")
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/build/Replay.app"
 BUNDLE_ID="app.replay.native"
-VERSION="0.9.3"   # matches the top entry in CHANGELOG.md
+VERSION="0.9.4"   # matches the top entry in CHANGELOG.md
 MIN_MACOS="26.0"  # CLAUDE.md: the interface leans on APIs that begin at 15 and 26
 
 echo "Building ($CONFIG)…"

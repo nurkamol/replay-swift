@@ -153,13 +153,28 @@ public enum Guide {
     /// must **not** exist upstream, so an addition here can never quietly shadow one of the
     /// sixteen. Shown after them in the Guide.
     ///
-    /// There is one so far, and it exists because this port grew a feature the reference
-    /// cannot have: the Glaze version updates through the Glaze Store, so "does it use the
-    /// network" has an unqualified no upstream and a qualified one here. The answer above it
-    /// — "It never leaves this Mac: no cloud, no account, no network" — is the reference's
-    /// word for word and stays that way; this is the footnote it now needs, and burying that
-    /// difference would be the one kind of dishonesty this app cannot afford.
+    /// The first exists because this port grew a feature the reference cannot have: the Glaze
+    /// version updates through the Glaze Store, so "does it use the network" has an
+    /// unqualified no upstream and a qualified one here. The answer above it — "It never
+    /// leaves this Mac: no cloud, no account, no network" — is the reference's word for word
+    /// and stays that way; this is the footnote it now needs, and burying that difference
+    /// would be the one kind of dishonesty this app cannot afford.
+    ///
+    /// The second is here for a narrower reason. The reference's own answer above ("How do I
+    /// start the screensaver…") is *its* answer and stays word for word, including the pane it
+    /// names — and it describes an idle timer that can only ever raise the screensaver. That
+    /// is no longer the whole truth here, and the honest place to say so is beside it rather
+    /// than inside it.
     public static let ownEntries: [Entry] = [
+        Entry(
+            question: "Can ambient mode drift in on its own too?",
+            answer: "Yes, and it is the same delay. Settings ▸ Display opens with the choice: "
+                + "which of the two takes the screen when you have been quiet, and after how "
+                + "long. It arrives only while Replay's own window is in front, so it never "
+                + "covers another app — and an ambient screen that started itself leaves on "
+                + "any key, click or movement. One you open by hand stays until you close it, "
+                + "which is what a second monitor is for."
+        ),
         Entry(
             question: "Does Replay ever use the network?",
             answer: "Only if you ask it to, and it is off when you install it. Settings ▸ "

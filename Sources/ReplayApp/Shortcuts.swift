@@ -21,7 +21,7 @@ enum Shortcuts {
     /// answer these live on the app delegate and stay private to it.
     enum Command: String {
         case today, palette, apps, week, timeline, search, memories
-        case collections, projects, story, canvas, sidebar, screensaver, ambient
+        case collections, projects, story, canvas, sidebar, screensaver, ambient, note
     }
 
     /// Which part of the Settings table an entry appears under.
@@ -154,6 +154,14 @@ enum Shortcuts {
             menuTitle: "Screensaver", label: "Screensaver", key: "s",
             modifiers: [.shift, .command], command: .screensaver, group: .window
         ),
+        // A note on the stretch in progress, from wherever you are. The same panel the menu
+        // bar opens, and the reason it has a key of its own: the moment worth writing down
+        // is the one you are in, and reaching for the mouse is how it gets lost.
+        Entry(
+            menuTitle: "Note on This Session…", label: "Note on this session", key: "n",
+            modifiers: [.shift, .command], command: .note, group: .window,
+            separatorBefore: true
+        ),
     ]
 
     /// Bound somewhere other than the View menu — by another menu macOS expects to own, or
@@ -175,6 +183,16 @@ enum Shortcuts {
         Entry(label: "Open what is focused", key: "↩", modifiers: [], group: .anywhere),
         Entry(label: "Close what is open", key: "esc", modifiers: [], group: .anywhere),
     ]
+
+    /// The keys that open and close ambient mode, written the way a Mac writes them.
+    ///
+    /// Read from the catalogue rather than typed out, because ambient mode's own exit hint
+    /// says them: an ambient screen left open on another display cannot take the keyboard,
+    /// so the hint promises this instead of Escape — and a hint that names a key nothing
+    /// binds is the failure `tools/shortcut-audit.mjs` exists to prevent.
+    static var ambientKeys: String {
+        (menu.first { $0.command == .ambient }?.display ?? []).joined()
+    }
 
     /// What a sidebar row should show on its trailing edge, or nothing when the surface has
     /// no key. Canvas is the one that has none — the digits run out at nine.

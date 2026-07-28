@@ -1247,10 +1247,11 @@ public enum ParityKit {
         }
 
         // And the Guide entries that are this port's own, the other way round again: their
-        // questions must not exist upstream. The one there is exists because this port has a
-        // feature the reference cannot have — it updates through the Glaze Store — so the
-        // reference's flat "no network" needs a footnote here and must not be edited into
-        // one. See `Guide.ownEntries`.
+        // questions must not exist upstream. Both exist because this port answers something
+        // the reference's own answer cannot — it updates through the Glaze Store, and its
+        // idle timer raises only the screensaver — so the reference's flat "no network" and
+        // its screensaver answer each need a footnote beside them rather than an edit inside
+        // them. See `Guide.ownEntries`.
         let referenceQuestions = Set(guideSpec.entries.map(\.question))
         for entry in Guide.ownEntries {
             equal(

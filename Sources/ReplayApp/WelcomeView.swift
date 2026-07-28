@@ -94,9 +94,18 @@ struct WelcomeView: View {
                     )
                 )
                 Divider()
+                // Named for whichever display the idle timer is pointed at. On a first run
+                // that is always the screensaver, but Settings can put this page back — and
+                // an offer that describes a drift through the day while the timer would
+                // raise ambient mode is simply wrong about what the switch does.
                 choice(
-                    "sparkles.tv", "Screensaver when idle",
-                    "After a few quiet minutes, drift through today's sessions and memories.",
+                    "sparkles.tv",
+                    preferences.idleDisplay == .screensaver
+                        ? "Screensaver when idle" : "Ambient mode when idle",
+                    preferences.idleDisplay == .screensaver
+                        ? "After a few quiet minutes, drift through today's sessions and memories."
+                        : "After a few quiet minutes, show today's total in type you can read "
+                            + "from across the room.",
                     isOn: Binding(
                         get: { preferences.screensaverIdleMinutes > 0 },
                         set: { preferences.screensaverIdleMinutes = $0 ? Design.welcomeIdleMinutes : 0 }

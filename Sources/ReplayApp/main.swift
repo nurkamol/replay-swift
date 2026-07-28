@@ -14,9 +14,17 @@ import SwiftUI
 /// `NSWindow` refuses to become key when it is borderless, and a borderless window is what a
 /// screensaver has to be. Without this the overlay came up, said "Press Esc to exit" across
 /// the bottom, and then ignored Esc — every keystroke went to whatever was behind it.
+///
+/// **Except when it must not take it.** Ambient mode left open on a second screen is the one
+/// case where taking the keyboard is exactly wrong: every keystroke would land in a window
+/// showing a clock instead of in whatever you are writing. So the answer is a stored property
+/// rather than `true`, and a pinned ambient window says no — which also means Escape does not
+/// reach it, and the ✕ and ⇧⌘A are the ways out. Both keep working, because a click on a
+/// non-key window is still delivered to it.
 final class ScreensaverWindow: NSWindow {
-    override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { true }
+    var takesKeyboard = true
+    override var canBecomeKey: Bool { takesKeyboard }
+    override var canBecomeMain: Bool { takesKeyboard }
 }
 
 @MainActor
@@ -48,6 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarPopover: NSPopover?
     /// Off unless somebody turned it on; see `UpdateModel`.
     private lazy var updates = UpdateModel(preferences: preferences)
+    /// Off unless somebody chose a folder and a schedule; see `AutoBackupModel`.
+    private lazy var backups = AutoBackupModel(model: model, preferences: preferences)
     private var window: NSWindow?
     private var settingsWindow: NSWindow?
     private var screensaverWindow: NSWindow?
@@ -56,7 +66,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// have gone — and nothing good comes of being able to be in both at once.
     private var ambientWindow: NSWindow?
     private var idleWatch: Timer?
+    private var backupWatch: Timer?
     private var whatsNewWindow: NSWindow?
+    /// The quick-note panel, while it is up.
+    private var noteWindow: NSWindow?
     /// Which Settings pane to show when it next opens.
     private var settingsPane: SettingsView.Pane?
     /// Kept so its title can say what it will do rather than what it is.
@@ -126,35 +139,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await notifications.reschedule()
         }
 
-        // And the screensaver's own idle watch, if it has been asked for.
+        // And the idle watch for whichever display it has been pointed at, if either.
         idleWatch = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.checkScreensaverIdle() }
+            Task { @MainActor in self?.checkIdleDisplay() }
+        }
+
+        // A backup if one is owed, and then an hourly look.
+        //
+        // An hour rather than a day: this is not a daemon, and a Mac that was asleep at
+        // whatever moment "daily" would have meant should still get its copy when it wakes.
+        // `isDue` compares calendar days, so an hourly tick writes one file a day, not
+        // twenty-four.
+        backups.runIfDue()
+        backupWatch = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.backups.runIfDue() }
         }
     }
 
-    /// Drift the screensaver in after a spell of quiet.
+    /// Drift a display in after a spell of quiet — whichever one the settings name.
     ///
     /// Only while Replay's own window is in front, which is the whole reason this is
     /// tolerable: a thing that takes over the screen while you are working in something else
     /// is a fright, and one that appears over the app you were already looking at is a
     /// screensaver. Off by default either way.
     ///
-    /// **And never over ambient mode.** That was already true before the check below was
-    /// added, but only by accident: ambient mode's window is key while it is up, so
-    /// `window?.isKeyWindow` was false and the guard fell through for a reason that had
-    /// nothing to do with ambient mode. Correct behaviour resting on an unrelated
-    /// condition is a bug that has not happened yet — relax that line for any reason and
-    /// the screensaver starts drifting in over a display somebody is deliberately reading.
-    /// Ambient mode is *specifically* the surface you look at without touching the
-    /// keyboard, so the idle threshold trips while you sit there. Said explicitly now.
-    private func checkScreensaverIdle() {
+    /// **And never over a display that is already up.** That was already true for ambient
+    /// mode before the check below was added, but only by accident: ambient mode's window is
+    /// key while it is up, so `window?.isKeyWindow` was false and the guard fell through for
+    /// a reason that had nothing to do with ambient mode. Correct behaviour resting on an
+    /// unrelated condition is a bug that has not happened yet — relax that line for any
+    /// reason and this starts drifting in over a screen somebody is deliberately reading.
+    /// Ambient mode is *specifically* the surface you look at without touching the keyboard,
+    /// so the idle threshold trips while you sit there. Said explicitly now — and it matters
+    /// twice over now that ambient mode can be what the timer raises, since an ambient screen
+    /// left up by hand would otherwise be replaced by an identical one that dismisses itself.
+    private func checkIdleDisplay() {
         let minutes = preferences.screensaverIdleMinutes
         guard minutes > 0, screensaverWindow == nil, ambientWindow == nil, NSApp.isActive,
               window?.isKeyWindow == true else { return }
+        // The hours somebody confined it to, if they confined it to any. Read from the
+        // calendar rather than from the timestamp so a span means what a person means by it
+        // through a change of daylight saving, when the same hour can happen twice.
+        if preferences.idleHoursLimited {
+            let hour = Calendar.current.component(.hour, from: Date())
+            guard IdleWindow.allows(
+                hour: hour, from: preferences.idleFromHour, until: preferences.idleUntilHour
+            ) else { return }
+        }
         let idle = CGEventSource.secondsSinceLastEventType(
             .hidSystemState, eventType: .init(rawValue: ~0)!
         )
-        if idle >= Double(minutes) * 60 { openScreensaver() }
+        guard idle >= Double(minutes) * 60 else { return }
+        switch preferences.idleDisplay {
+        case .screensaver: openScreensaver()
+        case .ambient: showAmbient(auto: true)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -414,6 +453,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.refreshStatusTitle()
                 },
                 onOpenSettings: { [weak self] in self?.fromPopover { $0.openSettings() } },
+                onAddNote: { [weak self] in self?.fromPopover { $0.openNotePanel() } },
                 onQuit: { [weak self] in self?.fromPopover { $0.quit() } }
             )
             .environment(\.themeTint, preferences.themeColour.resolved)
@@ -441,6 +481,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Without this the popover opens behind whatever you were in, because a status item
         // click does not activate the app.
         NSApp.activate(ignoringOtherApps: true)
+        // Nothing in here takes the keyboard, and that is a property rather than an
+        // oversight: a popover's window does not become key, so a text field placed in one
+        // eats its first character and then dismisses the whole panel. The note is written
+        // in a panel of its own for exactly that reason — see `openNotePanel`.
+    }
+
+    /// The quick-note panel, on the stretch being lived in.
+    ///
+    /// Its own small window rather than a field in the menu bar panel, because a popover
+    /// never becomes key and therefore cannot be typed in — see ``NoteView``. Floating, so it
+    /// stays over whatever you were working in, which is the point of writing a note about
+    /// the thing you are doing while you are still doing it.
+    @objc func openNotePanel() {
+        model.reload()
+        guard let session = model.sessions.max(by: { $0.startedAt < $1.startedAt }) else { return }
+        if let noteWindow {
+            noteWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let hosting = NSHostingController(
+            rootView: Themed(preferences: preferences) {
+                NoteView(
+                    sessionTitle: session.title,
+                    sessionStart: session.startedAt,
+                    annotations: model.annotations,
+                    onClose: { [weak self] in self?.closeNotePanel() }
+                )
+            }
+        )
+        let panel = NSPanel(contentViewController: hosting)
+        panel.title = Loc.t("Note")
+        panel.styleMask = [.titled, .closable, .utilityWindow]
+        panel.isFloatingPanel = true
+        panel.level = .floating
+        panel.hidesOnDeactivate = false
+        panel.isReleasedWhenClosed = false
+        panel.center()
+        panel.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        noteWindow = panel
+    }
+
+    private func closeNotePanel() {
+        noteWindow?.orderOut(nil)
+        noteWindow = nil
     }
 
     /// Anything that opens a window closes the popover first, so the window does not appear
@@ -543,6 +629,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .sidebar: #selector(toggleSidebar)
         case .screensaver: #selector(openScreensaver)
         case .ambient: #selector(openAmbient)
+        case .note: #selector(openNotePanel)
         case nil: nil
         }
     }
@@ -551,6 +638,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.reload()
         navigation.show(.today)
         showWindow()
+    }
+
+    /// Which screen a full-screen display takes.
+    ///
+    /// `NSScreen.main` is the screen with keyboard focus, which is where the person is
+    /// looking, and it is still the answer when nothing has been named. (`window?.screen` was
+    /// tried first, long ago, and put the overlay on whichever display the main window's
+    /// restored frame happened to sit on — the wrong one, silently.)
+    ///
+    /// A named screen is matched by `localizedName`, which is what the picker shows, and a
+    /// name that matches nothing falls through to the keyboard's screen rather than to
+    /// nothing at all. That is the unplugged case, and it has to be silent: a laptop that is
+    /// closed and opened twice a day would otherwise be a settings error twice a day.
+    private func displayScreen() -> NSScreen? {
+        let name = preferences.displayScreenName
+        if !name.isEmpty, let named = NSScreen.screens.first(where: { $0.localizedName == name }) {
+            return named
+        }
+        return NSScreen.main ?? window?.screen ?? NSScreen.screens.first
+    }
+
+    /// Whether two screens are the same physical display.
+    ///
+    /// By display id rather than by `==`: `NSScreen` objects are recreated when the screen
+    /// arrangement changes, so identity comparison answers "is this the same object" and the
+    /// question here is "is this the same piece of glass".
+    private func sameScreen(_ a: NSScreen?, _ b: NSScreen?) -> Bool {
+        guard let a, let b else { return false }
+        let key = NSDeviceDescriptionKey("NSScreenNumber")
+        return (a.deviceDescription[key] as? NSNumber) == (b.deviceDescription[key] as? NSNumber)
     }
 
     /// Raise the screensaver over everything, on the screen the window is on.
@@ -571,15 +688,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // was up stacked one over the other at the same window level, and leaving the
         // screensaver dropped you back into a display you had stopped looking at.
         closeAmbient()
-        // `NSScreen.main` is the screen with keyboard focus, which is where the person is
-        // looking. `window?.screen` was tried first and put the overlay on whichever display
-        // the main window's restored frame happened to sit on — the wrong one, silently.
         // Loaded before the view exists: the screensaver measures its own column to know
         // how far to drift, so everything it will show has to be in hand first.
         if !memories.loaded { memories.load() }
-        let screen = NSScreen.main ?? window?.screen ?? NSScreen.screens.first
+        let screen = displayScreen()
         let hosting = NSHostingController(
-            rootView: Themed(preferences: preferences) {
+            rootView: Themed(preferences: preferences, forcing: .dark) {
                 ScreensaverView(
                     model: model,
                     memories: memories,
@@ -596,6 +710,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         saver.styleMask = [.borderless]
         saver.level = .screenSaver
         saver.isOpaque = true
+        // Without this a window is never sent `.mouseMoved` at all, so the local monitor
+        // watching for it never fires: "Exit on mouse movement" had nothing to hear.
+        saver.acceptsMouseMovedEvents = true
         saver.backgroundColor = .black
         saver.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         saver.isReleasedWhenClosed = false
@@ -612,18 +729,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The same window recipe as the screensaver — borderless, screen-saver level, joins all
     /// spaces — because the requirement is the same: cover the menu bar and the Dock without
     /// dragging the main window into a full-screen space you then have to come back out of.
+    /// The menu, the palette and the sidebar all ask for it by hand; only the idle watch
+    /// asks for it any other way, and what it gets back has to behave differently.
+    ///
+    /// **Asking for it again closes it**, rather than raising the one already up. A mode is
+    /// something you are either in or not, so the command that enters it is the command that
+    /// leaves it — and once ambient mode can be left open on another screen without the
+    /// keyboard, ⇧⌘A is the only way out that does not involve aiming at a disc on a display
+    /// you are not looking at.
     @objc private func openAmbient() {
+        if ambientWindow != nil {
+            closeAmbient()
+        } else {
+            showAmbient(auto: false)
+        }
+    }
+
+    private func showAmbient(auto: Bool) {
         if let ambientWindow {
             ambientWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
         closeScreensaver()
-        let screen = NSScreen.main ?? window?.screen ?? NSScreen.screens.first
+        let screen = displayScreen()
+        // Left up, or handed back the moment you touch anything?
+        //
+        // Only a screen that is *not* the one the window is on can be left up. Ambient mode
+        // takes a whole display; honouring "leave it open" on the display you are working in
+        // would cover the work with a clock and no keyboard to dismiss it — the setting asks
+        // for a second screen, and this is where that is checked rather than assumed.
+        let pinned = preferences.ambientStaysOpen
+            && !sameScreen(screen, window?.screen ?? NSScreen.main)
         let hosting = NSHostingController(
-            rootView: Themed(preferences: preferences) {
+            rootView: Themed(preferences: preferences, forcing: .dark) {
                 AmbientView(
                     model: model, preferences: preferences,
+                    // Only a screen that arrived on its own leaves on its own — and only if
+                    // it is in the way. A pinned one is somewhere else by definition.
+                    dismissOnActivity: auto && !pinned,
+                    takesKeyboard: !pinned,
                     onExit: { [weak self] in self?.closeAmbient() }
                 )
                     .preferredColorScheme(.dark)
@@ -634,21 +779,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ambient.styleMask = [.borderless]
         ambient.level = .screenSaver
         ambient.isOpaque = true
+        // Same as the screensaver's: an auto-started ambient screen leaves on movement, and
+        // movement is not delivered to a window that has not said it wants it.
+        ambient.acceptsMouseMovedEvents = true
         ambient.backgroundColor = .black
         ambient.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         ambient.isReleasedWhenClosed = false
+        ambient.takesKeyboard = !pinned
         if let frame = screen?.frame { ambient.setFrame(frame, display: true) }
-        ambient.makeKeyAndOrderFront(nil)
+        if pinned {
+            // `orderFrontRegardless` rather than `makeKeyAndOrderFront`, and no `activate`:
+            // a display you leave running must not pull the application forward, or opening
+            // it would take you out of whatever you were typing in — which is the one thing
+            // this whole setting exists to prevent.
+            ambient.orderFrontRegardless()
+        } else {
+            ambient.makeKeyAndOrderFront(nil)
+        }
         // Again after ordering front: a borderless window can be nudged as it is shown.
         if let frame = screen?.frame { ambient.setFrame(frame, display: true) }
-        NSApp.activate(ignoringOtherApps: true)
+        if !pinned { NSApp.activate(ignoringOtherApps: true) }
         ambientWindow = ambient
     }
 
+    /// Take it down, and give the keyboard back only if it had it.
+    ///
+    /// A pinned ambient screen never took focus, so pulling the main window forward on the
+    /// way out would move somebody out of the application they were working in — the same
+    /// interruption in reverse.
     private func closeAmbient() {
+        let hadKeyboard = (ambientWindow as? ScreensaverWindow)?.takesKeyboard ?? true
         ambientWindow?.orderOut(nil)
         ambientWindow = nil
-        window?.makeKeyAndOrderFront(nil)
+        if hadKeyboard { window?.makeKeyAndOrderFront(nil) }
     }
 
     private func closeScreensaver() {
@@ -797,7 +960,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 SettingsView(
                     model: model, settings: settings, export: export,
                     preferences: preferences, contextual: contextual,
-                    notifications: notifications, updates: updates,
+                    notifications: notifications, updates: updates, backups: backups,
                     initialPane: settingsPane ?? .general
                 )
             }

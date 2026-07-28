@@ -20,8 +20,9 @@ enum Design {
     /// rather than a slider: four named choices are easier to mean than a continuum.
     static let memoryThresholds: [Double] = [0.2, 0.4, 0.55, 0.8]
 
-    /// How long the window may sit untouched before the screensaver drifts in.
-    static let screensaverIdleChoices = [2, 5, 10, 20]
+    /// How long the window may sit untouched before a display drifts in — the screensaver
+    /// or ambient mode, whichever `IdleDisplay` names.
+    static let idleStartChoices = [2, 5, 10, 20]
     /// What the welcome screen sets when its two numeric offers are accepted. Round rather
     /// than clever: someone agreeing to a goal on a first run has no basis for a precise one.
     static let welcomeGoalMinutes = 180
@@ -29,6 +30,10 @@ enum Design {
     /// The hours a daily recap can be delivered at. Evening-weighted, because a recap of a
     /// day is worth reading once the day has happened.
     static let notificationHours = [12, 15, 17, 18, 19, 20, 21, 22]
+    /// Every hour, for the spans that can legitimately begin at any of them — "only between
+    /// these hours" is answered with 2am as readily as with 9am, and a shortlist would be
+    /// the app deciding when somebody's day is.
+    static let hoursOfTheDay = Array(0..<24)
 
 
     // ── spacing ───────────────────────────────────────────────────────────────
@@ -1044,6 +1049,10 @@ enum Design {
         /// while something else has your attention, and a panel wide enough to browse is a
         /// panel you stop to read. Everything in it fits without scrolling at this width.
         static let menuBarPopoverWidth: CGFloat = 288
+        /// The quick-note panel. Wider than the menu bar panel it is opened from, because
+        /// this one holds a sentence rather than a column of figures — and narrower than any
+        /// window, because it is one field and two buttons.
+        static let notePanelWidth: CGFloat = 360
         /// The goal bar inside it — a bar rather than Today's ring, which needs room to
         /// anchor and becomes a thin circle read at a glance at this size. Four points
         /// rather than six: at six a full green bar read as an alert rather than a
@@ -1432,6 +1441,10 @@ private struct SettlesIn: ViewModifier {
 @MainActor
 struct Themed<Content: View>: View {
     let preferences: Preferences
+    /// A scheme this window insists on, whatever the setting says. Only the two full-screen
+    /// displays use it: they are black by design, and "Theme: Light" is not an instruction to
+    /// put a white sheet over the whole screen at midnight.
+    var forcing: ColorScheme?
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -1439,6 +1452,16 @@ struct Themed<Content: View>: View {
             .tint(preferences.themeColour.colour)
             .environment(\.themeTint, preferences.themeColour.resolved)
             .environment(\.surfaceStyle, preferences.surfaceStyle)
+            // The appearance belongs here rather than in each window, and that is a fix.
+            //
+            // It used to be applied by `RootView` and by the menu bar panel, which are two of
+            // the six windows this app opens — so with Theme set to Light, **Settings, What's
+            // New and the note panel stayed dark**, because a window with no preference of
+            // its own follows the system. A setting that works in some of an app's windows is
+            // worse than one that works in none: it reads as a bug in the theme rather than a
+            // gap in the plumbing. Found by looking at the light-mode screenshots, which is
+            // the only way it could have been found — every check in the suite passed.
+            .preferredColorScheme(forcing ?? preferences.appearance.colorScheme)
     }
 }
 

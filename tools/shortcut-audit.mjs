@@ -35,12 +35,13 @@ const catalogue = readFileSync(CATALOGUE, "utf8");
 
 /*
  * Bindings the catalogue deliberately does not claim, because no `keyboardShortcut` creates
- * them. `.defaultAction` is the Return key on a sheet's confirming button — the system's own
- * behaviour, present on every dialog and worth nobody's table. Escape and Space are bound by
- * views for the surface they are in (leave the screensaver, pause a playback) and appear in
- * the catalogue under "Anywhere" as a description rather than as one binding.
+ * them. `.defaultAction` is the Return key on a sheet's confirming button and `.cancelAction`
+ * its Escape — the system's own behaviour, present on every dialog and worth nobody's table.
+ * Escape and Space are bound by views for the surface they are in (leave the screensaver,
+ * pause a playback) and appear in the catalogue under "Anywhere" as a description rather than
+ * as one binding.
  */
-const NOT_CLAIMED = new Set([".defaultAction", ".escape", ".space"]);
+const NOT_CLAIMED = new Set([".defaultAction", ".cancelAction", ".escape", ".space"]);
 
 /**
  * Every `Entry(...)` in the catalogue, as a flat record.
