@@ -57,6 +57,11 @@ public final class ActivityStore {
             throw StoreError.open(message)
         }
         db = handle
+        // Wait rather than fail when the file is momentarily locked. Without this a
+        // concurrent write returns `SQLITE_BUSY` immediately and the event is simply lost —
+        // and "lost" here means a gap in somebody's day with no error anywhere. Five seconds
+        // is far longer than any write this app makes.
+        sqlite3_busy_timeout(handle, 5_000)
         try exec(Self.schema)
 
         // Any session left open by a previous run (quit or crash mid-session) is

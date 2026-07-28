@@ -64,6 +64,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuRefresh: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // One Replay at a time, and this is about the record rather than about tidiness.
+        //
+        // `ActivityStore.open()` closes any session left with no end — which is right after a
+        // crash, and destructive while another copy is *running*: it sets `ended_at =
+        // started_at, duration = 0` on the first instance's live session, so the stretch you
+        // are in the middle of is zeroed by a second launch. Both copies then write to one
+        // SQLite file with no busy timeout between them.
+        //
+        // So a second copy hands the first one the front and leaves, which is what a Mac app
+        // does anyway. Found because somebody asked whether running two versions at once
+        // could be the cause of a crash — it was not, but this was underneath the question.
+        if let identifier = Bundle.main.bundleIdentifier {
+            let others = NSRunningApplication
+                .runningApplications(withBundleIdentifier: identifier)
+                .filter { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier }
+            if let existing = others.first {
+                existing.activate(options: [.activateAllWindows])
+                NSApp.terminate(nil)
+                return
+            }
+        }
+
         model.start()
         // The tracker is told what to skip before the window appears, so an excluded app is
         // never recorded in the gap between launching and looking.

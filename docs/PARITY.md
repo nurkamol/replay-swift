@@ -161,6 +161,18 @@ document starts lying, and this one has done it twice already — see the two no
 
 ## Known divergences to keep an eye on
 
+- **Two copies of Replay could zero each other's live session.** Found on 2026-07-28 from a
+  user question — whether running the Glaze app and this port together could have caused a
+  crash. It could not, and they share nothing: separate containers, and both only *observe*
+  the frontmost-app notification, which any app may watch. But two copies of *this* app were
+  a real problem. `ActivityStore.open()` closes any session left with no end, which is right
+  after a crash and destructive while another instance is running: it sets `ended_at =
+  started_at, duration = 0` on the first copy's in-flight session. Both then wrote to one
+  SQLite file with no busy timeout, so a contended write returned `SQLITE_BUSY` and the event
+  was dropped with no error anywhere. A second launch now activates the first copy and exits,
+  and the store waits five seconds rather than failing. **The lesson is about where bugs come
+  from:** no audit, no test and no screenshot would have found this. A question did.
+
 - **The week's rhythm strip was capped, and the cap was hiding a layout bug.** `arcMaxWidth`
   held it to 560pt with a documented reason — twenty-four bars stretched across a full-screen
   window stop being a strip. Reasonable, and it was checked and left alone in the 2026-07-28
