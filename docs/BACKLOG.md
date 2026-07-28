@@ -197,26 +197,26 @@ These are not blocked by difficulty. They are blocked because they are somebody'
         outright. That rule has held the project together; it should be changed
         deliberately, in its own decision, rather than sneaked in behind a release process.
 
-- [ ] **Homebrew — the other half of "how does anybody get this".** `S` for the CLI, `M` for
-      the app, and the two are blocked differently.
-      · **The CLI is not blocked at all, and `Formula/replay.rb` is written.** Gatekeeper's
-        signing requirement is about *applications downloaded from the internet*; a binary
-        Homebrew builds on your own machine was never downloaded and is never quarantined.
-        `brew style` passes. Installing it needs a tap of its own — a GitHub repository named
-        `homebrew-tap` — which is a one-command thing (`brew tap-new nurkamol/tap`) that
-        nobody has done yet. **Not verified by installing:** this machine's Command Line
-        Tools are older than the selected Xcode 27 and Homebrew refuses on that alone.
-      · **A cask for the app waits on the same certificate the DMG does.** It would point at
-        a GitHub release, so it is only pleasant once that release is signed.
-      · **`--no-quarantine` is the nearest thing to an unsigned app opening cleanly**, and it
-        is worth knowing precisely what it is: `brew install --cask --no-quarantine replay`
-        stops the flag ever being set, so the app opens with no dialog. That is still the
-        *user* choosing to skip a check — but it is one word in a command they already typed
-        rather than a warning whose default button is "Move to Trash". It does not remove the
-        reason to sign; it removes the worst version of not having signed.
-      · Getting into the official `homebrew-cask` repository additionally needs a project
-        notable enough for their rules. A personal tap has no such bar and works identically
-        for anyone given the one-line install.
+- [x] **Homebrew — the other half of "how does anybody get this".** Done 2026-07-28.
+      `nurkamol/homebrew-tap` exists with a formula for each: `replay` (the CLI) and
+      `replay-app` (the application), both pinned to the v0.9.0 tarball with `head` kept so
+      `--HEAD` still tracks `main`. The tap's own CI runs `brew test-bot`, which installs and
+      tests both for real.
+      · **The entry above was wrong about the app, and the correction is the useful part.**
+        It said a cask "waits on the same certificate the DMG does". It does not, because the
+        app does not need a cask. A cask installs a *prebuilt* binary and therefore needs a
+        Developer ID; a **formula builds from source**, and an app compiled on your own
+        machine was never downloaded, is never quarantined, and opens with no dialog at all.
+        Homebrew prefers casks for GUI apps and is right to — but a cask cannot build, and
+        building is precisely what makes this openable. So `--no-quarantine`, argued for at
+        length above, turned out to be unnecessary.
+      · Two things cost real time. **Homebrew scrubs the environment it hands a build**, so
+        `REPLAY_BUILD_FLAGS` never arrived and SwiftPM tried to sandbox inside Homebrew's
+        sandbox — `sandbox_apply: Operation not permitted`. `make-app.sh` takes extra flags
+        as positional arguments now. And **`brew style` enforces a field order**: `url` and
+        `sha256` before `license`. Adding the tagged url below it turned the tap's CI red.
+      · Now verified by installing, which the entry above could not be: the CLI installs from
+        the tag on this machine.
 
 - [ ] **PDF export.** Three WebKit routes tried and dead — recorded in the ledger's
       divergences so a fourth person does not repeat them. Reviving it means leaving WebKit
@@ -429,6 +429,16 @@ because it is still a product decision nobody has taken.
 ## Done
 
 Kept rather than deleted, so the list shows its own history.
+
+- [x] **A landing page**, at `nurkamol.github.io/replay-swift`, published from `website/` by
+      a Pages workflow. One hand-written HTML file, CSS inline, no build step — the same rule
+      the app is built under. Fifteen screenshots of the app running against a real record,
+      each opening full screen, and the Gatekeeper warning on the download rather than behind
+      it. Never on the backlog; asked for on 2026-07-28 and built the same day.
+- [x] **v0.9.0 released.** 2026-07-28. A source release plus a zipped app, since there is no
+      Developer ID and the workflow refuses to attach an unsigned disk image. It publishes a
+      *version*, which is what Homebrew builds from and what the in-app update check looks
+      for — neither of which needs a certificate.
 
 - [x] **Living Home** — Today leads with one card, rotated by day, resume-within-six-hours
       overriding. 2026-07-27.
