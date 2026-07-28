@@ -7,7 +7,7 @@ OS version can be re-checked rather than re-argued.
 
 ## A test that was only true in the timezone it was written in
 
-**Date:** 2026-07-28 · **Reproduce:** `TZ=UTC swift run replay-parity` at commit `6354afc`
+**Date:** 2026-07-28 · **Reproduce:** `TZ=UTC swift run replay-parity` at commit `0e1b604`
 · **Verdict:** derive the fixture, never assert it
 
 The Monday-week check pinned an instant and called it a Monday:

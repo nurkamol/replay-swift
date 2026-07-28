@@ -1,7 +1,7 @@
 # 003 — Retire the motion declarations and the token nothing uses
 
 - **Status**: DONE
-- **Commit**: 6354afc
+- **Commit**: 0e1b604
 - **Severity**: LOW
 - **Category**: Cohesion & tokens (AUDIT §7)
 - **Estimated scope**: 17 files, one line removed from each; one token removed; one comment corrected

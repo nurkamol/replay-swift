@@ -1,7 +1,7 @@
 # 002 — Cross-fade the heatmap's Week / Month / Year switch
 
 - **Status**: DONE
-- **Commit**: 6354afc
+- **Commit**: 0e1b604
 - **Severity**: LOW (missed opportunity — additive, not corrective)
 - **Category**: Missed opportunities (AUDIT §8)
 - **Estimated scope**: 1 file, ~6 lines
@@ -107,7 +107,7 @@ read or changed. `Design.Motion.inPlace` is used as-is. The parity count must st
   high-frequency actions get no animation, ever.
 - Do NOT change `Design.Motion.inPlace` or any other token's value.
 - If the `switch range` block is not at approximately line 376 or does not match the
-  excerpt above, STOP and report: the file has drifted since 6354afc.
+  excerpt above, STOP and report: the file has drifted since 0e1b604.
 
 ## Verification
 

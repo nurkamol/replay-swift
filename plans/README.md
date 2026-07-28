@@ -1,6 +1,6 @@
 # Animation plans
 
-Produced by `improve-animations` against commit `6354afc` on 2026-07-28, auditing
+Produced by `improve-animations` against commit `0e1b604` on 2026-07-28, auditing
 `Sources/ReplayApp` against the eight categories in the skill's `AUDIT.md`.
 
 **Headline: the motion in this app is largely already right.** No `easeIn` anywhere, no

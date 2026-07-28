@@ -1,7 +1,7 @@
 # 001 — Remove the velocity seam between the Canvas tour's flight and its drift
 
 - **Status**: DONE
-- **Commit**: 6354afc
+- **Commit**: 0e1b604
 - **Severity**: MEDIUM
 - **Category**: Interruptibility & physicality (AUDIT §3, §4)
 - **Estimated scope**: 1 file, ~4 lines
@@ -145,7 +145,7 @@ still report the same number of checks after this change.
   takes a linear curve (AUDIT §2), and it is a marquee.
 - Do NOT add dependencies.
 - If line 319 does not read `withAnimation(.linear(duration: seconds)) {`, STOP and report:
-  the file has drifted since commit 6354afc.
+  the file has drifted since commit 0e1b604.
 
 ## Verification
 
