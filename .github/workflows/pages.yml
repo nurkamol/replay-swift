@@ -56,7 +56,13 @@ jobs:
           [ "$MISSING" = "0" ] || exit 1
           echo "all referenced assets are present"
 
+      # `enablement` so the first run on a fresh repository turns Pages on rather than
+      # failing. The very first push here did fail for exactly that reason — the workflow
+      # ran a minute before Pages was switched on, and "Get Pages site failed" is an
+      # unhelpful thing to hand somebody who has just forked this.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: website
