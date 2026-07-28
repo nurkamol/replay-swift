@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 932 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 947 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -195,6 +195,29 @@ document starts lying, and this one has done it twice already — see the two no
   because being frontmost is what put it there. A miss draws the name without an icon rather
   than dropping the row: the name is the information. Worth knowing before anyone "fixes" it
   by widening the tracker's `current`, which is on the recording path and should stay small.
+- **The menu bar item was never audited, and answered the wrong questions.** The list of
+  eleven surfaces was built from the reference's *router*, and a status item has no route —
+  so it was invisible to the sweep. Worth remembering: a route count is not a surface count.
+  The reference's tray answers two questions in its own words — *what am I in right now, and
+  what was I just in* — with four states (paused, away, the current app and how long, or
+  waiting) and a **Recently** list of four distinct applications from the last twelve hours.
+  This port showed the day's total, its session count and its top application, which are all
+  things the window is for.
+- **The status item wore Time Machine's glyph.** `clock.arrow.circlepath` in the menu bar is
+  Time Machine's icon, so a status item using it reads as a system backup service — confusing
+  and against the HIG. **The reference has a comment saying exactly this**, and this port used
+  that glyph anyway for months. It is `chart.bar.xaxis` now, and the glyph is contract-checked
+  like any other decision with a reason behind it.
+- **The menu has its own duration format.** Under a minute it says "just now" where the rest
+  of the app says "<1m". Both are right where they are: a figure in a table is scanned against
+  other figures, and a menu pulled down mid-task is read as a sentence.
+- **Kept deliberately different:** the actions list offers *Open Today* and *Open Timeline*
+  where the reference offers a single *Open Replay*. Additive rather than contradictory, and
+  a menu bar is where a second entry point costs nothing.
+- **`inline()` in the generator silently returns `NaN` for a string.** It maps every capture
+  through `Number`, which is right for thresholds and wrong for a glyph name — which was
+  written to `spec/` as `null` with no complaint. There is an `inlineText()` beside it now,
+  a separate function rather than a flag, so a call site says which kind of value it reads.
 - **The Timeline built every row before showing one.** A `VStack` inside a `ScrollView`
   constructs all its children eagerly, so opening on Last 7 Days laid out ~280 rows — every
   session card, its icons, its annotations — before a single one was on screen, and the wait

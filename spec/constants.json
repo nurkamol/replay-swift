@@ -291,6 +291,14 @@
   "tray": {
     "recentLimit": 4,
     "recentHours": 12,
+    "paused": "Tracking paused",
+    "away": "Away from keyboard",
+    "waiting": "Waiting for activity…",
+    "focusedFor": "Focused for",
+    "recentHeading": "Recently",
+    "justNow": "just now",
+    "tooltipPaused": "Replay — paused",
+    "tooltipTracking": "Replay — tracking",
     "symbol": "chart.bar.xaxis"
   },
   "screensaver": {

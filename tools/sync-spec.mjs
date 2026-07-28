@@ -567,9 +567,21 @@ const constants = {
       src, f, "how far back the recent list reaches",
       /const since = Date\.now\(\) - (\d+) \* 60 \* 60 \* 1000;/,
     );
+    const label = (what, pattern) => inlineText(src, f, what, pattern)[0];
     return {
       recentLimit: constant(src, f, "RECENT_LIMIT"),
       recentHours,
+      // What the item says about right now — four states, and this port had none of them.
+      paused: label("the paused label", /label: "(Tracking paused)"/),
+      away: label("the away label", /label: "(Away from keyboard)"/),
+      waiting: label("the waiting label", /label: "(Waiting for activity…)"/),
+      focusedFor: label("how a current session is described", /label: `(Focused for) \$\{/),
+      recentHeading: label("the recent section's heading", /label: "(Recently)"/),
+      // Under a minute the tray says "just now" rather than the "<1m" the rest of the app
+      // uses — a menu is read at a glance and "<1m" is a figure you have to parse.
+      justNow: label("what under a minute reads as", /return "(just now)"/),
+      tooltipPaused: label("the paused tooltip", /\? "(Replay — paused)"/),
+      tooltipTracking: label("the tracking tooltip", /: "(Replay — tracking)"/),
       // The glyph is load-bearing and the reference says why in a comment: in the menu bar
       // `clock.arrow.circlepath` is Time Machine's, so a status item using it reads as a
       // system backup service. This port used exactly that.

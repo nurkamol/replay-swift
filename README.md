@@ -28,7 +28,7 @@ What it never does:
 - **It describes rather than grades.** No score, no productivity rating, no "distracting" label
   on anything. A day that was mostly a browser is described as a day mostly in a browser.
 
-These are checked, not promised. `swift test` runs 932 contract checks against the reference
+These are checked, not promised. `swift test` runs 947 contract checks against the reference
 implementation, and the claims above are the ones the design is built around — see
 [docs/SPEC.md](docs/SPEC.md), which is the file to read before changing anything.
 
@@ -151,7 +151,7 @@ Checking this port against Glaze 2.3.2 (d355ba2)
    ✓ away-row-splits-session — A measured idle row is a break, and splits the run…
    … 8 scenarios …
 
-PARITY OK — 932 checks against Glaze 2.3.2
+PARITY OK — 947 checks against Glaze 2.3.2
 ```
 
 ## What is here
@@ -162,7 +162,7 @@ Sources/ReplayCore/
   ActivityStore.swift    SQLite: storage, headlines, deletion, compaction
   SessionBuilder.swift   the derivation — rows → named sessions and breaks
   ActivityTracker.swift  NSWorkspace + idle time → recorded sessions
-Sources/ParityKit/       the parity suite — 932 checks against the reference
+Sources/ParityKit/       the parity suite — 947 checks against the reference
 Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
 Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
 Sources/ReplayApp/       the application — every surface, and DesignSystem.swift

@@ -224,6 +224,22 @@ public enum ParityKit {
             public let breatheFloor: Double
         }
 
+        public let tray: TrayConstants
+
+        public struct TrayConstants: Decodable, Sendable {
+            public let recentLimit: Int
+            public let recentHours: Int
+            public let paused: String
+            public let away: String
+            public let waiting: String
+            public let focusedFor: String
+            public let recentHeading: String
+            public let justNow: String
+            public let tooltipPaused: String
+            public let tooltipTracking: String
+            public let symbol: String
+        }
+
         public let heatmap: HeatmapConstants
 
         public struct HeatmapConstants: Decodable, Sendable {
@@ -1339,6 +1355,54 @@ public enum ParityKit {
         equal(
             gN, "and the window that explains that",
             NarrativeCopy.relationshipEmptyDetail, narrative.relationship.emptyDetail
+        )
+
+        // The menu bar, which nobody had audited — the list of surfaces was built from the
+        // reference's router, and a status item has no route.
+        let t = constants.tray
+        equal(g1, "how many recent applications it names", MenuBar.recentLimit, t.recentLimit)
+        equal(g1, "how far back it looks for them", MenuBar.recentHours, t.recentHours)
+        // The glyph is checked because it is a decision with a reason, not decoration: in
+        // the menu bar `clock.arrow.circlepath` is Time Machine's, which this port used.
+        equal(g1, "the status item's glyph", MenuBar.symbol, t.symbol)
+        equal(g1, "what it says when paused", MenuBar.pausedLabel, t.paused)
+        equal(g1, "and when you are away", MenuBar.awayLabel, t.away)
+        equal(g1, "and when nothing has come through yet", MenuBar.waitingLabel, t.waiting)
+        equal(g1, "the recent section's heading", MenuBar.recentHeading, t.recentHeading)
+        equal(
+            g1, "how a current session is described",
+            MenuBar.focusedFor(600).hasPrefix(t.focusedFor), true
+        )
+        equal(g1, "under a minute reads as", MenuBar.shortDuration(20), t.justNow)
+        equal(
+            g1, "the tooltip when paused",
+            MenuBar.tooltip(isRecording: false, current: nil), t.tooltipPaused
+        )
+        equal(
+            g1, "and when tracking with nothing in front",
+            MenuBar.tooltip(isRecording: true, current: nil), t.tooltipTracking
+        )
+        // The four states, and the order they are tested in — paused beats away, away beats
+        // whatever the tracker last saw. The other order names an application you walked
+        // away from as the thing you are doing.
+        equal(
+            g1, "paused wins over everything",
+            MenuBar.now(isRecording: false, isAway: true, current: ("Xcode", 0), now: 0), .paused
+        )
+        equal(
+            g1, "away wins over a stale current",
+            MenuBar.now(isRecording: true, isAway: true, current: ("Xcode", 0), now: 0), .away
+        )
+        equal(
+            g1, "nothing in front is waiting, not idle",
+            MenuBar.now(isRecording: true, isAway: false, current: nil, now: 0), .waiting
+        )
+        equal(
+            g1, "and otherwise it is the application, with its elapsed time",
+            MenuBar.now(
+                isRecording: true, isAway: false, current: ("Xcode", 0), now: 600_000
+            ),
+            .inApplication(name: "Xcode", seconds: 600)
         )
 
         // A week begins on Monday, everywhere in the app.

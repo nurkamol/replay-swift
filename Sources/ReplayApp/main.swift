@@ -298,8 +298,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        // `MenuBar.symbol`, and it matters: in the menu bar `clock.arrow.circlepath` is
+        // Time Machine's glyph, so a status item wearing it reads as a system backup
+        // service. The reference says so in a comment and this port used it anyway.
         item.button?.image = NSImage(
-            systemSymbolName: "clock.arrow.circlepath",
+            systemSymbolName: MenuBar.symbol,
             accessibilityDescription: "Replay"
         )
         item.button?.imagePosition = .imageLeading
@@ -320,7 +323,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             button.title = ""
         }
-        button.toolTip = model.statusLine
+        button.toolTip = MenuBar.tooltip(
+            isRecording: model.isRecording, current: model.current?.applicationName
+        )
     }
 
     private func showWindow() {
@@ -698,29 +703,40 @@ extension AppDelegate: NSMenuDelegate {
         refreshStatusTitle()
         menu.removeAllItems()
 
-        let status = NSMenuItem(title: model.statusLine, action: nil, keyEquivalent: "")
-        status.isEnabled = false
-        menu.addItem(status)
+        // What is happening right now, in the reference's four states. This used to show
+        // the day's total, its session count and its top application — all things the
+        // window is for. A menu pulled down mid-task wants the last few seconds.
+        func caption(_ title: String) {
+            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            menu.addItem(item)
+        }
 
-        if let summary = model.summary, summary.switches > 0 {
-            let detail = NSMenuItem(
-                title: "\(formatDurationShort(summary.activeSeconds)) active · "
-                    + "\(summary.sessionCount) \(summary.sessionCount == 1 ? "session" : "sessions")",
-                action: nil,
-                keyEquivalent: ""
-            )
-            detail.isEnabled = false
-            menu.addItem(detail)
+        switch MenuBar.now(
+            isRecording: model.isRecording, isAway: model.isAway,
+            current: model.current, now: Int64(Date().timeIntervalSince1970 * 1000)
+        ) {
+        case .paused: caption(MenuBar.pausedLabel)
+        case .away: caption(MenuBar.awayLabel)
+        case .waiting: caption(MenuBar.waitingLabel)
+        case .inApplication(let name, let seconds):
+            caption(name)
+            caption(MenuBar.focusedFor(seconds))
+        }
 
-            if let top = summary.mostUsed {
-                let topItem = NSMenuItem(
-                    title: "Most used: \(top.applicationName) · \(formatDurationShort(top.seconds))",
-                    action: nil,
-                    keyEquivalent: ""
-                )
-                topItem.isEnabled = false
-                menu.addItem(topItem)
-            }
+        // And what you were just in. Distinct applications rather than distinct visits: you
+        // return to the same editor a dozen times an hour, and a list that repeats it is a
+        // switch log rather than an answer.
+        let since = Int64(Date().timeIntervalSince1970 * 1000)
+            - Int64(MenuBar.recentHours) * 60 * 60 * 1000
+        let rows = (try? model.store.sessions(from: since, to: since + Int64(MenuBar.recentHours + 1) * 60 * 60 * 1000)) ?? []
+        let recent = MenuBar.recentApplications(
+            in: rows, excluding: model.current?.applicationName
+        )
+        if !recent.isEmpty {
+            menu.addItem(.separator())
+            caption(MenuBar.recentHeading)
+            for name in recent { caption("  \(name)") }
         }
 
         menu.addItem(.separator())
