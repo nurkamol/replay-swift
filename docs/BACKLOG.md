@@ -218,6 +218,11 @@ existing implementation to measure against.
 widget that cannot be registered are each worth zero. That moves signing from "blocked, and
 awkward" to the top of the whole list.
 
+**One of these is not like the others.** Multilingual support is larger than everything else
+on this page put together, and it is the first item in the project's history that cannot be
+checked against anything — see its own note. It sits here rather than in a section of its own
+because it is still a product decision nobody has taken.
+
 - [x] **App Intents / Shortcuts support.** Built 2026-07-28. Three read-only intents —
       today's activity, a given day, and time in one application — with Siri phrases, and six
       behaviour cases over the sentences they return. `scripts/make-app.sh` runs
@@ -248,6 +253,56 @@ awkward" to the top of the whole list.
       · Worth checking first whether the widget could read the *daily headlines* only, which
         are small and could be mirrored into the group container rather than moved. That
         would make it additive instead of a migration, and today's total is a headline.
+
+- [ ] **Multilingual support.** `L`+ — **the largest item ever put on this list**, and the
+      only one that cannot be finished by the person who starts it.
+
+      The reference is English-only: it reaches for `Intl` to format a date and nothing
+      else. So there is no parity to catch up to here, and no contract to generate — which
+      makes this the purest §6 item on the page, and the one where being wrong is most
+      expensive.
+
+      **What is already done, and it is more than it looks.** Dates, times, durations and
+      weekday names all go through `.formatted()` and the calendar's own symbols, so they
+      are locale-correct today. The heatmap reads `veryShortStandaloneWeekdaySymbols`; the
+      week starts on Monday by rule rather than by locale, which is deliberate and stays.
+      Nothing has to be unpicked to begin.
+
+      **What the work actually is**, in rising order of difficulty:
+      · **~162 literal strings in views.** Mechanical. A string catalogue and a pass.
+      · **28 files pluralise by hand** — `count == 1 ? "session" : "sessions"`. English's
+        one-or-many is the exception, not the rule: Russian needs three forms and Arabic
+        six. Every one of these becomes a proper plural rule, and a wrong one is not a typo
+        but a sentence that reads as broken.
+      · **Sentences assembled from clauses.** `Answers`, `DayStory`, `Autobiography`,
+        `MorningBriefing` build prose by joining parts. Word order is not universal, so
+        each becomes a format string with positional arguments — and some will need
+        rewriting rather than translating, because a clause that works appended in English
+        may have to be a whole sentence elsewhere.
+      · **The layout.** German runs long, and this design uses fixed widths and tracked
+        capitals in places. Right-to-left is a second pass again.
+      · **The build.** `.xcstrings` are compiled by an Xcode build phase, and this project
+        assembles its bundle by hand — the same problem App Intents had. It is solved once
+        now, in `make-app.sh`, so the shape is known.
+
+      **The contract is not in the way, and it is worth saying so plainly.**
+      `spec/settings-copy.json`, `spec/guide.json` and `spec/narrative-copy.json` pin the
+      reference's English character for character. Localising does not weaken that: English
+      stays the source language and stays checked. Translations sit beside it, unchecked by
+      anything — which is the actual risk, and it is a new category for this project.
+      Everything user-facing here has been verifiable against something. Translated copy is
+      the first thing that will not be.
+
+      **Do not machine-translate it.** SPEC §8 says the copy *is* the product, and this
+      app's voice is unusually deliberate — "nothing set, nothing scheduled", "a day too
+      thin to narrate honestly gets no story". A flat translation does not deliver a
+      partial version of that; it delivers a different, worse product that happens to be in
+      your language. The first non-English language should be one the author actually
+      speaks, and it should be treated as rewriting the app in that language rather than
+      substituting words.
+      · Worth doing **one** language properly first and living with it, rather than three
+        at once. The first one will surface every structural assumption; the second will be
+        a tenth of the work.
 
 - [ ] **A richer menu bar popover.** `S` The item exists and shows the current app and
       today's total. A small popover — the last few sessions, the goal, a pause control —
