@@ -8,6 +8,30 @@ reference implementation — [get it on the Glaze Store](https://www.glaze.app/a
 This repo trails it deliberately, with a generated contract between them so it cannot trail
 it *silently*.
 
+## What Replay does, and what it will not do
+
+It records **which application is in front, and when you were away from the keyboard.** That
+is the entire input. From it Replay builds a day you can read back: sessions, the shape of
+your hours, what you kept coming back to, and a history that grows into something worth
+looking at months later.
+
+What it never does:
+
+- **No permissions.** Not Accessibility, not Automation, not Screen Recording. It reads which
+  app is frontmost through the standard macOS signal every app can see, and nothing else. If
+  a feature seemed to need a permission, it was the wrong feature.
+- **It cannot see inside your windows.** No titles, no documents, no URLs, no keystrokes, no
+  screenshots. Only an application's name and how long it was in front.
+- **No network.** No account, no cloud, no telemetry, no crash reporting, no update check —
+  there is no networking code in the app at all. Your record is a SQLite file in
+  `~/Library/Application Support/app.replay.native/`, and it has never left your Mac.
+- **It describes rather than grades.** No score, no productivity rating, no "distracting" label
+  on anything. A day that was mostly a browser is described as a day mostly in a browser.
+
+These are checked, not promised. `swift test` runs 932 contract checks against the reference
+implementation, and the claims above are the ones the design is built around — see
+[docs/SPEC.md](docs/SPEC.md), which is the file to read before changing anything.
+
 ## Install
 
 There is no download yet, and that is deliberate rather than unfinished — see below.
@@ -38,26 +62,52 @@ cd replay-swift
 open build/Replay.app
 ```
 
-### Why there is no disk image to download
+### If you downloaded a build
 
-Both routes above **build the app on your machine, and that is what makes it open.**
-Gatekeeper's signing requirement applies to applications *downloaded* from the internet —
-the quarantine flag is set by the browser that fetched the file. Something compiled here was
-never downloaded, so it carries no flag and opens with no dialog.
+**You will see a warning the first time, and it is not about this app.**
 
-A disk image from a release page would not. Without a Developer ID signature Gatekeeper
-rejects it outright — measured, not assumed, in [docs/FINDINGS.md](docs/FINDINGS.md) — and
-since macOS 15 there is no Control-click bypass, so the only way in is System Settings ▸
-Privacy & Security ▸ Open Anyway.
+macOS marks *everything* downloaded through a browser with a quarantine flag, and refuses to
+open anything under that flag unless it carries a paid Apple Developer ID signature. Replay
+does not have one yet, so the message is about a missing certificate rather than anything
+found in the app.
 
-Which is a poor thing to ask of anybody, and a worse thing to ask for *this* app. Replay's
-whole claim is that nothing leaves your Mac and nothing is being asked of you. Telling you to
-override macOS's own security check in order to install it would undercut the only thing it
-is really selling.
+What you will see: **"Apple could not verify Replay is free of malware"**, offering only
+*Move to Trash* or *Cancel*. To open it anyway:
 
-`scripts/make-dmg.sh` and `.github/workflows/release.yml` are written and waiting; the day a
-Developer ID exists, a signed and notarised image is one tag away — and the Homebrew route
-stays exactly as it is, because it never needed one.
+1. Try to open it once and dismiss the warning.
+2. **System Settings ▸ Privacy & Security**, scroll down, and click **Open Anyway**.
+3. Confirm. It opens normally from then on.
+
+Or, in a terminal, one line:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Replay.app
+```
+
+**Ignore any instruction to "right-click and choose Open".** That bypass existed for years and
+**Apple removed it in macOS 15**; it is still the advice in most projects' READMEs and it no
+longer does anything. System Settings is the route now.
+
+**None of this applies to the two routes above.** Homebrew and a source build compile on your
+machine, so nothing is ever downloaded and nothing is ever quarantined — they open with no
+warning at all. That is the reason they are listed first rather than as a fallback.
+
+### Why there is no signed download
+
+A disk image from a release page needs a **Developer ID signature and Apple notarisation** to
+open without that warning — measured, not assumed, in [docs/FINDINGS.md](docs/FINDINGS.md),
+along with the archive formats that were tested and do not avoid it. That means the Apple
+Developer Program, which is **$99 a year**. There is no free path to it: a free Apple account
+issues certificates that sign apps for your own machines only.
+
+It is worth being plain that this is the *only* thing standing in the way. Everything else is
+built: `scripts/make-dmg.sh` produces the image, `.github/workflows/release.yml` signs,
+notarises, staples and publishes it, and both refuse to run rather than produce something
+Gatekeeper will reject. The day a certificate exists, a signed download is one tag away.
+
+Automatic updates are a separate decision and deliberately not built. The usual answer is
+Sparkle, which is an external dependency — this project has none, on purpose, and that rule
+would be changed openly rather than in passing. See [docs/BACKLOG.md](docs/BACKLOG.md) §6.
 
 ## Quickstart
 

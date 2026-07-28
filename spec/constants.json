@@ -288,6 +288,11 @@
     "wheelStep": 1.09,
     "wheelSensitivity": 0.012
   },
+  "tray": {
+    "recentLimit": 4,
+    "recentHours": 12,
+    "symbol": "chart.bar.xaxis"
+  },
   "screensaver": {
     "driftSeconds": 90,
     "reducedSeconds": 240,

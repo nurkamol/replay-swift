@@ -92,6 +92,23 @@ function inline(source, file, what, pattern) {
   return match.slice(1).map(Number);
 }
 
+/**
+ * The same, for a constant that is a *string*.
+ *
+ * `inline` maps every capture through `Number`, which is right for thresholds and silently
+ * wrong for anything else — a glyph name came back as `NaN` and was written to `spec/` as
+ * `null` with no complaint. Separate function rather than a flag, so a call site says which
+ * kind of value it is reading and cannot get the wrong one by omission.
+ */
+function inlineText(source, file, what, pattern) {
+  const match = source.match(pattern);
+  if (!match) {
+    problems.push(`${file}: ${what} not found — written differently now?`);
+    return [];
+  }
+  return match.slice(1);
+}
+
 // ── schema ────────────────────────────────────────────────────────────────────
 
 const storeSrc = read("main/services/activity-store.ts");
@@ -532,6 +549,31 @@ const constants = {
       glideRestSpeed,
       wheelStep,
       wheelSensitivity,
+    };
+  })(),
+
+  /*
+   * The menu bar item.
+   *
+   * A surface nobody had audited — it was not in the list of eleven, because the list was
+   * built from the reference's *router* and a tray has no route. It answers two questions,
+   * in the reference's own words: what am I in right now, and what was I just in. This port
+   * answered neither, and showed day totals instead.
+   */
+  tray: (() => {
+    const src = read("main/tray.ts");
+    const f = "tray.ts";
+    const [recentHours] = inline(
+      src, f, "how far back the recent list reaches",
+      /const since = Date\.now\(\) - (\d+) \* 60 \* 60 \* 1000;/,
+    );
+    return {
+      recentLimit: constant(src, f, "RECENT_LIMIT"),
+      recentHours,
+      // The glyph is load-bearing and the reference says why in a comment: in the menu bar
+      // `clock.arrow.circlepath` is Time Machine's, so a status item using it reads as a
+      // system backup service. This port used exactly that.
+      symbol: inlineText(src, f, "the status item's glyph", /new Tray\("([\w.]+)"\)/)[0],
     };
   })(),
 
