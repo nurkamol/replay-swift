@@ -198,6 +198,61 @@
   .gallery figcaption span { color: var(--dim); font-size: .93rem; line-height: 1.5; }
   .gallery .wide { grid-column: 1 / -1; }
 
+  /* ── Lightbox ───────────────────────────────────────────────────────── */
+  /* Hand-rolled, like everything else here: a library for this would be the first dependency
+     on a page whose argument is that the app has none. */
+  .zoomable { cursor: zoom-in; }
+  #lb {
+    position: fixed; inset: 0; z-index: 100;
+    display: none;
+    background: rgba(0, 0, 0, .88);
+    -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+    padding: 40px 24px 24px;
+    /* Rows rather than centring, so a tall screenshot and its caption cannot collide.
+       `minmax(0, 1fr)` rather than `1fr`: a bare `1fr` track refuses to shrink below its
+       content, so the image sized itself to its natural height and pushed the caption out
+       of the overlay entirely — visible only by looking at the rendered page. */
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 18px;
+    justify-items: center;
+    cursor: zoom-out;
+  }
+  #lb[open] { display: grid; }
+  #lb img {
+    max-width: 100%; max-height: 100%; min-height: 0;
+    width: auto; height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, .6);
+    cursor: default;
+  }
+  #lb .lbcap {
+    color: #f5f5f7; text-align: center; max-width: 62ch;
+    font-size: .95rem; line-height: 1.5; margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  }
+  #lb button {
+    position: fixed; top: 16px;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 0; background: rgba(255, 255, 255, .12); color: #fff;
+    font-size: 20px; line-height: 1; cursor: pointer;
+    display: grid; place-items: center;
+  }
+  #lb button:hover { background: rgba(255, 255, 255, .24); }
+  #lb button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  #lb .close { right: 16px; }
+  #lb .prev { left: 16px; top: 50%; transform: translateY(-50%); }
+  #lb .next { right: 16px; top: 50%; transform: translateY(-50%); }
+  @media (max-width: 620px) { #lb .prev, #lb .next { display: none; } }
+  body.locked { overflow: hidden; }
+  /* An overlay that appears instantly is jarring; one that fades is not. Motion is opacity
+     only, so Reduce Motion has nothing to object to. */
+  @media (prefers-reduced-motion: no-preference) {
+    #lb { animation: none; }
+    #lb[open] { animation: fade .16s ease-out; }
+    @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+  }
+
   footer {
     border-top: 1px solid var(--line);
     padding: 52px 0 68px;
@@ -446,6 +501,16 @@ brew install nurkamol/tap/replay        <span class="c"># the command-line reade
       </figure>
 
       <figure>
+        <img src="img/gallery/privacy.jpg" alt="Settings, Privacy pane: a banner reading Everything stays on this Mac, the one permission Replay asks for, and counts of what is stored." width="1200" height="867" loading="lazy">
+        <figcaption>
+          <b>Settings ▸ Privacy</b>
+          <span>What is stored, in numbers, with the database’s exact path — and the only
+          permission Replay ever asks for, which is notifications, for the recaps. It records,
+          remembers and shows your history whether or not you grant it.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
         <img src="img/gallery/ambient.jpg" alt="Ambient mode: a large clock and today's total on an otherwise black full screen." width="1200" height="675" loading="lazy">
         <figcaption>
           <b>Ambient mode</b>
@@ -499,6 +564,85 @@ brew install nurkamol/tap/replay        <span class="c"># the command-line reade
     <p>The screenshots are of a real record, not a mock-up.</p>
   </div>
 </footer>
+
+
+<!-- Built by script from the images already on the page, so a new screenshot is picked up by
+     adding a <figure> and nothing else. Without JavaScript every image is still visible and
+     the page still reads; only the zoom is gone. -->
+<div id="lb" role="dialog" aria-modal="true" aria-label="Screenshot">
+  <img alt="">
+  <p class="lbcap"></p>
+  <button class="prev" type="button" aria-label="Previous screenshot">‹</button>
+  <button class="next" type="button" aria-label="Next screenshot">›</button>
+  <button class="close" type="button" aria-label="Close">✕</button>
+</div>
+
+<script>
+(function () {
+  var lb = document.getElementById('lb');
+  var pic = lb.querySelector('img');
+  var cap = lb.querySelector('.lbcap');
+  var shots = [].slice.call(document.querySelectorAll('.shot img, .gallery img'));
+  var at = 0, opener = null;
+
+  shots.forEach(function (img, i) {
+    img.classList.add('zoomable');
+    img.tabIndex = 0;
+    img.setAttribute('role', 'button');
+    img.setAttribute('aria-label', 'View larger: ' + (img.alt || 'screenshot'));
+    img.addEventListener('click', function () { open(i, img); });
+    // Enter and Space, because it behaves like a button and is reachable by keyboard.
+    img.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(i, img); }
+    });
+  });
+
+  function show(i) {
+    at = (i + shots.length) % shots.length;
+    var img = shots[at];
+    pic.src = img.currentSrc || img.src;
+    pic.alt = img.alt || '';
+    // The gallery's own caption, when there is one; the alt text otherwise.
+    var fig = img.closest('figure');
+    var b = fig && fig.querySelector('figcaption b');
+    cap.textContent = b ? b.textContent : (img.alt || '');
+  }
+
+  function open(i, from) {
+    opener = from;
+    show(i);
+    lb.setAttribute('open', '');
+    document.body.classList.add('locked');
+    lb.querySelector('.close').focus();
+  }
+
+  function close() {
+    lb.removeAttribute('open');
+    document.body.classList.remove('locked');
+    pic.removeAttribute('src');
+    // Put the caller back where they were, or the page loses the reader's place.
+    if (opener) { opener.focus(); opener = null; }
+  }
+
+  lb.addEventListener('click', function (e) {
+    if (e.target === lb || e.target === cap) close();
+  });
+  lb.querySelector('.close').addEventListener('click', close);
+  lb.querySelector('.prev').addEventListener('click', function (e) {
+    e.stopPropagation(); show(at - 1);
+  });
+  lb.querySelector('.next').addEventListener('click', function (e) {
+    e.stopPropagation(); show(at + 1);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (!lb.hasAttribute('open')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowLeft') show(at - 1);
+    else if (e.key === 'ArrowRight') show(at + 1);
+  });
+})();
+</script>
 
 </body>
 </html>
