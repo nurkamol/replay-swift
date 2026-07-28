@@ -248,7 +248,7 @@ running app behind your back.
 
 **Where is my data, and how do I get it out?**
 `~/Library/Application Support/app.replay.native/replay.db`, a plain SQLite file you can open
-with any tool. Settings ▸ Data exports a slice as Markdown, HTML, CSV, JSON or PDF, or the
+with any tool. Settings ▸ Data exports a slice as Markdown, HTML, CSV or JSON, or the
 whole database as a backup. Nothing is locked in, and deleting the folder deletes everything.
 
 **Does it run on Intel?**

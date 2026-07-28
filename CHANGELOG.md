@@ -23,13 +23,18 @@ Developer ID and notarised. Everything before it is a version of the source.
 
 Feature-complete: every route the reference has, both of its display modes, and the whole of
 its Settings. Nine rather than one because nothing is missing against the reference, and not
-ten because it still cannot be installed by anyone but the person who built it. Level with **Glaze 2.3.2** (`d355ba2`), verified by **932
-contract checks and 67 behaviour cases**.
+ten because it still cannot be handed to somebody as a finished application. Level with
+**Glaze 2.3.2** (`d355ba2`), verified by **951 contract checks and 74 behaviour cases**.
 
-Dated rather than released. `scripts/make-app.sh` signs ad-hoc, which runs on the machine
-that built it and nowhere else, so this is a version of the source and not something anyone
-can be handed. Signing is the only thing standing between the two, and it needs a Developer
-ID rather than any more code.
+**A source release, and the distinction is the honest one.** There is no disk image on the
+release page. `scripts/make-app.sh` signs ad-hoc, which runs on the machine that built it and
+nowhere else, and macOS refuses a *downloaded* app with no Developer ID — so an unsigned
+image would look like a download and behave like a broken app. What this release is instead
+is a **version**: something Homebrew can build from and something the update check can see,
+neither of which needs a certificate. Install it with `brew install nurkamol/tap/replay-app`
+or from the source tarball; both compile locally, are never quarantined, and open with no
+warning. Signing remains the only thing between this and 1.0.0, and it needs a Developer ID
+rather than any more code.
 
 ### Added
 
@@ -155,6 +160,40 @@ something; these are the ones worth naming.
   by a `ZStack` sizing to its drifting column.
 - **The Timeline built every row before showing one**, which read as a slow query and was
   not: the data is 22ms.
+
+### Added — getting it to somebody else
+
+- **An update check**, opt-in and off by default: at most one `GET` a day to GitHub's public
+  releases API, no body and no identifier, and a bar with the notes if a newer tag exists. It
+  downloads nothing and replaces nothing — a self-updater has to verify a signature and swap
+  a running bundle, and until there is a Developer ID it would be trading a working app for
+  one Gatekeeper refuses. `Check for Updates…` sits under About Replay where every Mac app
+  puts it. **This is the first network code the app has ever had**, which cost more in prose
+  than in Swift: README and SPEC both claimed there was none, both were true and are not, and
+  both were rewritten around the claim that survives — *nothing recorded ever leaves the
+  machine, under any setting*. The Guide could not be edited to match, because its sixteen
+  answers are compared character for character against the reference and the reference
+  genuinely has no network, so `Guide.ownEntries` states the exception beside them.
+- **A release pipeline.** `scripts/make-dmg.sh`, a tagged workflow that runs the whole suite
+  before it publishes, and `tools/release-notes.mjs` so the changelog and the release page
+  cannot disagree. It refuses to attach an unsigned image and publishes a source release
+  instead.
+- **A Homebrew tap** — `nurkamol/tap`, with a formula for the application and one for the
+  CLI. Formulae rather than casks, which is the whole trick: a cask installs a prebuilt
+  binary and needs a certificate, a formula *builds*, and an app built on your own machine
+  was never downloaded and is never quarantined.
+
+### Fixed — found by looking at it
+
+- **The menu bar item answered the wrong questions**, showing the day's total and top app —
+  things the window is for — where the reference answers *what am I in now, and what was I
+  just in*. It also wore `clock.arrow.circlepath`, which in the menu bar is Time Machine's
+  icon, so the status item read as a system backup service.
+- **A page never grew with its window.** Every surface was capped at 760pt — the measure for
+  prose — and pinned left, so widening the window grew a dead column against the scroll bar
+  and the page read as content that had failed to load. Pages now grow to 1080 and centre
+  the remainder; `readableWidth` moved to where it belongs, on the paragraph rather than the
+  page, so a card is as wide as its page and the sentence inside it is not.
 
 ### Known gaps
 

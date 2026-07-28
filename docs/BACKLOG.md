@@ -369,6 +369,37 @@ because it is still a product decision nobody has taken.
       · Still true, and still the better route: **anyone who installed with Homebrew already
         has updates** via `brew upgrade`, with no network code in the app at all.
 
+- [ ] **iCloud, as an option and only ever as an option.** `L` — and the size is the least
+      of it. Asked for on 2026-07-28 as a way to keep the record safe rather than to sync it,
+      and those are two features with very different costs.
+      · **It runs straight into the one invariant this app has left.** SPEC §1 now says
+        *nothing recorded is ever transmitted anywhere, under any setting* — the claim that
+        survived adding an update check, precisely because the check sends nothing. iCloud
+        would be the first thing to send the record itself. That does not make it wrong, but
+        it makes it a change to what Replay *is*, not a feature to slot in: it would have to
+        be off by default, explained before it is switched on, and stated plainly in the
+        README, the Guide and SPEC on the same day the code lands. A switch that quietly
+        makes an old promise false is the one failure this project cannot afford.
+      · **Backup is much smaller than sync, and is probably the real ask.** The app already
+        writes a full backup and already imports one by merging rather than overwriting.
+        Dropping that file into `~/Library/Mobile Documents/` on a schedule is a day's work
+        and gives you the whole of the safety with none of the hard part. It is one
+        direction, it has no conflicts, and a second Mac restores from it by hand.
+      · **Sync is the hard part and it is genuinely hard.** Two Macs both recording produce
+        two overlapping event streams for the same wall-clock hours, and there is no correct
+        merge — you were in front of one of them, and the record cannot say which. Sessions
+        are *derived*, so a merge has to happen on raw events and re-derive, and the derived
+        titles, notes, tags and bookmarks then have to be reconciled on top. CloudKit gives
+        you transport and conflict *detection*; the resolution is a product decision nobody
+        has made. Do not start here.
+      · **Never put the live SQLite file in iCloud Drive.** A file-sync layer copying a
+        database out from under an open connection is how a record gets truncated, and this
+        app holds its connection open all day. Export a backup; do not sync the store.
+      · **Blocked on the same thing as everything else.** A CloudKit container needs a paid
+        Apple Developer account and an entitlement, which is the same certificate §4 is
+        waiting on. iCloud Drive via the ubiquity container needs the account too. So this
+        cannot even be prototyped until signing is solved.
+
 - [ ] **A richer menu bar popover.** `S` The item exists and shows the current app and
       today's total. A small popover — the last few sessions, the goal, a pause control —
       is cheap and does not need signing to try.
@@ -382,8 +413,12 @@ because it is still a product decision nobody has taken.
 
 ### Considered and not proposed
 
-- **Sync between Macs.** It would be the first network code in an app whose entire claim is
-  that there is none. Not a feature to weigh against others; a different product.
+- **Sync between Macs.** Kept here, but the reason has changed and the old wording was
+  overtaken by events: it used to say sync "would be the first network code in an app whose
+  entire claim is that there is none", and as of 2026-07-28 the app has network code — an
+  opt-in update check. That check sends *nothing*, which is why the claim that matters
+  survived it. Sync would send the record, and that is the actual objection. See the iCloud
+  entry in §6, which is where the version of this worth considering lives.
 - **Anything that classifies or scores a day.** SPEC §8 — Replay describes, it does not
   grade. A "productivity score" is the most obvious idea in this space and the most clearly
   against what the app is.

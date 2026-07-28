@@ -98,18 +98,39 @@ jobs:
       - name: Behaviour
         run: swift test
 
+      # Signed or not, decided once and read by every step below.
+      #
+      # This used to stop the run dead without a certificate, which was right while the
+      # alternative was publishing something nobody could open. It is not right any more:
+      # a release is also a *version*, and a version is what Homebrew builds from and what
+      # the in-app update check looks for. Both work from the source tarball GitHub attaches
+      # to any release, neither needs a signature, and refusing to tag until a certificate
+      # exists held those hostage to it.
+      #
+      # So a run without secrets publishes the release and no disk image, and says so in the
+      # notes. What it will never do is attach an *unsigned* image: that looks like a
+      # download and behaves like a broken app, and you get one first impression.
+      - name: Can this run sign?
+        env:
+          CERT_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
+        run: |
+          if [ -n "$CERT_P12" ]; then
+            echo "SIGNED=1" >> "$GITHUB_ENV"
+            echo "This release will carry a signed, notarised disk image."
+          else
+            echo "SIGNED=0" >> "$GITHUB_ENV"
+            echo "::warning::No Developer ID. Publishing a source release with no disk image;"
+            echo "::warning::install with Homebrew or from source. See the README."
+          fi
+
       # A throwaway keychain, unlocked for this job and destroyed after it, so the
       # certificate never touches the runner's login keychain and cannot outlive the run.
       - name: Import the signing certificate
+        if: env.SIGNED == '1'
         env:
           CERT_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
           CERT_PASS: ${{ secrets.SIGNING_CERTIFICATE_PASS }}
         run: |
-          if [ -z "$CERT_P12" ]; then
-            echo "::error::SIGNING_CERTIFICATE_P12 is not set. A release without a Developer ID"
-            echo "::error::would be refused by Gatekeeper on every Mac but the one that built it."
-            exit 1
-          fi
           KEYCHAIN="$RUNNER_TEMP/replay-signing.keychain-db"
           PASSWORD="$(uuidgen)"
           security create-keychain -p "$PASSWORD" "$KEYCHAIN"
@@ -123,6 +144,7 @@ jobs:
           rm -f "$RUNNER_TEMP/cert.p12"
 
       - name: Build, sign, notarise and staple
+        if: env.SIGNED == '1'
         env:
           REPLAY_SIGN_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
           REPLAY_NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
@@ -137,13 +159,39 @@ jobs:
       # Proves the result opens on a machine that has never seen it, which is the only
       # question this whole workflow exists to answer.
       - name: The image is stapled
+        if: env.SIGNED == '1'
         run: |
           xcrun stapler validate "build/Replay-$VERSION.dmg"
           spctl --assess --type open --context context:primary-signature -vv \
             "build/Replay-$VERSION.dmg"
 
+      # One text, written once, in CHANGELOG.md. An unsigned run prepends how to install,
+      # because a release page with no download and no explanation reads as a mistake.
       - name: Release notes, from the changelog
-        run: node tools/release-notes.mjs "$VERSION" > "$RUNNER_TEMP/notes.md"
+        run: |
+          if [ "$SIGNED" != "1" ]; then
+            cat > "$RUNNER_TEMP/notes.md" <<'PREAMBLE'
+          > **There is no download on this page, and that is deliberate.** Replay has no Apple
+          > Developer ID yet, and macOS refuses a *downloaded* app that has no signature. An
+          > unsigned disk image would look like a download and behave like a broken app, so
+          > none is published.
+          >
+          > Install it by building it — neither route is ever quarantined, and both open with
+          > no warning at all:
+          >
+          > ```sh
+          > brew tap nurkamol/tap
+          > brew install nurkamol/tap/replay-app    # the application
+          > brew install nurkamol/tap/replay        # the command-line reader
+          > ```
+          >
+          > Or from the source tarball below: `./scripts/make-app.sh release && open build/Replay.app`.
+          > A signed disk image appears here the day there is a certificate; the workflow that
+          > builds it is already written.
+
+          PREAMBLE
+          fi
+          node tools/release-notes.mjs "$VERSION" >> "$RUNNER_TEMP/notes.md"
 
       - uses: softprops/action-gh-release@v2
         with:
@@ -152,8 +200,11 @@ jobs:
           files: |
             build/Replay-${{ env.VERSION }}.dmg
             build/Replay-${{ env.VERSION }}.dmg.sha256
-          fail_on_unmatched_files: true
+          # Off, because an unsigned run has no image to attach and the release is still
+          # worth publishing. The signed path is protected by the stapler check above, which
+          # fails before this step if the image is missing or unnotarised.
+          fail_on_unmatched_files: false
 
       - name: Destroy the signing keychain
-        if: always()
+        if: always() && env.SIGNED == '1'
         run: security delete-keychain "$RUNNER_TEMP/replay-signing.keychain-db" || true
