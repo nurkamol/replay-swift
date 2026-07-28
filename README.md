@@ -63,6 +63,7 @@ Sources/ReplayCore/
   ActivityTracker.swift  NSWorkspace + idle time → recorded sessions
 Sources/ParityKit/       the parity suite — 931 checks against the reference
 Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
+Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
 Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
 Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
 Tests/ReplayAppTests/    61 behaviour cases over the app's own models
@@ -71,6 +72,7 @@ tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
 tools/port-queue.mjs     lists Glaze commits this port still owes
 tools/design-audit.mjs   fails if a view spells a visual constant
 tools/shortcut-audit.mjs fails if a bound key is undocumented, or documented and unbound
+tools/cli-audit.sh       the CLI's exit codes, stream discipline and --json shape
 Resources/AppIcon.icns   the product's icon, carried over from the Glaze app
 docs/                    read these
 scripts/make-app.sh      assemble a runnable .app

@@ -308,10 +308,12 @@ because it is still a product decision nobody has taken.
       today's total. A small popover — the last few sessions, the goal, a pause control —
       is cheap and does not need signing to try.
 
-- [ ] **A command-line reader.** `S`–`M` `replay today`, `replay export --json`. Falls out of
-      `ReplayCore` almost free, is genuinely useful for anyone who scripts, and is the one
-      thing here that can be built and used *without* a Developer ID. A reasonable
-      consolation while signing is blocked.
+- [x] **A command-line reader.** Built 2026-07-28. `replay today`, `day`, `app`, `export`,
+      with `--json` everywhere and `--database` for reading another file. Read-only except
+      `export --output`, which writes only where you point it. `tools/cli-audit.sh` checks
+      the three things that make a CLI different from a function — exit codes, stream
+      discipline, and the shape of `--json` — because all three break somebody's automation
+      silently while every sentence still reads correctly by eye.
 
 ### Considered and not proposed
 

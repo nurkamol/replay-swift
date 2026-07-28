@@ -79,6 +79,26 @@
             "target": "replay-import",
             "configuration": "release",
             "preLaunchTask": "swift: Build Release replay-import"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Debug replay",
+            "target": "replay",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug replay"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:replay}",
+            "name": "Release replay",
+            "target": "replay",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release replay"
         }
     ]
 }

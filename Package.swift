@@ -35,6 +35,9 @@ let package = Package(
         // Brings a Glaze user's history across, and gives the UI real data to develop
         // against rather than fixtures.
         .executable(name: "replay-import", targets: ["ReplayImport"]),
+        // `replay` — the record from a shell. The one thing on the backlog that needs no
+        // Developer ID, and the second consumer of ReplayCore from outside the app.
+        .executable(name: "replay", targets: ["ReplayCLI"]),
     ],
     targets: [
         .target(name: "ReplayCore"),
@@ -51,5 +54,6 @@ let package = Package(
         .testTarget(name: "ReplayAppTests", dependencies: ["ReplayApp", "ReplayCore"]),
         .executableTarget(name: "IconProbe"),
         .executableTarget(name: "ReplayImport", dependencies: ["ReplayCore"]),
+        .executableTarget(name: "ReplayCLI", dependencies: ["ReplayCore"]),
     ]
 )

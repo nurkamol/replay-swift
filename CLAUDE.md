@@ -31,6 +31,8 @@ node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token
 node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or documented and unbound
+./tools/cli-audit.sh            # the CLI's exit codes, stream discipline and --json shape
+swift run replay -- today       # the record from a shell; `replay help` for the rest
 ./scripts/make-app.sh           # assemble a runnable .app
 ```
 

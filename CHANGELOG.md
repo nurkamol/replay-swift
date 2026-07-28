@@ -127,6 +127,17 @@ These are the ones worth reading. Each was invisible until something checked it.
 - **The same icons were inlined once per use** — fifty-odd icons appearing three hundred
   times in one document. Defined once as CSS classes and referenced by name.
 
+### Added — beyond the reference
+
+The first things Replay does that the Glaze app does not.
+
+- **App Intents.** Three read-only intents — today's activity, a given day, and time in one
+  application — with Siri phrases, so the record is reachable from Shortcuts and Spotlight.
+- **`replay`, a command-line reader.** `replay today`, `replay day yesterday`,
+  `replay app Xcode`, `replay export --format json`. Everything supports `--json`, nothing
+  can change the record, and exit codes distinguish "you asked wrongly" from "I could not
+  answer" so a script can branch on them.
+
 ### Fixed — divergences the audits found
 
 Seven surface audits, each comparing a view against its reference beside it. Every one found
