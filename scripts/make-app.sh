@@ -115,9 +115,21 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 # Ad-hoc signature: enough for local launch, not for distribution.
-codesign --force --sign - "$APP" >/dev/null 2>&1 \
-  && echo "Signed ad-hoc." \
-  || echo "Could not sign; the app may still run locally."
+# A Developer ID if one was handed in, ad-hoc otherwise.
+#
+# `REPLAY_SIGN_IDENTITY` is how `make-dmg.sh --release` and the release workflow ask for a
+# real signature. Deep and hardened-runtime, because notarisation refuses anything less, and
+# `--options runtime` has to be on the app before the disk image is built rather than after.
+if [ -n "${REPLAY_SIGN_IDENTITY:-}" ]; then
+    codesign --force --deep --options runtime --timestamp \
+        --sign "$REPLAY_SIGN_IDENTITY" "$APP" \
+      && echo "Signed with $REPLAY_SIGN_IDENTITY (hardened runtime)." \
+      || { echo "signing failed with $REPLAY_SIGN_IDENTITY" >&2; exit 1; }
+else
+    codesign --force --sign - "$APP" >/dev/null 2>&1 \
+      && echo "Signed ad-hoc — runs here, and nowhere else." \
+      || echo "Could not sign; the app may still run locally."
+fi
 
 echo "Built $APP"
 echo "Run with: open '$APP'   (or '$APP/Contents/MacOS/Replay' to see stdout)"

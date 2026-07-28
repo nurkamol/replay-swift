@@ -1,0 +1,159 @@
+# A downloadable build, from a version tag.
+#
+# What this produces
+# ------------------
+# A signed, notarised, stapled disk image attached to a GitHub release, with a SHA-256
+# beside it and release notes taken straight out of `CHANGELOG.md`. Nothing about the
+# release is written twice: the notes come from the changelog, the version comes from
+# `scripts/make-app.sh`, and the tag has to agree with both before anything is built.
+#
+# What it refuses to do
+# ---------------------
+# Ship an unsigned image. Gatekeeper refuses a downloaded app that has no Developer ID, and
+# the person who tried reads that as a broken app rather than an unsigned one — you get one
+# first impression. `make-dmg.sh --release` exits rather than produce one, so until the
+# signing secrets exist this workflow fails at a named step instead of publishing something
+# nobody can open.
+#
+# Secrets it needs, none of which exist yet
+# -----------------------------------------
+#   SIGNING_CERTIFICATE_P12   base64 of a Developer ID Application .p12
+#   SIGNING_CERTIFICATE_PASS  its password
+#   SIGNING_IDENTITY          "Developer ID Application: Name (TEAMID)"
+#   NOTARY_KEY                base64 of the App Store Connect .p8 private key
+#   NOTARY_KEY_ID             its key id
+#   NOTARY_ISSUER             the issuer UUID
+#
+# An API key rather than a stored notarytool profile, because a runner has no keychain
+# worth storing one in and a password would have to be typed by somebody.
+
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, without the leading v"
+        required: true
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Toolchain
+        run: |
+          sw_vers
+          xcode-select -p
+          swift --version
+
+      # Three places name the version — the tag, `make-app.sh`, and the newest changelog
+      # entry — and a release where they disagree describes something other than what it
+      # ships. Checked before anything is built, because the fix is a one-line edit and
+      # finding out after a 40-minute notarisation would be miserable.
+      - name: The tag, the build and the changelog agree
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          BUILD_VERSION="$(grep -m1 '^VERSION=' scripts/make-app.sh | cut -d'"' -f2)"
+          if [ "$VERSION" != "$BUILD_VERSION" ]; then
+            echo "::error::tag says $VERSION, scripts/make-app.sh says $BUILD_VERSION"
+            exit 1
+          fi
+          node tools/release-notes.mjs "$VERSION" --check
+
+      # The same checks `parity.yml` runs. A release is the one build where "we ran the
+      # tests on the branch" is not good enough — this is the artefact, so it is checked.
+      - name: No view spells a number
+        run: node tools/design-audit.mjs
+
+      - name: The shortcut table matches what is bound
+        run: node tools/shortcut-audit.mjs
+
+      - name: Build
+        run: swift build
+
+      - name: The CLI's exit codes, streams and JSON shape
+        run: ./tools/cli-audit.sh
+
+      - name: The contract
+        run: swift run replay-parity
+
+      - name: Behaviour
+        run: swift test
+
+      # A throwaway keychain, unlocked for this job and destroyed after it, so the
+      # certificate never touches the runner's login keychain and cannot outlive the run.
+      - name: Import the signing certificate
+        env:
+          CERT_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
+          CERT_PASS: ${{ secrets.SIGNING_CERTIFICATE_PASS }}
+        run: |
+          if [ -z "$CERT_P12" ]; then
+            echo "::error::SIGNING_CERTIFICATE_P12 is not set. A release without a Developer ID"
+            echo "::error::would be refused by Gatekeeper on every Mac but the one that built it."
+            exit 1
+          fi
+          KEYCHAIN="$RUNNER_TEMP/replay-signing.keychain-db"
+          PASSWORD="$(uuidgen)"
+          security create-keychain -p "$PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$PASSWORD" "$KEYCHAIN"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$CERT_PASS" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      - name: Build, sign, notarise and staple
+        env:
+          REPLAY_SIGN_IDENTITY: ${{ secrets.SIGNING_IDENTITY }}
+          REPLAY_NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          REPLAY_NOTARY_ISSUER: ${{ secrets.NOTARY_ISSUER }}
+          NOTARY_KEY_B64: ${{ secrets.NOTARY_KEY }}
+        run: |
+          echo "$NOTARY_KEY_B64" | base64 --decode > "$RUNNER_TEMP/notary.p8"
+          export REPLAY_NOTARY_KEY="$RUNNER_TEMP/notary.p8"
+          ./scripts/make-dmg.sh --release
+          rm -f "$RUNNER_TEMP/notary.p8"
+
+      # Proves the result opens on a machine that has never seen it, which is the only
+      # question this whole workflow exists to answer.
+      - name: The image is stapled
+        run: |
+          xcrun stapler validate "build/Replay-$VERSION.dmg"
+          spctl --assess --type open --context context:primary-signature -vv \
+            "build/Replay-$VERSION.dmg"
+
+      - name: Release notes, from the changelog
+        run: node tools/release-notes.mjs "$VERSION" > "$RUNNER_TEMP/notes.md"
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Replay ${{ env.VERSION }}
+          body_path: ${{ runner.temp }}/notes.md
+          files: |
+            build/Replay-${{ env.VERSION }}.dmg
+            build/Replay-${{ env.VERSION }}.dmg.sha256
+          fail_on_unmatched_files: true
+
+      - name: Destroy the signing keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/replay-signing.keychain-db" || true

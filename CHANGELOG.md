@@ -24,7 +24,7 @@ Developer ID and notarised. Everything before it is a version of the source.
 Feature-complete: every route the reference has, both of its display modes, and the whole of
 its Settings. Nine rather than one because nothing is missing against the reference, and not
 ten because it still cannot be installed by anyone but the person who built it. Level with **Glaze 2.3.2** (`d355ba2`), verified by **931
-contract checks and 61 behaviour cases**.
+contract checks and 67 behaviour cases**.
 
 Dated rather than released. `scripts/make-app.sh` signs ad-hoc, which runs on the machine
 that built it and nowhere else, so this is a version of the source and not something anyone

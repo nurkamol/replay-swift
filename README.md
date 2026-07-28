@@ -76,6 +76,7 @@ tools/cli-audit.sh       the CLI's exit codes, stream discipline and --json shap
 Resources/AppIcon.icns   the product's icon, carried over from the Glaze app
 docs/                    read these
 scripts/make-app.sh      assemble a runnable .app
+scripts/make-dmg.sh      a disk image; --release signs, notarises and staples it
 scripts/icon-probe.sh    the sandbox experiment behind docs/FINDINGS.md
 ```
 
