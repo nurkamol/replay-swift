@@ -19,6 +19,28 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## 0.9.2 — 2026-07-28
+
+**0.9.1 shipped an app that would not open.** This is that fixed, and the check that should
+have caught it.
+
+### Fixed
+
+- **The app died on launch if it could not find its strings catalogue.** `Bundle.module` calls
+  `fatalError` when the bundle is missing, and `Loc` reached for it on a path that runs during
+  startup. Every other path in `Loc` degrades to English by design — a missing `.lproj`, an
+  unreadable table, a key nobody has translated — and missing the whole catalogue should
+  degrade the same way rather than take the app down. It resolves the bundle by hand now and
+  gives up quietly.
+- **How it got through**, because that is the useful part. The resource bundle has two shapes:
+  SwiftPM's native build produces a *flat* one with `Info.plist` at the root, Xcode's produces
+  a *deep* one with `Contents/Resources/`. Every local build was deep and worked; the release
+  was built flat and did not. No test sees either — they run where the bundle is always found.
+  951 contract checks, 115 behaviour cases and four audits all passed on a build nobody could
+  open.
+- **The release workflow now runs the app it is about to publish** and fails if it exits on
+  its own. The only way to catch this class of failure is to launch the artefact.
+
 ## 0.9.1 — 2026-07-28
 
 Everything below happened after 0.9.0 was tagged the same day. Two of them are the reason to

@@ -187,6 +187,29 @@ jobs:
           # would look identical to the person who hit it.
           codesign --verify --deep --strict "build/Replay.app"
 
+      # Does the thing we are about to publish actually open?
+      #
+      # 0.9.1 shipped an app that died on launch. It built, 951 contract checks passed, 115
+      # behaviour cases passed, every audit passed, and the zip was unopenable — because the
+      # resource bundle SwiftPM's native builder produces is shaped differently from the one
+      # Xcode produces, `Bundle.module` traps rather than returning nil, and no test ever runs
+      # where the bundle is absent. The only way to catch that class of failure is to run the
+      # assembled artefact.
+      - name: The assembled app opens
+        run: |
+          BIN="build/Replay.app/Contents/MacOS/Replay"
+          "$BIN" >/tmp/smoke.log 2>&1 &
+          PID=$!
+          sleep 12
+          if kill -0 "$PID" 2>/dev/null; then
+            kill "$PID" 2>/dev/null || true
+            echo "the app was still running after 12 seconds"
+          else
+            echo "::error::the assembled app exited on its own — it does not open."
+            echo "--- its output ---"; cat /tmp/smoke.log || true
+            exit 1
+          fi
+
       - name: Release notes, from the changelog
         run: |
           if [ "$SIGNED" != "1" ]; then

@@ -61,9 +61,46 @@ public enum Loc {
     /// supports Uzbek, and somebody whose Mac prefers it would get one translated line and
     /// four hundred English ones — a worse experience than no claim at all. The probe
     /// catalogue lives in the test bundle instead.
-    /// The bundle the app's own catalogue lives in. `Bundle.module` is internal to the
-    /// module, so it cannot be a default argument — this exposes it instead.
-    public static var catalogue: Bundle { .module }
+    /// The bundle the app's own catalogue lives in.
+    ///
+    /// **Resolved by hand, because `Bundle.module` calls `fatalError` when it cannot find
+    /// its bundle** — and that is the wrong failure for this. Every other path here degrades
+    /// to English by design: a missing `.lproj`, an unreadable table, a key no translator has
+    /// reached. Missing the whole catalogue should degrade the same way, not take the app
+    /// down. It shipped in 0.9.1 doing exactly that, and the release was unopenable.
+    ///
+    /// The shape of the bundle differs by builder, which is how it got through: SwiftPM's
+    /// native build produces a *flat* bundle with `Info.plist` at the root, and Xcode's
+    /// produces a *deep* one with `Contents/Resources/`. Every local build was deep, the
+    /// release was flat, and the test suite never sees either — it runs where the bundle is
+    /// always found. So this looks in the places a bundle can be and gives up quietly.
+    public static var catalogue: Bundle {
+        if let resolved = resolvedCatalogue { return resolved }
+        let found = Self.findCatalogue()
+        resolvedCatalogue = found
+        return found
+    }
+
+    nonisolated(unsafe) private static var resolvedCatalogue: Bundle?
+
+    private static func findCatalogue() -> Bundle {
+        let name = "Replay_ReplayCore.bundle"
+        let candidates = [
+            Bundle.main.resourceURL,
+            Bundle.main.bundleURL,
+            Bundle(for: CatalogueMarker.self).resourceURL,
+            Bundle(for: CatalogueMarker.self).bundleURL,
+        ]
+        for candidate in candidates.compactMap({ $0?.appendingPathComponent(name) }) {
+            if let bundle = Bundle(url: candidate) { return bundle }
+        }
+        // The bundle this class is in: right for the test target, and for a build where the
+        // resources were compiled straight in rather than into a bundle of their own.
+        return Bundle(for: CatalogueMarker.self)
+    }
+
+    /// Only exists to be a class the runtime can locate a bundle from.
+    private final class CatalogueMarker {}
 
     public static func string(
         _ english: String, in language: String, bundle: Bundle? = nil
