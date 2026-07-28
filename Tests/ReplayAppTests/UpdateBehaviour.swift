@@ -81,3 +81,118 @@ struct UpdateBehaviour {
         #expect(Updates.shouldCheck(lastChecked: now.addingTimeInterval(-Updates.checkInterval), now: now))
     }
 }
+
+/// Installing an update in place, which is the part that can do damage.
+///
+/// Everything here is about refusing. The alternative to a correct refusal is overwriting
+/// somebody's application with a file off the internet, so the cases that say *no* are worth
+/// more tests than the case that says yes.
+@Suite("Installing an update")
+struct UpdateInstallBehaviour {
+
+    // MARK: - Where it must refuse
+
+    @Test("A Homebrew copy is left to Homebrew")
+    func homebrew() {
+        let path = "/opt/homebrew/Cellar/replay-app/HEAD-abc123/Replay.app"
+        #expect(Updates.installability(bundlePath: path, isWritable: true) == .managedByHomebrew)
+        // Writable is not the question: replacing it would leave brew believing it has a
+        // version it no longer has, and the next upgrade would fight this one.
+        #expect(!Updates.installability(bundlePath: path, isWritable: true).canInstall)
+        #expect(Updates.refusal(.managedByHomebrew)?.contains("brew upgrade") == true)
+    }
+
+    @Test("A translocated copy has nothing to replace")
+    func translocated() {
+        let path = "/private/var/folders/xy/AppTranslocation/ABC-123/d/Replay.app"
+        #expect(Updates.installability(bundlePath: path, isWritable: false) == .translocated)
+        // The advice has to be the thing that actually fixes it.
+        #expect(Updates.refusal(.translocated)?.contains("Applications") == true)
+    }
+
+    @Test("A read-only location refuses rather than half-installing")
+    func readOnly() {
+        #expect(
+            Updates.installability(bundlePath: "/Applications/Replay.app", isWritable: false)
+                == .notWritable
+        )
+    }
+
+    @Test("An ordinary writable install is ready")
+    func ready() {
+        let it = Updates.installability(bundlePath: "/Applications/Replay.app", isWritable: true)
+        #expect(it == .ready)
+        #expect(it.canInstall)
+        #expect(Updates.refusal(.ready) == nil)
+    }
+
+    @Test("Homebrew wins over writability, and translocation over both")
+    func precedence() {
+        // A Cellar path is always Homebrew's even if this account can write to it.
+        #expect(
+            Updates.installability(bundlePath: "/opt/homebrew/Cellar/x/Replay.app", isWritable: true)
+                == .managedByHomebrew
+        )
+    }
+
+    // MARK: - The checksum, which is the only thing standing between a download and trust
+
+    @Test("A shasum-format line yields its hash")
+    func checksum() {
+        let file = "a73465f5b900b6a9b60d4049209ceb076a7faad93847661746b8038547f04cb8  build/Replay-0.9.2.zip\n"
+        #expect(Updates.checksum(from: file) == "a73465f5b900b6a9b60d4049209ceb076a7faad93847661746b8038547f04cb8")
+    }
+
+    @Test("Anything that is not exactly one SHA-256 yields nothing")
+    func checksumRejects() {
+        // No hash means no install, so every one of these has to fail closed.
+        #expect(Updates.checksum(from: "") == nil)
+        #expect(Updates.checksum(from: "not a hash  file.zip") == nil)
+        #expect(Updates.checksum(from: "abc123  file.zip") == nil)           // too short
+        #expect(Updates.checksum(from: String(repeating: "z", count: 64)) == nil)  // not hex
+        #expect(Updates.checksum(from: "<html>404</html>") == nil)
+    }
+
+    @Test("Case and stray whitespace do not defeat it")
+    func checksumTolerates() {
+        let upper = "A73465F5B900B6A9B60D4049209CEB076A7FAAD93847661746B8038547F04CB8  x.zip"
+        #expect(Updates.checksum(from: upper)?.hasPrefix("a73465") == true)
+    }
+
+    // MARK: - A release that cannot be installed
+
+    @Test("A release with no assets is not installable, and says so")
+    func notInstallable() {
+        let release = Updates.Release(version: "1.0.0", name: "x", notes: "", url: "u")
+        #expect(!release.isInstallable)
+    }
+
+    @Test("Both the zip and its hash are required, not either")
+    func bothRequired() {
+        let zipOnly = Updates.Release(
+            version: "1.0.0", name: "x", notes: "", url: "u", downloadURL: "z"
+        )
+        // A zip with no published hash is a download from the internet run as an application.
+        #expect(!zipOnly.isInstallable)
+        let both = Updates.Release(
+            version: "1.0.0", name: "x", notes: "", url: "u", downloadURL: "z", checksumURL: "s"
+        )
+        #expect(both.isInstallable)
+    }
+
+    @Test("The assets are found by shape, so a version in the filename cannot break it")
+    func assetsFromJSON() {
+        let json: [String: Any] = [
+            "tag_name": "v2.5.0",
+            "html_url": "https://example.com/r",
+            "assets": [
+                ["name": "Replay-2.5.0.zip.sha256", "browser_download_url": "https://e/sha"],
+                ["name": "Replay-2.5.0.zip", "browser_download_url": "https://e/zip"],
+                ["name": "notes.pdf", "browser_download_url": "https://e/pdf"],
+            ],
+        ]
+        let release = Updates.release(from: json)
+        #expect(release?.downloadURL == "https://e/zip")
+        #expect(release?.checksumURL == "https://e/sha")
+    }
+}

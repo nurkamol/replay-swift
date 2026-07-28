@@ -299,7 +299,7 @@ struct RootView: View {
             // which is what the rest of the window's chrome already does.
             .safeAreaInset(edge: .top, spacing: 0) {
                 if updates.shouldOffer, let release = updates.available {
-                    UpdateBanner(release: release, onDismiss: updates.dismiss)
+                    UpdateBanner(release: release, updates: updates, onDismiss: updates.dismiss)
                         .transition(motion.transition(.move(edge: .top).combined(with: .opacity)))
                 }
             }

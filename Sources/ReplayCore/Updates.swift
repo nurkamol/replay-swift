@@ -31,13 +31,94 @@ public enum Updates {
         public var name: String
         public var notes: String
         public var url: String
+        /// The zipped application, when the release carries one.
+        public var downloadURL: String?
+        /// The published SHA-256 of that zip. Without it there is no install: an update that
+        /// cannot be checked is a download from the internet run as an application.
+        public var checksumURL: String?
 
-        public init(version: String, name: String, notes: String, url: String) {
+        public init(
+            version: String, name: String, notes: String, url: String,
+            downloadURL: String? = nil, checksumURL: String? = nil
+        ) {
             self.version = version
             self.name = name
             self.notes = notes
             self.url = url
+            self.downloadURL = downloadURL
+            self.checksumURL = checksumURL
         }
+
+        /// Whether this release can be installed in place rather than opened in a browser.
+        public var isInstallable: Bool { downloadURL != nil && checksumURL != nil }
+    }
+
+    // MARK: - Whether replacing this copy is a safe thing to do
+
+    /// Why an in-place update is or is not possible.
+    ///
+    /// Refusing loudly matters more here than anywhere else in the app: the alternative to a
+    /// refusal is overwriting somebody's application with a downloaded file.
+    public enum Installability: Equatable, Sendable {
+        case ready
+        /// Installed by Homebrew. Replacing the bundle would leave `brew` believing it has a
+        /// version it no longer has, and the next `brew upgrade` would fight this one.
+        case managedByHomebrew
+        /// Running from App Translocation — the read-only randomised mount Gatekeeper uses
+        /// for a quarantined app. There is nothing here to replace; the real copy is wherever
+        /// it was downloaded to, and moving it to Applications is what clears this.
+        case translocated
+        /// The bundle is somewhere this user cannot write.
+        case notWritable
+
+        public var canInstall: Bool { self == .ready }
+    }
+
+    /// Decide from a bundle path alone, so it is testable without touching a filesystem.
+    ///
+    /// `writable` is passed in rather than looked up for the same reason.
+    public static func installability(
+        bundlePath: String, isWritable: Bool
+    ) -> Installability {
+        // Homebrew keeps everything under a Cellar, whatever the prefix.
+        if bundlePath.contains("/Cellar/") { return .managedByHomebrew }
+        if bundlePath.contains("/AppTranslocation/") { return .translocated }
+        if !isWritable { return .notWritable }
+        return .ready
+    }
+
+    /// What to tell somebody who cannot update in place.
+    public static func refusal(_ reason: Installability) -> String? {
+        switch reason {
+        case .ready:
+            nil
+        case .managedByHomebrew:
+            "Replay was installed with Homebrew. Run `brew upgrade nurkamol/tap/replay-app` "
+                + "so Homebrew and this copy stay in agreement."
+        case .translocated:
+            "macOS is running Replay from a temporary read-only copy, which happens to an "
+                + "app that has not been moved out of the folder it was downloaded to. Move "
+                + "Replay to your Applications folder and open it again."
+        case .notWritable:
+            "Replay is in a folder this account cannot write to. Move it to your Applications "
+                + "folder, or download the new version yourself."
+        }
+    }
+
+    // MARK: - The checksum
+
+    /// Pull the hash out of a `shasum`-format file: the hash, whitespace, then a filename.
+    ///
+    /// Returns `nil` for anything that does not look like exactly one SHA-256, which is the
+    /// safe direction: no hash means no install.
+    public static func checksum(from file: String) -> String? {
+        let first = file.split(separator: "\n").first.map(String.init) ?? ""
+        let hash = first.split(separator: " ").first.map(String.init) ?? ""
+        let trimmed = hash.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard trimmed.count == 64,
+              trimmed.allSatisfy({ $0.isHexDigit })
+        else { return nil }
+        return trimmed
     }
 
     /// A version as comparable parts. Anything unparseable sorts as nothing at all.
@@ -77,11 +158,21 @@ public enum Updates {
     public static func release(from json: [String: Any]) -> Release? {
         guard let tag = json["tag_name"] as? String, parse(tag) != nil else { return nil }
         let notes = (json["body"] as? String) ?? ""
+        // The zip and its published hash, found by shape rather than by exact name so a
+        // change to the version in the filename cannot silently disable updating.
+        let assets = (json["assets"] as? [[String: Any]]) ?? []
+        func asset(endingIn suffix: String) -> String? {
+            assets.first {
+                ($0["name"] as? String)?.hasSuffix(suffix) == true
+            }?["browser_download_url"] as? String
+        }
         return Release(
             version: tag.hasPrefix("v") ? String(tag.dropFirst()) : tag,
             name: (json["name"] as? String) ?? tag,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines),
-            url: (json["html_url"] as? String) ?? releasesPage
+            url: (json["html_url"] as? String) ?? releasesPage,
+            downloadURL: asset(endingIn: ".zip"),
+            checksumURL: asset(endingIn: ".zip.sha256")
         )
     }
 

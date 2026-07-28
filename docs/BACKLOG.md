@@ -442,10 +442,23 @@ because it is still a product decision nobody has taken.
         the one `URLSession` call. Version parsing is deliberately strict and fails closed:
         anything it cannot read is "no update", because nagging about a release that does
         not exist is worse than being quietly out of date.
-      · **Self-update was not built, and that was the point.** Verifying a signature, swapping
-        a bundle and surviving interruption is where all the risk is, and until there is a
-        Developer ID it would be replacing a working app with one Gatekeeper refuses. Told,
-        not done.
+      · **Self-update built 2026-07-29.** The banner's button installs rather than opening a
+        page. Download the zip, fetch the SHA-256 the release publishes beside it, hash the
+        download and compare, extract with `ditto`, check the bundle is signed, is *this*
+        application, and is the version that was advertised — then replace and relaunch.
+        Staged beside the app rather than in `/tmp`, because `replaceItemAt` needs one volume.
+      · **What the trust actually rests on, stated plainly:** HTTPS to a repository named in
+        the source, and a checksum published in the same release. That is the Homebrew-formula
+        model, and it is weaker than notarisation — it proves the bytes are the ones that
+        release carries, not that the release is trustworthy. Anyone who can publish to the
+        repository can publish an update. A Developer ID would add authorship; it is still the
+        thing worth buying.
+      · **It refuses more often than it installs, and that is the design.** A Homebrew copy is
+        left to Homebrew, since replacing the bundle would leave `brew` believing it has a
+        version it no longer has. A translocated copy has nothing to replace. A read-only
+        location refuses rather than half-installing. Eleven behaviour cases cover the
+        refusals and the checksum parsing, because the alternative to a correct refusal is
+        overwriting somebody's application with a file off the internet.
       · **The claim was amended rather than defended.** README said "no networking code in
         the app at all" and SPEC said "no network of any kind". Both were true and are not,
         so both now say what is actually true: *nothing recorded ever leaves the machine,

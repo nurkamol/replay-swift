@@ -1,3 +1,5 @@
+import AppKit
+import CryptoKit
 import Foundation
 import ReplayCore
 import SwiftUI
@@ -24,6 +26,22 @@ final class UpdateModel {
     /// A release newer than this build, once one has been found.
     private(set) var available: Updates.Release?
     private(set) var checking = false
+    /// How far an install has got, so the panel can say so rather than freeze.
+    private(set) var install: Install = .idle
+
+    enum Install: Equatable {
+        case idle, downloading, verifying, installing, done
+
+        var label: String? {
+            switch self {
+            case .idle: nil
+            case .downloading: "Downloading…"
+            case .verifying: "Checking it…"
+            case .installing: "Installing…"
+            case .done: "Restarting…"
+            }
+        }
+    }
     /// Set only when the user asked for a check and it failed, so a silent daily check can
     /// never produce an error nobody was expecting.
     private(set) var failure: String?
@@ -73,9 +91,16 @@ final class UpdateModel {
                     let code = (response as? HTTPURLResponse)?.statusCode ?? 0
                     // 404 is the ordinary case before a first release exists, and saying
                     // "not found" would read as a fault.
-                    failure = code == 404
-                        ? "There are no releases yet."
-                        : "GitHub replied \(code)."
+                    failure = switch code {
+                    // The ordinary case before a first release exists. Saying "not found"
+                    // would read as a fault.
+                    case 404: "There are no releases yet."
+                    // Unauthenticated requests are capped per IP per hour, and this is what
+                    // it looks like from here. Hit while testing, and a bare "GitHub replied
+                    // 403" tells somebody nothing they can act on.
+                    case 403, 429: "GitHub is rate-limiting this connection. Try again later."
+                    default: "GitHub replied \(code)."
+                    }
                 }
                 return
             }
@@ -116,6 +141,7 @@ final class UpdateModel {
 /// is not a reason to install anything — what changed is.
 struct UpdateBanner: View {
     let release: Updates.Release
+    let updates: UpdateModel
     let onDismiss: () -> Void
 
     @Environment(\.openURL) private var openURL
@@ -129,23 +155,53 @@ struct UpdateBanner: View {
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
                 Text(String(format: Loc.t("Replay %@ is available"), "\(release.version)"))
                     .font(Design.Text.itemTitle)
-                Text(String(format: Loc.t("You have %@."), "\(Replay.version)"))
-                    .font(Design.Text.detail)
-                    .foregroundStyle(.secondary)
+                // A refusal or a failed install belongs here, where the eye already is,
+                // rather than somewhere the person has to go looking for it.
+                if let failure = updates.failure {
+                    Text(failure)
+                        .font(Design.Text.detail)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text(String(format: Loc.t("You have %@."), "\(Replay.version)"))
+                        .font(Design.Text.detail)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: Design.Space.inline)
-            if !release.notes.isEmpty {
-                Button(Loc.t("What's Changed")) { showingNotes = true }
+            if let progress = updates.install.label {
+                // What it is doing, in place of the buttons. An install is short but not
+                // instant, and a panel that simply stopped responding would read as a hang.
+                HStack(spacing: Design.Space.inline) {
+                    ProgressView().controlSize(.small)
+                    Text(Loc.t(progress))
+                        .font(Design.Text.detail)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                if !release.notes.isEmpty {
+                    Button(Loc.t("What's Changed")) { showingNotes = true }
+                }
+                if release.isInstallable {
+                    // Installs it here, rather than opening a page and leaving somebody to
+                    // drag a bundle over the one they are running.
+                    Button(Loc.t("Update")) { Task { await updates.install(release) } }
+                        .buttonStyle(.borderedProminent)
+                } else {
+                    // No zip on that release — the only honest offer left is the page.
+                    Button(Loc.t("Open the Release")) {
+                        openURL(URL(string: release.url) ?? URL(string: Updates.releasesPage)!)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                Button {
+                    onDismiss()
+                } label: {
+                    Image(systemName: "xmark").font(Design.Text.micro)
+                }
+                .buttonStyle(.plain)
+                .help(Loc.t("Skip this version"))
             }
-            Button(Loc.t("Get It")) { openURL(URL(string: release.url) ?? URL(string: Updates.releasesPage)!) }
-                .buttonStyle(.borderedProminent)
-            Button {
-                onDismiss()
-            } label: {
-                Image(systemName: "xmark").font(Design.Text.micro)
-            }
-            .buttonStyle(.plain)
-            .help(Loc.t("Skip this version"))
         }
         .padding(Design.Space.section)
         .background(.regularMaterial, in: RoundedRectangle(
@@ -218,5 +274,164 @@ private struct ReleaseNotes: View {
     /// so a malformed note is unattractive rather than absent.
     private func markdown(_ source: String) -> AttributedString {
         (try? AttributedString(markdown: source)) ?? AttributedString(source)
+    }
+}
+
+// MARK: - Installing it
+
+extension UpdateModel {
+
+    /// Download the new version, prove it is the published one, and put it in place.
+    ///
+    /// **The safety is the feature.** Without a Developer ID there is no signature that proves
+    /// authorship, so the trust here rests on two things and it is worth being precise about
+    /// them: HTTPS to a repository named in the source, and the SHA-256 the release publishes
+    /// beside the zip. That is the same model as a Homebrew formula with a `sha256`, and it is
+    /// weaker than notarisation — it proves the bytes are the ones that release carries, not
+    /// that the release is trustworthy. Anyone who can publish to the repository can publish
+    /// an update. The README says so.
+    ///
+    /// Every step that could produce a half-installed application refuses instead:
+    /// a missing hash, a hash that does not match, an archive that does not contain a Replay,
+    /// a bundle whose signature does not verify, a version that is not the one advertised.
+    @MainActor
+    func install(_ release: Updates.Release) async {
+        guard case .idle = install else { return }
+        guard let downloadURL = release.downloadURL.flatMap(URL.init(string:)),
+              let checksumURL = release.checksumURL.flatMap(URL.init(string:))
+        else {
+            failure = "That release has nothing to install."
+            return
+        }
+
+        let bundle = Bundle.main.bundleURL
+        let parent = bundle.deletingLastPathComponent()
+        let reason = Updates.installability(
+            bundlePath: bundle.path,
+            isWritable: FileManager.default.isWritableFile(atPath: parent.path)
+        )
+        guard reason.canInstall else {
+            failure = Updates.refusal(reason)
+            return
+        }
+
+        // Staged beside the application rather than in the system temp directory, because
+        // the replace at the end has to happen on one volume and /tmp is often not the one
+        // /Applications is on.
+        let staging = parent.appendingPathComponent(".replay-update-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: staging) }
+
+        do {
+            try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+
+            install = .downloading
+            let (zipTemp, response) = try await URLSession.shared.download(from: downloadURL)
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                throw Failure.message("The download did not arrive.")
+            }
+            let zip = staging.appendingPathComponent("Replay.zip")
+            try FileManager.default.moveItem(at: zipTemp, to: zip)
+
+            install = .verifying
+            let (checksumData, _) = try await URLSession.shared.data(from: checksumURL)
+            guard let expected = Updates.checksum(from: String(decoding: checksumData, as: UTF8.self))
+            else { throw Failure.message("That release publishes no checksum, so it was not installed.") }
+
+            let actual = try Self.sha256(of: zip)
+            guard actual == expected else {
+                throw Failure.message(
+                    "The download did not match its published checksum, so it was not installed."
+                )
+            }
+
+            // `ditto`, because a `.app` is symlinks and extended attributes and `unzip`
+            // flattens both into a bundle that will not launch.
+            try Self.run("/usr/bin/ditto", ["-x", "-k", zip.path, staging.path])
+            let unpacked = staging.appendingPathComponent("Replay.app")
+            guard FileManager.default.fileExists(atPath: unpacked.path) else {
+                throw Failure.message("That archive did not contain Replay.")
+            }
+
+            install = .verifying
+            try Self.check(unpacked, isVersion: release.version)
+
+            install = .installing
+            _ = try FileManager.default.replaceItemAt(bundle, withItemAt: unpacked)
+
+            install = .done
+            relaunch(at: bundle)
+        } catch let error as Failure {
+            install = .idle
+            failure = error.text
+        } catch {
+            install = .idle
+            failure = "The update could not be installed: \(error.localizedDescription)"
+        }
+    }
+
+    private enum Failure: Error {
+        case message(String)
+        var text: String { if case .message(let t) = self { t } else { "" } }
+    }
+
+    /// The archive's hash, read in chunks so a large one is not held in memory twice.
+    private static func sha256(of url: URL) throws -> String {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        var hasher = SHA256()
+        while let chunk = try handle.read(upToCount: 1 << 20), !chunk.isEmpty {
+            hasher.update(data: chunk)
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Is this actually the Replay it claims to be?
+    ///
+    /// Three questions, and each has caught something in a rehearsal: is it signed at all
+    /// (an unsigned bundle will not launch on Apple silicon), is it *this* application, and
+    /// is it the version the release advertised.
+    private static func check(_ app: URL, isVersion expected: String) throws {
+        do {
+            try run("/usr/bin/codesign", ["--verify", "--deep", "--strict", app.path])
+        } catch {
+            throw Failure.message("The downloaded copy is not correctly signed, so it was not installed.")
+        }
+        let plist = app.appendingPathComponent("Contents/Info.plist")
+        guard let info = NSDictionary(contentsOf: plist) as? [String: Any] else {
+            throw Failure.message("The downloaded copy has no Info.plist.")
+        }
+        guard info["CFBundleIdentifier"] as? String == Bundle.main.bundleIdentifier else {
+            throw Failure.message("The downloaded copy is a different application.")
+        }
+        guard info["CFBundleShortVersionString"] as? String == expected else {
+            throw Failure.message("The downloaded copy is not the version that was offered.")
+        }
+    }
+
+    private static func run(_ tool: String, _ arguments: [String]) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: tool)
+        process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else {
+            throw Failure.message("\(tool) failed.")
+        }
+    }
+
+    /// Start the new copy, then leave.
+    ///
+    /// The replaced bundle is a different file from the one this process is executing, which
+    /// keeps running from the old inode until it exits — so the order has to be open first,
+    /// quit second, or the new copy is asked to start while the old one still holds the
+    /// single-instance claim.
+    private func relaunch(at url: URL) {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in
+            Task { @MainActor in NSApp.terminate(nil) }
+        }
     }
 }
