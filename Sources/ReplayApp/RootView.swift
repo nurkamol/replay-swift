@@ -179,24 +179,9 @@ struct RootView: View {
                 .transition(motion.transition(.opacity))
             } else if preferences.seenWelcome {
                 ZStack(alignment: .top) {
-                    // A bar rather than a dialog. An update is not urgent and nothing is
-                    // waiting on the answer, so it should be dismissible by ignoring it —
-                    // a modal would stop you doing the thing you opened the app to do.
-                    //
-                    // In the stack rather than over it: as an overlay it sat on top of the
-                    // day's headline and cut the total in half, which is the one figure the
-                    // window exists to show. A bar that hides the content to announce
-                    // something optional has its priorities backwards.
-                    VStack(spacing: 0) {
-                        if updates.shouldOffer, let release = updates.available {
-                            UpdateBanner(release: release, onDismiss: updates.dismiss)
-                                .transition(motion.transition(.move(edge: .top).combined(with: .opacity)))
-                        }
-                        window
-                    }
+                    window
                     paletteOverlay
                 }
-                .animation(motion.animation(Design.Motion.settle), value: updates.shouldOffer)
             } else {
                 WelcomeView(
                     model: model, preferences: preferences, notifications: notifications,
@@ -302,6 +287,23 @@ struct RootView: View {
                         )
                     }
             }
+            // A bar rather than a dialog: an update is not urgent, nothing is waiting on the
+            // answer, and a modal would stop you doing whatever you opened the app to do.
+            //
+            // On the *detail pane*, and it took two wrong answers to get here. As an overlay
+            // it sat on top of the day's headline and cut the one figure the window exists to
+            // show in half. Wrapped around the split view in a `VStack` it pushed the sidebar
+            // down with it, so the sidebar stopped reaching the top of the window and left a
+            // dead strip under the traffic lights — the app looked broken to announce
+            // something optional. A safe-area inset displaces only the pane it belongs to,
+            // which is what the rest of the window's chrome already does.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if updates.shouldOffer, let release = updates.available {
+                    UpdateBanner(release: release, onDismiss: updates.dismiss)
+                        .transition(motion.transition(.move(edge: .top).combined(with: .opacity)))
+                }
+            }
+            .animation(motion.animation(Design.Motion.settle), value: updates.shouldOffer)
         }
     }
 

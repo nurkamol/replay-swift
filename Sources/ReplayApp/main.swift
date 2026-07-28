@@ -190,6 +190,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "About Replay", action: #selector(openAbout), keyEquivalent: "")
             .target = self
+        // Where every Mac app puts it, which is the whole argument for putting it here: it
+        // is the second thing under the app's own name, and people look for it there before
+        // they look in Settings. Unlike the daily check this runs whether or not the switch
+        // in Settings ▸ About is on — choosing it from a menu *is* the consent, and the
+        // switch governs only whether Replay asks on its own.
+        appMenu.addItem(
+            withTitle: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: ""
+        ).target = self
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
             .target = self
@@ -298,6 +306,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openAbout() {
         NSApp.orderFrontStandardAboutPanel(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// A check somebody asked for, which is a different thing from the daily one.
+    ///
+    /// It has to answer either way. The banner is enough when there *is* a new version —
+    /// it is right there in the window, so this brings the window forward and stops. When
+    /// there is not, or the network is down, silence would read as a broken menu item, so
+    /// this says so in a sheet and lets the user dismiss it. No sheet on success is
+    /// deliberate: the answer is already on screen, and a dialog to say "look behind me"
+    /// is a click that buys nothing.
+    @objc private func checkForUpdates() {
+        Task { @MainActor in
+            await updates.checkNow()
+            if updates.shouldOffer {
+                showWindow()
+                return
+            }
+            let alert = NSAlert()
+            alert.alertStyle = .informational
+            alert.messageText = "Replay \(Replay.version)"
+            alert.informativeText = updates.failure ?? "This is the latest version."
+            alert.addButton(withTitle: "OK")
+            NSApp.activate(ignoringOtherApps: true)
+            alert.runModal()
+        }
     }
 
     // ── menu bar ──────────────────────────────────────────────────────────────
