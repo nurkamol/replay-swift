@@ -2,9 +2,11 @@
 #
 # Every surface, captured, in one command.
 #
-#   ./tools/screenshots.sh                  # to build/screenshots/
-#   ./tools/screenshots.sh out/somewhere    # somewhere else
-#   ./tools/screenshots.sh --keep-open      # leave the app running afterwards
+#   ./tools/screenshots.sh                       # to build/screenshots/
+#   ./tools/screenshots.sh out/somewhere         # somewhere else
+#   ./tools/screenshots.sh --width 1600          # a wider window
+#   ./tools/screenshots.sh --appearance light    # the theme nobody has ever audited
+#   ./tools/screenshots.sh --keep-open           # leave the app running afterwards
 #
 # Why this exists
 # ---------------
@@ -44,13 +46,36 @@ APP="$ROOT/build/Replay.app"
 
 OUT="$ROOT/build/screenshots"
 KEEP_OPEN=0
-for arg in "$@"; do
-    case "$arg" in
-        --keep-open) KEEP_OPEN=1 ;;
-        -*) echo "screenshots: unknown option $arg" >&2; exit 2 ;;
-        *)  OUT="$arg" ;;
+WIDTH=1280
+APPEARANCE=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --keep-open)  KEEP_OPEN=1 ;;
+        --width)      WIDTH="$2"; shift ;;
+        --appearance) APPEARANCE="$2"; shift ;;
+        -*) echo "screenshots: unknown option $1" >&2; exit 2 ;;
+        *)  OUT="$1" ;;
     esac
+    shift
 done
+
+# The theme is a *preference*, which means overriding it writes to the user's own defaults.
+# Saved and put back on any exit — including a failure or a Control-C — because a harness that
+# leaves somebody's Mac in dark mode is worse than one that cannot test light mode. (This is
+# not hypothetical: an earlier stray keypress flipped it and it took a `defaults write` to
+# notice and undo.)
+DOMAIN="app.replay.native"
+PREVIOUS_APPEARANCE=""
+HAD_APPEARANCE=0
+restore_appearance () {
+    [ -n "$APPEARANCE" ] || return 0
+    if [ "$HAD_APPEARANCE" = "1" ]; then
+        defaults write "$DOMAIN" appearance -string "$PREVIOUS_APPEARANCE"
+    else
+        defaults delete "$DOMAIN" appearance 2>/dev/null || true
+    fi
+}
+trap restore_appearance EXIT INT TERM
 
 if [ ! -d "$APP" ]; then
     echo "screenshots: no build at $APP — run ./scripts/make-app.sh first." >&2
@@ -62,7 +87,6 @@ rm -f "$OUT"/*.png
 
 # One size for every capture, so two runs are comparable and a layout that only breaks wide
 # is not hidden by whatever size the window happened to be left at.
-WIDTH=1280
 HEIGHT=860
 POS_X=80
 POS_Y=80
@@ -95,6 +119,13 @@ capture () {  # capture <name>
 
 # ── Launch ────────────────────────────────────────────────────────────────────
 
+if [ -n "$APPEARANCE" ]; then
+    if PREVIOUS_APPEARANCE="$(defaults read "$DOMAIN" appearance 2>/dev/null)"; then
+        HAD_APPEARANCE=1
+    fi
+    defaults write "$DOMAIN" appearance -string "$APPEARANCE"
+fi
+
 pkill -f "$APP" 2>/dev/null || true
 sleep 1
 open -a "$APP"
@@ -108,7 +139,7 @@ osa -e "tell application \"System Events\" to tell process \"Replay\"
         end tell" >/dev/null
 sleep 2
 
-echo "Capturing ${WIDTH}x${HEIGHT} into ${OUT#$ROOT/}"
+echo "Capturing ${WIDTH}x${HEIGHT}${APPEARANCE:+ (${APPEARANCE})} into ${OUT#$ROOT/}"
 
 # ── The nine with a shortcut ──────────────────────────────────────────────────
 #
@@ -129,12 +160,27 @@ for name in $NAMES; do
     capture "$name"
 done
 
+# Going somewhere by name.
+#
+# The delays are generous because the palette's field takes focus *asynchronously*: type too
+# soon and the keystrokes go nowhere, the query stays empty, and Return opens whatever happened
+# to be first in an unfiltered list of fifty-two. That is not hypothetical — it is how the
+# first light-mode run captured the desktop twice instead of the two display modes, and the
+# only evidence was "52 results" in the corner of a screenshot.
+palette_go () {  # palette_go <query>
+    osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
+    sleep 0.5
+    osa -e 'tell application "Replay" to activate' -e 'delay 0.6' \
+        -e 'tell application "System Events" to keystroke "k" using command down' >/dev/null
+    sleep 2
+    osa -e "tell application \"System Events\" to keystroke \"$1\"" >/dev/null
+    sleep 2
+    osa -e 'tell application "System Events" to key code 36' >/dev/null
+}
+
 # ── Canvas, which has no shortcut ─────────────────────────────────────────────
 
-osa -e 'tell application "Replay" to activate' -e 'delay 0.4' \
-    -e 'tell application "System Events" to keystroke "k" using command down' -e 'delay 1.2' \
-    -e 'tell application "System Events" to keystroke "Canvas"' -e 'delay 1.5' \
-    -e 'tell application "System Events" to key code 36' >/dev/null
+palette_go "Canvas"
 # The field is a force simulation seeded from each node's id — it settles, and a capture taken
 # too early is of a graph mid-flight.
 sleep 8
@@ -168,17 +214,43 @@ sleep 2
 # Whole-display captures, because that is what they are. Esc closes both, and the script
 # presses it whatever happens so a failed run cannot leave the screen taken over.
 
+# Did a display mode actually take over? Its window is the size of the screen; the main
+# window is the size this script set. Anything much wider than that is the mode.
+in_display_mode () {
+    local w
+    # Assigned to a variable first, then indexed. `item 1 of (size of window 1)` inline is
+    # parsed by AppleScript as indexing *every* window's size and errors — which the first
+    # version did, silently, so every check returned false and two working captures were
+    # reported as failures. Same shape as `window_rect` above, which is why that one works.
+    w="$(osa -e 'tell application "System Events" to tell process "Replay"
+                   set s to size of window 1
+                   return (item 1 of s) as string
+                 end tell' 2>/dev/null | tr -d ' ')"
+    [ -n "$w" ] && [ "$w" -gt $((WIDTH + 300)) ]
+}
+
 for mode in "Ambient Mode:ambient" "Screensaver:screensaver"; do
     label="${mode%%:*}"
     file="${mode##*:}"
-    osa -e 'tell application "Replay" to activate' -e 'delay 0.5' \
-        -e 'tell application "System Events" to keystroke "k" using command down' -e 'delay 1.2' \
-        -e "tell application \"System Events\" to keystroke \"$label\"" -e 'delay 1.5' \
-        -e 'tell application "System Events" to key code 36' >/dev/null
-    sleep 6
-    /usr/sbin/screencapture -o -x "$OUT/$file.png"
-    say "$file" "$(basename "$OUT/$file.png") (full screen)"
-    osa -e 'tell application "System Events" to key code 53' >/dev/null || true
+    ok=0
+    # Three times, because the failure is a focus race in the palette and each attempt is
+    # independent. Better a slow harness than one that quietly captures the desktop and calls
+    # it ambient mode — which is exactly what it did before it learned to check.
+    for attempt in 1 2 3; do
+        palette_go "$label"
+        sleep 6
+        if in_display_mode; then ok=1; break; fi
+        say "$file" "attempt $attempt did not enter the mode — retrying"
+        osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
+        sleep 2
+    done
+    if [ "$ok" = "1" ]; then
+        /usr/sbin/screencapture -o -x "$OUT/$file.png"
+        say "$file" "$(basename "$OUT/$file.png") (full screen)"
+    else
+        say "$file" "FAILED — never entered the mode, no capture written"
+    fi
+    osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
     sleep 2
 done
 

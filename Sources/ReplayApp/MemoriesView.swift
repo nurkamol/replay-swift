@@ -415,10 +415,14 @@ struct Heatmap: View {
         .accessibilityHidden(true)
     }
 
-    /// How wide the year grid wants to be. Fifty-three columns and the pinned key.
+    /// How wide the year grid wants to be: fifty-three columns.
+    ///
+    /// The pinned key is deliberately *not* counted. It sits outside the scroll view, and
+    /// `yearViewport` measures the scroll view — so including it here compared a width that
+    /// had the key against a viewport that did not, and claimed the year was overflowing
+    /// while there was still a key's worth of room.
     private var yearContentWidth: CGFloat {
-        Design.Layout.heatmapWeekdayColumn + Design.Layout.heatmapGap
-            + CGFloat(ReplayCore.Heatmap.yearWeeks)
+        CGFloat(ReplayCore.Heatmap.yearWeeks)
             * (Design.Layout.heatmapSquare + Design.Layout.heatmapGap)
     }
 
@@ -517,6 +521,16 @@ struct Heatmap: View {
                         }
                     }
                 }
+                // Fill the viewport when the year is narrower than it, and stay left.
+                //
+                // `.defaultScrollAnchor(.trailing)` is right when the grid overflows — it
+                // opens on today, which is the whole reason it is there. When the grid
+                // *fits*, though, there is nothing to scroll and the anchor simply shoves it
+                // against the right edge, opening a gap between the pinned weekday key and
+                // the columns it is the key to. A key sitting a hundred points from its grid
+                // reads as two unrelated things. This costs nothing when the grid overflows,
+                // because then the content is already wider than the minimum.
+                .frame(minWidth: yearViewport, alignment: .leading)
             }
             // Opens on today. The month labels travel with the columns they name; only the
             // weekday key stays put, because it says the same thing at every scroll offset.
