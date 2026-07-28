@@ -232,7 +232,7 @@ These are not blocked by difficulty. They are blocked because they are somebody'
 
 - [x] **Homebrew — the other half of "how does anybody get this".** Done 2026-07-28.
       `nurkamol/homebrew-tap` exists with a formula for each: `replay` (the CLI) and
-      `replay-app` (the application), both pinned to the v0.9.0 tarball with `head` kept so
+      `replay-app` (the application), both pinned to the current release's tarball with `head` kept so
       `--HEAD` still tracks `main`. The tap's own CI runs `brew test-bot`, which installs and
       tests both for real.
       · **The entry above was wrong about the app, and the correction is the useful part.**
