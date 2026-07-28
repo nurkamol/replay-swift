@@ -30,6 +30,7 @@ swift run replay-parity         # the same suite without Xcode (CI, SSH, plain C
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token
+./tools/screenshots.sh          # every surface captured to build/screenshots/, plus a contact sheet
 node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or documented and unbound
 ./tools/cli-audit.sh            # the CLI's exit codes, stream discipline and --json shape
 swift run replay -- today       # the record from a shell; `replay help` for the rest
@@ -44,6 +45,12 @@ node tools/release-notes.mjs 0.9.0 --check   # the tag, the build and the change
   this port last caught up, split into behaviour (the spec covers it) and UI (nothing does).
 - **`spec/` is generated. Never hand-edit it.** Change behaviour in the Glaze app, run
   `node tools/sync-spec.mjs`, and the resulting `git diff spec/` is the porting work.
+- **Look at the interface before claiming it works.** `./tools/screenshots.sh` drives the app
+  through every surface and writes a PNG each, in about two minutes. The suites have never
+  caught a layout bug — a banner over the day's headline, a dead column on a wide window, a
+  caption that rendered nowhere, five buttons at five weights were all found by looking, and
+  all were invisible to 951 checks. It is not a UI test and makes no assertions: it makes
+  looking cheap, and a person answers "does this read badly" from an image in a second.
 - **Run the parity suite before committing** (`swift test`, or `swift run replay-parity`
   without Xcode). If it fails, either this port has not caught up or `spec/` is stale. Do
   not "fix" it by editing the spec. CI runs the same suite on every push and pull request,

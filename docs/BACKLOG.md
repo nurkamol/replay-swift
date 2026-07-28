@@ -163,7 +163,30 @@ These are not blocked by difficulty. They are blocked because they are somebody'
       6-point ellipse over 63. It clears Apple's specific caution about slow oscillation, sits
       against its general one about full-field motion, costs a permanent 30fps redraw, and
       diverges from a reference whose field is still. It rests on preference, not principle.
-- [ ] **Does this repo take a UI test target?** The command-palette scroll bug reached a
+- [x] **A screenshot harness.** Built 2026-07-28, and it answers the question below in a way
+      that entry did not anticipate. `./tools/screenshots.sh` drives the app through all
+      fourteen surfaces — the nine with a shortcut, Canvas and the two display modes through
+      the command palette, Search with a query in it, Settings in its own window — and writes
+      a PNG each plus a contact sheet, in under two minutes.
+      · **Keyboard only, through the app's own name-based navigation.** Clicking the sidebar
+        does not work and that is worth writing down: AppKit reports the row under the
+        pointer, `AXPress` returns success, and the selection does not change. Every
+        coordinate in the script is a window frame read from the accessibility API rather
+        than a guess, because the guesses are what cost four attempts and one stray keypress
+        that flipped the user's theme.
+      · **Not a UI test, and the distinction is the point.** It makes no assertions. XCUITest
+        can say a button exists and is hittable, which is not the question — "does this read
+        badly" is, and a person answers it from an image in a second. The bottleneck was
+        never whether to check the interface; it was that looking cost a dozen commands of
+        window arithmetic each time.
+
+- [ ] **Does this repo take a UI test target?** *Re-read the entry above first — the
+      screenshot harness now covers the part of this that was actually paying.* What is left
+      to decide is whether assertions are worth adding on top, and the honest answer from a
+      day of finding twelve layout bugs is that a conventional UI test would have caught
+      perhaps three of them: a focus ring, a dead strip, a jumble of button weights and a
+      sentence that reads wrong are all things a person sees and an assertion does not.
+      The original argument follows. The command-palette scroll bug reached a
       person because nothing exercises which view a scroll lands in, and it would regress
       silently. There are no UI tests at all today, so this is a question about what the
       project is willing to carry rather than a chore.
