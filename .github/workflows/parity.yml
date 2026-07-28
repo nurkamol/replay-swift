@@ -70,6 +70,13 @@ jobs:
       - name: The shortcut table matches what is bound
         run: node tools/shortcut-audit.mjs
 
+      # A ratchet, not a gate: it reports how many strings a translator still cannot reach,
+      # and fails only when a file that *had* been localised grows a hard-coded one. That is
+      # the failure that decays silently — nothing else notices until somebody reads the app
+      # in another language and finds one English line in the middle of a paragraph.
+      - name: Localised files stay localised
+        run: node tools/strings-audit.mjs
+
       - name: Build
         run: swift build
 

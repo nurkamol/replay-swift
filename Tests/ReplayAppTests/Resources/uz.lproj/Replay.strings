@@ -1,0 +1,8 @@
+/* A probe, not a translation.
+ *
+ * Two strings in one language, here to prove the mechanism resolves at all: that a
+ * `.lproj` beside the base one is found, that a key with an entry returns it, and that a
+ * key without one falls through to the English rather than to a raw identifier. It is
+ * deleted the moment a real language is started.
+ */
+"Tracking paused" = "Kuzatuv toʻxtatildi";

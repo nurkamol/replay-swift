@@ -337,7 +337,32 @@ because it is still a product decision nobody has taken.
         are small and could be mirrored into the group container rather than moved. That
         would make it additive instead of a migration, and today's total is a headline.
 
-- [ ] **Multilingual support.** `L`+ — **the largest item ever put on this list**, and the
+- [ ] **Multilingual support.** **The groundwork is built (2026-07-28); the translating is
+      not, and needs a language and a person before it can start.** What exists now:
+      · `Loc` in `ReplayCore` — one table, one bundle, and **the English text is the key**.
+        A missing translation therefore falls back to correct English rather than to a raw
+        identifier, which matters because half-translated is the normal state of a translated
+        app. It also keeps the contract working untouched: the value a parity check sees is
+        the same string it always was, and `Loc.base` makes that true on any machine, the same
+        seam and the same reason as `Report.Environment` injecting a locale.
+      · **Language resolution is explicit**, not left to `Bundle.localizedString`. Measured,
+        not assumed: the implicit path did not follow `-AppleLanguages` for a SwiftPM resource
+        bundle at all, and could not be tested without relaunching a process. `Loc.string(_:in:)`
+        is one function anybody can call with any language, and is the seam a language picker
+        in Settings would need.
+      · `tools/strings-audit.mjs`, in CI. **270-odd strings across 39 files** is the real size
+        of the job — and it is a ratchet rather than a gate, because an audit that failed on
+        all of them from the day it was written is an audit nobody runs. Files on its migrated
+        list fail on a bare literal; the rest are counted so the number is visible.
+      · `MenuBar.swift` is migrated end to end as the worked example, and eight behaviour
+        cases cover the mechanism — including that a translation genuinely resolves from a
+        `.lproj`, proved against a probe catalogue that lives in the **test** bundle. It is not
+        shipped: a `uz.lproj` in `ReplayCore` would make macOS believe Replay supports Uzbek,
+        and one translated line among four hundred English ones is worse than no claim.
+      · What is left is mechanical and large: wrap the other 270, then find a translator.
+        The original argument below still stands, and is the reason this stops here.
+
+       `L`+ — **the largest item ever put on this list**, and the
       only one that cannot be finished by the person who starts it.
 
       The reference is English-only: it reaches for `Intl` to format a date and nothing

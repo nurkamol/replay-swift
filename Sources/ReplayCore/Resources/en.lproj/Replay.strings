@@ -1,0 +1,15 @@
+/* Replay — the base catalogue.
+ *
+ * Deliberately almost empty, and that is not an oversight. The English text is the key
+ * (see `Loc`), so an English build needs no entries at all: every lookup falls through to
+ * the key, which is the sentence. Entries appear here only where English itself needs a
+ * value the key cannot carry — and a translation lives in its own `<code>.lproj` beside
+ * this one, never in here.
+ *
+ * `tools/strings-audit.mjs` reports what a translator would have to cover. Do not hand-write
+ * that inventory into this file: it would be a second list to keep in step with the source,
+ * which is the thing the key-is-the-English choice exists to avoid.
+ */
+
+/* The app's own name is not translated, in any language. */
+"Replay" = "Replay";

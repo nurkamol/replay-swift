@@ -185,7 +185,7 @@ Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xc
 Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
 Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
 Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
-Tests/ReplayAppTests/    107 behaviour cases over the app’s own models
+Tests/ReplayAppTests/    115 behaviour cases over the app’s own models
 spec/                    GENERATED contract — never hand-edit
 tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
 tools/port-queue.mjs     lists Glaze commits this port still owes

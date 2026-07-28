@@ -85,6 +85,30 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Replay"
 
+# The package's resource bundles, which hold the strings catalogue.
+#
+# **Not optional, and not a nicety.** SwiftPM's generated `Bundle.module` calls `fatalError`
+# when it cannot find its bundle — so an app assembled without this does not fall back to
+# English, it dies on the first line of copy it tries to read. That is exactly what happened
+# the day the catalogue was added: the app launched, and was gone by the time the menu bar
+# drew its tooltip. Nothing else catches it, because every test runs where the bundle is.
+BIN_DIR="$(dirname "$BIN")"
+BUNDLES=0
+for BUNDLE in "$BIN_DIR"/*.bundle; do
+    [ -d "$BUNDLE" ] || continue
+    # Never the test bundle. It carries a probe catalogue in a language nobody has
+    # translated, and shipping it would make macOS believe Replay supports that language —
+    # one translated line among four hundred English ones, which is worse than no claim.
+    case "$(basename "$BUNDLE")" in *Tests.bundle) continue ;; esac
+    cp -R "$BUNDLE" "$APP/Contents/Resources/"
+    BUNDLES=$((BUNDLES + 1))
+done
+if [ "$BUNDLES" = "0" ]; then
+    echo "make-app: no resource bundles found in $BIN_DIR — the app would crash on its" >&2
+    echo "make-app: first localised string. Refusing to assemble one." >&2
+    exit 1
+fi
+
 # The product's own icon, carried over from the Glaze app so the two are visibly the
 # same product. Glaze gitignores it as generated output, so this repo keeps a copy.
 # The App Intents metadata, into Contents/Resources where the system looks for it.

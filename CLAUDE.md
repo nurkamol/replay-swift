@@ -25,12 +25,13 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 951 parity checks + 107 behaviour cases
+swift test                      # 951 parity checks + 115 behaviour cases
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token
 ./tools/screenshots.sh          # every surface captured to build/screenshots/, plus a contact sheet
+node tools/strings-audit.mjs    # how much copy a translator can reach; --list for all of it
 node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or documented and unbound
 ./tools/cli-audit.sh            # the CLI's exit codes, stream discipline and --json shape
 swift run replay -- today       # the record from a shell; `replay help` for the rest

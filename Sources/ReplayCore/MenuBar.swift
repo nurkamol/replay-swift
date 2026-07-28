@@ -55,10 +55,10 @@ public enum MenuBar {
         return .inApplication(name: current.applicationName, seconds: max(0, seconds))
     }
 
-    public static let pausedLabel = "Tracking paused"
-    public static let awayLabel = "Away from keyboard"
-    public static let waitingLabel = "Waiting for activity…"
-    public static let recentHeading = "Recently"
+    public static var pausedLabel: String { Loc.t("Tracking paused") }
+    public static var awayLabel: String { Loc.t("Away from keyboard") }
+    public static var waitingLabel: String { Loc.t("Waiting for activity…") }
+    public static var recentHeading: String { Loc.t("Recently") }
 
     /// How long you have been in the thing you are in.
     ///
@@ -69,8 +69,8 @@ public enum MenuBar {
     /// copy did not change, the context did.
     public static func focusedFor(_ seconds: Int) -> String {
         let minutes = Int((Double(seconds) / 60).rounded())
-        if minutes < 1 { return "Just now" }
-        return "Focused for \(shortDuration(seconds))"
+        if minutes < 1 { return Loc.t("Just now") }
+        return String(format: Loc.t("Focused for %@"), shortDuration(seconds))
     }
 
     /// The menu's own duration, which is not the app's.
@@ -80,7 +80,7 @@ public enum MenuBar {
     /// menu pulled down mid-task is read as a sentence. "<1m" is a value you have to parse.
     public static func shortDuration(_ seconds: Int) -> String {
         let minutes = Int((Double(seconds) / 60).rounded())
-        if minutes < 1 { return "just now" }
+        if minutes < 1 { return Loc.t("just now") }
         if minutes < 60 { return "\(minutes)m" }
         let hours = minutes / 60
         let rest = minutes % 60
@@ -116,9 +116,9 @@ public enum MenuBar {
     // MARK: - The tooltip
 
     public static func tooltip(isRecording: Bool, current: String?) -> String {
-        guard isRecording else { return "Replay — paused" }
-        guard let current else { return "Replay — tracking" }
-        return "Replay — \(current)"
+        guard isRecording else { return Loc.t("Replay — paused") }
+        guard let current else { return Loc.t("Replay — tracking") }
+        return String(format: Loc.t("Replay — %@"), current)
     }
 
     // MARK: - The popover
@@ -143,16 +143,18 @@ public enum MenuBar {
         /// worse Timeline rather than a quicker one.
         public static let sessionLimit = 3
 
-        public static let todayHeading = "Today"
-        public static let recentHeading = "Recent sessions"
-        public static let goalHeading = "Focus goal"
-        public static let emptyToday = "Nothing recorded yet today."
+        public static var todayHeading: String { Loc.t("Today") }
+        public static var recentHeading: String { Loc.t("Recent sessions") }
+        public static var goalHeading: String { Loc.t("Focus goal") }
+        public static var emptyToday: String { Loc.t("Nothing recorded yet today.") }
 
         /// The day's total, said the way a person would say it.
         public static func todayLine(activeSeconds: Int, sessions: Int) -> String {
             guard activeSeconds > 0 || sessions > 0 else { return emptyToday }
-            let count = sessions == 1 ? "1 session" : "\(sessions) sessions"
-            return "\(shortDuration(activeSeconds)) active · \(count)"
+            let count = sessions == 1
+                ? Loc.t("1 session")
+                : String(format: Loc.t("%@ sessions"), "\(sessions)")
+            return String(format: Loc.t("%1$@ active · %2$@"), shortDuration(activeSeconds), count)
         }
 
         /// The goal in one line: what is left, or that there is nothing left.
@@ -162,8 +164,13 @@ public enum MenuBar {
         /// read a finished day as still not enough.
         public static func goalLine(activeSeconds: Int, goalMinutes: Int) -> String {
             let progress = Goals.progress(activeSeconds: activeSeconds, goalMinutes: goalMinutes)
-            if progress.met { return "Goal reached — \(shortDuration(activeSeconds))" }
-            return "\(shortDuration(progress.remainingSeconds)) to go of \(Goals.format(goalMinutes))"
+            if progress.met {
+                return String(format: Loc.t("Goal reached — %@"), shortDuration(activeSeconds))
+            }
+            return String(
+                format: Loc.t("%1$@ to go of %2$@"),
+                shortDuration(progress.remainingSeconds), Goals.format(goalMinutes)
+            )
         }
 
         /// The most recent sessions, newest first.
@@ -179,7 +186,7 @@ public enum MenuBar {
 
         /// The pause control's own label, which is a verb rather than a state.
         public static func trackingLabel(isRecording: Bool) -> String {
-            isRecording ? "Pause recording" : "Resume recording"
+            isRecording ? Loc.t("Pause recording") : Loc.t("Resume recording")
         }
     }
 }

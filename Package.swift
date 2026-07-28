@@ -24,6 +24,10 @@ import PackageDescription
 // `swift build` and `swift run replay-parity` work either way. See README.md.
 let package = Package(
     name: "Replay",
+    // Required once any target carries a `.lproj`. English is the language the source is
+    // written in, and `Loc` uses the English text as the lookup key — so this is both the
+    // development language and the fallback every missing translation lands on.
+    defaultLocalization: "en",
     platforms: [.macOS(.v26)],
     products: [
         .library(name: "ReplayCore", targets: ["ReplayCore"]),
@@ -40,7 +44,10 @@ let package = Package(
         .executable(name: "replay", targets: ["ReplayCLI"]),
     ],
     targets: [
-        .target(name: "ReplayCore"),
+        // Resources for the strings catalogue. `.process` rather than `.copy` so the
+        // `.lproj` directories are treated as localisations rather than as folders that
+        // happen to have a dot in the name.
+        .target(name: "ReplayCore", resources: [.process("Resources")]),
         .executableTarget(name: "ReplayApp", dependencies: ["ReplayCore"]),
 
         // The parity suite lives in its own library so it can run two ways from one
@@ -51,7 +58,13 @@ let package = Package(
         .executableTarget(name: "ReplayParity", dependencies: ["ParityKit"]),
         .testTarget(name: "ReplayCoreTests", dependencies: ["ParityKit", "ReplayCore"]),
 
-        .testTarget(name: "ReplayAppTests", dependencies: ["ReplayApp", "ReplayCore"]),
+        .testTarget(
+            name: "ReplayAppTests", dependencies: ["ReplayApp", "ReplayCore"],
+            // A probe catalogue in a language the app does not ship, so the localisation
+            // mechanism can be proved without claiming support for a language nobody has
+            // translated. See `Loc.string(_:in:bundle:)`.
+            resources: [.process("Resources")]
+        ),
         .executableTarget(name: "IconProbe"),
         .executableTarget(name: "ReplayImport", dependencies: ["ReplayCore"]),
         .executableTarget(name: "ReplayCLI", dependencies: ["ReplayCore"]),
