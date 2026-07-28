@@ -251,15 +251,26 @@ These are not blocked by difficulty. They are blocked because they are somebody'
       · Now verified by installing, which the entry above could not be: the CLI installs from
         the tag on this machine.
 
-- [ ] **PDF export.** Three WebKit routes tried and dead — recorded in the ledger's
-      divergences so a fourth person does not repeat them. Reviving it means leaving WebKit
-      and drawing the report into a `CGContext` by hand. `L`.
-      · **Weightier than it looks.** Six of the 110 prompts that built the Glaze app are
-        about the PDF and nothing else — pagination, items overflowing the canvas,
-        overwriting an existing file, a footer note. That is more attention than any other
-        single feature in that history. It does not change the recommendation, since the
-        three WebKit routes really are dead, but "one capped page nobody uses" understates
-        what it cost upstream and how much it was wanted.
+- [x] **PDF export.** Built 2026-07-28. Not WebKit — `ImageRenderer` returns a `CGContext`
+      and a PDF context *is* a `CGContext`, so a SwiftUI view draws straight into a page with
+      no browser and nothing to paginate. Every one of the three dead routes died on
+      pagination; a single fixed page needs none of it, and one page is what the reference
+      caps its own at.
+      · **The page is a summary, not the report again.** That answers the objection that
+        stopped this before — that a PDF would be a second document to keep in step with the
+        HTML one. It counts the whole span in its header and names what it left off ("17 more
+        sessions not shown — export as HTML for the whole span"), so the two formats of one
+        slice cannot quietly disagree about totals.
+      · Times use `timeLabel` twice rather than `formatRange`, which collapses a shared
+        meridiem — right on a card, wrong in a document, and already one of the five report
+        divergences this port found against the reference.
+      · Fonts are fixed points rather than the app's semantic styles: `Font.body` follows
+        Dynamic Type, which is right in a window and wrong in a file somebody prints, where
+        it would come out a different size on every Mac.
+      · 17 behaviour cases, five of which write a real file and read it back with Core
+        Graphics — one page, right media box, more than two kilobytes. A PDF export that
+        writes a blank or a zero-byte file succeeds from the caller's side, which is exactly
+        how the `dataWithPDF` attempt looked until somebody opened the result.
 
 ## 5 · The animation skills, and when to spend them
 

@@ -156,6 +156,18 @@ enum Design {
         static let sectionLabel = Font.caption.weight(.semibold)
         /// The uppercase micro-label inside a card.
         static let cardLabel = Font.caption2.weight(.semibold)
+
+        /// The PDF report's own scale.
+        ///
+        /// Fixed points rather than the app's semantic styles, and that is the difference
+        /// between a screen and a page: `Font.body` follows the reader's Dynamic Type
+        /// setting, which is right in a window and wrong in a document somebody is going to
+        /// print or email — the same file would come out at a different size on every Mac.
+        static let pdfTitle = Font.system(size: 22, weight: .semibold)
+        static let pdfSummary = Font.system(size: 11)
+        static let pdfRow = Font.system(size: 10)
+        static let pdfRowDetail = Font.system(size: 9)
+        static let pdfFootnote = Font.system(size: 8)
         /// Prose meant to be read rather than scanned — a day's story.
         static let prose = Font.title3
         /// A glyph small enough to sit inside a ring or a pill.
@@ -1037,6 +1049,8 @@ enum Design {
         /// rather than six: at six a full green bar read as an alert rather than a
         /// measurement, and thinning it was worth more than muting the colour.
         static let menuBarGoalBar: CGFloat = 4
+        /// The duration column on a PDF row, wide enough for "10h 30m".
+        static let pdfDurationColumn: CGFloat = 52
         static let releaseNotesWidth: CGFloat = 420
         static let releaseNotesMaxHeight: CGFloat = 340
         /// A year of days as a grid. How *many* weeks it draws is the reference's own

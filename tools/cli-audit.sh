@@ -36,7 +36,11 @@ check() { # description, expected-exit, command…
 # ── asking wrongly is exit 1, and is never confused with having no answer ─────
 check "an unknown command"            1 "$BIN" wat
 check "a date it cannot read"         1 "$BIN" day nonsense
-check "an unknown export format"      1 "$BIN" export --format pdf
+check "an unknown export format"      1 "$BIN" export --format xlsx
+# PDF is a *known* format the CLI cannot produce: it is drawn by SwiftUI, and a command-line
+# tool has no way to render one. It has to be refused rather than silently written as
+# Markdown into a file named .pdf — which is what happened the moment the format was added.
+check "a format the CLI cannot draw"  1 "$BIN" export --format pdf
 check "an unknown export scope"       1 "$BIN" export --scope decade
 check "a day with no date"            1 "$BIN" day
 check "an app with no name"           1 "$BIN" app

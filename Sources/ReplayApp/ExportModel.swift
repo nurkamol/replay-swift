@@ -132,6 +132,12 @@ final class ExportModel {
                     label: label, entries: entries, icon: { [self] in iconDataURI($0) }
                 )
                 try document.write(to: url, atomically: true, encoding: .utf8)
+            case .pdf:
+                // Drawn rather than serialised — see `ReportPDF`, and the three dead WebKit
+                // routes in the ledger that led there.
+                try ReportPDF.write(
+                    Report.PDF.page(label: label, entries: entries), to: url
+                )
             case .markdown, .csv, .json:
                 try Report.build(format, label: label, entries: entries)
                     .write(to: url, atomically: true, encoding: .utf8)

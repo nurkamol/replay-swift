@@ -180,6 +180,15 @@ func exportReport() {
         fail("unknown format \"\(formatName)\" — one of "
             + Report.Format.allCases.map(\.rawValue).joined(separator: ", "), .usage)
     }
+    // PDF is drawn by SwiftUI, which a command-line tool has no way to render — and
+    // `Report.build` returns Markdown for it so that switch stays total. Without this guard
+    // the CLI would cheerfully write Markdown into a file called `.pdf`, which is worse than
+    // refusing: you would not find out until you opened it.
+    if format.isBinary {
+        fail("\(format.label) is drawn rather than written, and needs the app — "
+            + "use Settings ▸ Data ▸ Export report. For a document from here, try html.",
+            .usage)
+    }
     let scopeName = option("scope") ?? "today"
     guard let scope = Report.Scope(rawValue: scopeName) else {
         fail("unknown scope \"\(scopeName)\" — one of "

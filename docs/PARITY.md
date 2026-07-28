@@ -100,7 +100,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | Settings | done | General, Privacy, Data, Shortcuts, Guide, About. The Guide is the reference's sixteen questions and answers, generated into `spec/guide.json` and compared character for character. Surfaces (solid/frosted/glass), focus goal, contextual memories and threshold, morning briefing, Dock badge, the screensaver's idle drift and exit conditions, and the three notification recaps — each wired to real behaviour. The Shortcuts table is rendered from `Shortcuts.swift`, the same catalogue the View menu is built from, and `tools/shortcut-audit.mjs` checks the keys a view binds against it in both directions |
 | Press and hover feedback | done | `RowButtonStyle` on 25 rows and cards — the reference's own `active:scale-[0.99]` at 90ms and `hover:bg-control-subtle` at 180ms, both on `easeStandard`. Reduced motion keeps the highlight and drops the give |
 | Session card (expand, apps, note) | done | app breakdown, tags and a note when expanded; bookmark and delete behind the ⋯; marks and a warmed border when collapsed |
-| Export a day / a session | partial | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON or HTML, carrying notes and tags. Scope selection and report text checked against the reference's own output. **No PDF** — see the divergence below |
+| Export a day / a session | done | a day, a session, this week, this month, bookmarks, notes — as Markdown, CSV, JSON, HTML or **PDF**, carrying notes and tags. Scope selection and report text checked against the reference's own output |
 | Dock badge | done | `Preferences.dockBadge`, whole hours only and nothing under one, as the reference has it — `DockBadgeLabel`, contract-checked and unit-tested |
 | Memories / Today in History | done | fixed calendar offsets over the durable headlines, so a memory survives its day being pruned; the date arithmetic is fixture-pinned |
 | Search | done | by session name, note or tag; by application; and a few phrases ("morning", "longest", "bookmarked") that go straight to a slice — checked against the reference's own predicates |
@@ -605,8 +605,17 @@ document starts lying, and this one has done it twice already — see the two no
   agree across both apps. Swift's `Calendar.date(byAdding:)` clamps and would have been
   wrong; building `DateComponents` with an out-of-range day and letting `date(from:)`
   normalise reproduces it. Pinned at three month-ends and a leap day.
-- **There is no PDF export, and that is a decision rather than an omission.** The reference
-  offers one; three attempts here have failed, all in WebKit:
+- **PDF export exists, and the route to it was not WebKit.** *Built 2026-07-28; the history
+  below is kept because it is the reason the answer looks the way it does.* `ImageRenderer`
+  hands back a `CGContext`, and a PDF context is a `CGContext` — so a SwiftUI view draws
+  straight into a page with no browser, no layout engine and nothing to hang on. One page,
+  matching the reference's own cap, which is what makes it tractable: every WebKit failure
+  below was a pagination failure. The page counts the *whole* span in its summary and names
+  what was left off — "17 more sessions not shown — export as HTML for the whole span" — so a
+  PDF and an HTML export of the same slice can never quietly disagree about the totals. The
+  ledger's objection was that a PDF would be a second document to keep in step with the HTML
+  one; it is not, because it is deliberately a summary rather than the same document smaller.
+  The three dead WebKit routes, kept so a fourth person does not repeat them:
   1. An unattached `WKWebView` never finishes loading.
   2. Attached, `createPDF` hung, with no timeout available on the call itself.
   3. `printOperation(with:)` on an attached view — the route this ledger recommended
@@ -616,13 +625,10 @@ document starts lying, and this one has done it twice already — see the two no
      nothing. `dataWithPDF(inside:)` on the same view returns an 838-byte empty page,
      because WebKit renders out of process and the `NSView` has nothing to draw.
 
-  The reference's own PDF is capped at a single page and tells the reader to use HTML for
-  anything longer, so HTML is the format that actually carries a month. The next route
-  worth trying is not WebKit at all — a second document built as a SwiftUI view and
-  rendered through `ImageRenderer`'s CGContext — but that is a *second* report to keep in
-  step with the HTML one, which is the thing this port's one-body-one-stylesheet rule
-  exists to avoid. Until that trade is worth making, the gap is stated here rather than
-  half-built.
+  The route this ledger guessed at — a SwiftUI view through `ImageRenderer`'s CGContext — is
+  the one that worked, and it took about a day. What the guess got wrong was the objection:
+  it assumed the PDF would have to be the HTML report again. It does not, because the
+  reference caps its own at one page, so the honest shape is a summary that points at HTML.
 - **Report text is compared with one deliberate fold.** Foundation and Node disagree on the
   space before a meridiem (U+202F vs U+0020) because they bundle different ICU versions.
   The comparison folds non-breaking spaces onto plain ones and nothing else.

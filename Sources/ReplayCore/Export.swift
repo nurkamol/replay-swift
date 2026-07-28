@@ -40,7 +40,7 @@ public enum Report {
     }
 
     public enum Format: String, CaseIterable, Sendable {
-        case markdown, csv, json, html
+        case markdown, csv, json, html, pdf
 
         public var label: String {
             switch self {
@@ -48,6 +48,7 @@ public enum Report {
             case .csv: "CSV"
             case .json: "JSON"
             case .html: "HTML"
+            case .pdf: "PDF"
             }
         }
 
@@ -57,13 +58,18 @@ public enum Report {
             case .csv: "csv"
             case .json: "json"
             case .html: "html"
+            case .pdf: "pdf"
             }
         }
 
         /// Whether the format is a document to look at rather than data to read or parse.
         /// HTML carries the app icons and needs them resolved, so callers route it
-        /// differently even though it is still text.
-        public var isDocument: Bool { self == .html }
+        /// differently even though it is still text; PDF is not text at all.
+        public var isDocument: Bool { self == .html || self == .pdf }
+
+        /// Whether the format is written as bytes rather than as a string. Only PDF, and it
+        /// is the reason `Report.build` cannot serve every format on its own.
+        public var isBinary: Bool { self == .pdf }
     }
 
     /// What slice of history a report covers.
@@ -157,6 +163,11 @@ public enum Report {
         case .csv: csv(entries, environment: environment)
         case .json: json(label: label, entries: entries, now: now)
         case .html: html(label: label, entries: entries, now: now, environment: environment)
+        // PDF is bytes, not text, and is drawn by `ReportPDF` in the app layer — `ReplayCore`
+        // has no SwiftUI to render with. Returning the Markdown keeps this total and gives a
+        // caller that ignores `isBinary` something readable rather than a crash, but the
+        // export path checks `isBinary` and never comes here for it.
+        case .pdf: markdown(label: label, entries: entries, now: now, environment: environment)
         }
     }
 

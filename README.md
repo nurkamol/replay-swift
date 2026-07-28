@@ -185,7 +185,7 @@ Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xc
 Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
 Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
 Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
-Tests/ReplayAppTests/    90 behaviour cases over the app’s own models
+Tests/ReplayAppTests/    107 behaviour cases over the app’s own models
 spec/                    GENERATED contract — never hand-edit
 tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
 tools/port-queue.mjs     lists Glaze commits this port still owes
@@ -269,7 +269,7 @@ running app behind your back.
 
 **Where is my data, and how do I get it out?**
 `~/Library/Application Support/app.replay.native/replay.db`, a plain SQLite file you can open
-with any tool. Settings ▸ Data exports a slice as Markdown, HTML, CSV or JSON, or the
+with any tool. Settings ▸ Data exports a slice as Markdown, HTML, PDF, CSV or JSON, or the
 whole database as a backup. Nothing is locked in, and deleting the folder deletes everything.
 
 **Does it run on Intel?**
