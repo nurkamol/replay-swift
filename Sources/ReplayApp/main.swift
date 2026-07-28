@@ -109,9 +109,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// tolerable: a thing that takes over the screen while you are working in something else
     /// is a fright, and one that appears over the app you were already looking at is a
     /// screensaver. Off by default either way.
+    ///
+    /// **And never over ambient mode.** That was already true before the check below was
+    /// added, but only by accident: ambient mode's window is key while it is up, so
+    /// `window?.isKeyWindow` was false and the guard fell through for a reason that had
+    /// nothing to do with ambient mode. Correct behaviour resting on an unrelated
+    /// condition is a bug that has not happened yet — relax that line for any reason and
+    /// the screensaver starts drifting in over a display somebody is deliberately reading.
+    /// Ambient mode is *specifically* the surface you look at without touching the
+    /// keyboard, so the idle threshold trips while you sit there. Said explicitly now.
     private func checkScreensaverIdle() {
         let minutes = preferences.screensaverIdleMinutes
-        guard minutes > 0, screensaverWindow == nil, NSApp.isActive,
+        guard minutes > 0, screensaverWindow == nil, ambientWindow == nil, NSApp.isActive,
               window?.isKeyWindow == true else { return }
         let idle = CGEventSource.secondsSinceLastEventType(
             .hidSystemState, eventType: .init(rawValue: ~0)!
@@ -414,6 +423,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
+        // The two never overlap. `openAmbient` already closed the screensaver; this is the
+        // other half, which was missing — so asking for the screensaver while ambient mode
+        // was up stacked one over the other at the same window level, and leaving the
+        // screensaver dropped you back into a display you had stopped looking at.
+        closeAmbient()
         // `NSScreen.main` is the screen with keyboard focus, which is where the person is
         // looking. `window?.screen` was tried first and put the overlay on whichever display
         // the main window's restored frame happened to sit on — the wrong one, silently.

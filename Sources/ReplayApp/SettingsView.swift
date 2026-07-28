@@ -1119,8 +1119,10 @@ private struct DisplayTab: View {
             } footer: {
                 Footnote(
                     "Drifts in only while Replay's own window is in front, so it never "
-                        + "appears over another app. Escape and the close button always "
-                        + "dismiss it, whatever these say."
+                        + "appears over another app — or over ambient mode, which is a "
+                        + "screen you are deliberately reading. Opening either of the two "
+                        + "closes the other; they are never both up. Escape and the close "
+                        + "button always dismiss whichever is, whatever these say."
                 )
             }
 
