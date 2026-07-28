@@ -31,6 +31,13 @@ whole claim is that nothing leaves your Mac and nothing is being asked of you. T
 override macOS's own security check in order to install it would undercut the only thing it
 is really selling.
 
+The command-line reader needs none of this and can be installed on its own:
+
+```bash
+brew install --HEAD --formula ./Formula/replay.rb
+replay today
+```
+
 `scripts/make-dmg.sh` and `.github/workflows/release.yml` are written and waiting; the day a
 Developer ID exists, a signed and notarised image is one tag away.
 
@@ -99,6 +106,7 @@ tools/port-queue.mjs     lists Glaze commits this port still owes
 tools/design-audit.mjs   fails if a view spells a visual constant
 tools/shortcut-audit.mjs fails if a bound key is undocumented, or documented and unbound
 tools/cli-audit.sh       the CLI's exit codes, stream discipline and --json shape
+Formula/replay.rb        a Homebrew formula for the CLI — needs no Developer ID
 Resources/AppIcon.icns   the product's icon, carried over from the Glaze app
 docs/                    read these
 scripts/make-app.sh      assemble a runnable .app

@@ -197,6 +197,27 @@ These are not blocked by difficulty. They are blocked because they are somebody'
         outright. That rule has held the project together; it should be changed
         deliberately, in its own decision, rather than sneaked in behind a release process.
 
+- [ ] **Homebrew — the other half of "how does anybody get this".** `S` for the CLI, `M` for
+      the app, and the two are blocked differently.
+      · **The CLI is not blocked at all, and `Formula/replay.rb` is written.** Gatekeeper's
+        signing requirement is about *applications downloaded from the internet*; a binary
+        Homebrew builds on your own machine was never downloaded and is never quarantined.
+        `brew style` passes. Installing it needs a tap of its own — a GitHub repository named
+        `homebrew-tap` — which is a one-command thing (`brew tap-new nurkamol/tap`) that
+        nobody has done yet. **Not verified by installing:** this machine's Command Line
+        Tools are older than the selected Xcode 27 and Homebrew refuses on that alone.
+      · **A cask for the app waits on the same certificate the DMG does.** It would point at
+        a GitHub release, so it is only pleasant once that release is signed.
+      · **`--no-quarantine` is the nearest thing to an unsigned app opening cleanly**, and it
+        is worth knowing precisely what it is: `brew install --cask --no-quarantine replay`
+        stops the flag ever being set, so the app opens with no dialog. That is still the
+        *user* choosing to skip a check — but it is one word in a command they already typed
+        rather than a warning whose default button is "Move to Trash". It does not remove the
+        reason to sign; it removes the worst version of not having signed.
+      · Getting into the official `homebrew-cask` repository additionally needs a project
+        notable enough for their rules. A personal tap has no such bar and works identically
+        for anyone given the one-line install.
+
 - [ ] **PDF export.** Three WebKit routes tried and dead — recorded in the ledger's
       divergences so a fourth person does not repeat them. Reviving it means leaving WebKit
       and drawing the report into a `CGContext` by hand. `L`.

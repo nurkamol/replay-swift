@@ -27,6 +27,13 @@ and since macOS 15 the Control-click-to-open bypass is gone, so the only route i
 Settings ▸ Privacy & Security ▸ Open Anyway, or `xattr -d com.apple.quarantine` in a
 terminal.
 
+**And there is no way around it.** A `.zip` carries the same quarantine; a `.pkg` needs a
+*Developer ID Installer* certificate from the same paid programme; a self-signed certificate
+is rejected identically because Gatekeeper trusts Apple's chain and nothing else; and
+`xattr -dr com.apple.quarantine` is the user performing a bypass on their own machine, which
+a publisher cannot do for them. Making a downloaded app open without friction *is* what the
+Developer ID programme sells.
+
 **So the decision is not "does it work" but "what are we asking of someone".** Two reasons
 not to:
 
