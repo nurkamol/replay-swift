@@ -17,11 +17,9 @@ class Replay < Formula
   desc "Your own local timeline of the apps you use, from a shell"
   homepage "https://github.com/nurkamol/replay-swift"
   license "MIT"
+  url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.0.tar.gz"
+  sha256 "41f43bc6f06fef65a2908fe3fce0140cbe9508fa422da273885bd33b4fe5064f"
   head "https://github.com/nurkamol/replay-swift.git", branch: "main"
-
-  # Arrives with the first tag:
-  #   url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.0.tar.gz"
-  #   sha256 "…"
 
   # The package targets macOS 26 deliberately — the *app* leans on APIs that begin there,
   # and the CLI shares its `Package.swift`. Splitting the manifest to let the CLI build on

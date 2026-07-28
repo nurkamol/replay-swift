@@ -107,9 +107,13 @@ jobs:
       # to any release, neither needs a signature, and refusing to tag until a certificate
       # exists held those hostage to it.
       #
-      # So a run without secrets publishes the release and no disk image, and says so in the
-      # notes. What it will never do is attach an *unsigned* image: that looks like a
-      # download and behaves like a broken app, and you get one first impression.
+      # So a run without secrets publishes a zipped application and no disk image. The zip
+      # is the deliberate choice: a `.dmg` is what a *finished* Mac app arrives in and would
+      # promise something this cannot deliver, while a zip reads as "here is the build" and
+      # is what unsigned projects on GitHub actually ship. Either way the person who
+      # downloads it meets Gatekeeper, so the notes carry the way through — which is the
+      # part most projects leave out, and the reason their issue trackers fill up with
+      # "the app is damaged".
       - name: Can this run sign?
         env:
           CERT_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
@@ -167,27 +171,67 @@ jobs:
 
       # One text, written once, in CHANGELOG.md. An unsigned run prepends how to install,
       # because a release page with no download and no explanation reads as a mistake.
+      # `ditto`, never `zip`. A `.app` is a directory of symlinks and extended attributes,
+      # and `zip` flattens both — the bundle unpacks into something that will not launch.
+      # `--keepParent` so it expands to `Replay.app` rather than scattering its contents
+      # into whatever folder it was opened in.
+      - name: Zip the application
+        if: env.SIGNED != '1'
+        run: |
+          ./scripts/make-app.sh release
+          ditto -c -k --keepParent --sequesterRsrc \
+            "build/Replay.app" "build/Replay-$VERSION.zip"
+          shasum -a 256 "build/Replay-$VERSION.zip" > "build/Replay-$VERSION.zip.sha256"
+          # It has to be signed, even if only ad-hoc: an unsigned bundle will not launch on
+          # Apple silicon at all, which is a worse failure than the Gatekeeper prompt and
+          # would look identical to the person who hit it.
+          codesign --verify --deep --strict "build/Replay.app"
+
       - name: Release notes, from the changelog
         run: |
           if [ "$SIGNED" != "1" ]; then
-            cat > "$RUNNER_TEMP/notes.md" <<'PREAMBLE'
-          > **There is no download on this page, and that is deliberate.** Replay has no Apple
-          > Developer ID yet, and macOS refuses a *downloaded* app that has no signature. An
-          > unsigned disk image would look like a download and behave like a broken app, so
-          > none is published.
-          >
-          > Install it by building it — neither route is ever quarantined, and both open with
-          > no warning at all:
-          >
-          > ```sh
-          > brew tap nurkamol/tap
-          > brew install nurkamol/tap/replay-app    # the application
-          > brew install nurkamol/tap/replay        # the command-line reader
-          > ```
-          >
-          > Or from the source tarball below: `./scripts/make-app.sh release && open build/Replay.app`.
-          > A signed disk image appears here the day there is a certificate; the workflow that
-          > builds it is already written.
+            cat > "$RUNNER_TEMP/notes.md" <<PREAMBLE
+          ## Download
+
+          **[Replay-$VERSION.zip](https://github.com/nurkamol/replay-swift/releases/download/v$VERSION/Replay-$VERSION.zip)** — unzip it and drag \`Replay.app\` to Applications.
+
+          ### macOS will refuse to open it the first time. Here is why, and what to do.
+
+          Replay has no Apple Developer ID yet, so macOS marks it as unverified and shows
+          **"Apple could not verify Replay is free of malware"** — offering only *Move to
+          Trash* or *Cancel*. That message is about a **missing certificate, not about
+          anything found in the app**. Every unsigned app gets it.
+
+          To open it:
+
+          1. Try to open Replay once and dismiss the warning.
+          2. Go to **System Settings ▸ Privacy & Security**, scroll down, click **Open Anyway**.
+          3. Confirm. It opens normally from then on.
+
+          Or one line in a terminal, which does the same thing:
+
+          \`\`\`sh
+          xattr -dr com.apple.quarantine /Applications/Replay.app
+          \`\`\`
+
+          **Right-click ▸ Open does not work.** That bypass existed for years and Apple
+          removed it in macOS 15. It is still the advice in most projects' READMEs.
+
+          ### Or skip all of that
+
+          Homebrew compiles it on your machine, so it is never downloaded, never quarantined,
+          and opens with no warning at all:
+
+          \`\`\`sh
+          brew tap nurkamol/tap
+          brew install nurkamol/tap/replay-app    # the application
+          brew install nurkamol/tap/replay        # the command-line reader
+          \`\`\`
+
+          A signed, notarised disk image — no warnings, nothing to click through — appears
+          here the day there is a certificate. The workflow that builds it is already written.
+
+          ---
 
           PREAMBLE
           fi
@@ -200,6 +244,8 @@ jobs:
           files: |
             build/Replay-${{ env.VERSION }}.dmg
             build/Replay-${{ env.VERSION }}.dmg.sha256
+            build/Replay-${{ env.VERSION }}.zip
+            build/Replay-${{ env.VERSION }}.zip.sha256
           # Off, because an unsigned run has no image to attach and the release is still
           # worth publishing. The signed path is protected by the stapler check above, which
           # fails before this step if the image is missing or unnotarised.

@@ -40,15 +40,19 @@ implementation, and the claims above are the ones the design is built around —
 
 ## Install
 
-There is no download yet, and that is deliberate rather than unfinished — see below.
+Three ways in. Homebrew and a source build compile on your machine, so they are never
+quarantined and open with no warning at all — which is why they are first. The zipped app on
+the [releases page](https://github.com/nurkamol/replay-swift/releases/latest) needs no tools,
+and costs you one trip through System Settings the first time you open it; that is explained
+in full below rather than left as a surprise.
 
 ### With Homebrew
 
 ```sh
 brew tap nurkamol/tap
 
-brew install --HEAD nurkamol/tap/replay-app    # the application
-brew install --HEAD nurkamol/tap/replay        # the command-line reader
+brew install nurkamol/tap/replay-app    # the application
+brew install nurkamol/tap/replay        # the command-line reader
 ```
 
 Then link the app once, so Spotlight and the Dock can find it:
@@ -57,7 +61,7 @@ Then link the app once, so Spotlight and the Dock can find it:
 ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
 ```
 
-`--HEAD` because there is no tagged release yet; it drops off once there is one.
+That builds v0.9.0. Add `--HEAD` to either one to build the current `main` instead.
 
 ### Or from source
 
@@ -98,7 +102,7 @@ longer does anything. System Settings is the route now.
 machine, so nothing is ever downloaded and nothing is ever quarantined — they open with no
 warning at all. That is the reason they are listed first rather than as a fallback.
 
-### Why there is no signed download
+### Why there is no *signed* download
 
 A disk image from a release page needs a **Developer ID signature and Apple notarisation** to
 open without that warning — measured, not assumed, in [docs/FINDINGS.md](docs/FINDINGS.md),
@@ -107,13 +111,18 @@ Developer Program, which is **$99 a year**. There is no free path to it: a free 
 issues certificates that sign apps for your own machines only.
 
 It is worth being plain that this is the *only* thing standing in the way. Everything else is
-built: `scripts/make-dmg.sh` produces the image, `.github/workflows/release.yml` signs,
-notarises, staples and publishes it, and both refuse to run rather than produce something
-Gatekeeper will reject. The day a certificate exists, a signed download is one tag away.
+built: `scripts/make-dmg.sh` produces the image and `.github/workflows/release.yml` signs,
+notarises, staples and publishes it. Until then a release carries a **zipped app** instead —
+a zip rather than a disk image on purpose, because a `.dmg` is what a finished app arrives in
+and would promise something this cannot yet deliver, and because the release notes have to
+carry the Gatekeeper instructions rather than let somebody meet that dialog cold. What the
+workflow will not do is attach an unsigned `.dmg`.
 
-Automatic updates are a separate decision and deliberately not built. The usual answer is
-Sparkle, which is an external dependency — this project has none, on purpose, and that rule
-would be changed openly rather than in passing. See [docs/BACKLOG.md](docs/BACKLOG.md) §6.
+Automatic updates are half-built and deliberately stop short. Replay can check GitHub for a
+newer version — opt-in, off by default, Settings ▸ About — and tells you rather than
+installing anything. Self-update is the part that needs a signature to verify before it
+swaps a running app, so it waits for the same certificate. Not Sparkle: that is an external
+dependency and this project has none, on purpose. See [docs/BACKLOG.md](docs/BACKLOG.md) §6.
 
 ## Quickstart
 
@@ -208,20 +217,28 @@ covers, not about what it does not.
 
 ## FAQ
 
-**Is there a `.dmg` I can download?**
-Not yet. A disk image has to be signed and notarized with a paid Apple Developer ID
-(99 USD/year) or macOS refuses to open it, and this project does not have one. Publishing an
-*unsigned* archive would look like a download and behave like a broken one — the ritual in
-[If you downloaded a build](#if-you-downloaded-a-build) is not something to hand a stranger.
-Homebrew and a source build compile on your machine, are never quarantined, and open with no
-warning at all. The release workflow to publish a signed DMG is already written and will
-start producing one the day there is a certificate.
+**Is there something I can just download and run?**
+Yes — a zipped app on the [releases page](https://github.com/nurkamol/replay-swift/releases/latest),
+for people who do not have Xcode and are not going to install it to try something. But read
+the next answer first: macOS will refuse to open it once, and you have to go through System
+Settings to allow it. That is the price of no certificate, and it is on the download rather
+than hidden behind it.
+
+No `.dmg`, and that is the distinction. A disk image is what a *finished* Mac app arrives in,
+and one that makes you click through a malware warning is not that. It needs a Developer ID
+signature and Apple notarisation — the Apple Developer Program, 99 USD a year — and the
+workflow that builds, signs, notarises and staples it is already written. The day there is a
+certificate, a real download is one tag away.
 
 **I got "Apple could not verify Replay is free of malware".**
-Then it was downloaded rather than built. That message is about a missing certificate, not
-about anything found in the app — see [If you downloaded a build](#if-you-downloaded-a-build)
-for the two ways out. Note that right-click ▸ Open no longer works: Apple removed that bypass
-in macOS 15.
+Expected, if you took the zip. That message is about a **missing certificate, not about
+anything found in the app** — every unsigned app on macOS gets it, and it offers only *Move
+to Trash* or *Cancel*, which is why it reads worse than it is. Open Replay once, dismiss it,
+then **System Settings ▸ Privacy & Security ▸ Open Anyway**; or run
+`xattr -dr com.apple.quarantine /Applications/Replay.app`. Full version in
+[If you downloaded a build](#if-you-downloaded-a-build). Right-click ▸ Open does **not** work
+— Apple removed that bypass in macOS 15, and it is still the advice in most projects'
+READMEs.
 
 **Does Replay send anything anywhere?**
 Nothing about you or your record, under any setting. There is exactly one network request in
@@ -242,7 +259,8 @@ name and how long it was in front is the entire input — which is why "Replay" 
 that you spent four hours in an editor and nothing whatsoever about what you wrote.
 
 **How do I update it?**
-`brew upgrade --fetch-HEAD nurkamol/tap/replay-app`, or `git pull && ./scripts/make-app.sh
+`brew upgrade nurkamol/tap/replay-app` (add `--fetch-HEAD` if you installed with
+`--HEAD`), or `git pull && ./scripts/make-app.sh
 release` from a clone. The in-app check only tells you a version exists; it never replaces a
 running app behind your back.
 
