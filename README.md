@@ -102,7 +102,7 @@ covers, not about what it does not.
 | [docs/SYNC.md](docs/SYNC.md) | **how the two stay honest** — the generated contract and the loop |
 | [docs/PORTING-MAP.md](docs/PORTING-MAP.md) | every Glaze API → native equivalent, costs, and the two real risks |
 | [docs/PARITY.md](docs/PARITY.md) | feature-by-feature status ledger, and every known divergence |
-| [docs/BACKLOG.md](docs/BACKLOG.md) | **the only list of remaining work**, in the order it is worth doing |
+| [docs/BACKLOG.md](docs/BACKLOG.md) | **the only list of remaining work** — parity, decisions, and §6 for ideas of this port's own |
 | [docs/FINDINGS.md](docs/FINDINGS.md) | questions that decided something, with the evidence |
 | [plans/](plans/) | animation audit findings and the plans they became |
 | [docs/GLAZE-CHANGELOG.md](docs/GLAZE-CHANGELOG.md) | the reference implementation's release history (a copy) |

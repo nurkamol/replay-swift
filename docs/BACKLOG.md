@@ -1,7 +1,16 @@
 # Backlog
 
 What is left, in the order it is worth doing. **This is the only list of remaining work** —
-[PARITY.md](PARITY.md) records what the port *is*, this records what it is *not yet*. If a
+[PARITY.md](PARITY.md) records what the port *is*, this records what it is *not yet*.
+
+Sections 1–5 are all one kind of thing: catching up with the reference, or unblocking a
+build. **§6 is the first that is not.** Everything Replay does today exists because the
+Glaze app does it, and "is this right?" has had an answer that could be looked up. Beyond
+parity there is no reference to check against and no contract to generate — the questions
+become ordinary product questions, answered by argument rather than by `sync-spec.mjs`.
+Worth keeping in its own section for exactly that reason: the discipline that has served
+this port does not apply there, and pretending otherwise would be the easiest way to lose
+it. If a
 task is finished, tick it here and update the ledger in the same commit; if a task turns out
 to be already done, say so here rather than deleting the line, because that has happened
 twice and both times it cost real work.
@@ -166,6 +175,10 @@ These are not blocked by difficulty. They are blocked because they are somebody'
 
 - [ ] **Signing and notarisation.** Needs a Developer ID. `scripts/make-app.sh` ad-hoc signs,
       which runs locally and cannot be handed to anybody. Everything else here is smaller.
+      · **This is now the top item on the whole list**, not just this section. Two of the
+        three things in §6 worth building — App Intents and a widget — cannot be installed
+        without it, so it stopped being only about distribution and became the thing gating
+        the next feature. The CLI in §6 is the one item that does not need it.
 - [ ] **PDF export.** Three WebKit routes tried and dead — recorded in the ledger's
       divergences so a fourth person does not repeat them. Reviving it means leaving WebKit
       and drawing the report into a `CGContext` by hand. `L`.
@@ -191,6 +204,61 @@ the implementation guidance does not.
 - [ ] **Hold `find-animation-opportunities`.** It proposes *new* motion, and the Canvas gained
       four moving things on 27 July that nobody has lived with yet. Revisit once they have
       been used for a while.
+
+---
+
+## 6 · Beyond parity — this port's own ideas
+
+Nothing here exists in the Glaze app, so nothing here can be generated, contract-checked, or
+settled by reading the reference. Sized, ordered, and with the real costs named — but none of
+it is decided, and the sizes are the least trustworthy in this document because there is no
+existing implementation to measure against.
+
+**Both of the first two are gated on signing (§4).** An App Intent nobody can install and a
+widget that cannot be registered are each worth zero. That moves signing from "blocked, and
+awkward" to the top of the whole list.
+
+- [ ] **App Intents / Shortcuts support.** `M` The best fit and the cheapest. "How long was I
+      in Xcode today?", "What did I do on Tuesday?", "Start a reflection." Read-only, needs
+      no permission, and reuses `ReplayCore` unchanged — the derivations it would call are
+      already pure functions with a contract behind them. It also makes Replay scriptable and
+      reachable from Spotlight for free.
+      · **Do this one first.** It is the only item here with no architectural cost, and it
+        would tell us whether the core's API is actually pleasant to call from outside the
+        app, which nothing has tested.
+
+- [ ] **A widget.** `L` Today's total, the application in front, the streak. The right shape
+      for this product — it is a glanceable figure the app already computes, and ambient mode
+      is evidence somebody wants that figure without opening a window.
+      · **The cost is not the view.** Widgets run in a separate process, so the extension
+        cannot read `~/Library/Application Support/app.replay.native/activity.db` where the
+        database lives today. It needs an **App Group container**, which means migrating the
+        database of every existing install.
+      · **That is a one-way door**, and the only one on this list. A half-finished migration
+        loses somebody's history, which is the one thing this app exists to keep. It wants a
+        written plan, a backup taken before the move, and a verified read-back afterwards —
+        not an afternoon.
+      · Worth checking first whether the widget could read the *daily headlines* only, which
+        are small and could be mirrored into the group container rather than moved. That
+        would make it additive instead of a migration, and today's total is a headline.
+
+- [ ] **A richer menu bar popover.** `S` The item exists and shows the current app and
+      today's total. A small popover — the last few sessions, the goal, a pause control —
+      is cheap and does not need signing to try.
+
+- [ ] **A command-line reader.** `S`–`M` `replay today`, `replay export --json`. Falls out of
+      `ReplayCore` almost free, is genuinely useful for anyone who scripts, and is the one
+      thing here that can be built and used *without* a Developer ID. A reasonable
+      consolation while signing is blocked.
+
+### Considered and not proposed
+
+- **Sync between Macs.** It would be the first network code in an app whose entire claim is
+  that there is none. Not a feature to weigh against others; a different product.
+- **Anything that classifies or scores a day.** SPEC §8 — Replay describes, it does not
+  grade. A "productivity score" is the most obvious idea in this space and the most clearly
+  against what the app is.
+- **Live Activities.** iOS only; there is no Mac equivalent to port.
 
 ---
 
