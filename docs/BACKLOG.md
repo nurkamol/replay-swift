@@ -218,7 +218,14 @@ existing implementation to measure against.
 widget that cannot be registered are each worth zero. That moves signing from "blocked, and
 awkward" to the top of the whole list.
 
-- [ ] **App Intents / Shortcuts support.** `M` The best fit and the cheapest. "How long was I
+- [x] **App Intents / Shortcuts support.** Built 2026-07-28. Three read-only intents —
+      today's activity, a given day, and time in one application — with Siri phrases, and six
+      behaviour cases over the sentences they return. `scripts/make-app.sh` runs
+      `appintentsmetadataprocessor` itself, because SwiftPM does not and the failure mode is
+      an app that silently has no Shortcuts support. **End-to-end discovery in Shortcuts.app
+      is unverified** — see the ledger; it may need a signed build in `/Applications`.
+
+      ~~Was:~~ `M` The best fit and the cheapest. "How long was I
       in Xcode today?", "What did I do on Tuesday?", "Start a reflection." Read-only, needs
       no permission, and reuses `ReplayCore` unchanged — the derivations it would call are
       already pure functions with a contract behind them. It also makes Replay scriptable and

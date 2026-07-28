@@ -101,7 +101,7 @@ func nameSession(
 }
 
 /// Fold a run's rows into per-application totals, most time first.
-func summarizeApps(_ events: [ActivityEvent], now: Int64) -> (apps: [SessionApp], activeSeconds: Int) {
+public func summarizeApps(_ events: [ActivityEvent], now: Int64) -> (apps: [SessionApp], activeSeconds: Int) {
     var order: [String] = []
     var byApp: [String: SessionApp] = [:]
     var activeSeconds = 0

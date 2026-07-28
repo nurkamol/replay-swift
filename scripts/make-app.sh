@@ -19,9 +19,30 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/build/Replay.app"
 BUNDLE_ID="app.replay.native"
 VERSION="0.9.0"   # matches the top entry in CHANGELOG.md
+MIN_MACOS="26.0"  # CLAUDE.md: the interface leans on APIs that begin at 15 and 26
 
 echo "Building ($CONFIG)…"
-swift build -c "$CONFIG" --package-path "$ROOT"
+
+# App Intents need metadata generated at build time, and SwiftPM does not do it.
+#
+# Xcode runs `appintentsmetadataprocessor` as a build phase; a hand-assembled bundle has to
+# run it itself, or Shortcuts, Spotlight and Siri simply never see the intents — no error,
+# no warning, an app that looks like it has none. The processor reads the constant values
+# the compiler emits for the protocols listed in the toolchain's own `AppIntents.json`, so
+# the build has to ask for those too.
+#
+# Both flags are additive: if the toolchain ever drops them the build still succeeds and
+# only the metadata step is skipped, which is checked and reported below rather than
+# passing silently.
+INTENT_PROTOCOLS="$(xcrun --find swiftc | xargs dirname)/../share/swift/SwiftConstantValues/AppIntents.json"
+CONST_FLAGS=()
+if [ -f "$INTENT_PROTOCOLS" ]; then
+  CONST_FLAGS=(-Xswiftc -emit-const-values
+               -Xswiftc -Xfrontend -Xswiftc -const-gather-protocols-file
+               -Xswiftc -Xfrontend -Xswiftc "$INTENT_PROTOCOLS")
+fi
+
+swift build -c "$CONFIG" --package-path "$ROOT" "${CONST_FLAGS[@]}"
 
 BIN="$(swift build -c "$CONFIG" --package-path "$ROOT" --show-bin-path)/ReplayApp"
 [ -x "$BIN" ] || { echo "no executable at $BIN" >&2; exit 1; }
@@ -32,6 +53,36 @@ cp "$BIN" "$APP/Contents/MacOS/Replay"
 
 # The product's own icon, carried over from the Glaze app so the two are visibly the
 # same product. Glaze gitignores it as generated output, so this repo keeps a copy.
+# The App Intents metadata, into Contents/Resources where the system looks for it.
+PROCESSOR="$(xcrun --find swiftc | xargs dirname)/appintentsmetadataprocessor"
+CONSTVALS="$(find "$ROOT/.build" -path "*ReplayApp-p.build*" -name "*.swiftconstvalues" 2>/dev/null)"
+if [ -x "$PROCESSOR" ] && [ -n "$CONSTVALS" ]; then
+  WORK="$(mktemp -d)"
+  find "$ROOT/Sources/ReplayApp" -name "*.swift" > "$WORK/sources.txt"
+  printf '%s\n' $CONSTVALS > "$WORK/constvals.txt"
+  "$PROCESSOR" \
+    --output "$APP/Contents/Resources" \
+    --toolchain-dir "$(xcrun --find swiftc | xargs dirname)/.." \
+    --module-name ReplayApp \
+    --sdk-root "$(xcrun --sdk macosx --show-sdk-path)" \
+    --xcode-version "$(xcodebuild -version 2>/dev/null | tail -1 | awk '{print $3}')" \
+    --platform-family macOS \
+    --deployment-target "$MIN_MACOS" \
+    --target-triple "$(uname -m)-apple-macos$MIN_MACOS" \
+    --source-file-list "$WORK/sources.txt" \
+    --swift-const-vals-list "$WORK/constvals.txt" \
+    --force >/dev/null 2>&1
+  rm -rf "$WORK"
+fi
+if [ -d "$APP/Contents/Resources/Metadata.appintents" ]; then
+  INTENTS=$(python3 -c "import json,sys; print(len(json.load(open(sys.argv[1]))['actions']))" \
+    "$APP/Contents/Resources/Metadata.appintents/extract.actionsdata" 2>/dev/null || echo "?")
+  echo "  App Intents: $INTENTS, discoverable by Shortcuts and Spotlight."
+else
+  # Loud, because the failure mode is an app that silently has no Shortcuts support.
+  echo "  warning: no App Intents metadata — Shortcuts will not see any intents." >&2
+fi
+
 ICON="$ROOT/Resources/AppIcon.icns"
 if [ -f "$ICON" ]; then
     cp "$ICON" "$APP/Contents/Resources/AppIcon.icns"

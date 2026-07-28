@@ -232,6 +232,26 @@ public func startOfLocalDay(_ epochMillis: Int64, calendar: Calendar = .current)
 
 public let dayMillis: Int64 = 24 * 60 * 60 * 1000
 
+/// A day's full name, including its year — for a reopened day, where the year matters.
+///
+/// In the core because an App Intent has to name a day and cannot import the app. The
+/// no-argument form is what every view calls; the parameters exist so a test can pin a
+/// calendar and a locale.
+public func fullDayLabel(
+    _ dayStart: Int64, calendar: Calendar = .current, locale: Locale = .current
+) -> String {
+    var formatted = Date(timeIntervalSince1970: Double(dayStart) / 1000)
+        .formatted(.dateTime.weekday(.wide).month(.wide).day().year()
+            .locale(locale))
+    if calendar.timeZone != TimeZone.current {
+        var style = Date.FormatStyle.dateTime.weekday(.wide).month(.wide).day().year()
+        style.timeZone = calendar.timeZone
+        formatted = Date(timeIntervalSince1970: Double(dayStart) / 1000)
+            .formatted(style.locale(locale))
+    }
+    return formatted
+}
+
 /// The local-midnight **Monday** that starts the week a moment falls in.
 ///
 /// Monday deliberately, and not `Calendar.firstWeekday`. The reference settled this in

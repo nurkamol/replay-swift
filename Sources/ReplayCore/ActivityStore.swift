@@ -11,6 +11,17 @@ import SQLite3
 /// identical to the Glaze app's, and a query builder would hide exactly the details
 /// that matter (the `duration < idleStretchSeconds` filter that makes "active" mean
 /// something, the `started_at` lower bound that keeps range scans bounded).
+/// Where Replay keeps its record.
+///
+/// In `ReplayCore` rather than in the app because more than one process needs it now: the
+/// app opens it to write, and an App Intent opens it to read without the app running. Two
+/// copies of a path is how a feature ends up reading an empty database on somebody else's
+/// Mac and nobody finding out.
+public func defaultDatabaseURL() -> URL {
+    let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    return support.appendingPathComponent("app.replay.native/activity.db")
+}
+
 public final class ActivityStore {
     private var db: OpaquePointer?
     // Internal so Maintenance.swift can name the file it is copying and rewriting.

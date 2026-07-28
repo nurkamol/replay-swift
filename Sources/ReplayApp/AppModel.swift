@@ -39,10 +39,8 @@ final class AppModel {
     private static let deriveIntervalMillis: Int64 = 30_000
 
     /// The app's own container, so the native app never touches the Glaze database.
-    static var defaultDatabaseURL: URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return support.appendingPathComponent("app.replay.native/activity.db")
-    }
+    /// Defined in `ReplayCore` because App Intents open the same file without the app.
+    static var defaultDatabaseURL: URL { ReplayCore.defaultDatabaseURL() }
 
     init(databaseURL: URL = AppModel.defaultDatabaseURL) {
         store = ActivityStore(path: databaseURL.path)

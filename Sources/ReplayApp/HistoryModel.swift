@@ -151,8 +151,4 @@ func dayLabel(_ dayStart: Int64, today: Int64) -> String {
         .formatted(.dateTime.weekday(.wide).month(.wide).day())
 }
 
-/// A day's full name, including its year — for a reopened day, where the year matters.
-func fullDayLabel(_ dayStart: Int64) -> String {
-    Date(timeIntervalSince1970: Double(dayStart) / 1000)
-        .formatted(.dateTime.weekday(.wide).month(.wide).day().year())
-}
+
