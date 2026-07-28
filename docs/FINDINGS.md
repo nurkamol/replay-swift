@@ -5,6 +5,46 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## A test that was only true in the timezone it was written in
+
+**Date:** 2026-07-28 · **Reproduce:** `TZ=UTC swift run replay-parity` at commit `6354afc`
+· **Verdict:** derive the fixture, never assert it
+
+The Monday-week check pinned an instant and called it a Monday:
+
+```swift
+let mondayProbe = startOfLocalDay(1_785_092_400_000)  // a Monday
+```
+
+It is a Monday in UTC+5, where it was written. In UTC it is a Sunday, so `startOfWeek` walked
+back six days and all seven checks failed — on every CI runner, from the commit that
+introduced them, for six hours and twenty commits.
+
+**Both halves of that are the finding.** The four-timezone matrix caught it on the first
+push and kept saying so; nobody read the result. A check that fails unwatched is worth
+nothing, and this project now has two entries in this file about local truths written into
+tests — the other is the day-part titles. Both were invisible at the desk and obvious in CI.
+
+The fix is a shape, not a value: **derive the fixture from the function under test, then
+assert the property.**
+
+```swift
+let mondayProbe = startOfWeek(1_785_092_400_000)          // whatever week that is
+equal("a week begins on a Monday",
+      calendar.component(.weekday, from: mondayDate), 2)  // the actual claim
+for offset in 0..<7 {                                     // all seven agree
+    let day = calendar.date(byAdding: .day, value: offset, to: mondayDate)!
+    equal("day \(offset) resolves to the same Monday", startOfWeek(millis(day)), mondayProbe)
+}
+```
+
+Verified in eight zones including Pacific/Chatham (+12:45) and Australia/Lord_Howe (+10:30),
+whose half-hour offsets break arithmetic that assumes a day is 86,400,000ms. The loop uses
+`Calendar.date(byAdding:)` for the same reason: across a daylight-saving boundary a day is
+not 24 hours, and adding milliseconds lands the probe on the wrong side of midnight.
+
+---
+
 ## An unsigned disk image can be published, and cannot be opened
 
 **Date:** 2026-07-28 · **Reproduce:** the three commands below · **Verdict:** no download

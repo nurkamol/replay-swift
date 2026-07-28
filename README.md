@@ -83,7 +83,7 @@ Checking this port against Glaze 2.3.2 (d355ba2)
    ✓ away-row-splits-session — A measured idle row is a break, and splits the run…
    … 8 scenarios …
 
-PARITY OK — 931 checks against Glaze 2.3.2
+PARITY OK — 932 checks against Glaze 2.3.2
 ```
 
 ## What is here
@@ -94,7 +94,7 @@ Sources/ReplayCore/
   ActivityStore.swift    SQLite: storage, headlines, deletion, compaction
   SessionBuilder.swift   the derivation — rows → named sessions and breaks
   ActivityTracker.swift  NSWorkspace + idle time → recorded sessions
-Sources/ParityKit/       the parity suite — 931 checks against the reference
+Sources/ParityKit/       the parity suite — 932 checks against the reference
 Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
 Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
 Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
@@ -124,7 +124,7 @@ built it: `scripts/make-app.sh` signs ad-hoc, and a Developer ID is the only thi
 that and a build you could hand to somebody. What is left is in
 [docs/BACKLOG.md](docs/BACKLOG.md), which is short and mostly not code.
 
-**A caveat worth reading before trusting the number.** 931 checks cover the core and the
+**A caveat worth reading before trusting the number.** 932 checks cover the core and the
 values behind the interface, and nothing exercises the interface itself. Three bugs in this
 release were invisible to every automated check and were found by looking at the app: a
 Settings toggle bound to the wrong `Bool`, chrome laid out off-screen, and a test suite

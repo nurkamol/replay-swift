@@ -1348,10 +1348,34 @@ public enum ParityKit {
         // in `Autobiography` until the heatmap needed one and reached for `firstWeekday`
         // instead, so the grid drew a week the rest of the app did not recognise. Checked
         // across all seven weekdays, in whatever calendar the suite is running under.
-        let mondayProbe = startOfLocalDay(1_785_092_400_000)  // a Monday
+        // **Derived, not asserted.** The first version of this pinned a fixed instant and
+        // called it "a Monday" — which it is in UTC+5, where it was written, and is not in
+        // UTC, where it is a Sunday. All seven checks failed on every CI runner for six
+        // hours. The four-timezone matrix exists for exactly this and caught it immediately;
+        // nobody looked. Twice now this project has been bitten by a *local* truth written
+        // into a test (see docs/FINDINGS.md), and both times it was invisible at the desk.
+        //
+        // So: take any instant, ask what week it is in, and check that all seven of that
+        // week's days agree — which holds wherever it runs. Then check separately that the
+        // week began on a Monday, which is the claim being made.
+        let weekCalendar = Calendar.current
+        let mondayProbe = startOfWeek(1_785_092_400_000)
+        let mondayDate = Date(timeIntervalSince1970: Double(mondayProbe) / 1000)
+        equal(
+            g1, "a week begins on a Monday",
+            weekCalendar.component(.weekday, from: mondayDate), 2
+        )
         for offset in 0..<7 {
-            let day = startOfLocalDay(mondayProbe + Int64(offset) * dayMillis)
-            equal(g1, "day \(offset) of the week starts on its Monday", startOfWeek(day), mondayProbe)
+            // Calendar arithmetic rather than adding milliseconds: a day is not always
+            // 86,400,000ms, and a week that crosses a daylight-saving boundary would
+            // otherwise land this probe on the wrong side of midnight.
+            guard let day = weekCalendar.date(byAdding: .day, value: offset, to: mondayDate)
+            else { continue }
+            let millis = Int64((day.timeIntervalSince1970 * 1000).rounded())
+            equal(
+                g1, "day \(offset) of that week resolves to the same Monday",
+                startOfWeek(millis), mondayProbe
+            )
         }
 
         // The screensaver's marquee. Its reduced-motion answer is the interesting half:
