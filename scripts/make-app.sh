@@ -52,8 +52,30 @@ if [ -f "$INTENT_PROTOCOLS" ]; then
                -Xswiftc -Xfrontend -Xswiftc "$INTENT_PROTOCOLS")
 fi
 
-swift build -c "$CONFIG" --package-path "$ROOT" \
-    ${CONST_FLAGS[@]+"${CONST_FLAGS[@]}"} ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"}
+# Tried with the constant-extraction flags, and again without them if that fails.
+#
+# The flags are how App Intents metadata gets generated, and their spelling is not stable
+# across toolchains: Xcode 26.5 rejects the protocol list shipped in its *own* toolchain as
+# "malformed", where Xcode 27 accepts it. Found on a Homebrew runner, where the app would
+# otherwise simply not build.
+#
+# Metadata is worth having and is not worth failing a build for. Someone installing the app
+# wants the app; Shortcuts support is the part that can be missing and said so. The retry
+# also means this keeps working on whatever Xcode ships next, whichever way the flag goes.
+if ! swift build -c "$CONFIG" --package-path "$ROOT" \
+        ${CONST_FLAGS[@]+"${CONST_FLAGS[@]}"} ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} 2>&1
+then
+    if [ ${#CONST_FLAGS[@]} -gt 0 ]; then
+        echo "  note: this toolchain rejected the App Intents constant-extraction flags."
+        echo "        Building without them — Shortcuts and Spotlight will not see any"
+        echo "        intents from this build. Everything else is unaffected."
+        CONST_FLAGS=()
+        swift build -c "$CONFIG" --package-path "$ROOT" \
+            ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"}
+    else
+        exit 1
+    fi
+fi
 
 BIN="$(swift build -c "$CONFIG" --package-path "$ROOT" \
     ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} --show-bin-path)/ReplayApp"
