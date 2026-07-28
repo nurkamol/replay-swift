@@ -5,6 +5,38 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## A self-installed update is not quarantined — measured 2026-07-29
+
+**You meet Gatekeeper once, and never again.** The first copy is downloaded by a browser and
+carries `com.apple.quarantine`, which is the dialog the README explains. Every update after
+that is downloaded by Replay itself, and does not.
+
+Quarantine is not applied by *being* downloaded — it is applied by the downloading
+application, and only when that application opts in with `LSFileQuarantineEnabled` in its
+`Info.plist`. Browsers set it. Replay does not, so its own `URLSession` download never
+inherits it, and the bundle it puts in place is clean.
+
+Measured on a real self-update from 0.9.0 to 0.9.3:
+
+| check | result |
+|---|---|
+| `com.apple.quarantine` on the replaced bundle | absent |
+| extended attributes actually present | `com.apple.provenance` only |
+| launching it afterwards | ran, no dialog |
+| `spctl --assess --type execute` | `rejected` |
+
+That last row is worth keeping, because it looks alarming and is not. `spctl` reports what
+Gatekeeper *would* say about a notarised distribution, and an ad-hoc signature is not one —
+it says `rejected` for every build this project has ever made, including ones that open
+perfectly. Gatekeeper blocks on the quarantine flag, not on `spctl`'s opinion, which is why
+"it says rejected" was a wrong conclusion earlier in this project's history and is recorded
+above as such.
+
+**So no de-quarantining step is needed, and none was added.** A `xattr -dr
+com.apple.quarantine` in the update path would be stripping a flag that is not there — and a
+line of code that removes a security attribute, kept for a case that does not arise, is the
+kind of thing that stays after the reason for it stops being true.
+
 ## A test that was only true in the timezone it was written in
 
 **Date:** 2026-07-28 · **Reproduce:** `TZ=UTC swift run replay-parity` at commit `0e1b604`

@@ -139,6 +139,11 @@ It refuses in three cases rather than doing damage: a copy installed by Homebrew
 replace; and a read-only location refuses rather than half-installing. Not Sparkle — that is
 an external dependency and this project has none, on purpose.
 
+**You meet the Gatekeeper warning once, and never again.** The first copy is downloaded by a
+browser, which is what applies the quarantine flag. An update Replay downloads itself does
+not carry one — measured, in [docs/FINDINGS.md](docs/FINDINGS.md) — so it installs and
+reopens with no dialog at all.
+
 ## Quickstart
 
 ```bash
