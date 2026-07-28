@@ -85,18 +85,27 @@ public enum Loc {
 
     private static func findCatalogue() -> Bundle {
         let name = "Replay_ReplayCore.bundle"
-        let candidates = [
+        let marker = Bundle(for: CatalogueMarker.self)
+        let roots = [
             Bundle.main.resourceURL,
             Bundle.main.bundleURL,
-            Bundle(for: CatalogueMarker.self).resourceURL,
-            Bundle(for: CatalogueMarker.self).bundleURL,
+            marker.resourceURL,
+            marker.bundleURL,
+            // A test run puts the resource bundle *beside* the binary rather than inside it.
+            marker.bundleURL.deletingLastPathComponent(),
         ]
-        for candidate in candidates.compactMap({ $0?.appendingPathComponent(name) }) {
-            if let bundle = Bundle(url: candidate) { return bundle }
+        // Loading is not enough: `Bundle(url:)` succeeds for any directory that exists, so a
+        // candidate has to be checked for actually holding the catalogue. Without this the
+        // search settled on the first thing that opened — a bundle with no localisations at
+        // all — and `available` came back empty on CI while every local build was fine.
+        for candidate in roots.compactMap({ $0?.appendingPathComponent(name) }) {
+            if let bundle = Bundle(url: candidate), bundle.holdsCatalogue { return bundle }
         }
-        // The bundle this class is in: right for the test target, and for a build where the
-        // resources were compiled straight in rather than into a bundle of their own.
-        return Bundle(for: CatalogueMarker.self)
+        // Resources compiled straight in rather than into a bundle of their own.
+        if marker.holdsCatalogue { return marker }
+        // Nothing found. Every lookup falls through to the English key, which is the whole
+        // reason the key is the English — a build with no catalogue is in English, not dead.
+        return marker
     }
 
     /// Only exists to be a class the runtime can locate a bundle from.
@@ -152,5 +161,13 @@ public enum Loc {
     public static var available: [String] {
         let codes = catalogue.localizations.filter { $0 != "Base" }.sorted()
         return codes.contains("en") ? ["en"] + codes.filter { $0 != "en" } : codes
+    }
+}
+
+private extension Bundle {
+    /// Whether this bundle is the one carrying Replay's strings, rather than merely a
+    /// directory that opened.
+    var holdsCatalogue: Bool {
+        path(forResource: "en", ofType: "lproj") != nil
     }
 }
