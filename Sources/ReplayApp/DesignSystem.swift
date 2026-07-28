@@ -336,15 +336,10 @@ enum Design {
         ///
         /// The two periods are deliberately not multiples of each other, so the sway and the
         /// drift never line up into a pattern anyone could learn.
-        static let canvasSwayDegrees: CGFloat = 0.6
-        static let canvasSwaySeconds: TimeInterval = 44
-        static let canvasDriftPoints: CGFloat = 6
-        static let canvasDriftSeconds: TimeInterval = 63
         /// How often the field is redrawn when the sway is all that is moving. A third of a
         /// display's rate, because at this speed nothing is fast enough to show the seam,
         /// and a canvas this size redrawn sixty times a second for a movement nobody would
         /// name is not a trade worth making.
-        static let canvasAmbientTick: TimeInterval = 1.0 / 30
 
         /// A selection arriving. The halo eases outward into place rather than appearing,
         /// which is the difference between the field answering you and the field blinking.

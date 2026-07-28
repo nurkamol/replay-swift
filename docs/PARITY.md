@@ -161,6 +161,18 @@ document starts lying, and this one has done it twice already — see the two no
 
 ## Known divergences to keep an eye on
 
+- **"applications" where the reference says "Apps".** Only in the week's stat group, and
+  deliberate as of 2026-07-28. The reference is inconsistent with itself here — "Apps" in the
+  week's stats, "application"/"applications" on its own daily memory card — so there is no
+  single reference wording to match. This port says "applications" everywhere, which is also
+  the word SPEC and the README use. The rule that Glaze wins exists to stop this port
+  drifting; it is not a reason to adopt a contradiction.
+- **The Canvas field is still, and so is the reference's.** This port used to sway it — 0.6°
+  over 44 seconds, a 6-point drift over 63 — which was *this port's own* addition and is now
+  cut. Recorded because the divergence ran the other way for a while: the port was the one
+  moving. What remains this port's own on the Canvas is the entrance, the story tour's line
+  and breath, and the lean toward the next stop.
+
 - **The year grid's key sat a hundred points from the year, and nobody had rendered light
   mode.** The grid anchors trailing so it opens on today — right, and recorded below. But the
   anchor was unconditional, and a grid that *fits* its viewport has nothing to scroll, so the

@@ -159,10 +159,16 @@ behaviour first and constants second, and generate anything that matches-by-luck
 
 These are not blocked by difficulty. They are blocked because they are somebody's call.
 
-- [ ] **Keep or cut the field's sway.** The Canvas leans 0.6° over 44 seconds and drifts a
-      6-point ellipse over 63. It clears Apple's specific caution about slow oscillation, sits
-      against its general one about full-field motion, costs a permanent 30fps redraw, and
-      diverges from a reference whose field is still. It rests on preference, not principle.
+- [x] **The field's sway: cut.** Decided 2026-07-28. The Canvas leaned 0.6° over 44 seconds
+      and drifted a 6-point ellipse over 63. It rested on preference and preference went the
+      other way — it cost a permanent 30fps redraw, sat against Apple's caution about moving
+      a whole field, and diverged from a reference whose graph is still. The field is now a
+      still picture until you touch it: the `TimelineView` that drove the redraw is gone, and
+      with it `sway()` and five motion tokens.
+      · Worth remembering *why* `sway()` was a function rather than inline arithmetic: it was
+        used by the drawing and the hit test together, so a click always landed where the eye
+        had aimed. Removing it had to remove both, or the Canvas would have kept working and
+        started missing.
 - [x] **A screenshot harness.** Built 2026-07-28, and it answers the question below in a way
       that entry did not anticipate. `./tools/screenshots.sh` drives the app through all
       fourteen surfaces — the nine with a shortcut, Canvas and the two display modes through
@@ -180,19 +186,23 @@ These are not blocked by difficulty. They are blocked because they are somebody'
         never whether to check the interface; it was that looking cost a dozen commands of
         window arithmetic each time.
 
-- [ ] **Does this repo take a UI test target?** *Re-read the entry above first — the
-      screenshot harness now covers the part of this that was actually paying.* What is left
-      to decide is whether assertions are worth adding on top, and the honest answer from a
-      day of finding twelve layout bugs is that a conventional UI test would have caught
-      perhaps three of them: a focus ring, a dead strip, a jumble of button weights and a
-      sentence that reads wrong are all things a person sees and an assertion does not.
-      The original argument follows. The command-palette scroll bug reached a
-      person because nothing exercises which view a scroll lands in, and it would regress
-      silently. There are no UI tests at all today, so this is a question about what the
-      project is willing to carry rather than a chore.
-- [ ] **"applications" or "Apps" in the week's stat group?** The reference says "Apps" here
-      and "application"/"applications" on its own daily memory card, so it disagrees with
-      itself. This port is consistent. Worth deciding rather than guessing — see the ledger.
+- [x] **A UI test target: no.** Decided 2026-07-28, on evidence rather than taste. Of the
+      twelve layout bugs found in a single day, a conventional UI test would have caught
+      perhaps three — a focus ring that reads as *armed*, a dead strip under the traffic
+      lights, five buttons at five weights and a sentence that reads wrong are all things a
+      person sees and an assertion does not. `tools/screenshots.sh` covers the part that was
+      actually paying, at a fraction of the maintenance.
+      · The original argument still stands on its own terms: the command-palette scroll bug
+        reached a person because nothing exercises which view a scroll lands in, and it would
+        regress silently. That is one bug's worth of coverage against a permanent burden. If
+        this is revisited, revisit it for *that* class — a handful of assertions about
+        navigation, not a suite that tries to check appearance.
+- [x] **"applications" everywhere.** Decided 2026-07-28, and the interesting part is that
+      the project's own rule pointed the other way. CLAUDE.md says Glaze is right when the two
+      disagree — but here Glaze disagrees with *itself*, saying "Apps" in the week's stat
+      group and "application"/"applications" on its daily memory card. That rule exists to
+      stop this port drifting from the reference, not to import the reference's
+      inconsistencies, so consistency wins and it is recorded as a deliberate divergence.
 
 ## 4 · Blocked on something outside the code
 

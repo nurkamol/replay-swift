@@ -461,29 +461,6 @@ struct CanvasView: View {
         neighbourhood = node.map { canvas.graph.neighbours(of: $0.id) } ?? []
     }
 
-    /// Where a point sits once the field's own sway is taken into account.
-    ///
-    /// Used by the drawing *and* by the hit test, which is the whole reason it is a function
-    /// rather than two copies of the same arithmetic: a field that moves under a click the
-    /// eye had already aimed is worse than a field that does not move at all.
-    private func sway(_ point: CGPoint, at now: Date) -> CGPoint {
-        guard !motion.reduced else { return point }
-        let t = now.timeIntervalSinceReferenceDate
-        let angle = Design.Motion.canvasSwayDegrees * .pi / 180
-            * sin(t * 2 * .pi / Design.Motion.canvasSwaySeconds)
-        let wander = t * 2 * .pi / Design.Motion.canvasDriftSeconds
-        let cosine = cos(angle)
-        let sine = sin(angle)
-        return CGPoint(
-            x: point.x * cosine - point.y * sine
-                + Design.Motion.canvasDriftPoints * cos(wander),
-            // Half the reach vertically: the field is wider than it is tall, and an equal
-            // wander in both reads as a wobble rather than as a drift.
-            y: point.x * sine + point.y * cosine
-                + Design.Motion.canvasDriftPoints * sin(wander) / 2
-        )
-    }
-
     /// How strongly a node reads right now.
     ///
     /// Focus is a *dimming*, not a hiding: the rest of the field stays visible so the thing
@@ -760,14 +737,13 @@ struct CanvasView: View {
             // in full — reduced motion asks for less movement, not for less of the picture.
             renderField(centre: centre, progress: 1, now: .distantFuture)
         } else if entranceDone && tour == nil {
-            // Only the sway is running, and it is slow enough that a third of a display's
-            // rate is indistinguishable from all of it. Qualified: this app has its own
-            // `TimelineView` — the Timeline surface — and it shadows SwiftUI's here.
-            SwiftUI.TimelineView(
-                .periodic(from: entranceStart, by: Design.Motion.canvasAmbientTick)
-            ) { timeline in
-                renderField(centre: centre, progress: 1, now: timeline.date)
-            }
+            // Nothing is moving: the entrance has finished and no story is playing, so the
+            // field is a still picture until you touch it. It used to sway — 0.6° over 44
+            // seconds and a 6-point drift over 63 — which cost a permanent 30fps redraw for
+            // motion nobody had asked for, sat against Apple's caution about moving a whole
+            // field, and diverged from a reference whose graph is still. Cut on 2026-07-28;
+            // it rested on preference and preference went the other way.
+            renderField(centre: centre, progress: 1, now: .distantFuture)
         } else {
             // The entrance or a story is playing, and both are movement worth every frame.
             SwiftUI.TimelineView(.animation) { timeline in
@@ -827,10 +803,9 @@ struct CanvasView: View {
                     return emphasis(node)
                 }
                 func place(_ point: CGPoint) -> CGPoint {
-                    let swayed = sway(point, at: now)
-                    return CGPoint(
-                        x: centre.x + (swayed.x * scale) + camera.width,
-                        y: centre.y + (swayed.y * scale) + camera.height
+                    CGPoint(
+                        x: centre.x + (point.x * scale) + camera.width,
+                        y: centre.y + (point.y * scale) + camera.height
                     )
                 }
 
@@ -1353,16 +1328,12 @@ struct CanvasView: View {
     /// demand a pixel-perfect hit.
     private func node(at location: CGPoint, centre: CGPoint) -> CanvasGraph.Node? {
         var best: (node: CanvasGraph.Node, distance: CGFloat)?
-        // Read at the moment of the click rather than off the drawing's clock — the two are
-        // at most a frame apart, and at this speed a frame is a fraction of a point.
-        let now = Date()
         let camera = liveOffset(centre: centre)
         for node in canvas.graph.nodes {
             guard let point = canvas.positions[node.id] else { continue }
-            let swayed = sway(point, at: now)
             let at = CGPoint(
-                x: centre.x + swayed.x * scale + camera.width,
-                y: centre.y + swayed.y * scale + camera.height
+                x: centre.x + point.x * scale + camera.width,
+                y: centre.y + point.y * scale + camera.height
             )
             let distance = hypot(at.x - location.x, at.y - location.y)
             let reach = radius(for: node) * scale + Design.Layout.canvasHitSlack
