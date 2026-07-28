@@ -37,15 +37,11 @@ struct AmbientView: View {
     /// apps of the day's own sessions, newest first — which is where it will be, because
     /// being frontmost is what put it there. No match means no icon rather than no row: the
     /// name is the information and the icon is the ornament.
+    /// The lookup is the model's; the *fallback* is ambient mode's own — a screen you are
+    /// not sitting at should keep showing the last thing rather than blink to nothing every
+    /// time the tracker is between applications.
     private var currentApp: (name: String, bundleID: String?, appPath: String?)? {
-        guard let current = model.current else { return lastApp }
-        for item in model.timeline.reversed() {
-            guard case .session(let session) = item else { continue }
-            if let app = session.apps.first(where: { $0.applicationName == current.applicationName }) {
-                return (current.applicationName, app.bundleIdentifier, app.appPath)
-            }
-        }
-        return (current.applicationName, nil, nil)
+        model.currentApp ?? lastApp
     }
 
     /// The session being lived in, which is the last one the timeline built.

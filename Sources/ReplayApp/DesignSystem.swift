@@ -1037,6 +1037,15 @@ enum Design {
         /// Release notes in a popover. Narrower than the palette because these are lines of
         /// prose rather than rows, and capped rather than fixed: most releases are four
         /// bullets, and a box sized for the worst case is mostly empty for the usual one.
+        /// The menu bar popover. Narrow on purpose: it is read in the corner of the screen
+        /// while something else has your attention, and a panel wide enough to browse is a
+        /// panel you stop to read. Everything in it fits without scrolling at this width.
+        static let menuBarPopoverWidth: CGFloat = 288
+        /// The goal bar inside it — a bar rather than Today's ring, which needs room to
+        /// anchor and becomes a thin circle read at a glance at this size. Four points
+        /// rather than six: at six a full green bar read as an alert rather than a
+        /// measurement, and thinning it was worth more than muting the colour.
+        static let menuBarGoalBar: CGFloat = 4
         static let releaseNotesWidth: CGFloat = 420
         static let releaseNotesMaxHeight: CGFloat = 340
         /// A year of days as a grid. How *many* weeks it draws is the reference's own

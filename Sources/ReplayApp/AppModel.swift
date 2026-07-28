@@ -182,6 +182,25 @@ final class AppModel {
         timeline.compactMap { if case .session(let s) = $0 { return s } else { return nil } }
     }
 
+    /// The application in front, with the fields an icon needs.
+    ///
+    /// The tracker knows a name and a start; the bundle identifier and path live on the
+    /// `SessionApp` rows the timeline built. Searching backwards finds the most recent
+    /// session that mentions this application, which is the one it is currently in.
+    ///
+    /// Here rather than in a view because two surfaces want it — ambient mode and the menu
+    /// bar popover — and the second one was about to be a copy of the first.
+    var currentApp: (name: String, bundleID: String?, appPath: String?)? {
+        guard let current else { return nil }
+        for item in timeline.reversed() {
+            guard case .session(let session) = item else { continue }
+            if let app = session.apps.first(where: { $0.applicationName == current.applicationName }) {
+                return (current.applicationName, app.bundleIdentifier, app.appPath)
+            }
+        }
+        return (current.applicationName, nil, nil)
+    }
+
     /// What the menu bar says: the app in front, how long you have been away, or paused.
     var statusLine: String {
         if !isRecording { return "Paused" }

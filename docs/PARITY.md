@@ -69,7 +69,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 
 | capability | status | notes |
 |---|---|---|
-| Menu bar item | done | current app, today's total, pause/resume, Open Today/Timeline, Settings, Quit |
+| Menu bar item | done | **this port's own — the reference has no menu bar, it runs inside the Glaze shell.** A popover rather than a menu: what you are in and for how long, the day's total, the focus goal as a bar, the last three sessions with their applications' icons, and rows for pause/resume, Open Replay, Timeline, Settings and Quit. The menu it replaced could not hold any of the first four, because a menu is rows of text. Decisions in `MenuBar.Popover`, 20 behaviour cases; nothing here can be contract-checked |
 | Update check | done | **this port's own — the reference updates through the Glaze Store.** Opt-in and off by default; at most one `GET` a day to GitHub's public releases API, no body and no identifier, and a dismissible bar with the notes if a newer tag exists. It downloads and replaces nothing: self-update is gated on a Developer ID, and until then would swap a working app for one Gatekeeper refuses. The comparison lives in `Updates` and is tested; the request lives in `UpdateModel`. README and SPEC were amended rather than defended — see the divergences |
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |

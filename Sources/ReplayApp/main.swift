@@ -45,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var notifications = NotificationsModel(model: model, preferences: preferences)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
+    private var menuBarPopover: NSPopover?
     /// Off unless somebody turned it on; see `UpdateModel`.
     private lazy var updates = UpdateModel(preferences: preferences)
     private var window: NSWindow?
@@ -345,11 +346,69 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             accessibilityDescription: "Replay"
         )
         item.button?.imagePosition = .imageLeading
-        let menu = NSMenu()
-        menu.delegate = self
-        item.menu = menu
+        // A popover rather than `item.menu`, and the two cannot coexist: setting `menu` makes
+        // AppKit open it on mouse-down and the button's own action never fires. The menu's
+        // contents did not survive as a right-click fallback for the same reason — everything
+        // it held is a control in the popover now.
+        item.button?.target = self
+        item.button?.action = #selector(toggleMenuBarPopover)
         statusItem = item
         refreshStatusTitle()
+    }
+
+    /// Open the popover, or close it if it is already up.
+    ///
+    /// `.transient` so it closes when you click away, which is what a menu bar surface has to
+    /// do — it is opened *during* something else, and dismissing it should not be a decision.
+    @objc private func toggleMenuBarPopover() {
+        guard let button = statusItem?.button else { return }
+        if let popover = menuBarPopover, popover.isShown {
+            popover.performClose(nil)
+            return
+        }
+        // Read fresh. The popover is opened seconds after something changed as often as not,
+        // and a stale figure in a surface this small is the whole content being wrong.
+        model.reload()
+        refreshStatusTitle()
+
+        let popover = menuBarPopover ?? {
+            let new = NSPopover()
+            new.behavior = .transient
+            new.animates = true
+            menuBarPopover = new
+            return new
+        }()
+        popover.contentViewController = NSHostingController(
+            rootView: MenuBarPopoverView(
+                model: model,
+                preferences: preferences,
+                onOpenToday: { [weak self] in self?.fromPopover { $0.openToday() } },
+                onOpenTimeline: { [weak self] in self?.fromPopover { $0.openTimeline() } },
+                onToggleTracking: { [weak self] in
+                    // Deliberately does *not* close: pausing and watching the line change to
+                    // "Tracking paused" is the confirmation, and a panel that vanishes leaves
+                    // you wondering whether the click landed.
+                    self?.toggleTracking()
+                    self?.refreshStatusTitle()
+                },
+                onOpenSettings: { [weak self] in self?.fromPopover { $0.openSettings() } },
+                onQuit: { [weak self] in self?.fromPopover { $0.quit() } }
+            )
+            .environment(\.themeTint, preferences.themeColour.resolved)
+            .tint(preferences.themeColour.colour)
+            .preferredColorScheme(preferences.appearance.colorScheme)
+        )
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        // Without this the popover opens behind whatever you were in, because a status item
+        // click does not activate the app.
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// Anything that opens a window closes the popover first, so the window does not appear
+    /// underneath it.
+    private func fromPopover(_ action: (AppDelegate) -> Void) {
+        menuBarPopover?.performClose(nil)
+        action(self)
     }
 
     /// Deliberately quiet: an icon, and a short label only while something is worth saying.
@@ -735,67 +794,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func quit() { NSApp.terminate(nil) }
-}
-
-extension AppDelegate: NSMenuDelegate {
-    /// Rebuilt each time it opens, so it always states the truth rather than a cached one.
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        model.reload()
-        refreshStatusTitle()
-        menu.removeAllItems()
-
-        // What is happening right now, in the reference's four states. This used to show
-        // the day's total, its session count and its top application — all things the
-        // window is for. A menu pulled down mid-task wants the last few seconds.
-        func caption(_ title: String) {
-            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-            item.isEnabled = false
-            menu.addItem(item)
-        }
-
-        switch MenuBar.now(
-            isRecording: model.isRecording, isAway: model.isAway,
-            current: model.current, now: Int64(Date().timeIntervalSince1970 * 1000)
-        ) {
-        case .paused: caption(MenuBar.pausedLabel)
-        case .away: caption(MenuBar.awayLabel)
-        case .waiting: caption(MenuBar.waitingLabel)
-        case .inApplication(let name, let seconds):
-            caption(name)
-            caption(MenuBar.focusedFor(seconds))
-        }
-
-        // And what you were just in. Distinct applications rather than distinct visits: you
-        // return to the same editor a dozen times an hour, and a list that repeats it is a
-        // switch log rather than an answer.
-        let since = Int64(Date().timeIntervalSince1970 * 1000)
-            - Int64(MenuBar.recentHours) * 60 * 60 * 1000
-        let rows = (try? model.store.sessions(from: since, to: since + Int64(MenuBar.recentHours + 1) * 60 * 60 * 1000)) ?? []
-        let recent = MenuBar.recentApplications(
-            in: rows, excluding: model.current?.applicationName
-        )
-        if !recent.isEmpty {
-            menu.addItem(.separator())
-            caption(MenuBar.recentHeading)
-            for name in recent { caption("  \(name)") }
-        }
-
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Open Today", action: #selector(openToday), keyEquivalent: "")
-            .target = self
-        menu.addItem(withTitle: "Open Timeline", action: #selector(openTimeline), keyEquivalent: "")
-            .target = self
-        menu.addItem(
-            withTitle: model.isRecording ? "Pause Recording" : "Resume Recording",
-            action: #selector(toggleTracking),
-            keyEquivalent: ""
-        ).target = self
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
-            .target = self
-        menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Replay", action: #selector(quit), keyEquivalent: "q").target = self
-    }
 }
 
 // A `@main` type cannot coexist with top-level code, so the app is started explicitly.

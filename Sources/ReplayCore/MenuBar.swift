@@ -61,8 +61,16 @@ public enum MenuBar {
     public static let recentHeading = "Recently"
 
     /// How long you have been in the thing you are in.
+    ///
+    /// Under a minute this is "Just now" rather than "Focused for just now", which is what
+    /// composing it out of ``shortDuration`` produced and is not a sentence anybody would
+    /// say. Worth recording: this read fine as a standalone row in the menu this replaced,
+    /// and only became wrong when it moved under an application's name in the popover — the
+    /// copy did not change, the context did.
     public static func focusedFor(_ seconds: Int) -> String {
-        "Focused for \(shortDuration(seconds))"
+        let minutes = Int((Double(seconds) / 60).rounded())
+        if minutes < 1 { return "Just now" }
+        return "Focused for \(shortDuration(seconds))"
     }
 
     /// The menu's own duration, which is not the app's.
@@ -111,5 +119,67 @@ public enum MenuBar {
         guard isRecording else { return "Replay — paused" }
         guard let current else { return "Replay — tracking" }
         return "Replay — \(current)"
+    }
+
+    // MARK: - The popover
+
+    /// What the popover shows beyond the menu, decided here so it can be tested.
+    ///
+    /// The menu answered two questions — what am I in, what was I just in — and answered them
+    /// well enough that this does not replace it so much as give it room. A menu can only hold
+    /// rows of text; a popover can show the goal as a bar, a session with the icons of the
+    /// applications that were in it, and a pause control you do not have to read.
+    ///
+    /// Nothing here is contract-checked. The reference has no menu bar at all — it runs inside
+    /// the Glaze shell — so this whole surface is this port's own, like ``OwnSettingsRow`` and
+    /// `Guide.ownEntries`. Which makes the discipline more important rather than less: the
+    /// decisions live here where a test can reach them, and the view only lays them out.
+    public enum Popover {
+
+        /// How many recent sessions the popover lists.
+        ///
+        /// Three, and the ceiling is the point. This is read while you are in the middle of
+        /// something else — the whole thing has to be taken in without scrolling, or it is a
+        /// worse Timeline rather than a quicker one.
+        public static let sessionLimit = 3
+
+        public static let todayHeading = "Today"
+        public static let recentHeading = "Recent sessions"
+        public static let goalHeading = "Focus goal"
+        public static let emptyToday = "Nothing recorded yet today."
+
+        /// The day's total, said the way a person would say it.
+        public static func todayLine(activeSeconds: Int, sessions: Int) -> String {
+            guard activeSeconds > 0 || sessions > 0 else { return emptyToday }
+            let count = sessions == 1 ? "1 session" : "\(sessions) sessions"
+            return "\(shortDuration(activeSeconds)) active · \(count)"
+        }
+
+        /// The goal in one line: what is left, or that there is nothing left.
+        ///
+        /// "Goal reached" rather than a percentage over 100. The app describes and does not
+        /// grade (SPEC §8), and a figure that keeps climbing past the target invites you to
+        /// read a finished day as still not enough.
+        public static func goalLine(activeSeconds: Int, goalMinutes: Int) -> String {
+            let progress = Goals.progress(activeSeconds: activeSeconds, goalMinutes: goalMinutes)
+            if progress.met { return "Goal reached — \(shortDuration(activeSeconds))" }
+            return "\(shortDuration(progress.remainingSeconds)) to go of \(Goals.format(goalMinutes))"
+        }
+
+        /// The most recent sessions, newest first.
+        ///
+        /// Newest first because the popover is read top-down and the last thing you did is the
+        /// thing you are most likely asking about. The Timeline orders a day the other way, and
+        /// that is right there and wrong here.
+        public static func sessions(
+            in sessions: [ActivitySession], limit: Int = sessionLimit
+        ) -> [ActivitySession] {
+            Array(sessions.sorted { $0.startedAt > $1.startedAt }.prefix(limit))
+        }
+
+        /// The pause control's own label, which is a verb rather than a state.
+        public static func trackingLabel(isRecording: Bool) -> String {
+            isRecording ? "Pause recording" : "Resume recording"
+        }
     }
 }

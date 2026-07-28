@@ -400,9 +400,32 @@ because it is still a product decision nobody has taken.
         waiting on. iCloud Drive via the ubiquity container needs the account too. So this
         cannot even be prototyped until signing is solved.
 
-- [ ] **A richer menu bar popover.** `S` The item exists and shows the current app and
-      today's total. A small popover — the last few sessions, the goal, a pause control —
-      is cheap and does not need signing to try.
+- [x] **A richer menu bar popover.** Built 2026-07-28. The status item now opens an
+      `NSPopover` instead of an `NSMenu`: what you are in and for how long, the day's total
+      and session count, the focus goal as a bar, the last three sessions with the icons of
+      the applications in them, and a list of actions.
+      · **The menu and the popover cannot coexist.** Setting `item.menu` makes AppKit open it
+        on mouse-down and the button's own action never fires, so there is no right-click
+        fallback — everything the menu held is a row in the popover, and 61 lines of menu
+        building went with it.
+      · **Buttons were the wrong shape and the render said so.** The first version had five
+        controls at five weights — a saturated blue pill, two bordered capsules of different
+        widths, two icon squares floated right — in a panel 300 points wide, and the eye went
+        to the blue first, which is backwards: the figures are the content and the actions
+        are the exits. Rebuilt as equal, quiet rows that highlight under the pointer and run
+        edge to edge. Calmer to read and easier to hit, since the target is the full width.
+      · Two things only a screenshot could have caught. `focusedFor` produced **"Focused for
+        just now"** — fine as a standalone menu row, not a sentence once it sat under an
+        application's name; the copy never changed, the context did. And the first row took
+        keyboard focus as the panel opened and wore a **focus ring**, which reads as "armed,
+        press Return" on a control that pauses recording.
+      · Pausing deliberately does *not* close the panel: watching the line change to
+        "Tracking paused" is the confirmation, and a panel that vanishes leaves you wondering
+        whether the click landed. Everything that opens a window closes it first, so the
+        window does not appear underneath.
+      · The decisions are in `MenuBar.Popover` with 20 behaviour cases over them. The
+        reference has no menu bar at all — it runs inside the Glaze shell — so this surface
+        can never be contract-checked, which is the argument for testing what can be tested.
 
 - [x] **A command-line reader.** Built 2026-07-28. `replay today`, `day`, `app`, `export`,
       with `--json` everywhere and `--database` for reading another file. Read-only except
