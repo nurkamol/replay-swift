@@ -174,6 +174,30 @@
   .n { font-size: clamp(2rem, 4.5vw, 2.8rem); font-weight: 700; letter-spacing: -.03em; display: block; }
   .n + span { color: var(--dim); font-size: .92rem; }
 
+
+  /* ── Gallery ────────────────────────────────────────────────────────── */
+  /* Two columns of figures. Each keeps its own aspect ratio — the Settings window and the
+     two full-screen modes are genuinely different shapes, and forcing them into one box
+     would mean cropping a screenshot to make a grid tidier, which is the wrong trade. */
+  .gallery { display: grid; gap: 34px 24px; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 760px) { .gallery { grid-template-columns: 1fr 1fr; } }
+  .gallery figure { margin: 0; }
+  .gallery img {
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+    width: 100%;
+  }
+  @media (prefers-color-scheme: dark) {
+    .gallery img { box-shadow: 0 12px 34px rgba(0, 0, 0, .5); }
+  }
+  .gallery figcaption { margin-top: 14px; }
+  .gallery figcaption b {
+    display: block; font-weight: 600; letter-spacing: -.01em; margin-bottom: 4px;
+  }
+  .gallery figcaption span { color: var(--dim); font-size: .93rem; line-height: 1.5; }
+  .gallery .wide { grid-column: 1 / -1; }
+
   footer {
     border-top: 1px solid var(--line);
     padding: 52px 0 68px;
@@ -266,7 +290,7 @@
   </div>
 </section>
 
-<section class="soft" id="install">
+<section id="install">
   <div class="wrap">
     <div class="section-head">
       <h2>Install it</h2>
@@ -307,6 +331,140 @@ brew install nurkamol/tap/replay        <span class="c"># the command-line reade
       <code>xattr -dr com.apple.quarantine /Applications/Replay.app</code></p>
       <p><strong>Right-click ▸ Open does not work.</strong> That bypass existed for years and Apple
       removed it in macOS 15 — it is still the advice in most projects’ instructions.</p>
+    </div>
+  </div>
+</section>
+
+
+<section class="soft">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>The rest of it</h2>
+      <p>Twenty screens are built from those same two facts — which app was in front, and when
+      you were away. Nothing below is a mock-up; each is the app running against a real record.</p>
+    </div>
+
+    <div class="gallery">
+
+      <figure class="wide">
+        <img src="img/gallery/canvas.jpg" alt="Canvas: applications and projects drawn as a field of connected icons on a dark background." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Canvas</b>
+          <span>Your whole history as a landscape you can fly through — every application and
+          project a real icon, joined to the things it appears alongside. Pan keeps gliding
+          after a flick, pinch zooms, and clicking a node opens whatever it stands for.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/week.jpg" alt="This Week: a bar chart of daily activity, the app combinations that recur, and the most-used apps." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>This Week</b>
+          <span>Seven days as one shape, with your daily rhythm plotted hour by hour, the app
+          combinations that keep recurring, and what you spent the week actually in.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/apps.jpg" alt="Apps: every application ranked by time, each with a proportional bar." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Apps</b>
+          <span>Every application you have used, ranked by time, over any span you pick. Each
+          one opens onto its own history — when you started using it, and what you tend to use
+          beside it.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/projects.jpg" alt="Projects: cards for recurring app combinations, each named and showing its sessions." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Projects</b>
+          <span>The app combinations that keep coming back, found rather than filed. Replay
+          names them descriptively — “Research · Firefox”, “Development · Terminal” — and you
+          can rename any of them.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/collections.jpg" alt="Collections: sessions grouped into Research, Development, Communication and Utilities." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Collections</b>
+          <span>Every session of one kind gathered together, with its running totals and the
+          apps that defined it. Derived from the category a session already has, so there is
+          nothing to sort by hand.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/story.jpg" alt="Story: cards for My Story, Autobiography, Chapters and Museum, above a list of daily rituals." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Story</b>
+          <span>The long view — your history divided into the eras it naturally fell into, told
+          back a month at a time, and the best of it curated. Underneath, the rituals: what you
+          usually begin with, and what each part of the day tends to lead with.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/day.jpg" alt="A past day reopened, with a written summary of the day above its sessions." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Any day, reopened</b>
+          <span>A day told back in a few plain sentences, every clause filled from what was
+          actually recorded. A day too thin to narrate honestly gets no story rather than a
+          padded one.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/search.jpg" alt="Search results for the word research, matching a collection and five projects." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Search</b>
+          <span>Sessions, notes, tags, projects and apps at once. A few phrases are understood
+          rather than matched — “morning work” or “last friday” go straight to that slice
+          instead of looking for the words.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/palette.jpg" alt="The command palette open over the Canvas, listing surfaces to jump to." width="1200" height="807" loading="lazy">
+        <figcaption>
+          <b>Command palette</b>
+          <span><kbd>⌘K</kbd> reaches every surface, application, project and recent day by
+          name, along with the actions that are not places — start the screensaver, export,
+          pause tracking.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/settings.jpg" alt="Replay's Settings window, General pane, showing theme, surface and launch options." width="1200" height="867" loading="lazy">
+        <figcaption>
+          <b>Settings</b>
+          <span>Theme and accent, which surface opens on launch, menu-bar-only mode, excluded
+          applications, how long to keep history, and export. Privacy has a live check that
+          recording is working — with no permission behind it.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/ambient.jpg" alt="Ambient mode: a large clock and today's total on an otherwise black full screen." width="1200" height="675" loading="lazy">
+        <figcaption>
+          <b>Ambient mode</b>
+          <span>For a second screen you glance at rather than sit in front of. The time, today’s
+          total, and what you are in right now. Each line can be turned off — a second monitor
+          is often one other people can see.</span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <img src="img/gallery/screensaver.jpg" alt="The screensaver: sessions drifting slowly upward with their app icons and times." width="1200" height="675" loading="lazy">
+        <figcaption>
+          <b>Screensaver</b>
+          <span>The day drifting past, slowly, with the clock in the corner. It never starts
+          itself unless you ask it to — a thing that takes over the screen on its own is the
+          sort of surprise this app should not spring.</span>
+        </figcaption>
+      </figure>
+
     </div>
   </div>
 </section>
