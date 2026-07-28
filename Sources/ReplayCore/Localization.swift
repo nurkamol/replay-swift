@@ -86,6 +86,18 @@ public enum Loc {
         string(english, in: "en")
     }
 
+    /// A counted noun: "1 session", "14 sessions".
+    ///
+    /// Two forms, and the limit is worth stating plainly rather than discovering later:
+    /// English has two, and plenty of languages do not. Russian has three, Arabic six, and
+    /// Japanese does not inflect for number at all. The real answer is a `.stringsdict`,
+    /// which expresses those rules per language — and this is the seam it would go behind,
+    /// since every counted noun in the app already comes through here. Adding it before
+    /// there is a translator would be building for a language nobody has chosen.
+    public static func count(_ n: Int, _ singular: String, _ plural: String) -> String {
+        String(format: t(n == 1 ? singular : plural), "\(n)")
+    }
+
     /// Every key the base catalog defines, for the audit to check against the source.
     ///
     /// Returns an empty set when the catalog has no entries yet, which is the correct state

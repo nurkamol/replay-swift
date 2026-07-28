@@ -29,7 +29,7 @@ struct WeekView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("This Week")
+        .navigationTitle(Loc.t("This Week"))
         .navigationSubtitle(week.rangeLabel)
         .onAppear { week.load() }
     }
@@ -62,7 +62,7 @@ struct WeekView: View {
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(value) \(label)")
+        .accessibilityLabel(String(format: Loc.t("%1$@ %2$@"), value, label))
     }
 
     // ── the rhythm ────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ struct WeekView: View {
         // looking equally full.
         let busiest = max(summary.days.map(\.activeSeconds).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Daily rhythm").sectionLabelStyle()
+            Text(Loc.t("Daily rhythm")).sectionLabelStyle()
             VStack(spacing: 0) {
                 ForEach(summary.days, id: \.dayStart) { day in
                     WeekDayRow(day: day, busiestDaySeconds: busiest)
@@ -83,7 +83,7 @@ struct WeekView: View {
             .settlesIn(1)
             if let peak = summary.peak {
                 // A statement of when, not a recommendation about when.
-                Text("Most often here on \(describePeak(peak)).")
+                Text(String(format: Loc.t("Most often here on %@."), "\(describePeak(peak))"))
                     .font(Design.Text.detail)
                     .foregroundStyle(.tertiary)
                     .padding(.top, Design.Space.tight)
@@ -100,7 +100,7 @@ struct WeekView: View {
     /// pairings has no habits in it to report.
     private var workflows: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Recurring together").sectionLabelStyle()
+            Text(Loc.t("Recurring together")).sectionLabelStyle()
             VStack(spacing: Design.Space.snug) {
                 ForEach(week.workflows, id: \.id) { workflow in
                     WorkflowRow(workflow: workflow)
@@ -115,7 +115,7 @@ struct WeekView: View {
     private func mostUsed(_ summary: WeekSummary) -> some View {
         let top = Array(summary.apps.prefix(WeekSummary.appLimit))
         return VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Most used this week").sectionLabelStyle()
+            Text(Loc.t("Most used this week")).sectionLabelStyle()
             VStack(spacing: Design.Space.snug) {
                 ForEach(top, id: \.applicationName) { app in
                     WeekAppRow(app: app, maxSeconds: top.first?.seconds ?? 0)
@@ -127,9 +127,9 @@ struct WeekView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("Your week is just beginning", systemImage: "calendar")
+            Label(Loc.t("Your week is just beginning"), systemImage: "calendar")
         } description: {
-            Text("As you use your Mac, each day will fill in here.")
+            Text(Loc.t("As you use your Mac, each day will fill in here."))
         }
     }
 }
@@ -146,7 +146,7 @@ private struct WeekDayRow: View {
                     .font(Design.Text.detail.weight(.medium))
                     .monospacedDigit()
                     .foregroundStyle(day.isEmpty ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.primary))
-                Text("\(day.dayOfMonth)")
+                Text(String(format: Loc.t("%@"), "\(day.dayOfMonth)"))
                     .font(Design.Text.micro)
                     .monospacedDigit()
                     .foregroundStyle(.tertiary)
@@ -182,7 +182,7 @@ private struct WeekDayRow: View {
                 ? "\(day.weekdayShort) \(day.dayOfMonth), nothing recorded"
                 : "\(day.weekdayShort) \(day.dayOfMonth), "
                     + "\(formatDurationShort(day.activeSeconds)) active, "
-                    + "\(day.sessionCount) \(day.sessionCount == 1 ? "session" : "sessions")"
+                    + Loc.count(day.sessionCount, "%@ session", "%@ sessions")
         )
     }
 }
@@ -351,7 +351,7 @@ private struct WorkflowRow: View {
                 Text(formatDurationShort(workflow.totalSeconds))
                     .font(Design.Text.detail.weight(.medium))
                     .monospacedDigit()
-                Text("\(workflow.sessionCount)×")
+                Text(String(format: Loc.t("%@×"), "\(workflow.sessionCount)"))
                     .font(Design.Text.micro)
                     .foregroundStyle(.tertiary)
                     .monospacedDigit()

@@ -536,8 +536,8 @@ struct RootView: View {
             Image(systemName: "chevron.backward")
         }
         .keyboardShortcut("[", modifiers: .command)
-        .help("Back")
-        .accessibilityLabel("Back")
+        .help(Loc.t("Back"))
+        .accessibilityLabel(Loc.t("Back"))
     }
 
     private var sidebar: some View {
@@ -619,7 +619,7 @@ struct RootView: View {
             ideal: Design.Layout.sidebarWidth,
             max: Design.Layout.sidebarMaxWidth
         )
-        .navigationTitle("Replay")
+        .navigationTitle(Loc.t("Replay"))
     }
 
     @ViewBuilder

@@ -218,7 +218,7 @@ struct CommandPaletteView: View {
         VStack(spacing: 0) {
             field
             if palette.results.isEmpty {
-                Text("Nothing matches.")
+                Text(Loc.t("Nothing matches."))
                     .font(Design.Text.detail)
                     .foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -254,7 +254,7 @@ struct CommandPaletteView: View {
             hint("esc", "Close")
             Spacer(minLength: 0)
             if !palette.results.isEmpty {
-                Text("\(palette.results.count) \(palette.results.count == 1 ? "result" : "results")")
+                Text(Loc.count(palette.results.count, "%@ result", "%@ results"))
                     .font(Design.Text.micro)
                     .foregroundStyle(.quaternary)
                     .monospacedDigit()
@@ -284,7 +284,7 @@ struct CommandPaletteView: View {
         HStack(spacing: Design.Space.card) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.tertiary)
-            TextField("Go to a surface, an application, a project, a day…", text: $palette.query)
+            TextField(Loc.t("Go to a surface, an application, a project, a day…"), text: $palette.query)
                 .textFieldStyle(.plain)
                 .font(Design.Text.prose)
                 .focused($focused)

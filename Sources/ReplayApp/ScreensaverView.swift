@@ -129,8 +129,8 @@ struct ScreensaverView: View {
                 .opacity(Design.Colour.screensaverExitOpacity)
                 .padding(Design.Space.page)
                 .keyboardShortcut(.escape, modifiers: [])
-                .help("Exit")
-                .accessibilityLabel("Exit the screensaver")
+                .help(Loc.t("Exit"))
+                .accessibilityLabel(Loc.t("Exit the screensaver"))
             }
 
             // Bottom-left, diagonally opposite the close disc, so the two pieces of
@@ -155,7 +155,7 @@ struct ScreensaverView: View {
 
             VStack {
                 Spacer()
-                Text("Press Esc to exit")
+                Text(Loc.t("Press Esc to exit"))
                     .font(Design.Text.micro)
                     .foregroundStyle(.white.opacity(Design.Colour.screensaverHintOpacity))
                     .padding(.bottom, Design.Space.page)

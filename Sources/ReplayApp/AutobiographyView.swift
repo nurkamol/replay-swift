@@ -27,7 +27,7 @@ struct AutobiographyView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Autobiography")
+        .navigationTitle(Loc.t("Autobiography"))
         .navigationSubtitle(NarrativeCopy.autobiographySubtitle)
         .onAppear {
             if !story.loaded { story.load() }
@@ -38,7 +38,7 @@ struct AutobiographyView: View {
     /// Weeks, months and years in one list rather than three tabs: they are all "a stretch
     /// of time", and which one you want depends on the question, not on a mode.
     private var picker: some View {
-        Picker("Period", selection: Binding(
+        Picker(Loc.t("Period"), selection: Binding(
             get: { selected ?? story.periods.first },
             set: { selected = $0 }
         )) {
@@ -68,7 +68,7 @@ struct AutobiographyView: View {
 
             if !story.topApps.isEmpty {
                 VStack(alignment: .leading, spacing: Design.Space.row) {
-                    Text("What led the days").sectionLabelStyle()
+                    Text(Loc.t("What led the days")).sectionLabelStyle()
                     VStack(spacing: 0) {
                         ForEach(story.topApps, id: \.bundleIdentifier) { app in
                             HStack(spacing: Design.Space.card) {
@@ -79,7 +79,7 @@ struct AutobiographyView: View {
                                 )
                                 Text(app.applicationName).font(Design.Text.detail.weight(.medium))
                                 Spacer(minLength: Design.Space.inline)
-                                Text("\(app.days) \(app.days == 1 ? "day" : "days")")
+                                Text(Loc.count(app.days, "%@ day", "%@ days"))
                                     .font(Design.Text.micro)
                                     .foregroundStyle(.tertiary)
                                     .monospacedDigit()

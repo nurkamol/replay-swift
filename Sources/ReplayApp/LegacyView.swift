@@ -27,7 +27,7 @@ struct LegacyView: View {
                     if !legacy.years.isEmpty { years(legacy) }
                     if !byDay.isEmpty { growth }
                     if !legacy.favourites.isEmpty { favourites(legacy) }
-                    Text("Everything here was recorded on this Mac and has never left it.")
+                    Text(Loc.t("Everything here was recorded on this Mac and has never left it."))
                         .font(Design.Text.detail)
                         .foregroundStyle(.tertiary)
                 } else {
@@ -37,7 +37,7 @@ struct LegacyView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("My Story")
+        .navigationTitle(Loc.t("My Story"))
         .navigationSubtitle(NarrativeCopy.legacySubtitle)
         .onAppear {
             if !story.loaded { story.load() }
@@ -49,7 +49,7 @@ struct LegacyView: View {
 
     private func headline(_ legacy: Legacy) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text("Your story so far").cardLabelStyle()
+            Text(Loc.t("Your story so far")).cardLabelStyle()
             Text(
                 "You have been building this memory since "
                     + "\(shortDateLabel(legacy.firstDay)) — \(legacy.activeDays) active "
@@ -95,7 +95,7 @@ struct LegacyView: View {
         .padding(Design.Space.card)
         .card(border: Design.Colour.borderQuiet)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label), \(value)")
+        .accessibilityLabel(String(format: Loc.t("%@, %2$@"), "\(label), \(value)"))
     }
 
     private func years(_ legacy: Legacy) -> some View {
@@ -115,7 +115,7 @@ struct LegacyView: View {
                             .overlay(Capsule().strokeBorder(Design.Colour.border))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityHint("Opens the autobiography")
+                    .accessibilityHint(Loc.t("Opens the autobiography"))
                 }
             }
         }
@@ -140,7 +140,7 @@ struct LegacyView: View {
                             )
                             Text(app.applicationName).font(Design.Text.detail.weight(.medium))
                             Spacer(minLength: Design.Space.inline)
-                            Text("\(app.days) \(app.days == 1 ? "day" : "days")")
+                            Text(Loc.count(app.days, "%@ day", "%@ days"))
                                 .font(Design.Text.micro)
                                 .foregroundStyle(.tertiary)
                                 .monospacedDigit()

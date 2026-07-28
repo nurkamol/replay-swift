@@ -100,7 +100,7 @@ struct TimelineView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Timeline")
+        .navigationTitle(Loc.t("Timeline"))
         .navigationSubtitle(history.range.subtitle)
         .onAppear { if !overlays.loaded { overlays.load() } }
         .toolbar {
@@ -108,7 +108,7 @@ struct TimelineView: View {
             // surface, and a control that scrolls away with what it controls is a control
             // you have to go looking for.
             ToolbarItem(placement: .principal) {
-                Picker("Range", selection: Binding(
+                Picker(Loc.t("Range"), selection: Binding(
                     get: { history.range },
                     set: { history.range = $0 }
                 )) {
@@ -118,7 +118,7 @@ struct TimelineView: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                .help("How much history the Timeline shows")
+                .help(Loc.t("How much history the Timeline shows"))
             }
         }
     }
@@ -142,7 +142,7 @@ struct TimelineView: View {
                 }
             }
             HStack(alignment: .top, spacing: Design.Space.inline) {
-                Label("Layers", systemImage: "square.3.layers.3d")
+                Label(Loc.t("Layers"), systemImage: "square.3.layers.3d")
                     .labelStyle(.titleAndIcon)
                     .sectionLabelStyle()
                     .padding(.top, Design.Space.snug)
@@ -294,9 +294,9 @@ struct TimelineView: View {
 
     private var narrowed: some View {
         ContentUnavailableView {
-            Label("Nothing matches", systemImage: "line.3.horizontal.decrease")
+            Label(Loc.t("Nothing matches"), systemImage: "line.3.horizontal.decrease")
         } description: {
-            Text("No session in this range is in the kinds of work, or the layers, you chose.")
+            Text(Loc.t("No session in this range is in the kinds of work, or the layers, you chose."))
         }
     }
 
@@ -365,8 +365,8 @@ private struct DaySection: View {
             isPresented: $confirmingDelete,
             titleVisibility: .visible
         ) {
-            Button("Delete Day", role: .destructive) { history.deleteDay(day.dayStart) }
-            Button("Cancel", role: .cancel) {}
+            Button(Loc.t("Delete Day"), role: .destructive) { history.deleteDay(day.dayStart) }
+            Button(Loc.t("Cancel"), role: .cancel) {}
         } message: {
             Text(
                 "Deleting \(day.label) permanently removes its sessions, its summary, and any "
@@ -397,8 +397,8 @@ private struct DaySection: View {
             // control beside every day is easy to hit by accident, and noisy for something
             // rarely wanted.
             Menu {
-                Button("Open This Day") { onOpenDay(day.dayStart) }
-                Button("Replay This Day") {
+                Button(Loc.t("Open This Day")) { onOpenDay(day.dayStart) }
+                Button(Loc.t("Replay This Day")) {
                     onReplayDay(day.sessions, day.label)
                 }
                 .disabled(day.sessions.isEmpty)
@@ -414,7 +414,7 @@ private struct DaySection: View {
                     }
                 }
                 Divider()
-                Button("Delete This Day…", role: .destructive) { confirmingDelete = true }
+                Button(Loc.t("Delete This Day…"), role: .destructive) { confirmingDelete = true }
             } label: {
                 Image(systemName: "ellipsis")
             }
@@ -489,7 +489,7 @@ struct DayView: View {
                 // none rather than a padded one — see DayStory.
                 if !story.isEmpty {
                     VStack(alignment: .leading, spacing: Design.Space.snug) {
-                        Text("The story of this day")
+                        Text(Loc.t("The story of this day"))
                             .font(Design.Text.cardLabel)
                             .foregroundStyle(.tertiary)
                             .kerning(Design.Text.labelKerning)
@@ -521,7 +521,7 @@ struct DayView: View {
                 } else {
                     VStack(alignment: .leading, spacing: Design.Space.row) {
                         HStack {
-                            Text("\(day.sessions.count) \(day.sessions.count == 1 ? "session" : "sessions")")
+                            Text(Loc.count(day.sessions.count, "%@ session", "%@ sessions"))
                                 .font(Design.Text.sectionLabel)
                                 .foregroundStyle(.secondary)
                                 .textCase(.uppercase)
@@ -577,9 +577,9 @@ struct DayView: View {
                     Button {
                         onReplayDay(day.sessions, day.label)
                     } label: {
-                        Label("Replay Day", systemImage: "play.rectangle")
+                        Label(Loc.t("Replay Day"), systemImage: "play.rectangle")
                     }
-                    .help("Watch this day play back")
+                    .help(Loc.t("Watch this day play back"))
                 }
                 ToolbarItem {
                     Menu {
@@ -593,9 +593,9 @@ struct DayView: View {
                             }
                         }
                     } label: {
-                        Label("Export", systemImage: "square.and.arrow.up")
+                        Label(Loc.t("Export"), systemImage: "square.and.arrow.up")
                     }
-                    .help("Export this day")
+                    .help(Loc.t("Export this day"))
                 }
             }
         }
@@ -608,7 +608,7 @@ struct DayView: View {
             Text(fullDayLabel(day.dayStart))
                 .font(Design.Text.title)
             if !day.items.isEmpty {
-                Text("\(formatDurationShort(day.activeSeconds)) active")
+                Text(String(format: Loc.t("%@ active"), "\(formatDurationShort(day.activeSeconds))"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -631,7 +631,7 @@ struct DayView: View {
                         .foregroundStyle(.tint)
                         .frame(width: Design.Icon.listItem)
                     VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                        Text("Part of the chapter").cardLabelStyle()
+                        Text(Loc.t("Part of the chapter")).cardLabelStyle()
                         Text(chapterName)
                             .font(Design.Text.itemTitle)
                             .lineLimit(1)
@@ -649,7 +649,7 @@ struct DayView: View {
             if !context.nearbyDays.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: Design.Space.snug) {
-                    Text("Around this time").cardLabelStyle()
+                    Text(Loc.t("Around this time")).cardLabelStyle()
                     FlowRow(spacing: Design.Space.snug) {
                         ForEach(context.nearbyDays, id: \.self) { day in
                             Button { onOpenDay(day) } label: {
@@ -662,7 +662,7 @@ struct DayView: View {
                                     .overlay(Capsule().strokeBorder(Design.Colour.borderQuiet))
                             }
                             .buttonStyle(.plain)
-                            .accessibilityHint("Opens that day")
+                            .accessibilityHint(Loc.t("Opens that day"))
                         }
                     }
                 }
@@ -676,7 +676,7 @@ struct DayView: View {
 
     private var pruned: some View {
         VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text("No timeline for this day")
+            Text(Loc.t("No timeline for this day"))
                 .font(.headline)
             Text(prunedDetail)
                 .font(.subheadline)

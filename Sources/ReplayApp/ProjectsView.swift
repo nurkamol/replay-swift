@@ -36,14 +36,14 @@ struct ProjectsView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Projects")
+        .navigationTitle(Loc.t("Projects"))
         .navigationSubtitle("The apps that keep coming back together")
         .onAppear { projects.load() }
     }
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("No projects yet", systemImage: "shippingbox")
+            Label(Loc.t("No projects yet"), systemImage: "shippingbox")
         } description: {
             Text(
                 "When the same handful of applications keeps coming back together, "
@@ -120,6 +120,6 @@ private struct ProjectCard: View {
                 + "\(formatDurationShort(project.totalSeconds)), "
                 + project.apps.map(\.applicationName).joined(separator: ", ")
         )
-        .accessibilityHint("Opens this project")
+        .accessibilityHint(Loc.t("Opens this project"))
     }
 }

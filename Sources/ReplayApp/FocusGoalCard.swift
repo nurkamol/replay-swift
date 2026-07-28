@@ -19,14 +19,14 @@ struct FocusGoalCard: View {
             ProgressRing(fraction: progress.fraction, met: progress.met)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("Focus goal")
+                Text(Loc.t("Focus goal"))
                     .font(Design.Text.cardLabel)
                     .foregroundStyle(.tertiary)
                     .kerning(Design.Text.labelKerning)
                     .textCase(.uppercase)
 
                 if progress.met {
-                    Text("Goal reached — \(formatDurationShort(progress.activeSeconds))")
+                    Text(String(format: Loc.t("Goal reached — %@"), "\(formatDurationShort(progress.activeSeconds))"))
                         .font(Design.Text.figure)
                         .monospacedDigit()
                 } else {
@@ -34,13 +34,13 @@ struct FocusGoalCard: View {
                         Text(formatDurationShort(progress.activeSeconds))
                             .font(Design.Text.figure)
                             .monospacedDigit()
-                        Text("of \(formatDurationShort(progress.goalSeconds))")
+                        Text(String(format: Loc.t("of %@"), "\(formatDurationShort(progress.goalSeconds))"))
                             .font(.callout)
                             .foregroundStyle(.tertiary)
                             .monospacedDigit()
                     }
                     if progress.remainingSeconds > 0 {
-                        Text("\(formatDurationShort(progress.remainingSeconds)) to go")
+                        Text(String(format: Loc.t("%@ to go"), "\(formatDurationShort(progress.remainingSeconds))"))
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                             .monospacedDigit()
@@ -54,7 +54,7 @@ struct FocusGoalCard: View {
             if streak > 1 {
                 HStack(spacing: Design.Space.tight) {
                     Image(systemName: "flame.fill").font(.caption2)
-                    Text("\(streak) days").font(Design.Text.sectionLabel).monospacedDigit()
+                    Text(String(format: Loc.t("%@ days"), "\(streak)")).font(Design.Text.sectionLabel).monospacedDigit()
                 }
                 .foregroundStyle(.orange)
                 .padding(.horizontal, Design.Pill.horizontal).padding(.vertical, Design.Pill.vertical)
@@ -76,7 +76,7 @@ struct FocusGoalCard: View {
                     }
                 }
                 Divider()
-                Button("Stop Keeping a Goal") { onSetGoal(nil) }
+                Button(Loc.t("Stop Keeping a Goal")) { onSetGoal(nil) }
             } label: {
                 Image(systemName: "ellipsis")
             }
@@ -113,6 +113,8 @@ private struct ProgressRing: View {
                     .font(Design.Text.ringGlyph)
                     .foregroundStyle(.green)
             } else {
+                // A bare number. Nothing to translate, and wrapping it made the *value*
+                // the lookup key — a new key on every repaint.
                 Text("\(Int((fraction * 100).rounded()))")
                     .font(Design.Text.ringFigure)
                     .monospacedDigit()

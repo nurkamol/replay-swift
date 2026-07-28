@@ -19,22 +19,22 @@ struct AnnotationMarks: View {
                         // Bounces once when it is set, and never again: an icon should
                         // animate when its meaning changes, not while it merely exists.
                         .symbolEffect(.bounce, value: annotation.bookmarked)
-                        .accessibilityLabel("Bookmarked")
+                        .accessibilityLabel(Loc.t("Bookmarked"))
                 }
                 if !annotation.tags.isEmpty {
                     HStack(spacing: Design.Space.hairline) {
                         Image(systemName: "tag")
-                        Text("\(annotation.tags.count)").monospacedDigit()
+                        Text(String(format: Loc.t("%@"), "\(annotation.tags.count)")).monospacedDigit()
                     }
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
-                    .accessibilityLabel("\(annotation.tags.count) tags")
+                    .accessibilityLabel(String(format: Loc.t("%@ tags"), "\(annotation.tags.count)"))
                 }
                 if !annotation.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Image(systemName: "note.text")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
-                        .accessibilityLabel("Has a note")
+                        .accessibilityLabel(Loc.t("Has a note"))
                 }
             }
         }
@@ -75,7 +75,7 @@ private struct TagEditor: View {
 
             ForEach(tags, id: \.self) { tag in
                 HStack(spacing: Design.Space.tight) {
-                    Text("#\(tag)")
+                    Text(String(format: Loc.t("#%@"), "\(tag)"))
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
                     Button {
@@ -85,14 +85,14 @@ private struct TagEditor: View {
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(.tertiary)
-                    .accessibilityLabel("Remove tag \(tag)")
+                    .accessibilityLabel(String(format: Loc.t("Remove tag %@"), "\(tag)"))
                 }
                 .padding(.leading, Design.Pill.fieldVertical).padding(.trailing, Design.Pill.trailingTight).padding(.vertical, Design.Space.hairline)
                 .background(Design.Colour.fillStrong, in: Capsule())
             }
 
             if adding {
-                TextField("tag", text: $draft)
+                TextField(Loc.t("tag"), text: $draft)
                     .textFieldStyle(.roundedBorder)
                     .font(.caption)
                     .frame(width: Design.Layout.tagField)
@@ -105,7 +105,7 @@ private struct TagEditor: View {
                     adding = true
                     fieldFocused = true
                 } label: {
-                    Label("Tag", systemImage: "plus")
+                    Label(Loc.t("Tag"), systemImage: "plus")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.tertiary)
                 }
@@ -143,7 +143,7 @@ private struct NoteEditor: View {
 
             // A plain growing field rather than a boxed text view: a note on a memory
             // should feel like writing in a margin, not filling in a form.
-            TextField("Add a note…", text: $value, axis: .vertical)
+            TextField(Loc.t("Add a note…"), text: $value, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.callout)
                 .lineLimit(1...8)

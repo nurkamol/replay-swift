@@ -110,8 +110,8 @@ struct AmbientView: View {
                         // leaves, and the disc is still clickable.
                         .focusEffectDisabled()
                         .opacity(Design.Colour.screensaverTertiary)
-                        .help("Exit ambient mode")
-                        .accessibilityLabel("Exit ambient mode")
+                        .help(Loc.t("Exit ambient mode"))
+                        .accessibilityLabel(Loc.t("Exit ambient mode"))
                     }
                     Spacer()
                     exitHint
@@ -149,7 +149,10 @@ struct AmbientView: View {
     }
 
     private var eyebrow: some View {
-        Text("Today · \(fullDayLabel(startOfLocalDay(Int64(now.timeIntervalSince1970 * 1000))))")
+        Text(String(
+            format: Loc.t("Today · %@"),
+            fullDayLabel(startOfLocalDay(Int64(now.timeIntervalSince1970 * 1000)))
+        ))
             .font(Design.Text.detailStrong)
             .textCase(.uppercase)
             .kerning(Design.Layout.ambientEyebrowKerning)
@@ -176,7 +179,7 @@ struct AmbientView: View {
                     reduceMotion ? nil : Design.Motion.settle,
                     value: model.summary?.activeSeconds ?? 0
                 )
-            Text("active today")
+            Text(Loc.t("active today"))
                 .font(Design.Text.itemTitle)
                 .foregroundStyle(.white.opacity(Design.Colour.ambientHeadline))
         }
@@ -212,7 +215,7 @@ struct AmbientView: View {
             .modifier(Breathing(active: preferences.ambientBreath && !reduceMotion))
 
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text("Now")
+                Text(Loc.t("Now"))
                     .font(Design.Text.micro)
                     .textCase(.uppercase)
                     .kerning(Design.Layout.ambientNowKerning)
@@ -223,13 +226,13 @@ struct AmbientView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Now in \(app.name)")
+        .accessibilityLabel(String(format: Loc.t("Now in %@"), "\(app.name)"))
     }
 
     /// The way out, and nothing else. The time used to share this line; it has gone to the
     /// top, where a clock belongs, and this is a footnote again.
     private var exitHint: some View {
-        Text("Press Esc to exit")
+        Text(Loc.t("Press Esc to exit"))
             .font(Design.Text.micro)
             .foregroundStyle(.white.opacity(Design.Colour.ambientHint))
     }

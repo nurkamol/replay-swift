@@ -42,7 +42,7 @@ struct AppHistoryView: View {
                 Text(history.name).font(Design.Text.title).lineLimit(1)
                 Text(
                     "\(formatDurationShort(history.figures.lastWeek)) this week · "
-                        + "\(history.figures.visits) \(history.figures.visits == 1 ? "visit" : "visits")"
+                        + Loc.count(history.figures.visits, "%@ visit", "%@ visits")
                 )
                 .font(Design.Text.body)
                 .foregroundStyle(.secondary)
@@ -75,12 +75,12 @@ struct AppHistoryView: View {
         .padding(Design.Space.card)
         .card(border: Design.Colour.borderQuiet)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label), \(formatDurationShort(seconds))")
+        .accessibilityLabel(String(format: Loc.t("%@, %2$@"), "\(label), \(formatDurationShort(seconds))"))
     }
 
     private var appearsIn: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Appears in").sectionLabelStyle()
+            Text(Loc.t("Appears in")).sectionLabelStyle()
             // A wrapping row rather than a list: these are labels on the app, not a menu.
             FlowRow(spacing: Design.Space.inline) {
                 ForEach(history.collections, id: \.self) { category in
@@ -101,7 +101,7 @@ struct AppHistoryView: View {
     /// The applications this one is most entwined with.
     private var alongside: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Works alongside").sectionLabelStyle()
+            Text(Loc.t("Works alongside")).sectionLabelStyle()
             VStack(spacing: 0) {
                 ForEach(history.partners, id: \.identity.key) { partner in
                     Button {
@@ -142,7 +142,7 @@ struct AppHistoryView: View {
                     }
                     .buttonStyle(.row)
                     .disabled(partner.identity.bundleIdentifier == nil)
-                    .accessibilityHint("Opens how these two are used together")
+                    .accessibilityHint(Loc.t("Opens how these two are used together"))
                 }
             }
             .padding(Design.Space.snug)
@@ -153,7 +153,7 @@ struct AppHistoryView: View {
 
     private var recent: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Recent sessions").sectionLabelStyle()
+            Text(Loc.t("Recent sessions")).sectionLabelStyle()
             VStack(spacing: Design.Space.row) {
                 ForEach(history.sessions, id: \.startedAt) { session in
                     SessionCard(

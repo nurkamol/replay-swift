@@ -55,10 +55,10 @@ public enum MenuBar {
         return .inApplication(name: current.applicationName, seconds: max(0, seconds))
     }
 
-    public static var pausedLabel: String { Loc.t("Tracking paused") }
-    public static var awayLabel: String { Loc.t("Away from keyboard") }
-    public static var waitingLabel: String { Loc.t("Waiting for activity…") }
-    public static var recentHeading: String { Loc.t("Recently") }
+    public static let pausedLabel = "Tracking paused"
+    public static let awayLabel = "Away from keyboard"
+    public static let waitingLabel = "Waiting for activity…"
+    public static let recentHeading = "Recently"
 
     /// How long you have been in the thing you are in.
     ///
@@ -143,10 +143,10 @@ public enum MenuBar {
         /// worse Timeline rather than a quicker one.
         public static let sessionLimit = 3
 
-        public static var todayHeading: String { Loc.t("Today") }
-        public static var recentHeading: String { Loc.t("Recent sessions") }
-        public static var goalHeading: String { Loc.t("Focus goal") }
-        public static var emptyToday: String { Loc.t("Nothing recorded yet today.") }
+        public static let todayHeading = "Today"
+        public static let recentHeading = "Recent sessions"
+        public static let goalHeading = "Focus goal"
+        public static let emptyToday = "Nothing recorded yet today."
 
         /// The day's total, said the way a person would say it.
         public static func todayLine(activeSeconds: Int, sessions: Int) -> String {

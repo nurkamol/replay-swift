@@ -194,7 +194,7 @@ struct SearchView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Search")
+        .navigationTitle(Loc.t("Search"))
         .onAppear { if !search.loaded { search.load() } }
         .onChange(of: navigation.focusSearchRequests, initial: true) { _, _ in
             if navigation.focusSearchRequests > 0 { fieldFocused = true }
@@ -207,7 +207,7 @@ struct SearchView: View {
     /// and a Save button with nothing to save is a control that cannot be used.
     private var refinements: some View {
         HStack(spacing: Design.Space.card) {
-            Picker("How far back", selection: Binding(
+            Picker(Loc.t("How far back"), selection: Binding(
                 get: { search.span }, set: { search.span = $0 }
             )) {
                 ForEach(Search.Span.allCases) { span in
@@ -254,7 +254,7 @@ struct SearchView: View {
                     .foregroundStyle(.tint)
                     .frame(width: Design.Icon.listItem)
                 VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                    Text("Jump to").cardLabelStyle()
+                    Text(Loc.t("Jump to")).cardLabelStyle()
                     Text(fullDayLabel(dayStart)).font(Design.Text.itemTitle)
                 }
                 Spacer(minLength: Design.Space.inline)
@@ -311,13 +311,13 @@ struct SearchView: View {
                 Text(saved).font(Design.Text.detail.weight(.medium))
             }
             .buttonStyle(.plain)
-            .help("Search for \(saved) again")
+            .help(String(format: Loc.t("Search for %@ again"), "\(saved)"))
             Button { preferences.toggleSavedSearch(saved) } label: {
                 Image(systemName: "xmark").font(Design.Text.pillGlyph)
             }
             .buttonStyle(.plain)
             .foregroundStyle(.tertiary)
-            .accessibilityLabel("Forget the saved search \(saved)")
+            .accessibilityLabel(String(format: Loc.t("Forget the saved search %@"), "\(saved)"))
         }
         .padding(.horizontal, Design.Pill.leadingRoomy)
         .padding(.vertical, Design.Pill.countVertical)
@@ -327,7 +327,13 @@ struct SearchView: View {
 
     private var nothing: some View {
         ContentUnavailableView {
-            Label("No results for \u{201C}\(search.trimmedQuery)\u{201D}", systemImage: "magnifyingglass")
+            Label(
+                // The quotation marks are inside the key, because which marks a language
+                // uses is part of translating it — German nests them low-then-high, French
+                // sets guillemets with spaces.
+                String(format: Loc.t("No results for \u{201C}%@\u{201D}"), search.trimmedQuery),
+                systemImage: "magnifyingglass"
+            )
         } description: {
             Text(
                 "Try an app name, a collection, a word from a note or reflection, a #tag — "
@@ -371,7 +377,7 @@ struct SearchView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.tertiary)
-                .accessibilityLabel("Clear search")
+                .accessibilityLabel(Loc.t("Clear search"))
             }
         }
         .padding(.horizontal, Design.Space.cardRoomy)
@@ -382,14 +388,14 @@ struct SearchView: View {
     /// The chip that says the results are narrowed to one app, and how to stop.
     private func narrowedTo(_ app: String) -> some View {
         HStack(spacing: Design.Space.snug) {
-            Text("in \(app)").font(Design.Text.detail.weight(.medium))
+            Text(String(format: Loc.t("in %@"), "\(app)")).font(Design.Text.detail.weight(.medium))
             Button {
                 search.chosenApp = nil
             } label: {
                 Image(systemName: "xmark").font(Design.Text.pillGlyph)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Stop narrowing to \(app)")
+            .accessibilityLabel(String(format: Loc.t("Stop narrowing to %@"), "\(app)"))
         }
         .foregroundStyle(.secondary)
         .padding(.horizontal, Design.Pill.leadingRoomy)
@@ -399,7 +405,7 @@ struct SearchView: View {
 
     private var hint: some View {
         ContentUnavailableView {
-            Label("Search your memory", systemImage: "magnifyingglass")
+            Label(Loc.t("Search your memory"), systemImage: "magnifyingglass")
         } description: {
             Text(
                 "Find an app, a session, a project, a note, a #tag, a collection, or a line "

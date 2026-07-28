@@ -127,17 +127,17 @@ struct UpdateBanner: View {
                 .font(Design.Text.prose)
                 .foregroundStyle(.tint)
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text("Replay \(release.version) is available")
+                Text(String(format: Loc.t("Replay %@ is available"), "\(release.version)"))
                     .font(Design.Text.itemTitle)
-                Text("You have \(Replay.version).")
+                Text(String(format: Loc.t("You have %@."), "\(Replay.version)"))
                     .font(Design.Text.detail)
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: Design.Space.inline)
             if !release.notes.isEmpty {
-                Button("What's Changed") { showingNotes = true }
+                Button(Loc.t("What's Changed")) { showingNotes = true }
             }
-            Button("Get It") { openURL(URL(string: release.url) ?? URL(string: Updates.releasesPage)!) }
+            Button(Loc.t("Get It")) { openURL(URL(string: release.url) ?? URL(string: Updates.releasesPage)!) }
                 .buttonStyle(.borderedProminent)
             Button {
                 onDismiss()
@@ -145,7 +145,7 @@ struct UpdateBanner: View {
                 Image(systemName: "xmark").font(Design.Text.micro)
             }
             .buttonStyle(.plain)
-            .help("Skip this version")
+            .help(Loc.t("Skip this version"))
         }
         .padding(Design.Space.section)
         .background(.regularMaterial, in: RoundedRectangle(

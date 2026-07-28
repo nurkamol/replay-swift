@@ -21,7 +21,7 @@ struct ReflectionCard: View {
                 Image(systemName: "pencil.line")
                     .font(.caption)
                     .foregroundStyle(.tint)
-                Text("Reflection")
+                Text(Loc.t("Reflection"))
                     .font(Design.Text.cardLabel)
                     .foregroundStyle(.tertiary)
                     .kerning(Design.Text.labelKerning)

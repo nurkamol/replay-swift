@@ -45,7 +45,7 @@ struct WelcomeView: View {
         VStack(spacing: Design.Space.block) {
             mark
             VStack(spacing: Design.Space.snug) {
-                Text("Welcome to Replay").font(Design.Text.title)
+                Text(Loc.t("Welcome to Replay")).font(Design.Text.title)
                 Text(
                     "Replay quietly notes which apps you use and turns your day into a "
                         + "memory you can return to — all on your Mac."
@@ -127,7 +127,7 @@ struct WelcomeView: View {
             Button {
                 page = 1
             } label: {
-                Label("Continue", systemImage: "arrow.right")
+                Label(Loc.t("Continue"), systemImage: "arrow.right")
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Design.Space.snug)
             }
@@ -173,7 +173,7 @@ struct WelcomeView: View {
         VStack(spacing: Design.Space.block) {
             mark
             VStack(spacing: Design.Space.snug) {
-                Text("One quick check").font(Design.Text.title)
+                Text(Loc.t("One quick check")).font(Design.Text.title)
                 Text(
                     "Replay reads which app is frontmost using macOS\u{2019}s standard signal "
                         + "— no Automation, and it never looks inside your windows. Here\u{2019}s it "
@@ -230,7 +230,7 @@ struct WelcomeView: View {
             .card(border: Design.Colour.borderQuiet)
 
             Button(action: onFinish) {
-                Text("Start Remembering")
+                Text(Loc.t("Start Remembering"))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Design.Space.snug)
             }
@@ -241,7 +241,7 @@ struct WelcomeView: View {
             Button {
                 page = 0
             } label: {
-                Label("Back", systemImage: "arrow.left")
+                Label(Loc.t("Back"), systemImage: "arrow.left")
                     .font(Design.Text.detail)
             }
             .buttonStyle(.plain)

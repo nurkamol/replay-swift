@@ -70,7 +70,7 @@ struct CollectionsView: View {
             VStack(alignment: .leading, spacing: Design.Space.section) {
                 if collections.opened != nil {
                     Button { collections.opened = nil } label: {
-                        Label("All collections", systemImage: "chevron.left")
+                        Label(Loc.t("All collections"), systemImage: "chevron.left")
                     }
                     .buttonStyle(.link)
                     .settlesIn(0)
@@ -168,7 +168,7 @@ struct CollectionsView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("Nothing collected yet", systemImage: "square.stack")
+            Label(Loc.t("Nothing collected yet"), systemImage: "square.stack")
         } description: {
             Text(
                 "A collection is every session of one kind — development, research, writing. "
@@ -220,7 +220,7 @@ private struct CollectionRow: View {
                     Text(formatDurationShort(collection.totalSeconds))
                         .font(Design.Text.figure)
                         .monospacedDigit()
-                    Text("\(collection.sessionCount) \(collection.sessionCount == 1 ? "session" : "sessions")")
+                    Text(Loc.count(collection.sessionCount, "%@ session", "%@ sessions"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .monospacedDigit()
@@ -240,6 +240,6 @@ private struct CollectionRow: View {
                 + "\(collection.sessionCount) "
                 + "\(collection.sessionCount == 1 ? "session" : "sessions")"
         )
-        .accessibilityHint("Opens this collection")
+        .accessibilityHint(Loc.t("Opens this collection"))
     }
 }

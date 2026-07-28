@@ -25,7 +25,7 @@ struct ChaptersView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Chapters")
+        .navigationTitle(Loc.t("Chapters"))
         .navigationSubtitle(NarrativeCopy.chaptersSubtitle)
         .onAppear { if !story.loaded { story.load() } }
     }
@@ -98,7 +98,7 @@ private struct ChapterRow: View {
                 + "\(formatDurationShort(chapter.totalActiveSeconds)), "
                 + "from \(shortDateLabel(chapter.startDay)) to \(shortDateLabel(chapter.endDay))"
         )
-        .accessibilityHint("Opens this chapter")
+        .accessibilityHint(Loc.t("Opens this chapter"))
     }
 }
 
@@ -130,12 +130,12 @@ struct ChapterDetailView: View {
         .background(.background)
         .navigationTitle(named?.name ?? "Chapter")
         .onAppear { if !story.loaded { story.load() } }
-        .alert("Rename chapter", isPresented: $renaming) {
+        .alert(Loc.t("Rename chapter"), isPresented: $renaming) {
             TextField(named.map { chapterDefaultName($0.chapter) } ?? "", text: $draft)
-            Button("Save") { story.rename(chapter: id, to: draft) }
-            Button("Cancel", role: .cancel) {}
+            Button(Loc.t("Save")) { story.rename(chapter: id, to: draft) }
+            Button(Loc.t("Cancel"), role: .cancel) {}
         } message: {
-            Text("Leave it empty to go back to the name Replay chose.")
+            Text(Loc.t("Leave it empty to go back to the name Replay chose."))
         }
     }
 
@@ -151,7 +151,7 @@ struct ChapterDetailView: View {
                 .foregroundStyle(.secondary)
             }
             Spacer(minLength: Design.Space.inline)
-            Button("Rename…") {
+            Button(Loc.t("Rename…")) {
                 draft = named.named ? named.name : ""
                 renaming = true
             }
@@ -178,12 +178,12 @@ struct ChapterDetailView: View {
         .padding(Design.Space.card)
         .card(border: Design.Colour.borderQuiet)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label), \(value)")
+        .accessibilityLabel(String(format: Loc.t("%@, %2$@"), "\(label), \(value)"))
     }
 
     private func apps(_ chapter: Chapter) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("What led its days").sectionLabelStyle()
+            Text(Loc.t("What led its days")).sectionLabelStyle()
             VStack(spacing: 0) {
                 ForEach(chapter.apps, id: \.bundleIdentifier) { app in
                     HStack(spacing: Design.Space.card) {
@@ -194,7 +194,7 @@ struct ChapterDetailView: View {
                         )
                         Text(app.applicationName).font(Design.Text.detail.weight(.medium))
                         Spacer(minLength: Design.Space.inline)
-                        Text("\(app.days) \(app.days == 1 ? "day" : "days")")
+                        Text(Loc.count(app.days, "%@ day", "%@ days"))
                             .font(Design.Text.micro)
                             .foregroundStyle(.tertiary)
                             .monospacedDigit()
@@ -228,7 +228,7 @@ struct ChapterDetailView: View {
                             Text(fullDayLabel(day)).font(Design.Text.detail)
                             Spacer(minLength: Design.Space.inline)
                             if day == chapter.representativeDay {
-                                Text("Fullest")
+                                Text(Loc.t("Fullest"))
                                     .font(Design.Text.micro)
                                     .foregroundStyle(.tint)
                             }
@@ -241,7 +241,7 @@ struct ChapterDetailView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.row)
-                    .accessibilityHint("Opens this day")
+                    .accessibilityHint(Loc.t("Opens this day"))
                 }
             }
             .padding(Design.Space.snug)
@@ -251,9 +251,9 @@ struct ChapterDetailView: View {
 
     private var missing: some View {
         ContentUnavailableView {
-            Label("Chapter not found", systemImage: "book")
+            Label(Loc.t("Chapter not found"), systemImage: "book")
         } description: {
-            Text("A chapter exists only while the days beneath it do.")
+            Text(Loc.t("A chapter exists only while the days beneath it do."))
         }
     }
 }

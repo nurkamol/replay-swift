@@ -30,13 +30,13 @@ struct WhatsNewView: View {
                     .resizable()
                     .frame(width: Design.Icon.about, height: Design.Icon.about)
                 VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                    Text("What's New").font(Design.Text.title)
-                    Text("Everything Replay has gained, newest first.")
+                    Text(Loc.t("What's New")).font(Design.Text.title)
+                    Text(Loc.t("Everything Replay has gained, newest first."))
                         .font(Design.Text.body)
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: Design.Space.inline)
-                Button("Done", action: onClose)
+                Button(Loc.t("Done"), action: onClose)
                     .keyboardShortcut(.defaultAction)
             }
             .padding(Design.Space.page)
@@ -62,7 +62,7 @@ struct WhatsNewView: View {
                                         )
                                     )
                                 if release.version == current {
-                                    Text("You have this")
+                                    Text(Loc.t("You have this"))
                                         .font(Design.Text.micro)
                                         .foregroundStyle(.tertiary)
                                 }

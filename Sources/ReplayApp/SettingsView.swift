@@ -149,7 +149,7 @@ extension View {
     func explains(own row: OwnSettingsRow) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.hairline) {
             self
-            Text(row.explanation)
+            Text(Loc.t(row.explanation))
                 .font(Design.Text.detail)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -160,7 +160,7 @@ extension View {
     func explains(_ row: SettingsRow) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.hairline) {
             self
-            if let text = row.explanation {
+            if let text = row.explanation.map(Loc.t) {
                 Text(text)
                     .font(Design.Text.detail)
                     .foregroundStyle(.secondary)
@@ -325,7 +325,7 @@ private struct GeneralTab: View {
 
                 // Named rather than shown as a switch: three genuinely different looks, and
                 // "off" would imply glass is the app and the rest is its absence.
-                Picker("Surfaces", selection: $preferences.surfaceStyle) {
+                Picker(Loc.t("Surfaces"), selection: $preferences.surfaceStyle) {
                     ForEach(SurfaceStyle.allCases) { Text($0.label).tag($0) }
                 }
 
@@ -352,7 +352,7 @@ private struct GeneralTab: View {
 
             Section {
                 LabeledContent("Welcome screen") {
-                    Button("Show Welcome") { preferences.seenWelcome = false }
+                    Button(Loc.t("Show Welcome")) { preferences.seenWelcome = false }
                 }
             } footer: {
             }
@@ -372,7 +372,7 @@ private struct GeneralTab: View {
                     .onChange(of: preferences.dailySummary) { _, on in
                         Task { await enableNotification(on) }
                     }
-                Picker("At", selection: $preferences.dailySummaryHour) {
+                Picker(Loc.t("At"), selection: $preferences.dailySummaryHour) {
                     ForEach(Design.notificationHours, id: \.self) { hour in
                         Text(Self.hourLabel(hour)).tag(hour)
                     }
@@ -393,7 +393,7 @@ private struct GeneralTab: View {
                         Task { await enableNotification(on) }
                     }
             } header: {
-                Text("Notifications")
+                Text(Loc.t("Notifications"))
             } footer: {
                 Footnote(
                     notifications.permission == .denied
@@ -435,7 +435,7 @@ private struct GeneralTab: View {
 
                 if !preferences.dismissedMemories.isEmpty {
                     LabeledContent("Put away") {
-                        Button("Bring back \(preferences.dismissedMemories.count)") {
+                        Button(String(format: Loc.t("Bring back %@"), "\(preferences.dismissedMemories.count)")) {
                             preferences.dismissedMemories = []
                             contextual.load()
                         }
@@ -452,7 +452,7 @@ private struct GeneralTab: View {
 
             Section {
                 Picker(SettingsRow.dailyFocus.label, selection: goalSelection) {
-                    Text("No goal").tag(0)
+                    Text(Loc.t("No goal")).tag(0)
                     ForEach(Goals.presetMinutes, id: \.self) {
                         Text(Goals.format($0)).tag($0)
                     }
@@ -472,12 +472,12 @@ private struct GeneralTab: View {
                             .labelsHidden()
                             .frame(width: Design.Layout.numberField)
                             .multilineTextAlignment(.trailing)
-                        Text("min").foregroundStyle(.secondary)
+                        Text(Loc.t("min")).foregroundStyle(.secondary)
                     }
                 }
                 .disabled(!keepsGoal)
             } header: {
-                Text("Focus goal")
+                Text(Loc.t("Focus goal"))
             } footer: {
                 Footnote(
                     keepsGoal
@@ -495,7 +495,7 @@ private struct GeneralTab: View {
                 ))
                     .explains(.activityTracking)
             } header: {
-                Text("Recording")
+                Text(Loc.t("Recording"))
             } footer: {
                 Footnote(
                     "Replay reads which app is frontmost through macOS's standard signal. It "
@@ -550,7 +550,7 @@ private struct PrivacyTab: View {
                 // The promise, stated once and plainly, before any control.
                 Label {
                     VStack(alignment: .leading, spacing: Design.Space.tight) {
-                        Text("Everything stays on this Mac")
+                        Text(Loc.t("Everything stays on this Mac"))
                             .font(Design.Text.itemTitle)
                         Text(
                             "Replay records only which applications you use, and keeps it in "
@@ -582,7 +582,7 @@ private struct PrivacyTab: View {
                         Text(notificationState)
                             .foregroundStyle(.secondary)
                         if notifications.permission == .denied {
-                            Button("Open Settings…") {
+                            Button(Loc.t("Open Settings…")) {
                                 NSWorkspace.shared.open(
                                     URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!
                                 )
@@ -592,7 +592,7 @@ private struct PrivacyTab: View {
                     }
                 }
             } header: {
-                Text("Permission")
+                Text(Loc.t("Permission"))
             } footer: {
                 Footnote(
                     notifications.permission == .denied
@@ -622,7 +622,7 @@ private struct PrivacyTab: View {
                         }
                     }
                 } header: {
-                    Text("What is stored")
+                    Text(Loc.t("What is stored"))
                 } footer: {
                     // The path, so "local" is verifiable rather than claimed.
                     Text(info.path)
@@ -715,7 +715,7 @@ private struct ExclusionsSheet: View {
             HStack {
                 StatusFooter(settings: settings)
                 Spacer()
-                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+                Button(Loc.t("Done")) { dismiss() }.keyboardShortcut(.defaultAction)
             }
             .padding(Design.Space.card)
         }
@@ -727,11 +727,11 @@ private struct ExclusionsSheet: View {
                 set: { if !$0 { pendingExclusion = nil } }
             )
         ) {
-            Button("Exclude and Erase", role: .destructive) {
+            Button(Loc.t("Exclude and Erase"), role: .destructive) {
                 if let app = pendingExclusion { settings.setExcluded(app, true) }
                 pendingExclusion = nil
             }
-            Button("Cancel", role: .cancel) { pendingExclusion = nil }
+            Button(Loc.t("Cancel"), role: .cancel) { pendingExclusion = nil }
         } message: {
             Text(
                 "Replay will stop recording it and permanently erase everything already "
@@ -764,7 +764,7 @@ private struct DataTab: View {
             Section {
                 LabeledContent("Report") {
                     HStack(spacing: Design.Space.snug) {
-                        Picker("Scope", selection: $scope) {
+                        Picker(Loc.t("Scope"), selection: $scope) {
                             ForEach(Report.Scope.allCases, id: \.self) {
                                 Text($0.label).tag($0)
                             }
@@ -772,7 +772,7 @@ private struct DataTab: View {
                         .labelsHidden()
                         .fixedSize()
 
-                        Picker("Format", selection: $format) {
+                        Picker(Loc.t("Format"), selection: $format) {
                             ForEach(Report.Format.allCases, id: \.self) {
                                 Text($0.label).tag($0)
                             }
@@ -780,21 +780,21 @@ private struct DataTab: View {
                         .labelsHidden()
                         .fixedSize()
 
-                        Button("Export…") { export.exportScope(format, scope: scope) }
+                        Button(Loc.t("Export…")) { export.exportScope(format, scope: scope) }
                             .disabled(matching == 0)
                     }
                 }
 
                 LabeledContent("Full backup") {
                     HStack(spacing: Design.Space.inline) {
-                        Button("Export…") { export.exportBackup() }
-                        Button("Import…") { export.importBackup() }
+                        Button(Loc.t("Export…")) { export.exportBackup() }
+                        Button(Loc.t("Import…")) { export.importBackup() }
                     }
                 }
 
                 StatusFooter(export: export)
             } header: {
-                Text("Your data")
+                Text(Loc.t("Your data"))
             } footer: {
                 // Said before the save panel rather than after: an export that turns out to
                 // be empty is a wasted trip through a file dialog.
@@ -820,13 +820,13 @@ private struct DataTab: View {
                 LabeledContent(SettingsRow.deleteASingleDay.label) {
                     HStack(spacing: Design.Space.snug) {
                         Picker("", selection: $dayToDelete) {
-                            Text("Choose a day").tag(Int64(0))
+                            Text(Loc.t("Choose a day")).tag(Int64(0))
                             ForEach(settings.deletableDays, id: \.dayStart) { day in
                                 Text(day.label).tag(day.dayStart)
                             }
                         }
                         .labelsHidden()
-                        Button("Delete…", role: .destructive) { confirmingDayDelete = true }
+                        Button(Loc.t("Delete…"), role: .destructive) { confirmingDayDelete = true }
                             .disabled(dayToDelete == 0)
                     }
                 }
@@ -839,26 +839,26 @@ private struct DataTab: View {
 
                 StatusFooter(settings: settings)
             } header: {
-                Text("Storage")
+                Text(Loc.t("Storage"))
             } footer: {
                 Footnote(compactFooter)
             }
 
             Section {
                 LabeledContent("Activity history") {
-                    Button("Clear History…", role: .destructive) { confirmingClear = true }
+                    Button(Loc.t("Clear History…"), role: .destructive) { confirmingClear = true }
                 }
                 LabeledContent(SettingsRow.resetReplay.label) {
-                    Button("Reset…", role: .destructive) { confirmingReset = true }
+                    Button(Loc.t("Reset…"), role: .destructive) { confirmingReset = true }
                 }
                 .explains(.resetReplay)
             } footer: {
                 Footnote("Deletes every event, headline, note and bookmark. There is no undo.")
             }
         }
-        .alert("Clear activity history?", isPresented: $confirmingClear) {
-            Button("Clear History", role: .destructive) { settings.clearHistory() }
-            Button("Cancel", role: .cancel) {}
+        .alert(Loc.t("Clear activity history?"), isPresented: $confirmingClear) {
+            Button(Loc.t("Clear History"), role: .destructive) { settings.clearHistory() }
+            Button(Loc.t("Cancel"), role: .cancel) {}
         } message: {
             Text(
                 "This permanently deletes every recorded event from this Mac, along with every "
@@ -872,22 +872,22 @@ private struct DataTab: View {
             "Delete \(settings.deletableDays.first { $0.dayStart == dayToDelete }?.label ?? "this day")?",
             isPresented: $confirmingDayDelete
         ) {
-            Button("Delete Day", role: .destructive) {
+            Button(Loc.t("Delete Day"), role: .destructive) {
                 settings.deleteDay(dayToDelete)
                 dayToDelete = 0
             }
-            Button("Cancel", role: .cancel) {}
+            Button(Loc.t("Cancel"), role: .cancel) {}
         } message: {
             Text(
                 "This takes that day's sessions, its summary, its reflection and anything you "
                     + "wrote about it. Every other day is untouched, and this can't be undone."
             )
         }
-        .alert("Reset Replay?", isPresented: $confirmingReset) {
-            Button("Reset Replay", role: .destructive) {
+        .alert(Loc.t("Reset Replay?"), isPresented: $confirmingReset) {
+            Button(Loc.t("Reset Replay"), role: .destructive) {
                 settings.resetEverything(preferences: preferences)
             }
-            Button("Cancel", role: .cancel) {}
+            Button(Loc.t("Cancel"), role: .cancel) {}
         } message: {
             Text(
                 "This deletes all activity, every setting and every preference, and returns "
@@ -934,7 +934,7 @@ private struct GuideTab: View {
                     // area, which makes a full-width question into an eight-point target and
                     // leaves the obvious thing to click — the question — doing nothing.
                     DisclosureGroup(isExpanded: isOpen(entry)) {
-                        Text(entry.answer)
+                        Text(Loc.t(entry.answer))
                             .font(Design.Text.detail)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -948,7 +948,7 @@ private struct GuideTab: View {
                                 toggle(entry)
                             }
                         } label: {
-                            Text(entry.question)
+                            Text(Loc.t(entry.question))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .contentShape(Rectangle())
                         }
@@ -960,7 +960,7 @@ private struct GuideTab: View {
                     }
                 }
             } header: {
-                Text("How Replay works")
+                Text(Loc.t("How Replay works"))
             }
         }
     }
@@ -997,12 +997,12 @@ private struct AboutTab: View {
             Image(nsImage: BundleIcon.image)
                 .resizable()
                 .frame(width: Design.Icon.about, height: Design.Icon.about)
-            Text("Replay").font(.title2.weight(.semibold))
-            Text("Version \(version)")
+            Text(Loc.t("Replay")).font(.title2.weight(.semibold))
+            Text(String(format: Loc.t("Version %@"), "\(version)"))
                 .font(Design.Text.detail)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
-            Text("A private timeline of the apps you use. Everything stays on this Mac.")
+            Text(Loc.t("A private timeline of the apps you use. Everything stays on this Mac."))
                 .font(Design.Text.detail)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -1015,13 +1015,13 @@ private struct AboutTab: View {
             Button {
                 (NSApp.delegate as? AppDelegate)?.openWhatsNew()
             } label: {
-                Label("What's New", systemImage: "sparkles")
+                Label(Loc.t("What's New"), systemImage: "sparkles")
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, Design.Space.inline)
 
             Link(destination: Self.repository) {
-                Label("Source on GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+                Label(Loc.t("Source on GitHub"), systemImage: "chevron.left.forwardslash.chevron.right")
             }
             .buttonStyle(.link)
             .padding(.top, Design.Space.tight)
@@ -1036,7 +1036,7 @@ private struct AboutTab: View {
                 )
                 .explains(own: .checkForUpdates)
                 HStack(spacing: Design.Space.snug) {
-                    Button("Check Now") { Task { await updates.checkNow() } }
+                    Button(Loc.t("Check Now")) { Task { await updates.checkNow() } }
                         .disabled(updates.checking)
                     if updates.checking { ProgressView().controlSize(.small) }
                     if let failure = updates.failure {
@@ -1048,7 +1048,7 @@ private struct AboutTab: View {
             .frame(maxWidth: Design.Layout.readableWidth)
 
             Spacer(minLength: 0)
-            Text("MIT licensed. Built on this Mac, and it stays here.")
+            Text(Loc.t("MIT licensed. Built on this Mac, and it stays here."))
                 .font(Design.Text.micro)
                 .foregroundStyle(.tertiary)
         }
@@ -1073,7 +1073,7 @@ private struct ShortcutsTab: View {
             ForEach(Shortcuts.settingsGroups, id: \.0) { group, rows in
                 Section(group.rawValue) {
                     ForEach(rows, id: \.label) { row in
-                        LabeledContent(row.label) {
+                        LabeledContent(Loc.t(row.label)) {
                             HStack(spacing: Design.Space.tight) {
                                 ForEach(row.display, id: \.self) { key in
                                     Text(key)
@@ -1119,9 +1119,9 @@ private struct DisplayTab: View {
                     SettingsRow.autoStartWhenIdle.label,
                     selection: $preferences.screensaverIdleMinutes
                 ) {
-                    Text("Never").tag(0)
+                    Text(Loc.t("Never")).tag(0)
                     ForEach(Design.screensaverIdleChoices, id: \.self) { minutes in
-                        Text("\(minutes) minutes").tag(minutes)
+                        Text(String(format: Loc.t("%@ minutes"), "\(minutes)")).tag(minutes)
                     }
                 }
                 .explains(.autoStartWhenIdle)
@@ -1139,7 +1139,7 @@ private struct DisplayTab: View {
                 )
                 .explains(own: .screensaverClock)
             } header: {
-                Text("Screensaver")
+                Text(Loc.t("Screensaver"))
             } footer: {
                 Footnote(
                     "Drifts in only while Replay's own window is in front, so it never "
@@ -1166,7 +1166,7 @@ private struct DisplayTab: View {
                 Toggle(OwnSettingsRow.ambientBreath.label, isOn: $preferences.ambientBreath)
                     .explains(own: .ambientBreath)
             } header: {
-                Text("Ambient mode")
+                Text(Loc.t("Ambient mode"))
             } footer: {
                 Footnote(
                     "The day's total is always shown — it is what the screen is for. These "

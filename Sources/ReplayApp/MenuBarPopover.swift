@@ -117,7 +117,7 @@ struct MenuBarPopoverView: View {
 
     private var today: some View {
         VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text(MenuBar.Popover.todayHeading).cardLabelStyle()
+            Text(Loc.t(MenuBar.Popover.todayHeading)).cardLabelStyle()
             Text(
                 MenuBar.Popover.todayLine(
                     activeSeconds: model.summary?.activeSeconds ?? 0,
@@ -171,7 +171,7 @@ struct MenuBarPopoverView: View {
 
     private var recentBlock: some View {
         VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text(MenuBar.Popover.recentHeading).cardLabelStyle()
+            Text(Loc.t(MenuBar.Popover.recentHeading)).cardLabelStyle()
             ForEach(recent, id: \.startedAt) { session in
                 HStack(spacing: Design.Space.inline) {
                     HStack(spacing: Design.Space.hairline) {

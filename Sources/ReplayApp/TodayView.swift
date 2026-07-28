@@ -99,13 +99,13 @@ struct TodayView: View {
                         }
                     )
                 } label: {
-                    Label("Replay Day", systemImage: "play.rectangle")
+                    Label(Loc.t("Replay Day"), systemImage: "play.rectangle")
                 }
                 .disabled(model.timeline.isEmpty)
-                .help("Watch today play back")
+                .help(Loc.t("Watch today play back"))
             }
         }
-        .navigationTitle("Today")
+        .navigationTitle(Loc.t("Today"))
         .navigationSubtitle(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
         .onAppear {
             if !memories.loaded { memories.load() }
@@ -116,9 +116,9 @@ struct TodayView: View {
 
     private var quietDay: some View {
         ContentUnavailableView {
-            Label("A quiet day", systemImage: "moon.stars")
+            Label(Loc.t("A quiet day"), systemImage: "moon.stars")
         } description: {
-            Text("Nothing recorded yet. Your sessions will appear here as you work.")
+            Text(Loc.t("Nothing recorded yet. Your sessions will appear here as you work."))
         }
     }
 
@@ -183,7 +183,7 @@ struct TodayView: View {
 
     private var sessionList: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("\(model.sessions.count) \(model.sessions.count == 1 ? "session" : "sessions")")
+            Text(Loc.count(model.sessions.count, "%@ session", "%@ sessions"))
                 .font(Design.Text.sectionLabel)
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
@@ -229,8 +229,8 @@ private struct HeadlineCard: View {
                     // still counting.
                     .contentTransition(.numericText())
                     .animation(motion.animation(Design.Motion.settle), value: summary.activeSeconds)
-                    .accessibilityLabel("\(formatDurationShort(summary.activeSeconds)) active today")
-                Text("active")
+                    .accessibilityLabel(String(format: Loc.t("%@ active today"), "\(formatDurationShort(summary.activeSeconds))"))
+                Text(Loc.t("active"))
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }
@@ -253,7 +253,7 @@ private struct HeadlineCard: View {
                 HStack(spacing: Design.Space.row) {
                     AppIcon(bundleID: top.bundleIdentifier, appPath: top.appPath, size: Design.Icon.feature)
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("TOP APP")
+                        Text(Loc.t("TOP APP"))
                             .font(Design.Text.cardLabel)
                             .foregroundStyle(.tertiary)
                             .kerning(Design.Text.labelKerning)
@@ -325,7 +325,7 @@ struct SessionCard: View {
             session.title,
             formatRange(session.startedAt, session.endedAt),
             "\(formatDurationShort(session.activeSeconds)) active",
-            "\(session.apps.count) \(session.apps.count == 1 ? "app" : "apps")",
+            Loc.count(session.apps.count, "%@ app", "%@ apps"),
         ]
         if annotation.bookmarked { parts.append("bookmarked") }
         if !annotation.tags.isEmpty {
@@ -348,7 +348,7 @@ struct SessionCard: View {
                             AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: Design.Icon.stack)
                         }
                         if session.apps.count > 4 {
-                            Text("+\(session.apps.count - 4)")
+                            Text(String(format: Loc.t("+%@"), "\(session.apps.count - 4)"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, Design.Pill.countHorizontal).padding(.vertical, Design.Pill.countVertical)
@@ -357,7 +357,11 @@ struct SessionCard: View {
                     }
                     VStack(alignment: .leading, spacing: 1) {
                         Text(session.title).font(Design.Text.itemTitle)
-                        Text("\(formatRange(session.startedAt, session.endedAt)) · \(session.apps.count) apps · \(session.switches) switches")
+                        Text(String(
+                            format: Loc.t("%1$@ · %2$@ apps · %3$@ switches"),
+                            formatRange(session.startedAt, session.endedAt),
+                            "\(session.apps.count)", "\(session.switches)"
+                        ))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -435,7 +439,7 @@ struct SessionCard: View {
                             }
                         }
                         Divider()
-                        Button("Delete Session…", role: .destructive, action: onDelete)
+                        Button(Loc.t("Delete Session…"), role: .destructive, action: onDelete)
                     } label: {
                         Image(systemName: "ellipsis")
                     }
@@ -476,7 +480,7 @@ struct SessionCard: View {
                 }
             }
             Divider()
-            Button("Delete Session…", role: .destructive, action: onDelete)
+            Button(Loc.t("Delete Session…"), role: .destructive, action: onDelete)
         }
     }
 }
@@ -511,7 +515,7 @@ private struct AppShareRow: View {
         // The bar is a picture of the number beside it; announcing both would say the
         // same thing twice.
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(app.applicationName), \(formatDurationShort(app.seconds))")
+        .accessibilityLabel(String(format: Loc.t("%@, %2$@"), "\(app.applicationName), \(formatDurationShort(app.seconds))"))
     }
 }
 
@@ -662,7 +666,7 @@ struct ResumeCard: View {
                     .truncationMode(.tail)
             }
             Spacer(minLength: Design.Space.inline)
-            Button("Open \(target.app.applicationName)", action: open)
+            Button(String(format: Loc.t("Open %@"), target.app.applicationName), action: open)
                 .buttonStyle(.borderedProminent)
                 // Nothing to open without a bundle identifier, and a button that cannot
                 // work should say so by being unavailable rather than by failing.
@@ -676,8 +680,11 @@ struct ResumeCard: View {
         .padding(Design.Space.section)
         .card(border: Design.Colour.border)
         .accessibilityElement(children: .contain)
-        .alert("Couldn't open \(target.app.applicationName)", isPresented: showingFailure) {
-            Button("OK", role: .cancel) { failure = nil }
+        .alert(
+            String(format: Loc.t("Couldn't open %@"), target.app.applicationName),
+            isPresented: showingFailure
+        ) {
+            Button(Loc.t("OK"), role: .cancel) { failure = nil }
         } message: {
             Text(failure ?? "")
         }
@@ -755,8 +762,8 @@ struct ContextualMemoryCard: View {
                             .foregroundStyle(.tertiary)
                     }
                     .buttonStyle(.plain)
-                    .help("Put this away for good")
-                    .accessibilityLabel("Put this away for good")
+                    .help(Loc.t("Put this away for good"))
+                    .accessibilityLabel(Loc.t("Put this away for good"))
                 }
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
@@ -764,8 +771,8 @@ struct ContextualMemoryCard: View {
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .help("Not today")
-                .accessibilityLabel("Put this memory away for now")
+                .help(Loc.t("Not today"))
+                .accessibilityLabel(Loc.t("Put this memory away for now"))
             }
             .opacity(hovering ? 1 : 0)
         }
@@ -776,7 +783,12 @@ struct ContextualMemoryCard: View {
         .onHover { hovering = $0 }
         .card(border: Design.Colour.markedBorder)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label). \(memory.headline) \(memory.detail ?? "")")
+        .accessibilityLabel(
+            String(
+                format: Loc.t("%1$@. %2$@ %3$@"),
+                label, memory.headline, memory.detail ?? ""
+            )
+        )
         .accessibilityHint(memory.dayStart != nil ? "Opens that day" : "")
     }
 
@@ -809,7 +821,7 @@ struct MorningBriefingCard: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: Design.Space.hairline) {
                     Text(greeting).font(Design.Text.title)
-                    Text("A quiet look back, before the day begins.")
+                    Text(Loc.t("A quiet look back, before the day begins."))
                         .font(Design.Text.body)
                         .foregroundStyle(.secondary)
                 }
@@ -820,8 +832,8 @@ struct MorningBriefingCard: View {
                         .foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .help("Put this away until tomorrow")
-                .accessibilityLabel("Put the briefing away")
+                .help(Loc.t("Put this away until tomorrow"))
+                .accessibilityLabel(Loc.t("Put the briefing away"))
             }
 
             VStack(spacing: 0) {
@@ -932,7 +944,7 @@ struct PastReflectionCard: View {
                     .font(.title3)
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("YOU WROTE, \(relativeDayLabel(reflection.dayStart, now: now).uppercased())")
+                    Text(String(format: Loc.t("YOU WROTE, %@"), "\(relativeDayLabel(reflection.dayStart, now: now).uppercased())"))
                         .font(Design.Text.cardLabel)
                         .foregroundStyle(.tertiary)
                         .kerning(Design.Text.labelKerning)
@@ -951,6 +963,6 @@ struct PastReflectionCard: View {
         }
         .buttonStyle(.row)
         .card(background: Design.Colour.surface, border: Design.Colour.fill)
-        .accessibilityHint("Opens the day you wrote it on")
+        .accessibilityHint(Loc.t("Opens the day you wrote it on"))
     }
 }

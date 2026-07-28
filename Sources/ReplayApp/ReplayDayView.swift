@@ -65,8 +65,8 @@ struct ReplayDayView: View {
                     }
                     .buttonStyle(.plain)
                     .keyboardShortcut(.escape, modifiers: [])
-                    .help("Close")
-                    .accessibilityLabel("Close")
+                    .help(Loc.t("Close"))
+                    .accessibilityLabel(Loc.t("Close"))
                 }
                 Spacer()
                 transport
@@ -100,7 +100,10 @@ struct ReplayDayView: View {
                 size: Design.Icon.playbackMark
             )
             VStack(spacing: Design.Space.snug) {
-                Text("\(dayPart(of: session.startedAt)) · \(session.category.rawValue)")
+                Text(String(
+                    format: Loc.t("%1$@ · %2$@"),
+                    dayPart(of: session.startedAt), session.category.rawValue
+                ))
                     .cardLabelStyle()
                 Text(session.title)
                     .font(Design.Text.playbackTitle)
@@ -151,8 +154,8 @@ struct ReplayDayView: View {
 
                 Spacer(minLength: Design.Space.inline)
 
-                Picker("Speed", selection: $speed) {
-                    ForEach(Playback.speeds, id: \.self) { Text("\($0)×").tag($0) }
+                Picker(Loc.t("Speed"), selection: $speed) {
+                    ForEach(Playback.speeds, id: \.self) { Text(String(format: Loc.t("%@×"), "\($0)")).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
@@ -220,7 +223,7 @@ struct ReplayDayView: View {
             )
         }
         .frame(height: Design.Layout.barHitRow)
-        .accessibilityLabel("Scrub the day")
+        .accessibilityLabel(Loc.t("Scrub the day"))
         .accessibilityValue("\(Int(progress * 100)) percent")
     }
 

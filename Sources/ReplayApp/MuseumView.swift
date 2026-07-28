@@ -38,7 +38,7 @@ struct MuseumView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Museum")
+        .navigationTitle(Loc.t("Museum"))
         .navigationSubtitle(NarrativeCopy.museumSubtitle)
         .onAppear { museum.load() }
     }
@@ -143,7 +143,7 @@ struct MuseumView: View {
                     .buttonStyle(.row)
                     .card(border: Design.Colour.borderQuiet)
                     .accessibilityElement(children: .combine)
-                    .accessibilityHint("Opens that day")
+                    .accessibilityHint(Loc.t("Opens that day"))
                 }
             }
         }

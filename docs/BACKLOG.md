@@ -359,8 +359,27 @@ because it is still a product decision nobody has taken.
         `.lproj`, proved against a probe catalogue that lives in the **test** bundle. It is not
         shipped: a `uz.lproj` in `ReplayCore` would make macOS believe Replay supports Uzbek,
         and one translated line among four hundred English ones is worse than no claim.
-      · What is left is mechanical and large: wrap the other 270, then find a translator.
-        The original argument below still stands, and is the reason this stops here.
+      · **Done 2026-07-28: every string a reader sees now goes through `Loc`.** The audit
+        reports zero. The real number was never 279 — teaching it the shapes it could not see
+        (constructor arguments, switch-case returns, multi-line concatenations) put it at
+        **664**, of which 408 are `ReplayCore` copy that stays literal on purpose.
+      · **One rule, and the contract decides it.** `ReplayCore` holds copy as *keys*; the view
+        translates at the point of display. A third of that copy is compared character for
+        character against the reference, and `ParityKit` reads the values directly — so a
+        definition that resolved through `Loc` would return a translation on a translated
+        machine and fail 200-odd checks for a reason unrelated to drift. The exception is a
+        function that *composes* a sentence, where the format string is the translatable unit
+        and has to go through `Loc` inside the module.
+      · Counted nouns go through `Loc.count`, which has two forms — and the limit is written
+        down rather than discovered later: Russian has three, Arabic six, Japanese none. A
+        `.stringsdict` is the real answer and this is the seam it goes behind.
+      · **It crashed the app, and that is the part worth keeping.** Six generated calls had a
+        format wanting two or three arguments and were handed one; `String(format:)` then
+        reads past its arguments and segfaults. It built, the tests passed, every audit
+        passed, and the app died the moment a view drew. Only `tools/screenshots.sh` caught
+        it — by failing to find a window. The audit counts specifiers against arguments now.
+      · What is left is a translator, and the argument below is why that is a person rather
+        than a task.
 
        `L`+ — **the largest item ever put on this list**, and the
       only one that cannot be finished by the person who starts it.

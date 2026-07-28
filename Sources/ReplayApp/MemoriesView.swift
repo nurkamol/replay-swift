@@ -90,7 +90,7 @@ struct MemoriesView: View {
                 if !memories.moments.isEmpty { momentsSection.settlesIn(1) }
 
                 VStack(alignment: .leading, spacing: Design.Space.row) {
-                    Text("On this day").sectionLabelStyle()
+                    Text(Loc.t("On this day")).sectionLabelStyle()
                     if memories.memories.isEmpty {
                         // Emptiness here is a section, not a screen. The whole-page version
                         // this replaces took the heatmap and Surprise down with it, so a new
@@ -121,7 +121,7 @@ struct MemoriesView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Memories")
+        .navigationTitle(Loc.t("Memories"))
         .navigationSubtitle("What you were doing on this date before")
         .onAppear { memories.load() }
     }
@@ -131,7 +131,7 @@ struct MemoriesView: View {
         Button {
             if let day = memories.surprise() { onOpenDay(day) }
         } label: {
-            Label("Surprise me", systemImage: "shuffle")
+            Label(Loc.t("Surprise me"), systemImage: "shuffle")
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Design.Space.row)
                 .contentShape(Rectangle())
@@ -139,12 +139,12 @@ struct MemoriesView: View {
         .buttonStyle(.row)
         .card(border: Design.Colour.border)
         .disabled(memories.pool.isEmpty)
-        .help("Open a day worth rediscovering")
+        .help(Loc.t("Open a day worth rediscovering"))
     }
 
     private var momentsSection: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Moments").sectionLabelStyle()
+            Text(Loc.t("Moments")).sectionLabelStyle()
             LazyVGrid(columns: columns, spacing: Design.Space.row) {
                 ForEach(memories.moments, id: \.key) { moment in
                     Button {
@@ -187,7 +187,7 @@ struct MemoriesView: View {
 
     private var heatmapSection: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Browse by date").sectionLabelStyle()
+            Text(Loc.t("Browse by date")).sectionLabelStyle()
             Heatmap(byDay: memories.byDay, onOpenDay: onOpenDay)
                 .padding(Design.Space.section)
                 .card(border: Design.Colour.borderQuiet)
@@ -209,7 +209,7 @@ struct MemoriesView: View {
     /// No memories *for this date* — which is not the same as no history, and says so.
     private var noMemoriesYet: some View {
         VStack(spacing: Design.Space.hairline) {
-            Text("No memories for this date yet")
+            Text(Loc.t("No memories for this date yet"))
                 .font(Design.Text.itemTitle)
             Text(
                 "Replay will begin building your personal history every day. This date will "
@@ -232,7 +232,7 @@ struct MemoriesView: View {
             Spacer(minLength: 0)
             Image(systemName: "lock")
                 .font(Design.Text.micro)
-            Text("All memories are generated locally. Nothing is uploaded.")
+            Text(Loc.t("All memories are generated locally. Nothing is uploaded."))
                 .font(Design.Text.micro)
             Spacer(minLength: 0)
         }
@@ -257,7 +257,7 @@ private struct MemoryRow: View {
                     Text(fullDayLabel(memory.range.dayStart))
                         .font(Design.Text.itemTitle)
                     if let top = memory.summary.topAppName {
-                        Text("Mostly \(top)")
+                        Text(String(format: Loc.t("Mostly %@"), "\(top)"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -282,7 +282,7 @@ private struct MemoryRow: View {
                 + "\(formatDurationShort(memory.summary.activeSeconds)) active"
                 + (memory.summary.topAppName.map { ", mostly \($0)" } ?? "")
         )
-        .accessibilityHint("Opens that day")
+        .accessibilityHint(Loc.t("Opens that day"))
     }
 }
 
@@ -366,7 +366,7 @@ struct Heatmap: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
             HStack(spacing: Design.Space.card) {
-                Picker("Range", selection: $range) {
+                Picker(Loc.t("Range"), selection: $range) {
                     ForEach(Kind.allCases) { Text($0.label).tag($0) }
                 }
                 .pickerStyle(.segmented)
@@ -402,7 +402,7 @@ struct Heatmap: View {
     /// scale the grid is not using.
     private var legend: some View {
         HStack(spacing: Design.Space.snug) {
-            Text("Less").font(Design.Text.micro).foregroundStyle(.tertiary)
+            Text(Loc.t("Less")).font(Design.Text.micro).foregroundStyle(.tertiary)
             ForEach(ReplayCore.Heatmap.Level.allCases, id: \.rawValue) { level in
                 RoundedRectangle(cornerRadius: Design.Radius.hair, style: .continuous)
                     .fill(colour(for: level))
@@ -410,7 +410,7 @@ struct Heatmap: View {
                         width: Design.Layout.heatmapSquare, height: Design.Layout.heatmapSquare
                     )
             }
-            Text("More").font(Design.Text.micro).foregroundStyle(.tertiary)
+            Text(Loc.t("More")).font(Design.Text.micro).foregroundStyle(.tertiary)
         }
         .accessibilityHidden(true)
     }
@@ -434,11 +434,14 @@ struct Heatmap: View {
     private var caption: some View {
         HStack(spacing: Design.Space.snug) {
             if let hovered, let seconds = byDay[hovered], seconds > 0 {
-                Text("\(fullDayLabel(hovered)) · \(formatDurationShort(seconds))")
+                Text(String(
+                    format: Loc.t("%1$@ · %2$@"),
+                    fullDayLabel(hovered), formatDurationShort(seconds)
+                ))
                     .font(Design.Text.micro)
                     .foregroundStyle(.secondary)
             } else {
-                Text("Darker is busier. Click a day to replay it.")
+                Text(Loc.t("Darker is busier. Click a day to replay it."))
                     .font(Design.Text.micro)
                     .foregroundStyle(.tertiary)
                 // Only when there is genuinely something off-screen. A permanent "you can
@@ -449,7 +452,7 @@ struct Heatmap: View {
                     Image(systemName: "arrow.left")
                         .font(Design.Text.micro)
                         .foregroundStyle(.quaternary)
-                    Text("Scroll sideways for earlier months.")
+                    Text(Loc.t("Scroll sideways for earlier months."))
                         .font(Design.Text.micro)
                         .foregroundStyle(.tertiary)
                 }

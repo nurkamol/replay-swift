@@ -50,13 +50,16 @@ struct RelationshipView: View {
                 size: Design.Icon.resume
             )
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text("\(pair.a.applicationName) & \(pair.b.applicationName)")
+                Text(String(
+                    format: Loc.t("%1$@ & %2$@"),
+                    pair.a.applicationName, pair.b.applicationName
+                ))
                     .font(Design.Text.title)
                     .lineLimit(2)
                 Text(
                     "\(pair.sharedSessions) shared "
                         + "\(pair.sharedSessions == 1 ? "session" : "sessions") · "
-                        + "\(pair.switches) \(pair.switches == 1 ? "switch" : "switches")"
+                        + Loc.count(pair.switches, "%@ switch", "%@ switches")
                 )
                 .font(Design.Text.body)
                 .foregroundStyle(.secondary)
@@ -86,7 +89,7 @@ struct RelationshipView: View {
         .padding(Design.Space.card)
         .card(border: Design.Colour.borderQuiet)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label), \(value)")
+        .accessibilityLabel(String(format: Loc.t("%@, %2$@"), "\(label), \(value)"))
     }
 
     /// Which way the switching tends to run.
@@ -96,7 +99,7 @@ struct RelationshipView: View {
     private func direction(_ pair: Relationship) -> some View {
         let total = max(pair.switches, 1)
         return VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Which way it goes").sectionLabelStyle()
+            Text(Loc.t("Which way it goes")).sectionLabelStyle()
             VStack(alignment: .leading, spacing: Design.Space.inline) {
                 GeometryReader { geometry in
                     HStack(spacing: Design.Layout.hairline) {
@@ -131,7 +134,7 @@ struct RelationshipView: View {
     private func sessions(_ pair: Relationship) -> some View {
         let shown = Array(pair.sessions.prefix(20))
         return VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Sessions they shared").sectionLabelStyle()
+            Text(Loc.t("Sessions they shared")).sectionLabelStyle()
             VStack(spacing: Design.Space.row) {
                 ForEach(shown, id: \.startedAt) { session in
                     SessionCard(

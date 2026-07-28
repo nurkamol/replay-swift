@@ -74,7 +74,7 @@ struct StoryView: View {
         .focusable()
         .card(border: Design.Colour.border)
         .accessibilityElement(children: .combine)
-        .accessibilityHint("Opens \(title)")
+        .accessibilityHint(String(format: Loc.t("Opens %@"), "\(title)"))
     }
 
     /// The shape the days tend to take.
@@ -135,7 +135,7 @@ struct StoryView: View {
             )
             Text(app.applicationName).font(Design.Text.detail.weight(.medium))
             Spacer(minLength: Design.Space.inline)
-            Text("\(app.days) \(app.days == 1 ? "day" : "days")")
+            Text(Loc.count(app.days, "%@ day", "%@ days"))
                 .font(Design.Text.micro)
                 .foregroundStyle(.tertiary)
                 .monospacedDigit()

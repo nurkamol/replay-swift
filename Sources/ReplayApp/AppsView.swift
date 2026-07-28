@@ -34,14 +34,14 @@ struct AppsView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle("Apps")
+        .navigationTitle(Loc.t("Apps"))
         .navigationSubtitle(apps.window.subtitle)
         .onAppear { if !apps.loaded { apps.load() } }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Design.Space.card) {
-            Picker("Window", selection: Binding(
+            Picker(Loc.t("Window"), selection: Binding(
                 get: { apps.window }, set: { apps.window = $0 }
             )) {
                 ForEach(AppWindow.allCases) { window in
@@ -71,7 +71,7 @@ struct AppsView: View {
             Text(label).font(Design.Text.subtitle).foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(value) \(label)")
+        .accessibilityLabel(String(format: Loc.t("%1$@ %2$@"), value, label))
     }
 
     private func section(_ title: String, _ rows: [AppStat], glyph: String?) -> some View {
@@ -102,9 +102,9 @@ struct AppsView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("No applications tracked yet", systemImage: "square.grid.2x2")
+            Label(Loc.t("No applications tracked yet"), systemImage: "square.grid.2x2")
         } description: {
-            Text("Once you have used a few, Replay will rank them here by the time you spent in each.")
+            Text(Loc.t("Once you have used a few, Replay will rank them here by the time you spent in each."))
         }
     }
 }
@@ -144,7 +144,7 @@ private struct AppStatRow: View {
                     }
                     HStack(spacing: Design.Space.card) {
                         bar
-                        Text("\(stat.sessionCount) \(stat.sessionCount == 1 ? "session" : "sessions")")
+                        Text(Loc.count(stat.sessionCount, "%@ session", "%@ sessions"))
                             .font(Design.Text.micro)
                             .foregroundStyle(.tertiary)
                             .monospacedDigit()
@@ -162,10 +162,10 @@ private struct AppStatRow: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "\(stat.applicationName), \(formatDurationShort(stat.totalSeconds)), "
-                + "\(stat.sessionCount) \(stat.sessionCount == 1 ? "session" : "sessions")"
+                + Loc.count(stat.sessionCount, "%@ session", "%@ sessions")
                 + (pinned ? ", pinned" : "")
         )
-        .accessibilityHint("Opens this application's history")
+        .accessibilityHint(Loc.t("Opens this application's history"))
     }
 
     /// Visible on hover, or always once pinned — a star on every row would be a column of

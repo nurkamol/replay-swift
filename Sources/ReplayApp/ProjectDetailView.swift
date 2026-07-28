@@ -34,12 +34,12 @@ struct ProjectDetailView: View {
         .background(.background)
         .navigationTitle(named?.name ?? "Project")
         .onAppear { if !projects.loaded { projects.load() } }
-        .alert("Rename project", isPresented: $renaming) {
+        .alert(Loc.t("Rename project"), isPresented: $renaming) {
             TextField(named.map { projectDefaultName($0.project) } ?? "", text: $draft)
-            Button("Save") { projects.rename(id, to: draft) }
-            Button("Cancel", role: .cancel) {}
+            Button(Loc.t("Save")) { projects.rename(id, to: draft) }
+            Button(Loc.t("Cancel"), role: .cancel) {}
         } message: {
-            Text("Leave it empty to go back to the name Replay chose.")
+            Text(Loc.t("Leave it empty to go back to the name Replay chose."))
         }
     }
 
@@ -56,7 +56,7 @@ struct ProjectDetailView: View {
                 }
             }
             Spacer(minLength: Design.Space.inline)
-            Button("Rename…") {
+            Button(Loc.t("Rename…")) {
                 draft = named.named ? named.name : ""
                 renaming = true
             }
@@ -84,7 +84,7 @@ struct ProjectDetailView: View {
         .padding(Design.Space.card)
         .card(border: Design.Colour.borderQuiet)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label), \(value)")
+        .accessibilityLabel(String(format: Loc.t("%@, %2$@"), "\(label), \(value)"))
     }
 
     /// The sessions that mark a project's beginning, its deepest focus and its most recent
@@ -97,7 +97,7 @@ struct ProjectDetailView: View {
             // reduce does — a tie must narrate the earlier session, not the later one.
             let longest = project.sessions.max { $0.activeSeconds < $1.activeSeconds } ?? first
             VStack(alignment: .leading, spacing: Design.Space.row) {
-                Text("How it grew").sectionLabelStyle()
+                Text(Loc.t("How it grew")).sectionLabelStyle()
                 VStack(spacing: 0) {
                     milestone("flag", "First session", first)
                     milestone(
@@ -146,12 +146,12 @@ struct ProjectDetailView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.row)
-        .accessibilityHint("Opens the day this happened")
+        .accessibilityHint(Loc.t("Opens the day this happened"))
     }
 
     private func apps(_ project: Project) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text("Frequently used apps").sectionLabelStyle()
+            Text(Loc.t("Frequently used apps")).sectionLabelStyle()
             VStack(spacing: 0) {
                 ForEach(project.apps, id: \.applicationName) { app in
                     Button {
@@ -202,7 +202,7 @@ struct ProjectDetailView: View {
                 }
             }
             if project.sessions.count > shown.count {
-                Text("Showing the most recent \(shown.count).")
+                Text(String(format: Loc.t("Showing the most recent %@."), "\(shown.count)"))
                     .font(Design.Text.detail)
                     .foregroundStyle(.tertiary)
             }
@@ -211,7 +211,7 @@ struct ProjectDetailView: View {
 
     private var missing: some View {
         ContentUnavailableView {
-            Label("Project not found", systemImage: "shippingbox")
+            Label(Loc.t("Project not found"), systemImage: "shippingbox")
         } description: {
             Text(
                 "A project exists only while its applications keep coming back together. "

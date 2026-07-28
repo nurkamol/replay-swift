@@ -504,7 +504,7 @@ struct CanvasView: View {
         }
         .animation(motion.animation(Design.Motion.settle), value: panelOpen)
         .background(.background)
-        .navigationTitle("Canvas")
+        .navigationTitle(Loc.t("Canvas"))
         .navigationSubtitle("Your history as a landscape")
         // The wheel, which SwiftUI has no modifier for. Pinch is the trackpad gesture and
         // already works; this is the mouse, and two fingers on a trackpad, which would
@@ -549,14 +549,14 @@ struct CanvasView: View {
                 .help(focusMode
                     ? "Stop pulling back everything unconnected"
                     : "Pull back everything not connected to the selection")
-                .accessibilityLabel("Focus on the selection")
+                .accessibilityLabel(Loc.t("Focus on the selection"))
 
                 Toggle(isOn: $panelOpen) {
                     Image(systemName: "sidebar.right")
                 }
                 .toggleStyle(.button)
-                .help("Show the sessions behind the selection")
-                .accessibilityLabel("Timeline panel")
+                .help(Loc.t("Show the sessions behind the selection"))
+                .accessibilityLabel(Loc.t("Timeline panel"))
 
                 Divider()
 
@@ -564,8 +564,8 @@ struct CanvasView: View {
                     Image(systemName: "minus.magnifyingglass")
                 }
                 .disabled(scale <= Design.Layout.canvasMinZoom)
-                .help("Zoom out")
-                .accessibilityLabel("Zoom out")
+                .help(Loc.t("Zoom out"))
+                .accessibilityLabel(Loc.t("Zoom out"))
 
                 // The current magnification, so the buttons are not the only way to know
                 // where you are. Announced as a percentage rather than a multiplier.
@@ -575,14 +575,14 @@ struct CanvasView: View {
                     .foregroundStyle(.secondary)
                     .contentTransition(.numericText())
                     .frame(width: Design.Layout.canvasZoomReadoutWidth)
-                    .accessibilityLabel("Zoom \(zoomLabel)")
+                    .accessibilityLabel(String(format: Loc.t("Zoom %@"), "\(zoomLabel)"))
 
                 Button { zoom(by: Design.Layout.canvasZoomStep) } label: {
                     Image(systemName: "plus.magnifyingglass")
                 }
                 .disabled(scale >= Design.Layout.canvasMaxZoom)
-                .help("Zoom in")
-                .accessibilityLabel("Zoom in")
+                .help(Loc.t("Zoom in"))
+                .accessibilityLabel(Loc.t("Zoom in"))
 
                 Button {
                     stopTour()
@@ -598,8 +598,8 @@ struct CanvasView: View {
                 } label: {
                     Image(systemName: "scope")
                 }
-                .help("Fit to the window")
-                .accessibilityLabel("Recentre the canvas")
+                .help(Loc.t("Fit to the window"))
+                .accessibilityLabel(Loc.t("Recentre the canvas"))
             }
         }
         // The shortcuts every Mac app uses for magnification, so the toolbar is not the only
@@ -607,13 +607,13 @@ struct CanvasView: View {
         // else in the app.
         .background {
             Group {
-                Button("Zoom In") { zoom(by: Design.Layout.canvasZoomStep) }
+                Button(Loc.t("Zoom In")) { zoom(by: Design.Layout.canvasZoomStep) }
                     .keyboardShortcut("+", modifiers: .command)
-                Button("Zoom In") { zoom(by: Design.Layout.canvasZoomStep) }
+                Button(Loc.t("Zoom In")) { zoom(by: Design.Layout.canvasZoomStep) }
                     .keyboardShortcut("=", modifiers: .command)
-                Button("Zoom Out") { zoom(by: 1 / Design.Layout.canvasZoomStep) }
+                Button(Loc.t("Zoom Out")) { zoom(by: 1 / Design.Layout.canvasZoomStep) }
                     .keyboardShortcut("-", modifiers: .command)
-                Button("Actual Size") {
+                Button(Loc.t("Actual Size")) {
                     stopTour()
                     stopGlide()
                     withAnimation(motion.animation(Design.Motion.camera(
@@ -1091,7 +1091,7 @@ struct CanvasView: View {
     private var timelinePanel: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text("Timeline").cardLabelStyle()
+                Text(Loc.t("Timeline")).cardLabelStyle()
                 Text(selected?.label ?? "Nothing selected")
                     .font(Design.Text.itemTitle)
                     .lineLimit(1)
@@ -1120,7 +1120,7 @@ struct CanvasView: View {
         .frame(width: Design.Layout.canvasPanelWidth)
         .background(Design.Colour.surfaceQuiet)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Sessions behind the selection")
+        .accessibilityLabel(Loc.t("Sessions behind the selection"))
     }
 
     private var panelSessions: [ActivitySession] {
@@ -1171,7 +1171,7 @@ struct CanvasView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.row)
-        .accessibilityHint("Opens the day this happened on")
+        .accessibilityHint(Loc.t("Opens the day this happened on"))
     }
 
     /// The way back to the whole field.
@@ -1187,12 +1187,12 @@ struct CanvasView: View {
             stopTour()
             withAnimation(motion.animation(Design.Motion.settle)) { select(nil) }
         } label: {
-            Label("Clear focus", systemImage: "xmark")
+            Label(Loc.t("Clear focus"), systemImage: "xmark")
                 .font(Design.Text.detail)
         }
         .buttonStyle(.bordered)
         .keyboardShortcut(.escape, modifiers: [])
-        .help("Bring the whole field back")
+        .help(Loc.t("Bring the whole field back"))
         .padding(Design.Space.page)
     }
 
@@ -1207,14 +1207,14 @@ struct CanvasView: View {
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: Design.Space.inline) {
                 if node.ref.isEmpty {
-                    Text("Nothing to open for this one.")
+                    Text(Loc.t("Nothing to open for this one."))
                         .font(Design.Text.micro)
                         .foregroundStyle(.tertiary)
                 } else {
                     Button {
                         onOpen(node)
                     } label: {
-                        Label("Open", systemImage: "arrow.up.right")
+                        Label(Loc.t("Open"), systemImage: "arrow.up.right")
                     }
                     .buttonStyle(.borderedProminent)
                 }
@@ -1346,7 +1346,7 @@ struct CanvasView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label("Nothing to map yet", systemImage: "sparkles")
+            Label(Loc.t("Nothing to map yet"), systemImage: "sparkles")
         } description: {
             Text(
                 "Once there are a few applications, projects and chapters, they will appear "
