@@ -958,10 +958,6 @@ enum Design {
         static let arcCeilingDivisor: Double = 6
         /// …but never against less than ten minutes, or a week of short days draws full.
         static let arcCeilingFloorSeconds: Double = 600
-        /// The widest a rhythm strip is allowed to get. Twenty-four bars stretched across
-        /// a full-screen window stop being a strip and become a row of blocks; capped, the
-        /// shape of a day stays legible at any window size.
-        static let arcMaxWidth: CGFloat = 560
         /// The hour scale under the seven rows.
         static let axisHeight: CGFloat = 12
         /// The canvas: how big a node gets, how far it can be zoomed, and how forgiving a

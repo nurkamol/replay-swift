@@ -161,6 +161,18 @@ document starts lying, and this one has done it twice already — see the two no
 
 ## Known divergences to keep an eye on
 
+- **The week's rhythm strip was capped, and the cap was hiding a layout bug.** `arcMaxWidth`
+  held it to 560pt with a documented reason — twenty-four bars stretched across a full-screen
+  window stop being a strip. Reasonable, and it was checked and left alone in the 2026-07-28
+  sweep on exactly that basis. It was wrong: the page measure already bounds the row at
+  1080pt, so the strip's own cap was redundant and produced a dead gap between the bars and
+  the durations at any window past about 1100. Removing it exposed what the cap had been
+  concealing — the strip is twenty-four bars that each want to fill, so given `maxWidth:
+  .infinity` it claims the whole row and pushes the duration column off the edge, clipped
+  away entirely. `layoutPriority(1)` on the duration sizes it first and fixes it properly.
+  **Worth remembering:** a documented constant is not the same as a correct one, and this one
+  read as a deliberate trade while quietly papering over greedy layout.
+
 - **"applications" where the reference says "Apps".** Only in the week's stat group, and
   deliberate as of 2026-07-28. The reference is inconsistent with itself here — "Apps" in the
   week's stats, "application"/"applications" on its own daily memory card — so there is no

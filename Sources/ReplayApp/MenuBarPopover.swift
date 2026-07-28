@@ -47,6 +47,13 @@ struct MenuBarPopoverView: View {
         .padding(.top, Design.Space.cardRoomy)
         .padding(.bottom, Design.Space.snug)
         .frame(width: Design.Layout.menuBarPopoverWidth)
+        // The panel draws its own material, and it has to.
+        //
+        // An `NSPopover` hosting a SwiftUI view does not give the content a background — so
+        // over a busy desktop the wallpaper showed through the rows *unblurred*, and "Quit
+        // Replay" sat on top of somebody's album art. A menu is opaque enough to read against
+        // anything, and this is a menu.
+        .background(.regularMaterial)
         .onReceive(clock) { now = $0 }
     }
 

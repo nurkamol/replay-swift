@@ -154,8 +154,7 @@ private struct WeekDayRow: View {
             .frame(width: Design.Layout.weekdayColumn, alignment: .leading)
 
             DayArc(arc: day.arc, busiestDaySeconds: busiestDaySeconds, empty: day.isEmpty)
-                .frame(maxWidth: Design.Layout.arcMaxWidth)
-            Spacer(minLength: 0)
+                .frame(maxWidth: .infinity)
 
             // An em dash rather than "0m": nothing was recorded, which is not the same
             // claim as zero minutes of use.
@@ -164,6 +163,12 @@ private struct WeekDayRow: View {
                 .monospacedDigit()
                 .foregroundStyle(day.isEmpty ? AnyShapeStyle(.quaternary) : AnyShapeStyle(.primary))
                 .frame(width: Design.Layout.durationColumn, alignment: .trailing)
+                // Sized before the strip beside it. Without this the strip — which is
+                // twenty-four bars that each want to fill — claims the whole row, and the
+                // duration is pushed past the edge and clipped away entirely. It was capped
+                // at 560pt before, which hid the greed behind a dead gap rather than fixing
+                // it.
+                .layoutPriority(1)
         }
         .padding(.horizontal, Design.Space.inline)
         .padding(.vertical, Design.Space.inline)
@@ -251,10 +256,11 @@ private struct HourAxis: View {
                     }
                 }
             }
-            .frame(maxWidth: Design.Layout.arcMaxWidth)
+            .frame(maxWidth: .infinity)
             .frame(height: Design.Layout.axisHeight)
-            Spacer(minLength: 0)
-            Color.clear.frame(width: Design.Layout.durationColumn)
+            Color.clear
+                .frame(width: Design.Layout.durationColumn)
+                .layoutPriority(1)
         }
         .padding(.horizontal, Design.Space.inline)
         .accessibilityHidden(true)
