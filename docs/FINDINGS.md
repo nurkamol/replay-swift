@@ -5,6 +5,43 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## An unsigned disk image can be published, and cannot be opened
+
+**Date:** 2026-07-28 · **Reproduce:** the three commands below · **Verdict:** no download
+until it is signed
+
+Asked whether the DMG could go on GitHub without a certificate. GitHub will host any file,
+so the question is really what happens to the person who downloads it. Measured on macOS
+27.0 rather than recalled:
+
+```bash
+codesign -dv --verbose=2 build/Replay.app     # Signature=adhoc, TeamIdentifier=not set
+xattr -w com.apple.quarantine "0083;0;Safari;" build/Replay-0.9.0.dmg
+spctl --assess --type open --context context:primary-signature -vv build/Replay-0.9.0.dmg
+#   → rejected, source=no usable signature
+```
+
+The app copied out of the image and quarantined is rejected too. In practice that is
+*"Apple could not verify Replay is free of malware"* with **Move to Trash** or **Cancel** —
+and since macOS 15 the Control-click-to-open bypass is gone, so the only route in is System
+Settings ▸ Privacy & Security ▸ Open Anyway, or `xattr -d com.apple.quarantine` in a
+terminal.
+
+**So the decision is not "does it work" but "what are we asking of someone".** Two reasons
+not to:
+
+- **It undercuts the product.** Replay's claim is that nothing leaves your Mac and nothing is
+  asked of you. Instructing somebody to override macOS's own security check to install it
+  argues against that better than any feature argues for it.
+- **Building it is genuinely better for the audience.** An app built locally is never
+  quarantined, so it opens with no fight at all. Anyone who finds a Swift port with a parity
+  suite has a toolchain. The "fallback" is the nicer path.
+
+`scripts/make-dmg.sh --release` therefore refuses rather than producing an unsigned image,
+and the README's Install section points at the source build.
+
+---
+
 ## The Timeline's wait was layout, not data
 
 **Date:** 2026-07-28 · **Reproduce:** the numbers below, against a 4,002-row database ·

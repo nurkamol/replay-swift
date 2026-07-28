@@ -8,6 +8,32 @@ reference implementation — [get it on the Glaze Store](https://www.glaze.app/a
 This repo trails it deliberately, with a generated contract between them so it cannot trail
 it *silently*.
 
+## Install
+
+There is no download yet, and that is deliberate rather than unfinished.
+
+```bash
+git clone https://github.com/nurkamol/replay-swift.git
+cd replay-swift
+./scripts/make-app.sh release      # builds and assembles Replay.app
+open build/Replay.app
+```
+
+**Why building it is currently the *better* route, not the fallback.** An app built here is
+signed ad-hoc and was never downloaded, so it has no quarantine flag and opens immediately.
+A disk image from a release page would not: without a Developer ID signature Gatekeeper
+rejects it outright — measured, not assumed, in [docs/FINDINGS.md](docs/FINDINGS.md) — and
+since macOS 15 there is no Control-click bypass, so the only way in is System Settings ▸
+Privacy & Security ▸ Open Anyway.
+
+Which is a poor thing to ask of anybody, and a worse thing to ask for *this* app. Replay's
+whole claim is that nothing leaves your Mac and nothing is being asked of you. Telling you to
+override macOS's own security check in order to install it would undercut the only thing it
+is really selling.
+
+`scripts/make-dmg.sh` and `.github/workflows/release.yml` are written and waiting; the day a
+Developer ID exists, a signed and notarised image is one tag away.
+
 ## Quickstart
 
 ```bash
