@@ -1,0 +1,64 @@
+# The landing page, published from `website/`.
+#
+# Deployed as an artifact rather than from a branch, because GitHub Pages' branch mode only
+# serves the repository root or `/docs` — and `docs/` here is the project's own documentation
+# (SPEC, PARITY, the backlog), which is written for people reading the source and would be a
+# strange thing to publish as a website.
+#
+# There is no build step and nothing to install. The page is one hand-written HTML file with
+# its CSS inline, which is the same rule the app is built under: no external dependencies. A
+# static-site generator would mean a `node_modules` and a lockfile to maintain for a page that
+# renders four screenshots and some prose.
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+# Read the repository, write the Pages deployment, and prove the artifact came from here.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one halfway: a half-published site is worse
+# than a stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      # Cheap, and it catches the failure mode this page actually has: a screenshot renamed
+      # or optimised away, leaving a broken image on the front page of the project.
+      - name: Every image the page asks for exists
+        run: |
+          cd website
+          MISSING=0
+          for SRC in $(grep -o 'src="[^"]*"' index.html | cut -d'"' -f2); do
+            case "$SRC" in http*) continue ;; esac
+            if [ ! -f "$SRC" ]; then
+              echo "::error file=website/index.html::missing asset: $SRC"
+              MISSING=1
+            fi
+          done
+          [ "$MISSING" = "0" ] || exit 1
+          echo "all referenced assets are present"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: website
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -3,6 +3,9 @@
 A native Swift port of Replay, a private timeline of the apps you use. Everything stays
 on the Mac: no cloud, no account, no permissions requested, and nothing uploaded ever.
 
+**[nurkamol.github.io/replay-swift](https://nurkamol.github.io/replay-swift/)** — screenshots,
+and the install instructions in a form you can hand to somebody.
+
 The [Glaze version](https://github.com/nurkamol/replay-glaze) ships today and is the
 reference implementation — [get it on the Glaze Store](https://www.glaze.app/app/replay-4fgahp).
 This repo trails it deliberately, with a generated contract between them so it cannot trail
