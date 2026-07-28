@@ -179,6 +179,26 @@ These are not blocked by difficulty. They are blocked because they are somebody'
         three things in §6 worth building — App Intents and a widget — cannot be installed
         without it, so it stopped being only about distribution and became the thing gating
         the next feature. The CLI in §6 is the one item that does not need it.
+- [ ] **A downloadable build: a signed DMG, released from GitHub.** `M` — and **half of it
+      is not blocked**, which is the useful part of writing it down.
+      · **Buildable today:** `scripts/make-dmg.sh` around `hdiutil create` — the window
+        layout, the `/Applications` symlink, the volume icon — and a GitHub Actions workflow
+        that fires on a version tag, runs the same checks `parity.yml` already runs on
+        `macos-26`, attaches the disk image and a SHA-256 next to it. Release notes can come
+        straight out of `CHANGELOG.md`, which is per-version and already written; nothing
+        else in this project would have to be maintained twice.
+      · **Needs the Developer ID:** signing the app inside the image, `notarytool submit`,
+        and `stapler staple` so it opens without a network round trip. Until then the
+        workflow would produce something Gatekeeper refuses — which is worse than no
+        download at all, because a blocked download reads as a broken app.
+      · So: worth building the script and the workflow *now* and leaving the signing step
+        as the one line that fails, rather than waiting. The failure would be honest and
+        located, and the day a certificate arrives it becomes a one-line change.
+      · **Auto-updates are a separate question, and the answer is currently no.** Sparkle is
+        the obvious choice and it is an external dependency, which CLAUDE.md forbids
+        outright. That rule has held the project together; it should be changed
+        deliberately, in its own decision, rather than sneaked in behind a release process.
+
 - [ ] **PDF export.** Three WebKit routes tried and dead — recorded in the ledger's
       divergences so a fourth person does not repeat them. Reviving it means leaving WebKit
       and drawing the report into a `CGContext` by hand. `L`.

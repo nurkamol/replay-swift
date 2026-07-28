@@ -73,6 +73,14 @@ jobs:
       - name: Build
         run: swift build
 
+      # A CLI's contract is not its sentences. Exit codes, which stream the output goes to,
+      # and the shape of `--json` can each break while every line still reads correctly by
+      # eye — and each one breaks somebody's script rather than somebody's screen. The
+      # runner has no recorded history, so this checks argument handling only; the
+      # data-reading half runs on a machine that has some.
+      - name: The CLI's exit codes, streams and JSON shape
+        run: ./tools/cli-audit.sh
+
       # Session titles are named after the *local* day part, so the suite is only
       # meaningful if it passes away from the timezone its fixtures were generated
       # in. It did not, once — see docs/FINDINGS.md — and this is the guard.
