@@ -18,7 +18,7 @@ CONFIG="${1:-debug}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/build/Replay.app"
 BUNDLE_ID="app.replay.native"
-VERSION="0.1.0"   # matches the top entry in CHANGELOG.md
+VERSION="0.9.0"   # matches the top entry in CHANGELOG.md
 
 echo "Building ($CONFIG)…"
 swift build -c "$CONFIG" --package-path "$ROOT"

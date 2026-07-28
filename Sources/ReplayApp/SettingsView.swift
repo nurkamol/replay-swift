@@ -985,7 +985,7 @@ private struct AboutTab: View {
     private static let repository = URL(string: "https://github.com/nurkamol/replay-swift")!
 
     private var version: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? Replay.version
     }
 
     var body: some View {

@@ -7,13 +7,23 @@ interesting entries are the ones where the two implementations disagreed. Those 
 out, because a divergence found is worth more than a feature shipped: it is the only thing
 that tells you the contract is doing its job.
 
-The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions
-follow the Glaze app's, so "level with 2.3.2" means this port matches that release.
+The format is loosely [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## 0.1.0 — 2026-07-28
+**This port carries its own version and states which Glaze release it is level with.** The
+two are not the same number and should not be: they are different codebases at different
+stages, and this one has no 2.3.1 to have shipped. So an entry reads "0.9.0 … level with
+Glaze 2.3.2", and the reference's version moves without dragging this one along. (This
+paragraph used to say versions *followed* Glaze's, while the entry below was numbered
+independently — the document asserted both schemes at once.)
 
-The first complete version: every route the reference has, both of its display modes, and
-the whole of its Settings. Level with **Glaze 2.3.2** (`d355ba2`), verified by **931
+**1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
+Developer ID and notarised. Everything before it is a version of the source.
+
+## 0.9.0 — 2026-07-28
+
+Feature-complete: every route the reference has, both of its display modes, and the whole of
+its Settings. Nine rather than one because nothing is missing against the reference, and not
+ten because it still cannot be installed by anyone but the person who built it. Level with **Glaze 2.3.2** (`d355ba2`), verified by **931
 contract checks and 61 behaviour cases**.
 
 Dated rather than released. `scripts/make-app.sh` signs ad-hoc, which runs on the machine

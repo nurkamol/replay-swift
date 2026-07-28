@@ -15,6 +15,14 @@ struct WhatsNewView: View {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
     }
 
+    /// One changelog line, with its emphasis.
+    private func markdown(_ line: String) -> AttributedString {
+        (try? AttributedString(
+            markdown: line,
+            options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        )) ?? AttributedString(line)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: Design.Space.card) {
@@ -70,7 +78,13 @@ struct WhatsNewView: View {
                                                 height: Design.Layout.bulletSize
                                             )
                                             .padding(.top, Design.Space.snug)
-                                        Text(change)
+                                        // Rendered as Markdown so a release can put the
+                                        // feature's name in bold and the list can be
+                                        // scanned rather than read. `Text(_: String)` takes
+                                        // a runtime string literally — the asterisks came
+                                        // out as asterisks — so the parse is explicit, and
+                                        // falls back to the raw line if it ever fails.
+                                        Text(markdown(change))
                                             .font(Design.Text.body)
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: false, vertical: true)

@@ -157,7 +157,7 @@ final class ExportModel {
         do {
             let rows = try model.store.rowsForBackup()
             let version = Bundle.main
-                .object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
+                .object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? Replay.version
             try Backup.encode(rows: rows, appVersion: version).write(to: url, options: .atomic)
             status = "Backed up \(rows.count) rows to \(url.lastPathComponent)"
             errorMessage = nil
