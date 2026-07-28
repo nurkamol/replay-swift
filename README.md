@@ -10,18 +10,42 @@ it *silently*.
 
 ## Install
 
-There is no download yet, and that is deliberate rather than unfinished.
+There is no download yet, and that is deliberate rather than unfinished — see below.
 
-```bash
+### With Homebrew
+
+```sh
+brew tap nurkamol/tap
+
+brew install --HEAD nurkamol/tap/replay-app    # the application
+brew install --HEAD nurkamol/tap/replay        # the command-line reader
+```
+
+Then link the app once, so Spotlight and the Dock can find it:
+
+```sh
+ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
+```
+
+`--HEAD` because there is no tagged release yet; it drops off once there is one.
+
+### Or from source
+
+```sh
 git clone https://github.com/nurkamol/replay-swift.git
 cd replay-swift
-./scripts/make-app.sh release      # builds and assembles Replay.app
+./scripts/make-app.sh release
 open build/Replay.app
 ```
 
-**Why building it is currently the *better* route, not the fallback.** An app built here is
-signed ad-hoc and was never downloaded, so it has no quarantine flag and opens immediately.
-A disk image from a release page would not: without a Developer ID signature Gatekeeper
+### Why there is no disk image to download
+
+Both routes above **build the app on your machine, and that is what makes it open.**
+Gatekeeper's signing requirement applies to applications *downloaded* from the internet —
+the quarantine flag is set by the browser that fetched the file. Something compiled here was
+never downloaded, so it carries no flag and opens with no dialog.
+
+A disk image from a release page would not. Without a Developer ID signature Gatekeeper
 rejects it outright — measured, not assumed, in [docs/FINDINGS.md](docs/FINDINGS.md) — and
 since macOS 15 there is no Control-click bypass, so the only way in is System Settings ▸
 Privacy & Security ▸ Open Anyway.
@@ -31,15 +55,9 @@ whole claim is that nothing leaves your Mac and nothing is being asked of you. T
 override macOS's own security check in order to install it would undercut the only thing it
 is really selling.
 
-The command-line reader needs none of this and can be installed on its own:
-
-```bash
-brew install --HEAD --formula ./Formula/replay.rb
-replay today
-```
-
 `scripts/make-dmg.sh` and `.github/workflows/release.yml` are written and waiting; the day a
-Developer ID exists, a signed and notarised image is one tag away.
+Developer ID exists, a signed and notarised image is one tag away — and the Homebrew route
+stays exactly as it is, because it never needed one.
 
 ## Quickstart
 
@@ -106,7 +124,8 @@ tools/port-queue.mjs     lists Glaze commits this port still owes
 tools/design-audit.mjs   fails if a view spells a visual constant
 tools/shortcut-audit.mjs fails if a bound key is undocumented, or documented and unbound
 tools/cli-audit.sh       the CLI's exit codes, stream discipline and --json shape
-Formula/replay.rb        a Homebrew formula for the CLI — needs no Developer ID
+Formula/                 Homebrew formulae — build from source, so no Developer ID
+                           replay.rb the CLI · replay-app.rb the application
 Resources/AppIcon.icns   the product's icon, carried over from the Glaze app
 docs/                    read these
 scripts/make-app.sh      assemble a runnable .app

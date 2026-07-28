@@ -15,6 +15,16 @@
 set -euo pipefail
 
 CONFIG="${1:-debug}"
+# Anything after the configuration goes straight to `swift build`. Arguments rather than an
+# environment variable because Homebrew scrubs the environment it hands a build, and an
+# option that silently fails to arrive is worse than one that is visible at the call site:
+#
+#   ./scripts/make-app.sh release --disable-sandbox
+#
+# which is exactly what the Homebrew formula passes, because SwiftPM's sandbox and
+# Homebrew's do not nest — `sandbox-exec: sandbox_apply: Operation not permitted`.
+shift 2>/dev/null || true
+EXTRA_FLAGS=("$@")
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/build/Replay.app"
 BUNDLE_ID="app.replay.native"
@@ -42,9 +52,11 @@ if [ -f "$INTENT_PROTOCOLS" ]; then
                -Xswiftc -Xfrontend -Xswiftc "$INTENT_PROTOCOLS")
 fi
 
-swift build -c "$CONFIG" --package-path "$ROOT" "${CONST_FLAGS[@]}"
+swift build -c "$CONFIG" --package-path "$ROOT" \
+    ${CONST_FLAGS[@]+"${CONST_FLAGS[@]}"} ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"}
 
-BIN="$(swift build -c "$CONFIG" --package-path "$ROOT" --show-bin-path)/ReplayApp"
+BIN="$(swift build -c "$CONFIG" --package-path "$ROOT" \
+    ${EXTRA_FLAGS[@]+"${EXTRA_FLAGS[@]}"} --show-bin-path)/ReplayApp"
 [ -x "$BIN" ] || { echo "no executable at $BIN" >&2; exit 1; }
 
 rm -rf "$APP"
