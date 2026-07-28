@@ -1,7 +1,7 @@
 # Replay — native macOS
 
 A native Swift port of Replay, a private timeline of the apps you use. Everything stays
-on the Mac: no cloud, no account, no network code, and no permissions requested.
+on the Mac: no cloud, no account, no permissions requested, and nothing uploaded ever.
 
 The [Glaze version](https://github.com/nurkamol/replay-glaze) ships today and is the
 reference implementation — [get it on the Glaze Store](https://www.glaze.app/app/replay-4fgahp).
@@ -22,13 +22,19 @@ What it never does:
   a feature seemed to need a permission, it was the wrong feature.
 - **It cannot see inside your windows.** No titles, no documents, no URLs, no keystrokes, no
   screenshots. Only an application's name and how long it was in front.
-- **No network.** No account, no cloud, no telemetry, no crash reporting, no update check —
-  there is no networking code in the app at all. Your record is a SQLite file in
+- **Nothing is uploaded.** No account, no cloud, no telemetry, no crash reporting, no
+  analytics. Your record is a SQLite file in
   `~/Library/Application Support/app.replay.native/`, and it has never left your Mac.
+  There is exactly one network request in the app, it is **off by default**, and it is a
+  `GET` to GitHub's public releases API asking whether a newer version exists —
+  Settings ▸ About. It carries no identifier and no body, it is the same request your
+  browser makes opening the releases page, and it downloads nothing. Leave the switch
+  alone and Replay opens no connection at all. Nothing about your record is ever sent
+  under any setting.
 - **It describes rather than grades.** No score, no productivity rating, no "distracting" label
   on anything. A day that was mostly a browser is described as a day mostly in a browser.
 
-These are checked, not promised. `swift test` runs 947 contract checks against the reference
+These are checked, not promised. `swift test` runs 951 contract checks against the reference
 implementation, and the claims above are the ones the design is built around — see
 [docs/SPEC.md](docs/SPEC.md), which is the file to read before changing anything.
 
@@ -151,7 +157,7 @@ Checking this port against Glaze 2.3.2 (d355ba2)
    ✓ away-row-splits-session — A measured idle row is a break, and splits the run…
    … 8 scenarios …
 
-PARITY OK — 947 checks against Glaze 2.3.2
+PARITY OK — 951 checks against Glaze 2.3.2
 ```
 
 ## What is here
@@ -162,12 +168,12 @@ Sources/ReplayCore/
   ActivityStore.swift    SQLite: storage, headlines, deletion, compaction
   SessionBuilder.swift   the derivation — rows → named sessions and breaks
   ActivityTracker.swift  NSWorkspace + idle time → recorded sessions
-Sources/ParityKit/       the parity suite — 947 checks against the reference
+Sources/ParityKit/       the parity suite — 951 checks against the reference
 Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
 Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
 Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
 Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
-Tests/ReplayAppTests/    61 behaviour cases over the app's own models
+Tests/ReplayAppTests/    74 behaviour cases over the app’s own models
 spec/                    GENERATED contract — never hand-edit
 tools/sync-spec.mjs      regenerates spec/ from the Glaze sources
 tools/port-queue.mjs     lists Glaze commits this port still owes
@@ -199,6 +205,55 @@ release were invisible to every automated check and were found by looking at the
 Settings toggle bound to the wrong `Bool`, chrome laid out off-screen, and a test suite
 leaking a `UserDefaults` domain per fixture. A high check count is evidence about what it
 covers, not about what it does not.
+
+## FAQ
+
+**Is there a `.dmg` I can download?**
+Not yet. A disk image has to be signed and notarized with a paid Apple Developer ID
+(99 USD/year) or macOS refuses to open it, and this project does not have one. Publishing an
+*unsigned* archive would look like a download and behave like a broken one — the ritual in
+[If you downloaded a build](#if-you-downloaded-a-build) is not something to hand a stranger.
+Homebrew and a source build compile on your machine, are never quarantined, and open with no
+warning at all. The release workflow to publish a signed DMG is already written and will
+start producing one the day there is a certificate.
+
+**I got "Apple could not verify Replay is free of malware".**
+Then it was downloaded rather than built. That message is about a missing certificate, not
+about anything found in the app — see [If you downloaded a build](#if-you-downloaded-a-build)
+for the two ways out. Note that right-click ▸ Open no longer works: Apple removed that bypass
+in macOS 15.
+
+**Does Replay send anything anywhere?**
+Nothing about you or your record, under any setting. There is exactly one network request in
+the app and it is off by default: an update check against GitHub's public releases API, in
+Settings ▸ About. It has no body and no identifier, downloads nothing, and reads a public
+version number — the same request your browser makes opening the releases page. Everything
+else is a SQLite file in your own user folder.
+
+**Which permissions does it need?**
+None. Not Accessibility, not Automation, not Screen Recording. It reads which app is
+frontmost through `NSWorkspace`, a signal every app on macOS can already see, and presence
+through a single "seconds since last input" integer that says *that* you typed, never what.
+If a feature seemed to need a permission, it was the wrong feature.
+
+**Can it see what I am working on?**
+No. No window titles, no documents, no URLs, no keystrokes, no screenshots. An application's
+name and how long it was in front is the entire input — which is why "Replay" can tell you
+that you spent four hours in an editor and nothing whatsoever about what you wrote.
+
+**How do I update it?**
+`brew upgrade --fetch-HEAD nurkamol/tap/replay-app`, or `git pull && ./scripts/make-app.sh
+release` from a clone. The in-app check only tells you a version exists; it never replaces a
+running app behind your back.
+
+**Where is my data, and how do I get it out?**
+`~/Library/Application Support/app.replay.native/replay.db`, a plain SQLite file you can open
+with any tool. Settings ▸ Data exports a slice as Markdown, HTML, CSV, JSON or PDF, or the
+whole database as a backup. Nothing is locked in, and deleting the folder deletes everything.
+
+**Does it run on Intel?**
+It should — there is nothing architecture-specific in it — but it has only ever been tested
+on Apple silicon, so that is the honest answer rather than a yes.
 
 ## Documentation
 

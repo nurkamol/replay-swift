@@ -343,31 +343,31 @@ because it is still a product decision nobody has taken.
         at once. The first one will surface every structural assumption; the second will be
         a tenth of the work.
 
-- [ ] **In-app updates from GitHub releases.** `M` — **and it is the first feature that would
-      put network code in this app**, which is the part to decide before any of the rest.
-      · The shape asked for: check on launch, or once a day; if a newer release exists, show
-        what changed and offer to install it.
-      · **Gated on signing twice over.** There is nothing to download until releases exist,
-        and a self-update that replaces a working app with an unsigned one would break the
-        install rather than improve it. Whatever it fetches has to be verified — signature,
-        team identifier, notarisation — *before* anything is swapped, and the old bundle kept
-        until the new one has launched once.
-      · **Not Sparkle.** It is the obvious choice and an external dependency, which CLAUDE.md
-        forbids. A version check is one `URLSession` call against
-        `api.github.com/repos/…/releases/latest`; the interesting part is the safety, not the
-        fetching.
-      · **The tension is real and belongs in the open.** README and SPEC say this app has no
-        network code, no account, nothing that leaves the Mac. A daily update check is an
-        outbound request on a schedule that tells GitHub an IP address and, by inference,
-        that someone is running Replay. That is small, and it is not nothing, and it is the
-        exact claim the app is sold on.
-      · So if it is built: **opt-in, off by default, and checking only** — tell the user a
-        version exists and link to it, rather than downloading and replacing on their behalf.
-        Self-update is where the risk lives and it buys the least. And say plainly in Settings
-        what the check sends and when.
-      · Worth knowing: **anyone who installed with Homebrew already has updates** —
-        `brew upgrade` does this, verifiably, with no network code in the app at all. The
-        in-app updater only serves people who took a direct download, and there are none yet.
+- [x] **In-app updates from GitHub releases.** Built 2026-07-28, in the shape this entry
+      argued for: **opt-in, off by default, and checking only.** Once a day at most, and only
+      while the app is running, it asks GitHub's public releases API whether a newer tag
+      exists; if one does, a dismissible bar offers the notes and a link. It downloads
+      nothing and replaces nothing.
+      · **The decision is in `ReplayCore`, the request is not.** `Updates` parses a version,
+        compares two, reads a release out of GitHub's JSON and decides whether a check is
+        due — all pure, all tested (74 behaviour cases). `UpdateModel` in `ReplayApp` owns
+        the one `URLSession` call. Version parsing is deliberately strict and fails closed:
+        anything it cannot read is "no update", because nagging about a release that does
+        not exist is worse than being quietly out of date.
+      · **Self-update was not built, and that was the point.** Verifying a signature, swapping
+        a bundle and surviving interruption is where all the risk is, and until there is a
+        Developer ID it would be replacing a working app with one Gatekeeper refuses. Told,
+        not done.
+      · **The claim was amended rather than defended.** README said "no networking code in
+        the app at all" and SPEC said "no network of any kind". Both were true and are not,
+        so both now say what is actually true: *nothing recorded ever leaves the machine,
+        under any setting* — which is the invariant worth having, and the one this feature
+        does not touch. The Guide could not be edited the same way, because its sixteen
+        answers are compared word for word against the reference and the reference genuinely
+        has no network — so `Guide.ownEntries` states the exception alongside them, checked
+        in the opposite direction like `OwnSettingsRow`.
+      · Still true, and still the better route: **anyone who installed with Homebrew already
+        has updates** via `brew upgrade`, with no network code in the app at all.
 
 - [ ] **A richer menu bar popover.** `S` The item exists and shows the current app and
       today's total. A small popover — the last few sessions, the goal, a pause control —

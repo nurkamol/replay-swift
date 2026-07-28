@@ -22,6 +22,7 @@ struct SettingsView: View {
     @Bindable var preferences: Preferences
     let contextual: ContextualMemoryModel
     let notifications: NotificationsModel
+    let updates: UpdateModel
 
     /// The panes, in the order they are worth reaching for.
     /// Not private: the Help menu opens Settings on a chosen pane.
@@ -109,7 +110,7 @@ struct SettingsView: View {
                 case .display: DisplayTab(preferences: preferences)
                 case .shortcuts: ShortcutsTab()
                 case .guide: GuideTab()
-                case .about: AboutTab()
+                case .about: AboutTab(preferences: preferences, updates: updates)
                 }
             }
             .navigationTitle(pane.rawValue)
@@ -924,7 +925,7 @@ private struct GuideTab: View {
     var body: some View {
         PaneForm {
             Section {
-                ForEach(Guide.entries) { entry in
+                ForEach(Guide.entries + Guide.ownEntries) { entry in
                     // Disclosure rather than four paragraphs: the questions stay scannable,
                     // and only the one being asked takes up room.
                     //
@@ -979,6 +980,9 @@ private struct GuideTab: View {
 }
 
 private struct AboutTab: View {
+    @Bindable var preferences: Preferences
+    let updates: UpdateModel
+
     /// Where the source lives. In About because that is where somebody looks when they want
     /// to know what this *is* — and for an app whose whole claim is that nothing leaves the
     /// Mac, "you can read it" is the strongest form that claim takes.
@@ -1022,6 +1026,26 @@ private struct AboutTab: View {
             .buttonStyle(.link)
             .padding(.top, Design.Space.tight)
             .help(Self.repository.absoluteString)
+
+            // The one setting in the app that causes a network request, so it lives beside
+            // the version it is about rather than buried in General — and it says what it
+            // sends rather than only what it does.
+            VStack(alignment: .leading, spacing: Design.Space.tight) {
+                Toggle(
+                    OwnSettingsRow.checkForUpdates.label, isOn: $preferences.checkForUpdates
+                )
+                .explains(own: .checkForUpdates)
+                HStack(spacing: Design.Space.snug) {
+                    Button("Check Now") { Task { await updates.checkNow() } }
+                        .disabled(updates.checking)
+                    if updates.checking { ProgressView().controlSize(.small) }
+                    if let failure = updates.failure {
+                        Text(failure).font(Design.Text.detail).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.top, Design.Space.block)
+            .frame(maxWidth: Design.Layout.readableWidth)
 
             Spacer(minLength: 0)
             Text("MIT licensed. Built on this Mac, and it stays here.")

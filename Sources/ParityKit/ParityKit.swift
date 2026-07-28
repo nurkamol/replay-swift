@@ -1246,6 +1246,23 @@ public enum ParityKit {
             equal(g1, "Guide answer: \(expected.question)", mine.answer, expected.answer)
         }
 
+        // And the Guide entries that are this port's own, the other way round again: their
+        // questions must not exist upstream. The one there is exists because this port has a
+        // feature the reference cannot have — it updates through the Glaze Store — so the
+        // reference's flat "no network" needs a footnote here and must not be edited into
+        // one. See `Guide.ownEntries`.
+        let referenceQuestions = Set(guideSpec.entries.map(\.question))
+        for entry in Guide.ownEntries {
+            equal(
+                g1, "own Guide question is not the reference's: \(entry.question)",
+                referenceQuestions.contains(entry.question), false
+            )
+            equal(
+                g1, "own Guide question is answered: \(entry.question)",
+                entry.answer.isEmpty, false
+            )
+        }
+
         // Living Home: what Today leads with, and how it is chosen.
         equal(
             g1, "how fresh a resume target has to be to lead",

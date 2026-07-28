@@ -45,6 +45,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var notifications = NotificationsModel(model: model, preferences: preferences)
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
+    /// Off unless somebody turned it on; see `UpdateModel`.
+    private lazy var updates = UpdateModel(preferences: preferences)
     private var window: NSWindow?
     private var settingsWindow: NSWindow?
     private var screensaverWindow: NSWindow?
@@ -65,6 +67,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The tracker is told what to skip before the window appears, so an excluded app is
         // never recorded in the gap between launching and looking.
         model.applyExclusions(preferences.excludedBundleIDs)
+        // The daily update check, if it was ever turned on. Detached and unawaited: a
+        // launch must not wait on a network, and a failed check is a non-event that will be
+        // tried again tomorrow.
+        Task { await updates.checkIfDue() }
         // A pinned "open on" is an instruction and wins; otherwise come back to where the
         // window was left, which is what a Mac app does.
         if let pinned = Navigation.Surface(rawValue: preferences.launchSurface.label),
@@ -354,7 +360,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 notifications: notifications,
                 onOpenSettings: { [weak self] in self?.openSettings() },
                 onOpenScreensaver: { [weak self] in self?.openScreensaver() },
-                onOpenAmbient: { [weak self] in self?.openAmbient() }
+                onOpenAmbient: { [weak self] in self?.openAmbient() },
+                updates: updates
             )
         )
         // The window's size is its own. Without this the SwiftUI content drives it, and a
@@ -659,7 +666,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 SettingsView(
                     model: model, settings: settings, export: export,
                     preferences: preferences, contextual: contextual,
-                    notifications: notifications, initialPane: settingsPane ?? .general
+                    notifications: notifications, updates: updates,
+                    initialPane: settingsPane ?? .general
                 )
             }
         )

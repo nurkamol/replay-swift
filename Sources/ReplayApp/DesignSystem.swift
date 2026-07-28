@@ -1020,6 +1020,11 @@ enum Design {
         static let paletteShadowRadius: CGFloat = 30
         static let paletteShadowOffset: CGFloat = 12
         static let paletteTopInset: CGFloat = 120
+        /// Release notes in a popover. Narrower than the palette because these are lines of
+        /// prose rather than rows, and capped rather than fixed: most releases are four
+        /// bullets, and a box sized for the worst case is mostly empty for the usual one.
+        static let releaseNotesWidth: CGFloat = 420
+        static let releaseNotesMaxHeight: CGFloat = 340
         /// A year of days as a grid. How *many* weeks it draws is the reference's own
         /// `Heatmap.yearWeeks` and is contract-checked; these are how big it renders.
         static let heatmapSquare: CGFloat = 11

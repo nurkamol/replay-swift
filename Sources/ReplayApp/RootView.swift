@@ -148,6 +148,7 @@ struct RootView: View {
     /// Likewise — the overlay is an `NSWindow`, which a view cannot raise on its own.
     let onOpenScreensaver: () -> Void
     let onOpenAmbient: () -> Void
+    let updates: UpdateModel
 
     @Environment(\.motion) private var motion
     /// The day being watched, if one is: its sessions and what to call it on screen. Held
@@ -178,9 +179,24 @@ struct RootView: View {
                 .transition(motion.transition(.opacity))
             } else if preferences.seenWelcome {
                 ZStack(alignment: .top) {
-                    window
+                    // A bar rather than a dialog. An update is not urgent and nothing is
+                    // waiting on the answer, so it should be dismissible by ignoring it —
+                    // a modal would stop you doing the thing you opened the app to do.
+                    //
+                    // In the stack rather than over it: as an overlay it sat on top of the
+                    // day's headline and cut the total in half, which is the one figure the
+                    // window exists to show. A bar that hides the content to announce
+                    // something optional has its priorities backwards.
+                    VStack(spacing: 0) {
+                        if updates.shouldOffer, let release = updates.available {
+                            UpdateBanner(release: release, onDismiss: updates.dismiss)
+                                .transition(motion.transition(.move(edge: .top).combined(with: .opacity)))
+                        }
+                        window
+                    }
                     paletteOverlay
                 }
+                .animation(motion.animation(Design.Motion.settle), value: updates.shouldOffer)
             } else {
                 WelcomeView(
                     model: model, preferences: preferences, notifications: notifications,

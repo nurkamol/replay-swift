@@ -146,4 +146,28 @@ public enum Guide {
                 + "stops recording immediately, and your history is left untouched."
         ),
     ]
+
+    /// The questions this port has to answer and the reference does not.
+    ///
+    /// Checked the *opposite* way round, exactly as ``OwnSettingsRow`` is: these questions
+    /// must **not** exist upstream, so an addition here can never quietly shadow one of the
+    /// sixteen. Shown after them in the Guide.
+    ///
+    /// There is one so far, and it exists because this port grew a feature the reference
+    /// cannot have: the Glaze version updates through the Glaze Store, so "does it use the
+    /// network" has an unqualified no upstream and a qualified one here. The answer above it
+    /// — "It never leaves this Mac: no cloud, no account, no network" — is the reference's
+    /// word for word and stays that way; this is the footnote it now needs, and burying that
+    /// difference would be the one kind of dishonesty this app cannot afford.
+    public static let ownEntries: [Entry] = [
+        Entry(
+            question: "Does Replay ever use the network?",
+            answer: "Only if you ask it to, and it is off when you install it. Settings ▸ "
+                + "About can check GitHub once a day for a newer version. That request "
+                + "sends nothing — no account, no identifier, nothing about your record — "
+                + "and is the same one your browser makes opening the releases page. It "
+                + "tells you and stops there: nothing is downloaded or installed on your "
+                + "behalf. Leave it off and Replay opens no connection at all, ever."
+        ),
+    ]
 }

@@ -146,6 +146,7 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
     case ambientCurrentApp
     case ambientCurrentSession
     case ambientBreath
+    case checkForUpdates
 
     public var label: String {
         switch self {
@@ -153,6 +154,7 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
         case .ambientCurrentApp: "Show the current application"
         case .ambientCurrentSession: "Show the current session"
         case .ambientBreath: "Gentle motion"
+        case .checkForUpdates: "Check for updates"
         }
     }
 
@@ -173,6 +175,11 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
             "A slow swell on the application's icon, so a screen of live figures does not "
                 + "read as a still picture of one. Off leaves ambient mode completely "
                 + "still. Reduce Motion turns it off either way."
+        case .checkForUpdates:
+            "Once a day, ask GitHub whether a newer Replay exists. This is the only thing "
+                + "in the app that uses the network, and it sends nothing about you or your "
+                + "record — the same request as opening the releases page in a browser. "
+                + "Nothing is downloaded or installed; you are told, and you decide."
         }
     }
 }

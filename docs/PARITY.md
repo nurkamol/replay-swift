@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 947 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 951 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -70,6 +70,7 @@ function now and live in `ReplayCore` where the suite can reach them.
 | capability | status | notes |
 |---|---|---|
 | Menu bar item | done | current app, today's total, pause/resume, Open Today/Timeline, Settings, Quit |
+| Update check | done | **this port's own — the reference updates through the Glaze Store.** Opt-in and off by default; at most one `GET` a day to GitHub's public releases API, no body and no identifier, and a dismissible bar with the notes if a newer tag exists. It downloads and replaces nothing: self-update is gated on a Developer ID, and until then would swap a working app for one Gatekeeper refuses. The comparison lives in `Updates` and is tested; the request lives in `UpdateModel`. README and SPEC were amended rather than defended — see the divergences |
 | Design system | done | one file of tokens, every view reading from it, and `node tools/design-audit.mjs` failing the build if a view spells a number |
 | Application menu | done | Replay / Edit / View / Window, so ⌘, ⌘W ⌘Q and — the one that bit — ⌘C/⌘V in a note field all work |
 | Today | done | headline, top app, a morning briefing before lunchtime, a moment quoted as one line, a contextual memory when there is one worth showing, focus-goal card, a resume card that brings the app back to the front, reflection, sessions and breaks |
@@ -159,6 +160,22 @@ what it is *not yet*, in the order it is worth doing. Two lists of the same thin
 document starts lying, and this one has done it twice already — see the two notes above.
 
 ## Known divergences to keep an eye on
+
+- **This port has a network request and the reference has none — so the claim moved, not the
+  feature.** The Glaze version updates through the Glaze Store, so "no network" costs it
+  nothing to say. A direct-download port has no such channel, and the honest options were to
+  ship no updater or to state the exception plainly. Built as opt-in, off by default,
+  check-only: one `GET` a day at most to a public releases endpoint, no body, no identifier,
+  nothing downloaded. What is worth remembering is which claim survived. README's "there is
+  no networking code in the app at all" and SPEC's "no network of any kind" were both true
+  and are not, and neither was ever enforced by a generated check — they were prose that had
+  aged into a promise. The invariant actually worth defending is *nothing recorded ever
+  leaves the machine, under any setting*, which this feature does not touch and which is now
+  what both documents say. The Guide is the interesting case: its sixteen answers are
+  compared character for character against the reference, one of them says "no network", and
+  the reference is right — so it stays, and `Guide.ownEntries` adds the footnote beside it,
+  checked in the opposite direction like `OwnSettingsRow` (the question must *not* exist
+  upstream). Added 2026-07-28.
 
 - **The heatmap shaded a day against the busiest day, not against a quantity.** The reference
   steps a square at fixed thresholds — half an hour, an hour and a half, three hours — so

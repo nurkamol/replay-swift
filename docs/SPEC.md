@@ -14,7 +14,17 @@ some of it is prose.
 
 Replay records **which application was frontmost, and when**. Nothing else. No
 screenshots, no video, no window titles, no keystrokes, no content. One SQLite file in
-the app's own container, no network of any kind.
+the app's own container, and **nothing recorded is ever transmitted anywhere, under any
+setting.**
+
+There is one network request in the whole app, added by this port and off by default: an
+update check against GitHub's public releases API (`Updates` / `UpdateModel`). It sends no
+body, no identifier and no query, downloads nothing, and reads only a public version
+number. The invariant it must never break is the one above — *no recorded data leaves the
+machine* — not the weaker "no sockets", which was true until it wasn't and which no
+generated check ever enforced. The reference has no equivalent, because it updates through
+the Glaze Store; see `Guide.ownEntries` for how that difference is stated to the user
+without editing the reference's own words.
 
 This is not a modesty claim, it is the product. It is why the app needs **no
 permissions at all** — no Accessibility, no Automation, no Screen Recording — and that

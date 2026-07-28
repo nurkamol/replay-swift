@@ -306,6 +306,26 @@ final class Preferences {
     /// central vision, not less. A 4% swell is nothing at minute one and can be a small
     /// irritation at hour three, and which of those you are is not something a default can
     /// know. Reduce Motion still wins over it either way.
+    /// Whether Replay asks GitHub, once a day, if a newer version exists.
+    ///
+    /// **Off, and it stays off until somebody turns it on.** This is the only setting in the
+    /// app that causes a network request, and the app's whole claim is that nothing leaves
+    /// the Mac — so it defaults to the state that keeps that true, and the Settings row says
+    /// in as many words what a check sends.
+    var checkForUpdates: Bool {
+        didSet { write(checkForUpdates, "checkForUpdates") }
+    }
+
+    /// When it last asked, so it asks once a day rather than once a launch.
+    var lastUpdateCheck: Date? {
+        didSet { defaults.set(lastUpdateCheck, forKey: "lastUpdateCheck") }
+    }
+
+    /// A version the user waved away. The offer returns when a newer one appears.
+    var skippedUpdate: String? {
+        didSet { defaults.set(skippedUpdate, forKey: "skippedUpdate") }
+    }
+
     var ambientBreath: Bool {
         didSet { write(ambientBreath, "ambientBreath") }
     }
@@ -363,6 +383,9 @@ final class Preferences {
         ambientCurrentApp = defaults.object(forKey: "ambientCurrentApp") as? Bool ?? true
         ambientCurrentSession = defaults.object(forKey: "ambientCurrentSession") as? Bool ?? true
         ambientBreath = defaults.object(forKey: "ambientBreath") as? Bool ?? true
+        checkForUpdates = defaults.object(forKey: "checkForUpdates") as? Bool ?? false
+        lastUpdateCheck = defaults.object(forKey: "lastUpdateCheck") as? Date
+        skippedUpdate = defaults.string(forKey: "skippedUpdate")
         let hour = defaults.integer(forKey: "dailySummaryHour")
         dailySummaryHour = hour == 0 ? 18 : hour
         dailySummary = defaults.bool(forKey: "dailySummary")
@@ -428,6 +451,9 @@ final class Preferences {
         "ambientCurrentApp",
         "ambientCurrentSession",
         "ambientBreath",
+        "checkForUpdates",
+        "lastUpdateCheck",
+        "skippedUpdate",
         "screensaverExitOnMouseMove",
         "screensaverIdleMinutes",
         "seenWelcome",
@@ -479,6 +505,9 @@ final class Preferences {
         ambientCurrentApp = fresh.ambientCurrentApp
         ambientCurrentSession = fresh.ambientCurrentSession
         ambientBreath = fresh.ambientBreath
+        checkForUpdates = fresh.checkForUpdates
+        lastUpdateCheck = fresh.lastUpdateCheck
+        skippedUpdate = fresh.skippedUpdate
         dailySummaryHour = fresh.dailySummaryHour
         dailySummary = fresh.dailySummary
         weeklyRecap = fresh.weeklyRecap
