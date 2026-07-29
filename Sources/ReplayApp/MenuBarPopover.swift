@@ -26,6 +26,7 @@ struct MenuBarPopoverView: View {
     var onOpenSettings: () -> Void
     var onAddNote: () -> Void
     var onPause: (Pause.Span) -> Void
+    var onExcludeCurrent: () -> Void
     var onQuit: () -> Void
 
     /// Ticks the "focused for" line without asking the tracker for anything.
@@ -248,6 +249,20 @@ struct MenuBarPopoverView: View {
             // stopping indefinitely is still a thing people mean, and burying it inside a
             // menu of durations would make the simple case the awkward one.
             if model.isRecording { pauseForRow }
+            // "Never record this one" belongs where the application is *named*, which is here
+            // and nowhere else in the app — Settings has a picker of every app you have ever
+            // used, and finding today's in it is the work this row removes.
+            //
+            // It asks first, and that is not politeness: excluding also erases everything
+            // already recorded for that application, which is the one action in this panel
+            // that cannot be undone.
+            if let app = model.currentApp, model.isRecording {
+                MenuBarRow(
+                    glyph: "eye.slash",
+                    title: String(format: Loc.t("Never record %@"), app.name),
+                    action: onExcludeCurrent
+                )
+            }
             annotate
             rowDivider
             MenuBarRow(glyph: "square.grid.2x2", title: "Open Replay", shortcut: "⌘1", action: onOpenToday)

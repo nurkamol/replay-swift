@@ -507,6 +507,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.pause(for: span)
                     self?.refreshStatusTitle()
                 },
+                onExcludeCurrent: { [weak self] in self?.fromPopover { $0.confirmExcludeCurrent() } },
                 onQuit: { [weak self] in self?.fromPopover { $0.quit() } }
             )
             .environment(\.themeTint, preferences.themeColour.resolved)
@@ -538,6 +539,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // oversight: a popover's window does not become key, so a text field placed in one
         // eats its first character and then dismisses the whole panel. The note is written
         // in a panel of its own for exactly that reason — see `openNotePanel`.
+    }
+
+    /// Stop recording the application in front, and erase what it already recorded.
+    ///
+    /// An alert rather than a row that simply does it. Every other control in the menu bar
+    /// panel is reversible — pause, bookmark, a note — and this one is not: excluding an
+    /// application also erases its history, which is what makes it a privacy action rather
+    /// than a filter. So it names the application, says what it will remove, and the
+    /// destructive button is the one that has to be chosen.
+    @objc private func confirmExcludeCurrent() {
+        guard let app = model.currentApp else { return }
+        let alert = NSAlert()
+        alert.messageText = String(format: Loc.t("Never record %@?"), app.name)
+        alert.informativeText = Loc.t(
+            "Replay will stop recording it, and will erase everything it has already recorded "
+                + "for it. That cannot be undone — un-excluding later resumes recording but "
+                + "does not bring the history back."
+        )
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: Loc.t("Exclude and Erase"))
+        alert.addButton(withTitle: Loc.t("Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard let bundleID = app.bundleID else { return }
+        settings.setExcluded(
+            KnownApp(
+                applicationName: app.name, bundleIdentifier: bundleID, appPath: app.appPath
+            ),
+            true
+        )
+        model.reload()
+        refreshStatusTitle()
     }
 
     /// The quick-note panel, on the stretch being lived in.

@@ -161,6 +161,7 @@ How Replay works
 How sure Replay must be before surfacing a memory. Higher means rarer, but only when it truly matters.
 I deleted history but the size on disk didn't change — why?
 Import…
+Importing…
 in %@
 In a single database file in your own user folder — the Privacy tab shows the exact path. It never leaves this Mac: no cloud, no account, no network.
 It notices which application is frontmost using macOS’s standard app-switch signal, and records the app’s name and how long it stayed in front. Never what’s inside a window, never your keystrokes, never content.
@@ -193,6 +194,8 @@ Mostly %@
 Museum
 My Story
 Never
+Never record %@
+Never record %@?
 No applications tracked yet
 No chapters yet
 No goal
@@ -295,6 +298,7 @@ Replay reads which app is frontmost through macOS's standard signal. It needs no
 Replay shows at most one memory a day, and most days it shows none. The briefing is a look back at yesterday, and it is gone by lunchtime. Everything either says is read from your own history on this Mac.
 Replay sometimes surfaces a memory on its own — what is that?
 Replay This Day
+Replay will stop recording it, and will erase everything it has already recorded for it. That cannot be undone — un-excluding later resumes recording but does not bring the history back.
 Reset Replay
 Reset Replay?
 Reset…

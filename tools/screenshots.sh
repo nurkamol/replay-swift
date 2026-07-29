@@ -126,6 +126,14 @@ if [ -n "$APPEARANCE" ]; then
     defaults write "$DOMAIN" appearance -string "$APPEARANCE"
 fi
 
+# Tell the app it has already run at this version, so the "Updated to Replay x.y.z" note
+# does not sit across the top of every capture. It is a real feature and worth looking at —
+# `settings-about` and a hand-run are where to look at it — but it is not part of Today, and
+# a banner in twenty screenshots is twenty screenshots of the banner.
+VERSION_IN_BUILD="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" \
+    "$APP/Contents/Info.plist" 2>/dev/null || true)"
+[ -n "$VERSION_IN_BUILD" ] && defaults write "$DOMAIN" lastRunVersion -string "$VERSION_IN_BUILD"
+
 pkill -f "$APP" 2>/dev/null || true
 sleep 1
 open -a "$APP"
@@ -204,10 +212,63 @@ osa -e 'tell application "Replay" to activate' -e 'delay 0.4' \
     -e 'tell application "System Events" to keystroke "," using command down' >/dev/null
 sleep 4
 capture "settings"
+
+# Every pane, not only the one it opens on.
+#
+# It captured General and stopped, so Display and Data — two panes that gained most of a
+# release each — were never looked at, and the light-mode theme bug that turned out to be
+# sitting in Settings was found by driving this by hand instead. **Clicking a row does not
+# work**: SwiftUI list rows report success from `AXPress` and change nothing, which cost four
+# attempts to learn. Setting `selected` on the row does work, and is what this uses.
+pane_row () {  # pane_row <index> <name>
+    osa -e "tell application \"System Events\" to tell process \"Replay\"
+              tell outline 1 of scroll area 1 of group 1 of splitter group 1 of group 1 of window 1
+                set selected of row $1 to true
+              end tell
+            end tell" >/dev/null 2>&1 || true
+    sleep 2
+    capture "settings-$2"
+}
+
+pane_row 2 "privacy"
+pane_row 3 "data"
+pane_row 4 "display"
+pane_row 6 "guide"
+pane_row 7 "about"
+
 # Close it, so the frame reader goes back to the main window.
 osa -e 'tell application "System Events" to tell process "Replay" to click button 1 of window 1' \
     >/dev/null 2>&1 || true
 sleep 2
+
+# ── The panel in the menu bar, and the note panel ─────────────────────────────
+#
+# Both are windows this script never saw. The menu bar panel is an `NSPopover`, so it is not
+# in the process's window list at all and has to be captured from the screen; the note panel
+# is a real window and can be measured like any other.
+
+osa -e 'tell application "Replay" to activate' -e 'delay 0.4' \
+    -e 'tell application "System Events" to tell process "Replay" to click menu bar item 1 of menu bar 2' \
+    >/dev/null 2>&1 || true
+sleep 2
+# The status item sits at the right-hand end of the menu bar on the main screen, and the
+# panel hangs under it. A generous box rather than arithmetic on the item's frame: this is a
+# screenshot, and cropping it exactly is not worth a second AppleScript round trip.
+MENUBAR_W=$(osa -e 'tell application "Finder" to get bounds of window of desktop' 2>/dev/null | awk -F", " '{print $3}')
+if [ -n "$MENUBAR_W" ]; then
+    /usr/sbin/screencapture -o -x -R "$((MENUBAR_W - 720)),0,720,760" "$OUT/menu-bar.png" 2>/dev/null \
+        && say "menu-bar" "menu-bar.png"
+fi
+osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
+sleep 1
+
+osa -e 'tell application "Replay" to activate' -e 'delay 0.4' \
+    -e 'tell application "System Events" to tell process "Replay" to click menu item "Note on This Session…" of menu 1 of menu bar item "View" of menu bar 1' \
+    >/dev/null 2>&1 || true
+sleep 2
+capture "note-panel"
+osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
+sleep 1
 
 # ── The two full-screen modes ─────────────────────────────────────────────────
 #

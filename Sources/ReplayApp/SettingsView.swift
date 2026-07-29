@@ -849,7 +849,10 @@ private struct DataTab: View {
                 LabeledContent("Full backup") {
                     HStack(spacing: Design.Space.inline) {
                         Button(Loc.t("Export…")) { export.exportBackup() }
-                        Button(Loc.t("Import…")) { export.importBackup() }
+                        Button(export.busy ? Loc.t("Importing…") : Loc.t("Import…")) {
+                            Task { await export.importBackup() }
+                        }
+                        .disabled(export.busy)
                     }
                 }
                 .explains(.fullBackup)

@@ -12,6 +12,9 @@ import ReplayCore
 @Observable
 final class ExportModel {
     private(set) var status: String?
+    /// True while a backup is being read and merged, so the button can say so. It could not
+    /// before: the whole thing ran on the main actor, so no state it set was ever drawn.
+    private(set) var busy = false
     private(set) var errorMessage: String?
 
     private let model: AppModel
@@ -201,19 +204,48 @@ final class ExportModel {
     }
 
     /// Read a backup back in. Merges rather than replaces — an import never erases.
-    func importBackup() {
+    /// Read a backup and merge it, without the window going quiet while it happens.
+    ///
+    /// **Split where the work actually splits.** Reading is pure — parse JSON, validate every
+    /// field, produce rows — and for a large export it is the slow half, so it happens off the
+    /// main actor. Writing is SQL on the app's own connection inside one transaction, and it
+    /// stays here: a second connection would be writing the same file the tracker is writing,
+    /// and the in-memory state would be reading a database that had changed underneath it.
+    ///
+    /// Recording is paused around the merge for the same reason compaction pauses it — an app
+    /// switch landing mid-transaction is a write waiting on a lock — and put back exactly as
+    /// it was found.
+    func importBackup() async {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard !busy else { return }
+        busy = true
+        defer { busy = false }
+
+        let read = await Task.detached(priority: .userInitiated) { () -> Result<Backup.ReadResult, Error> in
+            do { return .success(try Backup.read(contentsOf: url)) } catch { return .failure(error) }
+        }.value
+
+        let parsed: Backup.ReadResult
+        switch read {
+        case .success(let value): parsed = value
+        case .failure(let error): errorMessage = "\(error)"; return
+        }
+
+        let wasRecording = model.isRecording
+        if wasRecording { model.setTracking(false) }
+        defer { if wasRecording { model.setTracking(true) } }
 
         do {
             let now = Int64(Date().timeIntervalSince1970 * 1000)
-            let result = try model.store.importBackup(from: url, now: now)
+            let restored = try model.store.restore(rows: parsed.rows)
+            if restored.imported > 0 { try model.store.rebuildSummaries(now: now) }
             model.reload()
-            var message = "Imported \(result.imported) rows"
-            if result.skipped > 0 { message += ", skipped \(result.skipped) already here" }
-            if result.malformed > 0 { message += ", \(result.malformed) unreadable" }
+            var message = "Imported \(restored.imported) rows"
+            if restored.skipped > 0 { message += ", skipped \(restored.skipped) already here" }
+            if parsed.skipped > 0 { message += ", \(parsed.skipped) unreadable" }
             status = message
             errorMessage = nil
         } catch {
