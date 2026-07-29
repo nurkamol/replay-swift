@@ -971,3 +971,37 @@ struct PastReflectionCard: View {
         .accessibilityHint(Loc.t("Opens the day you wrote it on"))
     }
 }
+
+// The surface the preview fixture exists for.
+//
+// Today reads an `AppModel` and five collaborators over it, so before `SampleRecord` there
+// was nothing to draw and no way to preview this at all. Two variants because the layout
+// genuinely differs: a day with a focus goal carries a second card above the fold, and that
+// is where a headline has crowded a goal ring before.
+//
+// `#if DEBUG` keeps every line of it out of the shipped binary.
+#if DEBUG
+@MainActor
+private func previewToday(goalMinutes: Int?) -> some View {
+    let model = SampleRecord.model()
+    let preferences = Preferences(defaults: UserDefaults(suiteName: "replay.preview") ?? .standard)
+    preferences.focusGoalMinutes = goalMinutes
+    let projects = ProjectsModel(model: model, preferences: preferences)
+    return TodayView(
+        model: model,
+        annotations: model.annotations,
+        export: ExportModel(model: model),
+        memories: MemoriesModel(model: model),
+        contextual: ContextualMemoryModel(
+            model: model, projects: projects, preferences: preferences
+        ),
+        preferences: preferences,
+        onOpenDay: { _ in },
+        onReplayDay: { _ in }
+    )
+    .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+
+#Preview("Today") { previewToday(goalMinutes: nil) }
+#Preview("Today, with a goal") { previewToday(goalMinutes: 240) }
+#endif

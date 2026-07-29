@@ -367,6 +367,11 @@ with *"the executable target ReplayApp needs ENABLE_DEBUG_DYLIB"* — a setting 
 express. That is why the interface lives in `Sources/ReplayUI/`, a library, and
 `Sources/ReplayApp/` is only `main.swift` and the App Intents.
 
+Surfaces that read the database preview against `SampleRecord` — a believable day, three weeks
+of history behind it, written to a fresh temporary directory and never to your record. Add
+previews as you touch a view; `TodayView.swift` is the pattern for a surface with collaborators
+and `FocusGoalCard.swift` for one without.
+
 **Running (⌘R)** gives a bare executable, not a bundle, and it says so on stderr at launch.
 Three things differ, none of them bugs to chase:
 
@@ -377,9 +382,18 @@ Three things differ, none of them bugs to chase:
   builds one.
 
 **`REPLAY_DB`** points a development build at a scratch record, so stepping through a delete
-does not touch yours. Set it under Product ▸ Scheme ▸ Edit Scheme ▸ Run ▸ Arguments. The app,
-the CLI and the intents all honour it because they share one path function. Debug builds only
-— a released binary ignores it, so nobody ends up staring at an empty Today.
+does not touch yours. The shared `ReplayApp` scheme already sets it to
+`~/Library/Caches/app.replay.native/dev-activity.db`, so ⌘R is safe without doing anything.
+The app, the CLI and the intents all honour it because they share one path function. Debug
+builds only — a released binary ignores it, so nobody ends up staring at an empty Today.
+
+**`REPLAY_SEED`** fills that scratch record with the same sample day the previews use, so ⌘R
+opens onto an app with something in it. It is in the scheme, unticked; enable it under Product
+▸ Scheme ▸ Edit Scheme ▸ Run ▸ Arguments. It does nothing unless `REPLAY_DB` is also set and
+the record is empty, so it cannot add invented sessions to a database anyone is keeping.
+
+Schemes live in `.swiftpm/xcode/xcshareddata/` and are committed. `.swiftpm/xcode/xcuserdata/`
+is your own Xcode state and is gitignored.
 
 Both test runners work, and CI uses the first:
 

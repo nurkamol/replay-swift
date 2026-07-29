@@ -2,4 +2,13 @@
 build/
 .DS_Store
 *.xcuserstate
-build/
+
+# Xcode's per-user state. The package opens in Xcode without a project file, and Xcode
+# writes which schemes you have shown and in what order into here — it changes every time
+# anyone switches scheme, and it is one person's preference on one machine. Shared schemes
+# live in .swiftpm/xcode/xcshareddata/ instead, and those are committed on purpose.
+.swiftpm/xcode/xcuserdata/
+*.xcuserdatad/
+
+# Xcode's build products, when it is the builder rather than SwiftPM.
+DerivedData/
