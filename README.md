@@ -86,7 +86,9 @@ current `main` instead of v0.9.8.
 brew install nurkamol/tap/replay        # `replay today`, `replay week --json`
 ```
 
-A CLI is never quarantined either way, so this one has no caveats.
+A CLI is never quarantined either way, so this one has no caveats — and unlike the app it
+builds with **Command Line Tools alone**, no Xcode. The app needs Xcode for SwiftUI's macro
+plugins; a shell tool that reads SQLite does not.
 
 ### Or from source
 

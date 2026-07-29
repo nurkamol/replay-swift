@@ -36,6 +36,14 @@ class ReplayAppSource < Formula
   # macOS 14 since 0.9.8. The two interface APIs that begin later — `glassEffect` (26) and
   # `Color.mix(with:by:)` (15) — are guarded, and below 26 the Surfaces setting offers the
   # two styles that exist. Measured by building against each floor, not assumed.
+  #
+  # **Xcode, and not Command Line Tools — the reason is SwiftUI's macros.** `@State`, `@Entry`
+  # and `#Preview` are macros whose implementations (`SwiftUIMacros`, `PreviewsMacros`) ship
+  # inside Xcode; CLT carries the compiler but not the plugins, so a build there fails with
+  # "external macro implementation type could not be found" on the first view. It is not the
+  # App Intents processor, which is optional and skipped when absent. Measured 2026-07-30 by
+  # building the package with `DEVELOPER_DIR` pointed at CLT: the CLI succeeded, the app did
+  # not. The `replay` formula therefore does *not* require Xcode; this one does.
   depends_on xcode: :build
   depends_on macos: :sonoma
 

@@ -21,10 +21,15 @@ class Replay < Formula
   license "MIT"
   head "https://github.com/nurkamol/replay-swift.git", branch: "main"
 
-  # macOS 14. Two APIs in the interface begin later — `glassEffect` at 26 and
-  # `Color.mix(with:by:)` at 15 — and both are guarded, so the package builds and runs three
-  # OS generations back. Measured by building against each floor in turn rather than assumed.
-  depends_on xcode: :build
+  # macOS 14. Two APIs in the *interface* begin later — `glassEffect` at 26 and
+  # `Color.mix(with:by:)` at 15 — and both are guarded. The CLI touches neither.
+  #
+  # **No `depends_on xcode: :build`, and that was measured.** It used to be here, on the
+  # assumption that the CLI shares a `Package.swift` with the app and so shares its needs. It
+  # does not: `swift build --product replay` completes with Command Line Tools alone, because
+  # this product is `ReplayCore` and Foundation and nothing else. The app needs Xcode for
+  # SwiftUI's macro plugins; a shell tool that reads SQLite does not, and asking somebody to
+  # install 15 GB of Xcode to get one was a requirement nobody had checked.
   depends_on macos: :sonoma
 
   def install

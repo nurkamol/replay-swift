@@ -5,6 +5,45 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## The CLI never needed Xcode; the app needs it for SwiftUI's macros — 2026-07-30
+
+**The question**, asked after a Mac mini failed to install: Homebrew reported *"A full
+installation of Xcode.app is required. Installing just the Command Line Tools is not
+sufficient."* Is that true, and true of everything here?
+
+**Measured** by pointing `DEVELOPER_DIR` at Command Line Tools (Swift 6.4) and building each
+product:
+
+| product | with CLT alone |
+|---|---|
+| `replay` (the CLI) | **builds** — `Build complete` in 53s |
+| `Replay.app` | **fails** on the first view |
+
+The app's failure is not the App Intents processor, which `make-app.sh` already skips when it
+is absent. It is SwiftUI's macros:
+
+```
+error: external macro implementation type 'SwiftUIMacros.StateMacro' could not be found
+       for macro 'State()'; plugin for module 'SwiftUIMacros' not found
+error: external macro implementation type 'PreviewsMacros.SwiftUIView' could not be found
+       for macro 'Preview(_:body:)'
+```
+
+`@State`, `@Entry` and `#Preview` are macros, and their implementations ship *inside Xcode*.
+CLT carries the compiler and the SDK but not the macro plugins, so every view fails to
+compile. Nothing in the source can work around that.
+
+**So the two formulae differ, and one of them had been wrong.** `replay.rb` declared
+`depends_on xcode: :build` on the assumption that sharing a `Package.swift` with the app means
+sharing its requirements. It does not — the CLI product is `ReplayCore` and Foundation. That
+declaration was asking people to install 15 GB to get a shell tool, and it is gone.
+`replay-app-source.rb` keeps it, now with the real reason written down.
+
+**Re-run it:** `DEVELOPER_DIR=/Library/Developer/CommandLineTools swift build -c release
+--product replay` succeeds; the same with `./scripts/make-app.sh` does not.
+
+---
+
 ## "Is this an app?" is the `.app` extension, not the bundle identifier — 2026-07-29
 
 **The question:** `UNUserNotificationCenter.current()` raises `NSInternalInconsistencyException:
