@@ -353,7 +353,12 @@ because it is still a product decision nobody has taken.
       It found the appearance setting reaching two windows out of six — see the ledger. The
       surfaces themselves came back clean.
 
-- [ ] **A border beam, in the one place it would be information.** `S` for the effect, and the
+- [x] **A border beam, in the one place it would be information.** Built 2026-07-29 in 0.9.6:
+      thirty lines rather than the package, on the update banner while an update installs, and
+      nowhere else. Off under Reduce Motion. The original entry, with the reasoning about where
+      it would and would not belong:
+
+      ~~Was:~~ `S` for the effect, and the
       decision is the whole of the work. `border-beam` (jakubantalik) ships a SwiftUI package —
       `.package(url: "https://github.com/Jakubantalik/border-beam.git", from: "1.4.0")`,
       `import BorderBeamKit`, `BorderBeam(size: .md) { … }` or `.borderBeam(.md, colorVariant:
@@ -378,7 +383,11 @@ because it is still a product decision nobody has taken.
         the same shape. No indicator of any kind, beam or spinner, can help until that work
         moves off the main actor.
 
-- [ ] **Importing a backup still blocks the window.** `S`–`M` Compaction moved to its own
+- [x] **Importing a backup no longer blocks the window.** Done 2026-07-29. Reading — parse,
+      validate, produce rows — happens off the main actor; the merge stays on it in one
+      transaction, with recording paused around it. "Importing…" is a state that can draw now.
+
+      ~~Was:~~ `S`–`M` Compaction moved to its own
       connection off the main actor in 0.9.6; import did not, because it merges *into* the live
       database rather than rewriting a copy, so a second connection would have to hand the rows
       back and the main one reload behind it. Seconds rather than tens of seconds, which is why
@@ -399,7 +408,19 @@ because it is still a product decision nobody has taken.
         are small and could be mirrored into the group container rather than moved. That
         would make it additive instead of a migration, and today's total is a headline.
 
-- [ ] **Multilingual support.** **The groundwork is built (2026-07-28); the translating is
+- [x] **Multilingual support — built and shipping.** 0.9.7 ships English and Uzbek, a picker
+      in Settings ▸ General, `tools/translate.mjs` (CSV in, catalogue out, coverage report),
+      `docs/TRANSLATING.md`, and a runtime key recorder — `REPLAY_LOG_KEYS` plus the screenshot
+      harness — which is the only scan that has ever been right about what the app says.
+      `Loc.locale` makes dates and numbers follow the chosen language too.
+      · **What remains is one tier**: the sentences assembled at runtime — "Late night in
+        Terminal", "8m not recorded", "23 applications" — which have no whole sentence to be a
+        key. Each becomes a format string with positional arguments, translated at the view
+        layer while the contract keeps the English, the way `SettingsRow.label`/`base` do.
+        A day's work, and it is the difference between "translated" and "translated except
+        the parts you look at most".
+
+      ~~Was:~~ **Multilingual support.** **The groundwork is built (2026-07-28); the translating is
       not, and needs a language and a person before it can start.** What exists now:
       · `Loc` in `ReplayCore` — one table, one bundle, and **the English text is the key**.
         A missing translation therefore falls back to correct English rather than to a raw
