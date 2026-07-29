@@ -107,6 +107,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // launch must not wait on a network, and a failed check is a non-event that will be
         // tried again tomorrow.
         Task { await updates.checkIfDue() }
+        // And whether this launch is a version that has just arrived. Read before anything
+        // is shown and written back immediately, so a crash between the two costs a note
+        // rather than repeating one every launch forever.
+        let launchNote = Updates.launchNote(
+            previous: preferences.lastRunVersion,
+            current: Replay.version,
+            selfUpdated: preferences.selfUpdated
+        )
+        preferences.lastRunVersion = Replay.version
+        preferences.selfUpdated = false
         // A pinned "open on" is an instruction and wins; otherwise come back to where the
         // window was left, which is what a Mac app does.
         if let pinned = Navigation.Surface(rawValue: preferences.launchSurface.label),
@@ -119,6 +129,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installApplicationMenu()
         installStatusItem()
         showWindow()
+
+        // What the new version has to say for itself, if it is new.
+        //
+        // A window only for the update somebody asked for: they pressed a button, the app
+        // vanished and came back, and "what did I just get" is the question they are holding.
+        // An update that arrived by `brew upgrade` gets the banner instead — the same
+        // information, in the place the offer would have been, waiting to be read rather than
+        // asking to be. After `showWindow`, so the window it sits over already exists.
+        switch launchNote {
+        case .whatsNew: openWhatsNew()
+        case .quietly: updates.noteInstalled(Replay.version)
+        case .nothing: break
+        }
 
         // The menu is rebuilt when it opens, but the *title* has to keep up on its own.
         // The Dock badge rides the same tick: it changes once an hour at most, so it does
@@ -578,6 +601,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 onOpenSettings: { [weak self] in self?.openSettings() },
                 onOpenScreensaver: { [weak self] in self?.openScreensaver() },
                 onOpenAmbient: { [weak self] in self?.openAmbient() },
+                onOpenWhatsNew: { [weak self] in self?.openWhatsNew() },
                 updates: updates
             )
         )

@@ -123,6 +123,50 @@ struct UpdateBehaviour {
         #expect(Updates.retryAfter(header: "soon", now: now) == nil)
     }
 
+    // MARK: - What a launch says about the version it is running
+
+    @Test("A first run announces nothing")
+    func firstRunIsQuiet() {
+        // Nothing was written down, so there is nothing to compare — and telling somebody
+        // who has just installed the app what is new in it is telling them what they chose.
+        #expect(Updates.launchNote(previous: nil, current: "0.9.6", selfUpdated: false) == .nothing)
+        #expect(Updates.launchNote(previous: "", current: "0.9.6", selfUpdated: true) == .nothing)
+    }
+
+    @Test("The same version again says nothing, however it got here")
+    func sameVersionIsQuiet() {
+        #expect(Updates.launchNote(previous: "0.9.6", current: "0.9.6", selfUpdated: false) == .nothing)
+        // Even with the flag set — a self-update that ended on the version it started from
+        // did not update anything, whatever it thinks.
+        #expect(Updates.launchNote(previous: "0.9.6", current: "0.9.6", selfUpdated: true) == .nothing)
+    }
+
+    @Test("An update somebody pressed Update for opens What's New")
+    func askedForItGetsTheWindow() {
+        #expect(Updates.launchNote(previous: "0.9.5", current: "0.9.6", selfUpdated: true) == .whatsNew)
+    }
+
+    @Test("An update from outside the app gets the banner instead")
+    func arrivedQuietlyGetsTheBanner() {
+        // `brew upgrade`, or a bundle dragged into place. Nobody is waiting on an answer, so
+        // nothing takes the screen.
+        #expect(Updates.launchNote(previous: "0.9.5", current: "0.9.6", selfUpdated: false) == .quietly)
+    }
+
+    @Test("A downgrade says nothing at all")
+    func downgradeIsQuiet() {
+        // Putting an older copy back is deliberate. Announcing the release they just escaped
+        // would be the app arguing with them.
+        #expect(Updates.launchNote(previous: "0.9.6", current: "0.9.5", selfUpdated: false) == .nothing)
+        #expect(Updates.launchNote(previous: "0.9.6", current: "0.9.5", selfUpdated: true) == .nothing)
+    }
+
+    @Test("A version that cannot be read is not an update")
+    func unreadableIsQuiet() {
+        #expect(Updates.launchNote(previous: "nightly", current: "0.9.6", selfUpdated: true) == .nothing)
+        #expect(Updates.launchNote(previous: "0.9.5", current: "", selfUpdated: true) == .nothing)
+    }
+
     @Test("Only 304 means unchanged")
     func unchangedStatus() {
         #expect(Updates.isUnchanged(status: 304))

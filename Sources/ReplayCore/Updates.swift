@@ -209,6 +209,39 @@ public enum Updates {
         return when > now ? when : nil
     }
 
+    /// What a launch should say about the version it is running, if anything.
+    ///
+    /// The self-updater replaces the bundle and restarts, so "after the update" is a *later
+    /// launch* rather than a moment in the install. Which means the only place this can be
+    /// decided is here, from what the last run wrote down.
+    public enum LaunchNote: Equatable, Sendable {
+        /// Nothing to say: a first run, the same version again, or a downgrade.
+        case nothing
+        /// The user pressed Update seconds ago and the app disappeared and came back. Show
+        /// them what they got — they asked a question and this is its answer.
+        case whatsNew
+        /// The version changed without anyone pressing anything in Replay: `brew upgrade`, or
+        /// a bundle dragged into place. Worth mentioning, not worth a window taking the
+        /// screen — SPEC §8's "never interrupt" is about exactly this difference.
+        case quietly
+    }
+
+    /// Decide from the two versions and how the change happened.
+    ///
+    /// A *downgrade* says nothing at all. Somebody who has just put an older copy back has
+    /// done it deliberately, and a window announcing the release they were escaping would be
+    /// the app arguing with them.
+    public static func launchNote(
+        previous: String?, current: String, selfUpdated: Bool
+    ) -> LaunchNote {
+        // No previous version means a first run — or the first run after this was added,
+        // which is the same thing as far as anyone can tell. Announcing a release to somebody
+        // who has just installed the app is telling them what they already chose.
+        guard let previous, !previous.isEmpty else { return .nothing }
+        guard isNewer(current, than: previous) else { return .nothing }
+        return selfUpdated ? .whatsNew : .quietly
+    }
+
     /// Whether a reply means "nothing has changed since the copy you already have".
     ///
     /// Its own function because the *consequence* is the interesting part: a 304 carries no

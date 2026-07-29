@@ -446,6 +446,23 @@ final class Preferences {
         didSet { writeJSON(lastSeenRelease, "lastSeenRelease") }
     }
 
+    /// The version that ran last time, so a launch can tell it is a new one.
+    ///
+    /// Written on every launch, which makes this true for *any* way the bundle changed —
+    /// the in-app updater, `brew upgrade`, or somebody dragging a new copy into place. The
+    /// updater's own flag below is what separates the case where a person is waiting for an
+    /// answer from the case where the app simply came back different.
+    var lastRunVersion: String {
+        didSet { write(lastRunVersion, "lastRunVersion") }
+    }
+
+    /// Set the instant before the updater restarts the app, and cleared the moment the new
+    /// launch has read it. It is the only thing that survives the process boundary between
+    /// "I pressed Update" and "here is what you got".
+    var selfUpdated: Bool {
+        didSet { write(selfUpdated, "selfUpdated") }
+    }
+
     /// When the rate-limit window GitHub named reopens, from `x-ratelimit-reset`.
     ///
     /// Nil unless the last reply was a refusal. It only ever delays a check — see
@@ -538,6 +555,8 @@ final class Preferences {
         lastSeenRelease = (defaults.data(forKey: "lastSeenRelease"))
             .flatMap { try? JSONDecoder().decode(Updates.Release.self, from: $0) }
         updateRetryAfter = defaults.object(forKey: "updateRetryAfter") as? Date
+        lastRunVersion = defaults.string(forKey: "lastRunVersion") ?? ""
+        selfUpdated = defaults.bool(forKey: "selfUpdated")
         let hour = defaults.integer(forKey: "dailySummaryHour")
         dailySummaryHour = hour == 0 ? 18 : hour
         dailySummary = defaults.bool(forKey: "dailySummary")
@@ -609,6 +628,8 @@ final class Preferences {
         "updateETag",
         "lastSeenRelease",
         "updateRetryAfter",
+        "lastRunVersion",
+        "selfUpdated",
         "screensaverExitOnMouseMove",
         "screensaverIdleMinutes",
         "idleDisplay",
@@ -684,6 +705,8 @@ final class Preferences {
         updateETag = fresh.updateETag
         lastSeenRelease = fresh.lastSeenRelease
         updateRetryAfter = fresh.updateRetryAfter
+        lastRunVersion = fresh.lastRunVersion
+        selfUpdated = fresh.selfUpdated
         dailySummaryHour = fresh.dailySummaryHour
         dailySummary = fresh.dailySummary
         weeklyRecap = fresh.weeklyRecap

@@ -148,6 +148,7 @@ struct RootView: View {
     /// Likewise — the overlay is an `NSWindow`, which a view cannot raise on its own.
     let onOpenScreensaver: () -> Void
     let onOpenAmbient: () -> Void
+    let onOpenWhatsNew: () -> Void
     let updates: UpdateModel
 
     @Environment(\.motion) private var motion
@@ -298,12 +299,29 @@ struct RootView: View {
             // something optional. A safe-area inset displaces only the pane it belongs to,
             // which is what the rest of the window's chrome already does.
             .safeAreaInset(edge: .top, spacing: 0) {
+                // At most one of the two, and the offer wins: a version that has arrived is
+                // history, and one that is waiting is a decision. They cannot both be true
+                // for long anyway — a launch that has just updated has nothing newer to find
+                // until the next release.
                 if updates.shouldOffer, let release = updates.available {
                     UpdateBanner(release: release, updates: updates, onDismiss: updates.dismiss)
                         .transition(motion.transition(.move(edge: .top).combined(with: .opacity)))
+                } else if let installed = updates.installed {
+                    InstalledBanner(
+                        version: installed,
+                        onWhatsNew: {
+                            onOpenWhatsNew()
+                            // Read is read: the note has done its job and should not be
+                            // sitting there when the window comes back to the front.
+                            updates.dismissInstalled()
+                        },
+                        onDismiss: updates.dismissInstalled
+                    )
+                    .transition(motion.transition(.move(edge: .top).combined(with: .opacity)))
                 }
             }
             .animation(motion.animation(Design.Motion.settle), value: updates.shouldOffer)
+            .animation(motion.animation(Design.Motion.settle), value: updates.installed)
         }
     }
 

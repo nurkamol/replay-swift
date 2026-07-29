@@ -25,6 +25,9 @@ import SwiftUI
 final class UpdateModel {
     /// A release newer than this build, once one has been found.
     private(set) var available: Updates.Release?
+    /// The version this launch arrived as, when it arrived by an update rather than by being
+    /// installed. Drives the quieter half of the banner: *installed*, not *available*.
+    private(set) var installed: String?
     private(set) var checking = false
     /// How far an install has got, so the panel can say so rather than freeze.
     private(set) var install: Install = .idle
@@ -188,6 +191,12 @@ final class UpdateModel {
             + when.formatted(.dateTime.hour().minute()) + "."
     }
 
+    /// Say that this launch is a new version, so the banner can mention it once.
+    func noteInstalled(_ version: String) { installed = version }
+
+    /// Put the "installed" note away. Nothing remembers it: it is true for one launch.
+    func dismissInstalled() { installed = nil }
+
     /// Stop offering this one. It comes back if a newer release appears.
     func dismiss() {
         if let available { preferences.skippedUpdate = available.version }
@@ -279,6 +288,58 @@ struct UpdateBanner: View {
         .popover(isPresented: $showingNotes, arrowEdge: .bottom) {
             ReleaseNotes(text: release.notes)
         }
+    }
+}
+
+/// The version that has just arrived, said once and then gone.
+///
+/// The other half of ``UpdateBanner``, in the same slot and the same shape: one is an offer,
+/// this is an answer. It exists because an update that happened *outside* the app — a `brew
+/// upgrade`, a bundle dragged into place — otherwise arrives with no acknowledgement at all,
+/// and "what changed?" is the first thing anybody thinks after noticing a version moved.
+///
+/// A banner rather than the What's New window, and the distinction is the whole point: this
+/// update was not asked for *here*, so it is offered to be read rather than put in the way.
+/// The window is for the person who pressed Update thirty seconds ago and is waiting.
+///
+/// It remembers nothing. Dismissed, or simply not read, it is gone on the next launch —
+/// there is no state worth keeping about a note whose whole content is "this happened".
+struct InstalledBanner: View {
+    let version: String
+    let onWhatsNew: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: Design.Space.card) {
+            Image(systemName: "checkmark.circle")
+                .font(Design.Text.prose)
+                // The one green thing in the app, and it earns it: this is the only state
+                // that reports something having gone right rather than describing a day.
+                .foregroundStyle(Design.Colour.met)
+            VStack(alignment: .leading, spacing: Design.Space.hairline) {
+                Text(String(format: Loc.t("Updated to Replay %@"), "\(version)"))
+                    .font(Design.Text.itemTitle)
+                Text(Loc.t("Your record is untouched — an update replaces the app, not the history."))
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: Design.Space.inline)
+            Button(Loc.t("What's New"), action: onWhatsNew)
+                .buttonStyle(.borderedProminent)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark").font(Design.Text.micro)
+            }
+            .buttonStyle(.plain)
+            .help(Loc.t("Dismiss"))
+            .accessibilityLabel(Loc.t("Dismiss"))
+        }
+        .padding(Design.Space.section)
+        .background(.regularMaterial, in: RoundedRectangle(
+            cornerRadius: Design.Radius.card, style: .continuous
+        ))
+        .padding(Design.Space.section)
+        .frame(maxWidth: Design.Layout.readableWidth)
     }
 }
 
@@ -426,6 +487,10 @@ extension UpdateModel {
             _ = try FileManager.default.replaceItemAt(bundle, withItemAt: unpacked)
 
             install = .done
+            // The one fact that has to survive the process ending: somebody pressed Update
+            // and is waiting to see what they got. The new launch reads it and shows What's
+            // New; see `Updates.launchNote`.
+            preferences.selfUpdated = true
             relaunch(at: bundle)
         } catch let error as Failure {
             install = .idle

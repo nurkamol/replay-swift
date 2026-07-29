@@ -19,6 +19,24 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## Unreleased
+
+### Added
+
+- **After an update, Replay says what you got.** The updater replaces the bundle and restarts,
+  so "after the update" is really *the next launch* — and until now that launch said nothing at
+  all. It now compares the version it is running against the one that ran last time and, if it
+  is newer, answers in one of two ways.
+  - **You pressed Update:** the What's New window opens by itself. You asked a question thirty
+    seconds ago, the app disappeared and came back, and this is the answer.
+  - **It arrived some other way** — `brew upgrade`, a bundle dragged into place — a banner in
+    the same slot the update offer uses: "Updated to Replay 0.9.6", a **What's New** button and
+    a dismiss ✕. Nobody is waiting on an answer, so nothing takes the screen. SPEC §8's "never
+    interrupt" is exactly this distinction.
+  - A **downgrade says nothing**: putting an older copy back is deliberate, and announcing the
+    release somebody just escaped would be the app arguing with them.
+  - The note is true for one launch and remembers nothing. Read or dismissed, it is gone.
+
 ## 0.9.5 — 2026-07-29
 
 The update check spending its own attempts badly, and one claim measured rather than
