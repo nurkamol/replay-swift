@@ -1,4 +1,3 @@
-.json
 %@ (not connected)
 %@ active
 %@ active today
@@ -110,7 +109,6 @@ Done
 Drift the screensaver in after this long with no activity, while Replay is focused. Any key or movement wakes it.
 Edit the note
 Either drifts in only while Replay's own window is in front, so it never appears over another app. Never means neither does, and both can still be opened by hand from the sidebar, the View menu or ⌘K. What starts on its own leaves the way it came: any key, click or movement returns you — including in ambient mode, which stays put when you open it yourself, since that is the point of it.
-en_US_POSIX
 Events
 Every day
 Every sentence is drawn only from your own local history. Nothing is invented.
@@ -201,7 +199,7 @@ No goal
 No memories for this date yet
 No projects yet
 No recent history
-No results for \u{201C}%@\u{201D}
+No results for “%@”
 No session in this range is in the kinds of work, or the layers, you chose.
 No sessions in the kept window for this memory.
 No shared history
@@ -290,9 +288,8 @@ Replay — %@
 Replay — paused
 Replay — tracking
 Replay %@ is available
-Replay backup 
 Replay Day
-Replay hasn\u{2019}t recorded this application in the last 30 days.
+Replay hasn’t recorded this application in the last 30 days.
 Replay reads which app is frontmost through macOS’s standard signal — it needs no Accessibility, Automation, or App Management permission to do it, and never looks inside your windows. The links are only for verifying, or a locked-down Mac.
 Replay reads which app is frontmost through macOS's standard signal. It needs no Accessibility, Automation, or Screen Recording permission, and never looks inside your windows.
 Replay shows at most one memory a day, and most days it shows none. The briefing is a look back at yesterday, and it is gone by lunchtime. Everything either says is read from your own history on this Mac.
@@ -351,7 +348,7 @@ The whole of it, at a glance — how long you've been building this memory, and 
 Theme
 There is no undo — export a backup first if you want to keep your timeline.
 These three are the screensaver's own, and apply however it was started. Opening either of the two displays closes the other; they are never both up, and neither ever covers the one you are deliberately reading. Escape and the close button always dismiss whichever is up, whatever these say.
-These two apps haven\u{2019}t been used together in the last 30 days.
+These two apps haven’t been used together in the last 30 days.
 This Month
 This Week
 Timeline

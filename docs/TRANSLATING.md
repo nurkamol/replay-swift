@@ -75,8 +75,9 @@ pretended away. Until then those surfaces stay English in every language.
 
 `node tools/translate.mjs status` is the answer, always. At the time of writing:
 
-- **uz** — 318 of 414, built with `--partial` for checking in the running UI. The remaining 96
-  are the long-form Guide answers and Settings explanations, which are most of the characters
-  and few of the rows.
+- **uz — 423 of 423, complete and shipping.** Machine-made, and it wants a native reader: it
+  is fluent-looking Uzbek written by a model, not by an Uzbek speaker, and the difference shows
+  up in exactly the places nobody checks. Corrections go in `translations/uz.csv`, not in the
+  `.lproj`.
 - **es, fr, de, pt-BR, it, ru, tr, ar, zh-Hans, ja, ko, hi** — scaffolded and empty, ready to
   hand to a service or a person. None of them ship until they are finished.

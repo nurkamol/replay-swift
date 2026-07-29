@@ -36,12 +36,16 @@ Developer ID and notarised. Everything before it is a version of the source.
 - **A language ships only when it is complete.** `build` refuses below 100% unless `--partial`
   is passed: an `.lproj` tells macOS "Replay speaks this", and a Mac set to it would then show
   translated and English lines mixed with no way to tell which is which.
-- **Uzbek**, as the first translation — 321 of 426 strings, built with `--partial` so it can be
-  read in the running app. It is machine-made and wants a native reader before it ships.
-  Twelve more languages are scaffolded and empty, ready to be handed to a service.
+- **Uzbek, complete** — all 423 strings, so it ships without `--partial`. It is machine-made
+  and wants a native reader: corrections belong in `translations/uz.csv`, and rebuilding is one
+  command. Twelve more languages are scaffolded and empty, ready for a service or a person.
 
 ### Fixed
 
+- **Swift unicode escapes were being carried into the table as text.** Three of the longest
+  strings in the app contain `\u{2019}` in the source; the extractor took them literally, so
+  those keys could never have matched the string the app actually looks up. Found by
+  translating them — nothing else would have.
 - **The sidebar was never translatable**, and no audit could have said so: its names arrive as
   `Navigation.Surface.rawValue`, and `tools/strings-audit.mjs` looks for literals. The most
   visible column in the app was English in every language while the audit read clean. It goes

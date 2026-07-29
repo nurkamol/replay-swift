@@ -71,8 +71,15 @@ const swiftFiles = (dir) =>
    for SQL and for shell scripts here, never for copy. */
 const LITERAL = /"((?:[^"\\]|\\.)*)"/g;
 
+/* `\u{2019}` is a Swift escape, and the *runtime* string has the character in it — so a key
+   left escaped is a key that can never match anything. Found by translating: three of the
+   longest strings in the app carried a literal `\u{2019}` into the table. */
 const unescape = (s) =>
-  s.replace(/\\n/g, "\n").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+  s
+    .replace(/\\u\{([0-9a-fA-F]+)\}/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/\\n/g, "\n")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\");
 
 /** Is this a sentence somebody reads, or an identifier that happens to be letters? */
 const isCopy = (s) => {
@@ -82,6 +89,10 @@ const isCopy = (s) => {
   if (/^[a-z]+([A-Z][a-z0-9]*)+$/.test(s)) return false;       // camelCase keys
   if (/^%@?[a-z]?$/i.test(s)) return false;                     // a bare format specifier
   if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE|PRAGMA|VACUUM)\b/i.test(s)) return false;
+  // Not words: a file extension, a locale identifier, a filename this app builds.
+  if (/^\.[a-z]+$/i.test(s)) return false;
+  if (/^[a-z]{2}_[A-Z]{2}(_[A-Z]+)?$/.test(s)) return false;
+  if (/^Replay backup $/.test(s)) return false;
   return true;
 };
 
