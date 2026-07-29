@@ -21,8 +21,11 @@ class ReplayApp < Formula
   license "MIT"
   head "https://github.com/nurkamol/replay-swift.git", branch: "main"
 
+  # macOS 14 since 0.9.8. The two interface APIs that begin later — `glassEffect` (26) and
+  # `Color.mix(with:by:)` (15) — are guarded, and below 26 the Surfaces setting offers the
+  # two styles that exist. Measured by building against each floor, not assumed.
   depends_on xcode: :build
-  depends_on macos: :tahoe
+  depends_on macos: :sonoma
 
   def install
     # `--disable-sandbox` as an argument, not an environment variable: Homebrew scrubs the
