@@ -22,9 +22,9 @@ public enum Pause {
         /// What the menu calls it, as a sentence completing "Pause for…".
         public var label: String {
             switch self {
-            case .fifteenMinutes: "15 minutes"
-            case .hour: "1 hour"
-            case .untilTomorrow: "Until tomorrow"
+            case .fifteenMinutes: Loc.t("15 minutes")
+            case .hour: Loc.t("1 hour")
+            case .untilTomorrow: Loc.t("Until tomorrow")
             }
         }
     }

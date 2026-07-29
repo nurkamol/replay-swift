@@ -22,9 +22,9 @@ public enum AutoBackup {
 
         public var label: String {
             switch self {
-            case .off: "Never"
-            case .daily: "Every day"
-            case .weekly: "Every week"
+            case .off: Loc.t("Never")
+            case .daily: Loc.t("Every day")
+            case .weekly: Loc.t("Every week")
             }
         }
 

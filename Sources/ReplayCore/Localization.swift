@@ -60,8 +60,37 @@ public enum Loc {
 
     /// What the reader sees, in whatever language the machine is set to.
     public static func t(_ english: String) -> String {
-        string(english, in: language)
+        record(english)
+        return string(english, in: language)
     }
+
+    /// Every key the app actually asks for, written to a file when `REPLAY_LOG_KEYS` is set.
+    ///
+    /// **The ground truth, and the reason it exists.** Every other way of finding translatable
+    /// strings is a scan of the source guessing what will reach a person, and each guess has
+    /// been wrong in a different way: enum raw values are invisible to it, several `case`s on
+    /// one line hid half a sidebar, a helper that collected copy and never looked it up read
+    /// as complete. This asks the opposite question — what did the app *ask* for while
+    /// somebody drove it through every surface — and the answer cannot be wrong about the
+    /// surfaces it visited.
+    ///
+    /// Off unless the variable is set, and it appends rather than truncating so a run of
+    /// `tools/screenshots.sh` accumulates every surface into one file.
+    private static func record(_ english: String) {
+        guard let path = ProcessInfo.processInfo.environment["REPLAY_LOG_KEYS"] else { return }
+        recordLock.lock()
+        defer { recordLock.unlock() }
+        guard let data = (english + "\n").data(using: .utf8) else { return }
+        if let handle = FileHandle(forWritingAtPath: path) {
+            handle.seekToEndOfFile()
+            handle.write(data)
+            try? handle.close()
+        } else {
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    nonisolated(unsafe) private static let recordLock = NSLock()
 
     /// One string in one named language, with the English as the fallback at every step.
     ///

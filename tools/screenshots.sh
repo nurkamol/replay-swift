@@ -136,7 +136,14 @@ VERSION_IN_BUILD="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionStrin
 
 pkill -f "$APP" 2>/dev/null || true
 sleep 1
-open -a "$APP"
+# `open` does not pass the environment on, so a key-logging run launches the binary directly.
+# Same bundle either way — what matters is that `Loc` can see `REPLAY_LOG_KEYS`.
+if [ -n "${REPLAY_LOG_KEYS:-}" ]; then
+    : > "$REPLAY_LOG_KEYS"
+    "$APP/Contents/MacOS/Replay" >/dev/null 2>&1 &
+else
+    open -a "$APP"
+fi
 sleep 8
 
 osa -e 'tell application "Replay" to activate' >/dev/null

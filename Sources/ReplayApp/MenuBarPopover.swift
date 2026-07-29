@@ -305,7 +305,7 @@ struct MenuBarPopoverView: View {
             ForEach(Pause.Span.allCases, id: \.self) { span in
                 MenuBarRow(
                     glyph: "circle.dashed",
-                    title: Loc.t(span.label),
+                    title: span.label,
                     indented: true,
                     action: { onPause(span) }
                 )

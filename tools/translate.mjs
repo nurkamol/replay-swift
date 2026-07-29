@@ -163,6 +163,25 @@ function collectKeys() {
     }
   }
 
+  // 3. And everything the running app actually asked for.
+  //
+  // **This is the ground truth and the other two are approximations of it.** A scan of the
+  // source guesses which strings will reach a person, and every version of that guess has been
+  // wrong differently: enum raw values are invisible to it, several `case`s on one line hid
+  // half a sidebar, a helper that collected copy and never looked it up read as complete.
+  // `REPLAY_LOG_KEYS=<file> ./tools/screenshots.sh` drives every surface with `Loc` recording
+  // what it is asked for, and `translate.mjs record <file>` merges the result here.
+  //
+  // Committed rather than regenerated on demand, because it is evidence: it says which strings
+  // this app was seen to ask for, on a day somebody drove it through everything.
+  const recorded = join(OUT, "runtime-keys.txt");
+  if (existsSync(recorded)) {
+    for (const line of readFileSync(recorded, "utf8").split("\n")) {
+      const text = line.trim();
+      if (text && isCopy(text)) keys.add(text);
+    }
+  }
+
   return [...keys].sort((a, b) => a.localeCompare(b, "en"));
 }
 
@@ -248,6 +267,25 @@ if (command === "keys") {
       body + "\n"
   );
   console.log(`${argument}.lproj — ${done.length} strings${missing ? `, ${missing} still English` : ""}`);
+} else if (command === "record") {
+  // Merge a run's log into the recorded set. Union rather than replace: one run visits the
+  // surfaces that run visited, and nothing else — a missing key is evidence of a gap in the
+  // *drive*, not evidence the string is gone.
+  if (!argument) { console.error("usage: translate.mjs record <log-file>"); process.exit(2); }
+  if (!existsSync(argument)) { console.error(`no such file: ${argument}`); process.exit(1); }
+  mkdirSync(OUT, { recursive: true });
+  const path = join(OUT, "runtime-keys.txt");
+  const before = existsSync(path)
+    ? new Set(readFileSync(path, "utf8").split("\n").map((l) => l.trim()).filter(Boolean))
+    : new Set();
+  const size = before.size;
+  for (const line of readFileSync(argument, "utf8").split("\n")) {
+    const text = line.trim();
+    if (text && isCopy(text)) before.add(text);
+  }
+  const all = [...before].sort((a, b) => a.localeCompare(b, "en"));
+  writeFileSync(path, all.join("\n") + "\n");
+  console.log(`recorded ${all.length} keys (${all.length - size} new) → translations/runtime-keys.txt`);
 } else if (command === "status") {
   const keys = collectKeys();
   const languages = existsSync(OUT)
@@ -268,7 +306,7 @@ if (command === "keys") {
   }
 } else {
   console.error(
-    "usage: translate.mjs keys | new <code> | build <code> [--partial] | status"
+    "usage: translate.mjs keys | new <code> | build <code> [--partial] | record <log> | status"
   );
   process.exit(2);
 }

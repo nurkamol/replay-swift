@@ -227,9 +227,9 @@ private struct Footnote: View {
     init(_ text: String) { self.text = text }
 
     var body: some View {
-        // Translated here. The extractor collects these strings because they are copy; without
-        // this they were collected, translated, and then never asked for — which is the worst
-        // of the three states, because `status` says the language is complete.
+        // Translated here, and callers that compose a footnote out of parts translate the
+        // parts instead — a lookup of an already-joined string asks the table for a sentence
+        // nobody wrote.
         Text(Loc.t(text))
             // Both are needed: the frame places a short line, `multilineTextAlignment`
             // places the wrapped ones, which a Form otherwise centres.
@@ -394,10 +394,16 @@ private struct GeneralTab: View {
                         if !on { NSApp.activate(ignoringOtherApps: true) }
                     }
             } footer: {
+                // Two sentences, looked up separately and joined after. Concatenating first
+                // and looking up the result asked the table for a hybrid — half Uzbek, half
+                // English — which matched nothing and rendered exactly that way. A key has to
+                // be a whole sentence *and* a sentence has to be a whole key.
                 Footnote(
-                    preferences.surfaceStyle.detail
-                        + " Reduce Transparency in System Settings overrides this and makes "
-                        + "every surface solid."
+                    preferences.surfaceStyle.detail + " "
+                        + Loc.t(
+                            "Reduce Transparency in System Settings overrides this and makes "
+                                + "every surface solid."
+                        )
                 )
             }
 
@@ -881,7 +887,7 @@ private struct DataTab: View {
                     selection: $preferences.autoBackupCadence
                 ) {
                     ForEach(AutoBackup.Cadence.allCases, id: \.self) { cadence in
-                        Text(Loc.t(cadence.label)).tag(cadence)
+                        Text(cadence.label).tag(cadence)
                     }
                 }
                 .explains(own: .automaticBackup)
@@ -1269,7 +1275,7 @@ private struct DisplayTab: View {
                     OwnSettingsRow.idleDisplay.label, selection: $preferences.idleDisplay
                 ) {
                     ForEach(IdleDisplay.allCases) { mode in
-                        Text(Loc.t(mode.label)).tag(mode)
+                        Text(mode.label).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)

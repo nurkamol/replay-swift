@@ -38,6 +38,34 @@ Cloud Translation, Crowdin, Lokalise, or a person with a spreadsheet. The round 
 4. `node tools/translate.mjs build fr`
 5. `swift build && open build/Replay.app`, then Settings ▸ General ▸ Language
 
+## The deep scan: ask the app, do not guess
+
+```bash
+REPLAY_LOG_KEYS=/tmp/keys.txt ./tools/screenshots.sh   # drives 21 surfaces, records every lookup
+node tools/translate.mjs record /tmp/keys.txt          # merge what it saw into the key list
+node tools/translate.mjs keys && node tools/translate.mjs new uz
+```
+
+**This is the ground truth, and the source scan is an approximation of it.** Every version of
+"find the translatable strings by reading the source" has been wrong differently:
+
+| what was missed | why | how it looked |
+|---|---|---|
+| the sidebar's names | enum raw values — no literal to find | "Today" translated *by coincidence*, "Collections" never |
+| five of seven Settings panes | several `case`s on one line, one regex match per line | "Umumiy" then five English words |
+| every Settings row name | `Picker(String)` is SwiftUI's non-localising overload | English labels above translated explanations |
+| a footnote | a helper collected the copy and never looked it up | one English paragraph between two Uzbek ones |
+
+The recorder asks the opposite question — what did the app *ask* for while somebody drove it
+through every surface — and it cannot be wrong about the surfaces it visited. It is wrong only
+about the ones nobody opened, which is why `translations/runtime-keys.txt` is committed and
+merged rather than regenerated: it is evidence, and a second run adds to it.
+
+Two things it caught that nothing else would have: a **double translation** — labels that
+translate themselves being wrapped again, so the second lookup missed and the recorded set
+filled with Uzbek — and a **hybrid key**, where a footnote joined a translated sentence to an
+English one and then looked the pair up, matching nothing.
+
 ## Rules a translator needs to know
 
 - **Format specifiers are not words.** `%@` is a value the app substitutes — a duration, an
@@ -75,7 +103,7 @@ pretended away. Until then those surfaces stay English in every language.
 
 `node tools/translate.mjs status` is the answer, always. At the time of writing:
 
-- **uz — 423 of 423, complete and shipping.** Machine-made, and it wants a native reader: it
+- **uz — 468 of 468, complete and shipping.** Machine-made, and it wants a native reader: it
   is fluent-looking Uzbek written by a model, not by an Uzbek speaker, and the difference shows
   up in exactly the places nobody checks. Corrections go in `translations/uz.csv`, not in the
   `.lproj`.
