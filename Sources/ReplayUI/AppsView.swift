@@ -203,3 +203,11 @@ private struct AppStatRow: View {
         .frame(height: Design.Layout.barThin)
     }
 }
+
+#if DEBUG
+#Preview("Apps") {
+    let world = PreviewWorld().load()
+    return AppsView(apps: world.apps, preferences: world.preferences, onOpenApp: { _ in })
+        .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif

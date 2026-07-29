@@ -711,3 +711,11 @@ struct Heatmap: View {
         return formatter.string(from: date(day))
     }
 }
+
+#if DEBUG
+#Preview("Memories") {
+    let world = PreviewWorld().load()
+    return MemoriesView(memories: world.memories, onOpenDay: { _ in })
+        .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif

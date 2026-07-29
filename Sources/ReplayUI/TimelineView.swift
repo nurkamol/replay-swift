@@ -696,3 +696,15 @@ struct DayView: View {
         return "Either nothing was recorded, or this day is older than your kept history."
     }
 }
+
+#if DEBUG
+#Preview("Timeline") {
+    let world = PreviewWorld().load()
+    return TimelineView(
+        history: world.history, overlays: world.overlays,
+        annotations: world.annotations, export: world.export,
+        onOpenDay: { _ in }, onReplayDay: { _, _ in }
+    )
+    .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif

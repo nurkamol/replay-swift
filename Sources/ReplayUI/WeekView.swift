@@ -368,3 +368,11 @@ private struct WorkflowRow: View {
         )
     }
 }
+
+#if DEBUG
+#Preview("This Week") {
+    let world = PreviewWorld().load()
+    return WeekView(week: world.week)
+        .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif

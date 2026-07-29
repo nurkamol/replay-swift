@@ -243,3 +243,14 @@ private struct CollectionRow: View {
         .accessibilityHint(Loc.t("Opens this collection"))
     }
 }
+
+#if DEBUG
+#Preview("Collections") {
+    let world = PreviewWorld().load()
+    return CollectionsView(
+        collections: world.collections, annotations: world.annotations,
+        export: world.export, onDeleteSession: { _ in }
+    )
+    .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif
