@@ -28,7 +28,7 @@ EXTRA_FLAGS=("$@")
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/build/Replay.app"
 BUNDLE_ID="app.replay.native"
-VERSION="0.9.7"   # matches the top entry in CHANGELOG.md
+VERSION="0.9.8"   # matches the top entry in CHANGELOG.md
 MIN_MACOS="14.0"  # Sonoma. The two APIs that began later are guarded; see DesignSystem.
 
 echo "Building ($CONFIG)…"

@@ -18,7 +18,7 @@ public enum Replay {
             ?? fallbackVersion
 
     /// The version in the source, for when there is no bundle to ask.
-    public static let fallbackVersion = "0.9.7"
+    public static let fallbackVersion = "0.9.8"
 }
 
 /// What each version of Replay actually gained.
@@ -45,6 +45,17 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.8",
+        title: "Three OS generations, and words you can read",
+        changes: [
+            "**Replay runs on macOS 14 Sonoma.** It needed macOS 26 before \u{2014} a version most Macs are not on. Two calls in the interface wanted something newer, both are guarded now, and nothing about the app changed on a current Mac.",
+            "**Below macOS 26 the Surfaces setting offers Solid and Frosted, and not Glass.** A setting that silently did nothing would be worse than one that is not there. A Glass preference carried over from a newer Mac draws as Frosted.",
+            "**The parts you read most are translated.** A session is called \"Late night in Terminal\" and a gap \"8m not recorded\" \u{2014} sentences assembled as you go, which had no whole string for a translator to be given. Titles, gaps, the headline figures, the sidebar and the time labels now follow the language you chose. Uzbek is complete at 519 strings.",
+            "**A report on a schedule.** Settings \u{25B8} Data writes a report of the period that just *finished* \u{2014} yesterday, or the week just gone \u{2014} into a folder you choose. The sibling of the scheduled backup, with one difference: a backup is insurance you hope never to open, and this is the one file here meant to be read.",
+            "The schedules section used to report one schedule as if it were both, so \"Nothing has been written yet\" could sit directly under a line saying a report had just been written.",
+        ]
+    ),
     Release(
         version: "0.9.7",
         title: "Replay speaks Uzbek",
