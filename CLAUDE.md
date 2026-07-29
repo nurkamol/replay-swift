@@ -74,10 +74,20 @@ node tools/release-notes.mjs 0.9.7 --check   # the tag, the build and the change
   colour, icon size, window metric — lives in `Sources/ReplayUI/DesignSystem.swift`, and
   `node tools/design-audit.mjs` fails the build if a view hard-codes one. The motion values
   are the reference's own and are checked by the parity suite, so the two apps move alike.
-- **Deployment target is macOS 26**, with `swift-tools-version: 6.2` because `.v26` was
-  introduced there. Raised on purpose: the interface leans on APIs that begin at 15 and 26.
-  `ReplayCore` needs none of them, so the parity suite still runs anywhere the toolchain
-  does — but CI needs a runner at least that new, which is why it is pinned to `macos-26`.
+- **Deployment target is macOS 14** (Sonoma), lowered from 26 on 2026-07-29. Exactly two
+  APIs in the interface begin later and both are guarded: `glassEffect` (26) in
+  `DesignSystem.swift`, and `Color.mix(with:by:)` (15) in `SkyView.swift`. Measured by
+  building against each floor in turn, not assumed — the earlier note here claimed the
+  interface leaned on those versions broadly, and it leaned on two calls.
+  · **macOS 13 is the real wall**, and it is not a gate: `@Observable` and
+    `ContentUnavailableView` begin at 14, and the models use Observation throughout.
+    Going lower means `ObservableObject`/`@Published` everywhere.
+  · Below 26 the Surfaces setting offers Solid and Frosted only — see `SurfaceStyle.offered`.
+    A stored `glass` from a newer Mac draws as frosted rather than as nothing.
+  · **Nothing here has been run on macOS 14.** It compiles for it and the guards are checked
+    by the suite; CI is still pinned to `macos-26` because that is the runner available, so
+    the claim is "builds for 14", not "tested on 14". Worth a real Sonoma machine before the
+    next release says otherwise.
 - **No external dependencies.** SQLite from the system (`import SQLite3`), AppKit,
   SwiftUI. Nothing to resolve, nothing to vendor. Do not add GRDB — the SQL here has to
   stay readable against the reference implementation's SQL.

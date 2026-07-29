@@ -381,7 +381,7 @@ private struct GeneralTab: View {
                 // Named rather than shown as a switch: three genuinely different looks, and
                 // "off" would imply glass is the app and the rest is its absence.
                 Picker(Loc.t("Surfaces"), selection: $preferences.surfaceStyle) {
-                    ForEach(SurfaceStyle.allCases) { Text($0.label).tag($0) }
+                    ForEach(SurfaceStyle.offered) { Text($0.label).tag($0) }
                 }
 
                 // Only the languages this build actually carries, plus the system. A picker

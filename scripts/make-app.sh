@@ -29,7 +29,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP="$ROOT/build/Replay.app"
 BUNDLE_ID="app.replay.native"
 VERSION="0.9.7"   # matches the top entry in CHANGELOG.md
-MIN_MACOS="26.0"  # CLAUDE.md: the interface leans on APIs that begin at 15 and 26
+MIN_MACOS="14.0"  # Sonoma. The two APIs that began later are guarded; see DesignSystem.
 
 echo "Building ($CONFIG)…"
 
@@ -162,7 +162,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key>           <string>$VERSION</string>
   <key>CFBundleIconFile</key>          <string>AppIcon</string>
   <key>NSHumanReadableCopyright</key>  <string>Copyright © 2026 Nurkamol Vakhidov. MIT License.</string>
-  <key>LSMinimumSystemVersion</key>    <string>26.0</string>
+  <key>LSMinimumSystemVersion</key>    <string>14.0</string>
   <!-- Replay records only which app is frontmost, so it needs no usage
        descriptions: no camera, microphone, location, or screen recording. If a
        key like NSScreenCaptureUsageDescription ever becomes necessary, something

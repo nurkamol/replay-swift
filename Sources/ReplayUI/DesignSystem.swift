@@ -1290,7 +1290,10 @@ private struct Card: ViewModifier {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         // Reduce Transparency is not a preference to weigh against the setting — it is a
         // statement that blur is a problem, so it wins outright.
-        let resolved: SurfaceStyle = reduceTransparency ? .solid : style
+        // `drawable` first, so a Mac that cannot draw glass resolves to frosted *here* —
+        // which also means the border logic below sees frosted and draws its edge, rather
+        // than omitting it for a pane that has no glass edge of its own.
+        let resolved: SurfaceStyle = reduceTransparency ? .solid : style.drawable
         return Group {
             switch resolved {
             case .solid:
@@ -1298,7 +1301,14 @@ private struct Card: ViewModifier {
             case .frosted:
                 content.background(.regularMaterial, in: shape)
             case .glass:
-                content.glassEffect(.regular, in: shape)
+                // Unreachable below macOS 26 — `drawable` has already turned it to frosted —
+                // but the compiler needs the guard, and an `if #available` reads better than
+                // an unavailable branch that only a comment says is dead.
+                if #available(macOS 26, *) {
+                    content.glassEffect(.regular, in: shape)
+                } else {
+                    content.background(.regularMaterial, in: shape)
+                }
             }
         }
         .overlay {
@@ -1328,6 +1338,35 @@ enum SurfaceStyle: String, CaseIterable, Identifiable, Sendable {
     case glass
 
     var id: String { rawValue }
+
+    /// Whether this Mac can draw the system's glass at all.
+    ///
+    /// `glassEffect` arrived in macOS 26 and is the *only* thing in this app that needs it —
+    /// measured by building the whole package against macOS 14, which produced two errors,
+    /// both here. Everything else works three OS generations back.
+    static var glassAvailable: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
+    }
+
+    /// The styles worth offering on this Mac.
+    ///
+    /// Glass is left out where it cannot be drawn rather than shown and quietly substituted.
+    /// A setting that does nothing is worse than a setting that is not there: the first makes
+    /// somebody wonder whether their Mac is broken, the second tells them the truth by
+    /// omission.
+    static var offered: [SurfaceStyle] {
+        glassAvailable ? allCases : [.solid, .frosted]
+    }
+
+    /// What this style actually draws as here.
+    ///
+    /// A preference set on a newer Mac travels — in a backup, or on the same account — so a
+    /// stored `glass` has to mean something on a Mac that cannot draw it. Frosted, which is
+    /// the nearest thing and already one of the choices.
+    var drawable: SurfaceStyle {
+        self == .glass && !Self.glassAvailable ? .frosted : self
+    }
 
     var label: String {
         switch self {

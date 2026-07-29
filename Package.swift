@@ -28,7 +28,7 @@ let package = Package(
     // written in, and `Loc` uses the English text as the lookup key — so this is both the
     // development language and the fallback every missing translation lands on.
     defaultLocalization: "en",
-    platforms: [.macOS(.v26)],
+    platforms: [.macOS(.v14)],
     products: [
         .library(name: "ReplayCore", targets: ["ReplayCore"]),
         // The interface. A product rather than a bare target because Xcode only offers a
