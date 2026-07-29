@@ -437,12 +437,19 @@ because it is still a product decision nobody has taken.
       `docs/TRANSLATING.md`, and a runtime key recorder — `REPLAY_LOG_KEYS` plus the screenshot
       harness — which is the only scan that has ever been right about what the app says.
       `Loc.locale` makes dates and numbers follow the chosen language too.
-      · **What remains is one tier**: the sentences assembled at runtime — "Late night in
-        Terminal", "8m not recorded", "23 applications" — which have no whole sentence to be a
-        key. Each becomes a format string with positional arguments, translated at the view
-        layer while the contract keeps the English, the way `SettingsRow.label`/`base` do.
-        A day's work, and it is the difference between "translated" and "translated except
-        the parts you look at most".
+      · **The tier of runtime-assembled sentences is half done** (2026-07-29). The ones you
+        look at most now translate: session titles, the gaps between them, the headline
+        figures, the sidebar sections, the resume card, the reflection prompt, and the
+        relative day and time labels. `Sources/ReplayCore/RuntimeCopy.swift` holds them, the
+        English stays the contract, and `RuntimeCopyBehaviour` checks the two renderings take
+        the same branch. Uzbek is 519/519 and was verified by running the app in it.
+      · **What is left is the narrative tier**: Story, the autobiography, Memories and its
+        moments, the morning briefing, Collections and Projects. `MemoryProducers.swift` alone
+        assembles thirty-nine. One surface at a time, when it is being touched anyway — a
+        sweep would be a day of edits nobody can review.
+      · **`translate.mjs status` is not proof of coverage.** It counts keys that exist; copy
+        that never reaches `Loc` is not a key and so is not counted, which is how "100%" and
+        an English sidebar were true at once. See the traps section of `docs/TRANSLATING.md`.
 
       ~~Was:~~ **Multilingual support.** **The groundwork is built (2026-07-28); the translating is
       not, and needs a language and a person before it can start.** What exists now:

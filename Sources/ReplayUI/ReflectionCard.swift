@@ -28,7 +28,7 @@ struct ReflectionCard: View {
                     .textCase(.uppercase)
             }
 
-            TextField(prompt, text: $value, axis: .vertical)
+            TextField(Loc.t(prompt), text: $value, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.callout)
                 .lineLimit(1...10)

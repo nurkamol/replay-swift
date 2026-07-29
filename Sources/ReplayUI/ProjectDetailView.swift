@@ -68,7 +68,7 @@ struct ProjectDetailView: View {
         let now = Int64(Date().timeIntervalSince1970 * 1000)
         return HStack(spacing: Design.Space.row) {
             tile("First seen", shortDateLabel(project.firstSeen))
-            tile("Last active", relativeDayLabel(project.lastActive, now: now))
+            tile("Last active", RuntimeCopy.relativeDayLabel(project.lastActive, now: now))
             tile(project.sessionCount == 1 ? "Session" : "Sessions", "\(project.sessionCount)")
             tile("Total", formatDurationShort(project.totalSeconds))
         }
@@ -127,7 +127,7 @@ struct ProjectDetailView: View {
                     .frame(width: Design.Icon.glyphColumn)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(label).font(Design.Text.detail.weight(.medium))
-                    Text(session.title)
+                    Text(session.localizedTitle)
                         .font(Design.Text.micro)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)

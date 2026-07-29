@@ -80,7 +80,7 @@ struct LegacyView: View {
             )
             tile(
                 "Last active",
-                relativeDayLabel(legacy.lastDay, now: Int64(Date().timeIntervalSince1970 * 1000))
+                RuntimeCopy.relativeDayLabel(legacy.lastDay, now: Int64(Date().timeIntervalSince1970 * 1000))
             )
         }
         .settlesIn(1)

@@ -57,7 +57,7 @@ struct WeekView: View {
                 .font(Design.Text.figure)
                 .monospacedDigit()
                 .contentTransition(.numericText())
-            Text(label)
+            Text(Loc.t(label))
                 .font(Design.Text.subtitle)
                 .foregroundStyle(.secondary)
         }

@@ -101,15 +101,40 @@ style is the whole of the work.
 
 ## What is not translatable yet, and why
 
-The narrative surfaces — Story, the autobiography, the day's own sentences, the morning
-briefing — do not hold sentences. They hold fragments assembled at runtime with the numbers
-inside them: `"\(label), mostly in \(app)"`. There is no whole sentence in the source to be a
-key, so there is nothing to hand a translator, and a table of half-clauses cannot be translated
-into any language whose word order differs from English — which is most of them.
+Some copy is not a whole string in the source. It is fragments assembled at runtime with the
+numbers inside them — `"\(part) in \(app)"` — so there is no sentence to hand a translator,
+and a table of half-clauses cannot be assembled into a language whose word order differs from
+English. Which is most of them: in Uzbek the app name takes a locative and the time-of-day
+leads, and no amount of translating "in" separately produces that.
 
-Making those translatable means rewriting each one as a format string with positional
-arguments. It is real work, one surface at a time, and it is on the backlog rather than
-pretended away. Until then those surfaces stay English in every language.
+The fix is one format string per sentence, with positional arguments (`%1$@`, `%2$@`), so a
+translator can reorder the pieces and the whole sentence is one row in the catalogue.
+`Sources/ReplayCore/RuntimeCopy.swift` is where those live. **The English never moves**: every
+one has a counterpart that renders the contract — `SessionTitle.english`, `describeBreak` —
+and those are what the parity suite compares against `spec/`.
+
+**Done (2026-07-29):** session titles, the gaps between sessions, the day's headline figures,
+the sidebar sections, the resume card, the reflection prompt, the relative day and time labels,
+and the session card's VoiceOver sentence.
+
+**Not done:** the narrative surfaces — Story, the autobiography, Memories and its moments, the
+morning briefing, Collections and Projects. `MemoryProducers.swift` alone assembles thirty-nine
+of them. One surface at a time, when that surface is being touched anyway.
+
+### Two traps, both of which have already happened here
+
+**Do not translate an already-translated string.** `Loc.t` falls back to its input, so a double
+lookup looks harmless — the words on screen are right. What breaks is the key recorder: it
+writes down what was asked for, and it will happily record a *translated* sentence as though it
+were a key. Three Uzbek sentences reached `translations/keys.txt` that way. The rule is that a
+value is translated exactly once, at one end or the other, and helpers that compose from parts
+take them verbatim.
+
+**A count is not proof.** `translate.mjs status` counts the keys that exist. Copy that never
+reaches `Loc` at all is not a key, so it is not counted, and a language can report 100% while a
+whole surface is in English. Two things find that: the runtime recorder — which sees only what
+the running app asked for — and running the app in another language and *looking*. The second
+one is the one that found the sidebar headers.
 
 ## Where each language stands
 

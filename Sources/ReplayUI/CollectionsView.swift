@@ -159,7 +159,7 @@ struct CollectionsView: View {
             Text(figure)
                 .font(Design.Text.figure)
                 .monospacedDigit()
-            Text(label)
+            Text(Loc.t(label))
                 .font(Design.Text.micro)
                 .foregroundStyle(.tertiary)
         }

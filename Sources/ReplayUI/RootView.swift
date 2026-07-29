@@ -577,16 +577,16 @@ struct RootView: View {
                     row(.today)
                     row(.search)
                 }
-                Section("Recent") {
+                Section(Loc.t("Recent")) {
                     row(.week)
                     row(.timeline)
                 }
-                Section("Library") {
+                Section(Loc.t("Library")) {
                     row(.apps)
                     row(.projects)
                     row(.collections)
                 }
-                Section("Looking back") {
+                Section(Loc.t("Looking back")) {
                     // Gone from the sidebar when looking back is switched off, as upstream:
                     // a surface for a thing you have asked not to see is a dead end.
                     if preferences.todayInHistory { row(.memories) }

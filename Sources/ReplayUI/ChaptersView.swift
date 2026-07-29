@@ -171,14 +171,14 @@ struct ChapterDetailView: View {
 
     private func tile(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.tight) {
-            Text(label).cardLabelStyle()
+            Text(Loc.t(label)).cardLabelStyle()
             Text(value).font(Design.Text.figure).monospacedDigit().lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Design.Space.card)
         .card(border: Design.Colour.borderQuiet)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(String(format: Loc.t("%@, %2$@"), "\(label), \(value)"))
+        .accessibilityLabel(String(format: Loc.t("%1$@, %2$@"), Loc.t(label), value))
     }
 
     private func apps(_ chapter: Chapter) -> some View {

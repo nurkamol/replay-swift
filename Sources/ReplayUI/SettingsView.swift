@@ -225,13 +225,26 @@ func languageName(_ code: String) -> String {
 /// the window rather than a note about the section above it.
 private struct Footnote: View {
     let text: String
-    init(_ text: String) { self.text = text }
+    /// Whether this line still needs looking up, or arrived already translated.
+    let translated: Bool
+
+    /// A whole sentence, in English, which is its own key.
+    init(_ text: String) { self.text = text; translated = false }
+
+    /// A line composed from parts that were each translated already.
+    ///
+    /// Needed because the alternative is looking up the join, and a joined string is not a
+    /// key anybody wrote. That reads as harmless — the lookup misses and returns its input,
+    /// so the words on screen are right — but it puts a *translated* string into the key
+    /// recorder, which is the one tool that knows what this app actually asks for. Three
+    /// Uzbek sentences turned up in `translations/keys.txt` that way.
+    init(verbatim text: String) { self.text = text; translated = true }
 
     var body: some View {
         // Translated here, and callers that compose a footnote out of parts translate the
         // parts instead — a lookup of an already-joined string asks the table for a sentence
         // nobody wrote.
-        Text(Loc.t(text))
+        Text(translated ? text : Loc.t(text))
             // Both are needed: the frame places a short line, `multilineTextAlignment`
             // places the wrapped ones, which a Form otherwise centres.
             .multilineTextAlignment(.leading)
@@ -400,7 +413,7 @@ private struct GeneralTab: View {
                 // English — which matched nothing and rendered exactly that way. A key has to
                 // be a whole sentence *and* a sentence has to be a whole key.
                 Footnote(
-                    preferences.surfaceStyle.detail + " "
+                    verbatim: preferences.surfaceStyle.detail + " "
                         + Loc.t(
                             "Reduce Transparency in System Settings overrides this and makes "
                                 + "every surface solid."
@@ -979,7 +992,7 @@ private struct DataTab: View {
                 // alone, which read as "nothing has been written yet" directly under a line
                 // saying a report had just been written.
                 Footnote(
-                    Loc.t(
+                    verbatim: Loc.t(
                         "Both write while Replay is running — a background courtesy, not a "
                             + "daemon, so a Mac that was off has nothing to catch up. Each "
                             + "keeps its eight most recent and removes only its own."
