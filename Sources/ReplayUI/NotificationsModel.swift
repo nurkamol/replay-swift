@@ -27,8 +27,39 @@ final class NotificationsModel {
         self.preferences = preferences
     }
 
+    /// The notification centre, or nothing when this process is not an app.
+    ///
+    /// `UNUserNotificationCenter.current()` does not fail politely outside an application
+    /// bundle — it raises `NSInternalInconsistencyException: bundleProxyForCurrentProcess is
+    /// nil`, an Objective-C exception Swift cannot catch, so the process dies. Product ▸ Run
+    /// in Xcode produced exactly that: SwiftPM builds a bare executable, and the app died
+    /// inside `applicationDidFinishLaunching` before a window appeared.
+    ///
+    /// **The test is the `.app` extension, not the bundle identifier.** The obvious guard —
+    /// `bundleIdentifier != nil` — is wrong, and wrong in a way only a third build path
+    /// showed: under `xcodebuild test` the main bundle is Xcode's own test agent, which has
+    /// an identifier and is not an app, so the guard passed and the run still crashed. Every
+    /// host that is not a real app has a `bundleURL` that does not end in `.app`:
+    ///
+    /// | host                        | `bundleURL`                        | notifications |
+    /// | --------------------------- | ---------------------------------- | ------------- |
+    /// | the shipped app             | `/Applications/Replay.app`         | yes           |
+    /// | Product ▸ Run, `swift run`  | `…/.build/debug/`                  | no            |
+    /// | `swift test`                | `…/libexec/swift/pm/`              | no            |
+    /// | `xcodebuild test`           | `…/Xcode/Agents/`                  | no            |
+    ///
+    /// Every call goes through here so that stays true for the next one added. A development
+    /// run simply has no notifications, which is right — they are the one part of this app
+    /// needing an identity to be delivered against, and `./scripts/make-app.sh` builds the
+    /// bundle that has one.
+    private var centre: UNUserNotificationCenter? {
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return nil }
+        return UNUserNotificationCenter.current()
+    }
+
     func refreshPermission() async {
-        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard let centre else { return }
+        let settings = await centre.notificationSettings()
         permission = switch settings.authorizationStatus {
         case .authorized, .provisional: .granted
         case .denied: .denied
@@ -39,8 +70,9 @@ final class NotificationsModel {
     /// Ask, but only because something was switched on.
     @discardableResult
     func request() async -> Bool {
+        guard let centre else { return false }
         do {
-            let granted = try await UNUserNotificationCenter.current()
+            let granted = try await centre
                 .requestAuthorization(options: [.alert, .sound, .badge])
             permission = granted ? .granted : .denied
             return granted
@@ -55,7 +87,7 @@ final class NotificationsModel {
     /// Cleared and rebuilt rather than patched: the schedule is small, and a set of requests
     /// edited in place drifts out of step with the switches that describe it.
     func reschedule() async {
-        let centre = UNUserNotificationCenter.current()
+        guard let centre else { return }
         centre.removeAllPendingNotificationRequests()
         guard permission == .granted else { return }
 
@@ -99,7 +131,7 @@ final class NotificationsModel {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        UNUserNotificationCenter.current().add(
+        centre?.add(
             UNNotificationRequest(identifier: id, content: content, trigger: trigger)
         )
     }

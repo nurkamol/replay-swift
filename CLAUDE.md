@@ -25,8 +25,10 @@ version ships today and is the reference implementation** — it lives at
 export DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer
 
 swift build                     # ReplayCore + the parity suite
-swift test                      # 955 parity checks + 115 behaviour cases
+swift test                      # 971 parity checks + 99 behaviour cases
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
+xed .                           # Xcode, no .xcodeproj needed — pick the ReplayUI scheme
+                                #   for previews; REPLAY_DB=… for a scratch record on ⌘R
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token

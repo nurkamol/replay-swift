@@ -5,6 +5,41 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## "Is this an app?" is the `.app` extension, not the bundle identifier — 2026-07-29
+
+**The question:** `UNUserNotificationCenter.current()` raises `NSInternalInconsistencyException:
+bundleProxyForCurrentProcess is nil` outside an application bundle. It is an Objective-C
+exception, so Swift cannot catch it and the process dies. Product ▸ Run in Xcode did exactly
+that — SwiftPM builds a bare executable — and the app crashed inside
+`applicationDidFinishLaunching` before a window appeared. So: how does code tell whether it is
+running as an app?
+
+**The obvious answer is wrong.** `Bundle.main.bundleIdentifier != nil` looks right and passes
+under `swift test`, whose host is SwiftPM's helper and has no identifier. It fails under
+`xcodebuild test`, whose host is Xcode's test agent — which *has* an identifier and is not an
+app. The guard let the call through and the run still died. Found only because the same suite
+was run through both runners; one runner would have shipped the bug.
+
+**Measured, by asking each host what its `bundleURL` is:**
+
+| host                              | `bundleURL`                       | `bundleIdentifier` | is an app |
+| --------------------------------- | --------------------------------- | ------------------ | --------- |
+| `/Applications/Replay.app`        | `…/Replay.app`                    | `app.replay.native`| yes       |
+| Product ▸ Run, `swift run`        | `…/.build/debug/`                 | nil                | no        |
+| `swift test`                      | `…/libexec/swift/pm/`             | nil                | no        |
+| `xcodebuild test`                 | `…/Xcode/Agents/`                 | non-nil            | no        |
+
+**So the predicate is `Bundle.main.bundleURL.pathExtension == "app"`** — the one property every
+non-app host lacks and every app has. `NotificationsModel.centre` is the single place it is
+asked, and `Tests/ReplayAppTests/NotificationsBehaviour.swift` asserts the premise, so a runner
+that ever *is* an app makes the suite say so rather than silently passing.
+
+**Re-run it:** delete the guard and run `swift test --filter NotificationsBehaviour`. The
+process exits with signal 6 rather than reporting a failure — which is why the premise is
+asserted separately, as a test that can fail normally.
+
+---
+
 ## Replay Story stuttered because of an embellishment, not a shortage — 2026-07-29
 
 **Reported as "it centres the icon, then moves with stuttering, like with 2 stops".** That is
