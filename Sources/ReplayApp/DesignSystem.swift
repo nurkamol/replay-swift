@@ -405,6 +405,26 @@ enum Design {
         static let ambientBreatheFloor: Double = 0.96
     }
 
+    /// A light travelling around a border, for work with no known length.
+    ///
+    /// **Deliberately one use.** A moving border is attention-seeking by construction, and
+    /// SPEC §8 is explicit that nothing in this app asks to be watched — so it is not on the
+    /// goal card when a goal is met, not on a session, not in ambient mode. It is on the
+    /// update banner while an update installs, where the app is doing something you should
+    /// not interrupt and genuinely cannot say for how long. When it can say, a bar says it.
+    enum Beam {
+        /// One trip round. Slow enough to read as a light moving, fast enough to say "still
+        /// working" without a second's doubt.
+        static let seconds: Double = 2.4
+        /// How much of the border the bright part covers. A short arc is a chase light; this
+        /// is nearly a third, which reads as a sweep.
+        static let arc: Double = 0.3
+        static let width: CGFloat = 1.5
+        /// The dimmest the trailing edge goes, so the border never fully disappears — an
+        /// outline that vanishes reads as a flicker rather than as a sweep.
+        static let floor: Double = 0.18
+    }
+
     /// Motion, with Reduce Motion respected.
     ///
     /// Not a courtesy. When someone has asked the system to stop moving things, an animation
@@ -1494,4 +1514,57 @@ enum BundleIcon {
         }
         return NSApp.applicationIconImage
     }()
+}
+
+/// A light travelling once around a rounded border, for as long as something is happening.
+///
+/// Not a package. `border-beam` ships a SwiftUI one and CLAUDE.md forbids external
+/// dependencies — a rule worth more than the thirty lines it saves, and the effect is thirty
+/// lines: an angular gradient turning behind a stroked rounded rectangle, which masks it to
+/// the border.
+///
+/// **Off entirely under Reduce Motion**, rather than slowed. Somebody who has asked the system
+/// to stop moving things has not asked for a slower moving thing, and the state it reports is
+/// already written in words beside it.
+struct BorderBeam: ViewModifier {
+    let active: Bool
+    var radius: CGFloat = Design.Radius.card
+
+    @Environment(\.motion) private var motion
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            if active && !motion.reduced {
+                // `SwiftUI.` because this app has a `TimelineView` of its own — the
+                // Timeline surface — and the unqualified name resolves to that one.
+                SwiftUI.TimelineView(.animation) { timeline in
+                    let turn = timeline.date.timeIntervalSinceReferenceDate
+                        .truncatingRemainder(dividingBy: Design.Beam.seconds) / Design.Beam.seconds
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(
+                            AngularGradient(
+                                stops: [
+                                    .init(color: .accentColor.opacity(Design.Beam.floor), location: 0),
+                                    .init(color: .accentColor, location: Design.Beam.arc / 2),
+                                    .init(color: .accentColor.opacity(Design.Beam.floor), location: Design.Beam.arc),
+                                    .init(color: .accentColor.opacity(Design.Beam.floor), location: 1),
+                                ],
+                                center: .center,
+                                angle: .degrees(turn * 360)
+                            ),
+                            lineWidth: Design.Beam.width
+                        )
+                }
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
+        }
+    }
+}
+
+extension View {
+    /// A travelling border while `active`. See ``BorderBeam`` for why there is one use of it.
+    func borderBeam(_ active: Bool, radius: CGFloat = Design.Radius.card) -> some View {
+        modifier(BorderBeam(active: active, radius: radius))
+    }
 }

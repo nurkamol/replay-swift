@@ -378,6 +378,12 @@ because it is still a product decision nobody has taken.
         the same shape. No indicator of any kind, beam or spinner, can help until that work
         moves off the main actor.
 
+- [ ] **Importing a backup still blocks the window.** `S`–`M` Compaction moved to its own
+      connection off the main actor in 0.9.6; import did not, because it merges *into* the live
+      database rather than rewriting a copy, so a second connection would have to hand the rows
+      back and the main one reload behind it. Seconds rather than tens of seconds, which is why
+      it waited — but it is the same lie the compact button used to tell.
+
 - [ ] **A widget.** `L` Today's total, the application in front, the streak. The right shape
       for this product — it is a glanceable figure the app already computes, and ambient mode
       is evidence somebody wants that figure without opening a window.

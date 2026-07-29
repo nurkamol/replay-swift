@@ -18,7 +18,7 @@ public enum Replay {
             ?? fallbackVersion
 
     /// The version in the source, for when there is no bundle to ask.
-    public static let fallbackVersion = "0.9.5"
+    public static let fallbackVersion = "0.9.6"
 }
 
 /// What each version of Replay actually gained.
@@ -45,6 +45,17 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.6",
+        title: "A pause that ends itself, and a story that moves like one",
+        changes: [
+            "**Pausing can end by itself.** Pause for fifteen minutes, an hour, or until tomorrow, and recording comes back on its own \u{2014} after a quit, or a night with the lid shut. The menu bar and Settings say when it ends. Pausing with no end is still there; what this fixes is forgetting, which costs the rest of the day silently.",
+            "**Replay Story moved in lurches**, and the reason was an embellishment of this port\u{2019}s own: the camera arrived, stopped, crept toward the next stop, stopped again, then jerked away. The creep is gone, the pause between stops is still, and each hop now eases at both ends.",
+            "**The timeline beside the Canvas travels with the story.** It used to sit on whatever was selected when the story began \u{2014} a camera moving through one memory beside a list describing another.",
+            "**After an update, Replay says what you got:** What\u{2019}s New opens when you pressed Update, and a dismissible note appears when the version arrived by `brew upgrade` instead. A downgrade says nothing.",
+            "**Compacting no longer freezes the window.** It runs on its own connection with recording paused, so the button can say what it is doing rather than the app going quiet for the length of a whole-file rewrite.",
+        ]
+    ),
     Release(
         version: "0.9.5",
         title: "The update check stops wasting its own attempts",

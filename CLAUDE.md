@@ -38,7 +38,7 @@ node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or docum
 swift run replay -- today       # the record from a shell; `replay help` for the rest
 ./scripts/make-app.sh           # assemble a runnable .app
 ./scripts/make-dmg.sh           # a disk image; --release signs, notarises and staples it
-node tools/release-notes.mjs 0.9.5 --check   # the tag, the build and the changelog agree
+node tools/release-notes.mjs 0.9.6 --check   # the tag, the build and the changelog agree
 ```
 
 ## Rules for working here

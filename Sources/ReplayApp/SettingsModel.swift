@@ -125,16 +125,51 @@ final class SettingsModel {
     }
 
     /// Rewrite the file to hand freed pages back (SPEC §7).
-    func compact() {
+    ///
+    /// **On its own connection, off the main actor, with recording paused — and each of those
+    /// three is load-bearing.**
+    ///
+    /// It used to run `VACUUM` on the app's own connection, on the main actor, with
+    /// `defer { busy = false }` around it. So `busy` was never true for a drawn frame:
+    /// "Compacting…" could not appear, the window simply stopped answering for the length of
+    /// a whole-file rewrite, and the button that said it was working was unreachable code.
+    ///
+    /// A second connection to the same file is what lets the rewrite happen somewhere the
+    /// window is not. Recording is paused around it because the alternative is a tracker
+    /// writing an app switch into a file another connection holds an exclusive lock on —
+    /// `SQLITE_BUSY`, and a dropped event. Pausing is honest and reversible; a dropped event
+    /// is neither. The pause is put back exactly as it was found, including *not* resuming a
+    /// tracker somebody had already paused themselves.
+    func compact() async {
+        guard !busy else { return }
         busy = true
-        defer { busy = false }
-        do {
-            let result = try store.compactSafely()
+        let wasRecording = model.isRecording
+        if wasRecording { model.setTracking(false) }
+        defer {
+            if wasRecording { model.setTracking(true) }
+            busy = false
+        }
+
+        let path = AppModel.defaultDatabaseURL.path
+        let outcome = await Task.detached(priority: .userInitiated) { () -> Result<CompactionResult, Error> in
+            // Opened, used and closed inside this task: nothing about it crosses back, so
+            // there is no connection shared between two threads at any point.
+            let scratch = ActivityStore(path: path)
+            do {
+                try scratch.open()
+                return .success(try scratch.compactSafely())
+            } catch {
+                return .failure(error)
+            }
+        }.value
+
+        switch outcome {
+        case .success(let result):
             status = result.reclaimed > 0
                 ? "Reclaimed \(formatBytes(result.reclaimed)); \(result.rows) rows verified"
                 : "Nothing to reclaim; \(result.rows) rows verified"
             refreshAfterChange()
-        } catch {
+        case .failure(let error):
             // A failed verification names where the copy was left, so the message is the
             // recovery instruction rather than just bad news.
             errorMessage = "\(error)"

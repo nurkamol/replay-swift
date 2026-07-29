@@ -214,7 +214,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// left up by hand would otherwise be replaced by an identical one that dismisses itself.
     private func checkIdleDisplay() {
         let minutes = preferences.screensaverIdleMinutes
-        guard minutes > 0, screensaverWindow == nil, ambientWindow == nil, NSApp.isActive,
+        // Never over a display that is already up **on the screen this one would take** — and
+        // that qualifier is the fix. The guard used to be "no display is open anywhere", which
+        // meant an ambient screen left running on a second monitor silently switched
+        // auto-start off altogether: the thing you pinned somewhere else stopped the
+        // screensaver ever arriving where you actually work. Two displays on one screen is
+        // the thing worth preventing; two displays on two screens is the setup this app has.
+        let target = displayScreen()
+        let taken = [screensaverWindow, ambientWindow]
+            .compactMap { $0?.screen }
+            .contains { sameScreen($0, target) }
+        guard minutes > 0, !taken, screensaverWindow == nil, NSApp.isActive,
               window?.isKeyWindow == true else { return }
         // The hours somebody confined it to, if they confined it to any. Read from the
         // calendar rather than from the timestamp so a span means what a person means by it
@@ -727,15 +737,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        // The two never overlap. `openAmbient` already closed the screensaver; this is the
-        // other half, which was missing — so asking for the screensaver while ambient mode
-        // was up stacked one over the other at the same window level, and leaving the
-        // screensaver dropped you back into a display you had stopped looking at.
-        closeAmbient()
+        // The two never overlap *on one screen*. Asking for the screensaver while ambient
+        // mode was up used to stack one over the other at the same window level; closing it
+        // unconditionally then meant a pinned ambient screen on another monitor was thrown
+        // away by a screensaver that was never going to cover it.
+        let screen = displayScreen()
+        if sameScreen(ambientWindow?.screen, screen) { closeAmbient() }
         // Loaded before the view exists: the screensaver measures its own column to know
         // how far to drift, so everything it will show has to be in hand first.
         if !memories.loaded { memories.load() }
-        let screen = displayScreen()
         let hosting = NSHostingController(
             rootView: Themed(preferences: preferences, forcing: .dark) {
                 ScreensaverView(
@@ -795,8 +805,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        closeScreensaver()
         let screen = displayScreen()
+        if sameScreen(screensaverWindow?.screen, screen) { closeScreensaver() }
         // Left up, or handed back the moment you touch anything?
         //
         // Only a screen that is *not* the one the window is on can be left up. Ambient mode

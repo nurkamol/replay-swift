@@ -929,7 +929,9 @@ private struct DataTab: View {
                 .explains(.deleteASingleDay)
 
                 LabeledContent(SettingsRow.compactDatabase.label) {
-                    Button(settings.busy ? "Compacting…" : "Compact") { settings.compact() }
+                    Button(settings.busy ? "Compacting…" : "Compact") {
+                        Task { await settings.compact() }
+                    }
                         .disabled(settings.busy)
                 }
 

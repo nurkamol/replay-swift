@@ -283,6 +283,12 @@ struct UpdateBanner: View {
         .background(.regularMaterial, in: RoundedRectangle(
             cornerRadius: Design.Radius.card, style: .continuous
         ))
+        // The one travelling border in the app: while an update is downloading, being checked
+        // and being installed, which is the only stretch where Replay is working on something
+        // you should not interrupt and cannot be told how long it will take. The spinner
+        // beside the label says *that* it is working; the border says the whole banner is the
+        // thing that is busy.
+        .borderBeam(updates.install != .idle)
         .padding(Design.Space.section)
         .frame(maxWidth: Design.Layout.readableWidth)
         .popover(isPresented: $showingNotes, arrowEdge: .bottom) {

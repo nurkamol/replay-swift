@@ -19,10 +19,14 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
-## Unreleased
+## 0.9.6 — 2026-07-29
 
 ### Added
 
+- **A travelling border while an update installs.** The one moving border in the app, on the
+  one stretch where Replay is working on something you should not interrupt and cannot be told
+  how long it will take. Built here rather than taken from a package — CLAUDE.md forbids
+  dependencies, and the effect is thirty lines. Off entirely under Reduce Motion.
 - **Pausing can end by itself.** "Pause for…" in the menu bar offers 15 minutes, an hour, or
   until tomorrow, and recording comes back on its own — including after a quit or a night
   asleep, because a timed pause is a promise about a span of time rather than about this
@@ -51,6 +55,16 @@ Developer ID and notarised. Everything before it is a version of the source.
   lurch per hop. The lean was this port's own idea and has gone; the dwell is still, and a
   hop now eases at both ends, because it begins from a camera at rest and nobody asked for it
   in the instant it happens. The reference's timings are untouched and still contract-checked.
+- **Compacting no longer freezes the window.** `VACUUM` ran on the app's own connection, on
+  the main actor, wrapped in `defer { busy = false }` — so "Compacting…" could never draw a
+  frame and the window simply stopped answering for the length of a whole-file rewrite. It runs
+  on its own connection now, off the main actor, with recording paused around it so no tracker
+  write meets an exclusive lock. Importing a backup is still synchronous; it is seconds rather
+  than tens of seconds, and it is on the backlog.
+- **A pinned ambient screen switched auto-start off.** The idle watch refused to raise anything
+  while *any* display was open, so ambient mode left running on a second monitor stopped the
+  screensaver ever arriving on the screen you work on. The guard is about the screen now: two
+  displays on one screen is what it was for, and two displays on two screens is the setup.
 - **The timeline beside the Canvas now travels with the story.** It stayed on whatever was
   selected when the story began, so a story was a camera moving through one memory beside a
   list describing another — the Glaze version keeps the two in step, and now so does this.
