@@ -206,6 +206,15 @@ func hourLabel(_ hour: Int) -> String {
     return date.formatted(.dateTime.hour().minute())
 }
 
+/// A language's name in its own language, which is how a language picker names languages.
+///
+/// "O‘zbekcha" rather than "Uzbek": somebody looking for their own language is looking for the
+/// word they call it, and a list in English is only readable by people who did not need it.
+func languageName(_ code: String) -> String {
+    Locale(identifier: code).localizedString(forLanguageCode: code)?.capitalized(with: Locale(identifier: code))
+        ?? code
+}
+
 /// A section's footnote, aligned the way the system aligns them.
 ///
 /// `Form` centres a footer by default in this configuration, which reads as a caption for
@@ -355,6 +364,16 @@ private struct GeneralTab: View {
                     ForEach(SurfaceStyle.allCases) { Text($0.label).tag($0) }
                 }
 
+                // Only the languages this build actually carries, plus the system. A picker
+                // offering a language that resolves to nothing would be a promise the app
+                // cannot keep — see `Loc.available`.
+                Picker(OwnSettingsRow.language.label, selection: $preferences.languageCode) {
+                    Text(Loc.t("Match System")).tag("")
+                    ForEach(Loc.available.filter { $0 != "Base" }, id: \.self) { code in
+                        Text(languageName(code)).tag(code)
+                    }
+                }
+                .explains(own: .language)
                 Picker(SettingsRow.openTo.label, selection: $preferences.launchSurface) {
                     ForEach(LaunchSurface.allCases) { Text($0.label).tag($0) }
                 }

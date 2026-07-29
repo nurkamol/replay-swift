@@ -1017,6 +1017,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     notifications: notifications, updates: updates, backups: backups,
                     initialPane: settingsPane ?? .general
                 )
+                // Same reason as the main window's: a language is chosen *in* this window,
+                // so this is the one that has to answer in the new one immediately.
+                .id(preferences.languageCode)
             }
         )
         // The window takes its size from the pane rather than the other way round, so

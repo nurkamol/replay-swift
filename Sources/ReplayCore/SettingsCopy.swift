@@ -147,6 +147,7 @@ public enum SettingsRow: String, CaseIterable, Sendable {
 /// the same thing: the screensaver and ambient mode each offer to show the time, in their own
 /// section, and "Show the time (ambient)" would be a label written for a programmer.
 public enum OwnSettingsRow: String, CaseIterable, Sendable {
+    case language
     case idleDisplay
     case idleHours
     case displayScreen
@@ -162,6 +163,7 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
 
     public var label: String {
         switch self {
+        case .language: "Language"
         case .idleDisplay: "When idle, show"
         case .idleHours: "Only at certain hours"
         case .displayScreen: "Show on"
@@ -178,6 +180,9 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
 
     public var explanation: String {
         switch self {
+        case .language:
+            "Read Replay in a language your Mac is not set to. Anything this build has not "
+                + "been translated into stays in English rather than showing you a key."
         case .idleDisplay:
             "Which of the two takes the screen when the delay below runs out. The "
                 + "screensaver drifts through the day you have had; ambient mode holds "

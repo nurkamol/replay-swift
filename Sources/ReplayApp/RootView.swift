@@ -322,6 +322,11 @@ struct RootView: View {
             }
             .animation(motion.animation(Design.Motion.settle), value: updates.shouldOffer)
             .animation(motion.animation(Design.Motion.settle), value: updates.installed)
+            // Changing the language rebuilds the tree rather than asking every view to
+            // observe `Loc`. Strings are resolved as a view body runs, so the cheapest
+            // correct answer is to run them all again — and a language is changed once in a
+            // session, not once a frame.
+            .id(preferences.languageCode)
         }
     }
 
@@ -421,7 +426,11 @@ struct RootView: View {
             // One line, always. A sidebar row that wraps breaks the even rhythm the column
             // is read by, and the sidebar is resizable, so any row is one drag from being
             // too narrow for its own name.
-            Text(title).lineLimit(1)
+            // Translated here rather than at each call site: the sidebar's names arrive as
+            // `Navigation.Surface.rawValue`, which `tools/strings-audit.mjs` cannot see —
+            // it looks for literals, and an enum's raw value is not one. That is how the
+            // most visible column in the app stayed English while the audit read clean.
+            Text(Loc.t(title)).lineLimit(1)
         } icon: {
             Group {
                 if selected {

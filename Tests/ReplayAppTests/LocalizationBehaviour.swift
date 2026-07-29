@@ -60,8 +60,18 @@ struct LocalizationBehaviour {
     @Test("The build knows which languages it carries, English first")
     func available() {
         #expect(Loc.available.first == "en")
-        // The app ships English only; the probe language lives in the test bundle.
-        #expect(Loc.available == ["en"], "available was \(Loc.available)")
+        // Not a fixed list any more — languages arrive, and a test that names them would fail
+        // for every one of them. What has to hold is that English leads (it is the key, so it
+        // is the fallback for everything else) and that every language claimed has a
+        // catalogue behind it. A code in `available` with no strings is the exact failure
+        // `tools/translate.mjs` refuses to create: macOS told "Replay speaks this" and a
+        // reader shown English anyway.
+        for language in Loc.available {
+            #expect(
+                Loc.string("Tracking paused", in: language) != "",
+                "\(language) resolves to nothing"
+            )
+        }
     }
 
     @Test("The chosen language is one the build actually has")

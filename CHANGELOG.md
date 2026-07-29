@@ -19,6 +19,34 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## Unreleased
+
+### Added
+
+- **Replay can be read in another language, and there is now a way to translate it.**
+  Settings ▸ General ▸ Language, listing only the languages this build actually carries —
+  and the switch takes effect immediately rather than at the next launch.
+- **A translation kit**, because the two things that translate text — a person and a service —
+  both want a table, and neither wants a `.strings` file. `node tools/translate.mjs new fr`
+  writes `translations/fr.csv`, a service or a translator fills the second column, `build fr`
+  turns it into the catalogue that ships. Re-running `new` keeps what is already translated
+  and adds rows for anything the app has gained since. `status` says how far each language is.
+  Instructions, including what a translator needs to know about `%@`, are in
+  [docs/TRANSLATING.md](docs/TRANSLATING.md).
+- **A language ships only when it is complete.** `build` refuses below 100% unless `--partial`
+  is passed: an `.lproj` tells macOS "Replay speaks this", and a Mac set to it would then show
+  translated and English lines mixed with no way to tell which is which.
+- **Uzbek**, as the first translation — 321 of 426 strings, built with `--partial` so it can be
+  read in the running app. It is machine-made and wants a native reader before it ships.
+  Twelve more languages are scaffolded and empty, ready to be handed to a service.
+
+### Fixed
+
+- **The sidebar was never translatable**, and no audit could have said so: its names arrive as
+  `Navigation.Surface.rawValue`, and `tools/strings-audit.mjs` looks for literals. The most
+  visible column in the app was English in every language while the audit read clean. It goes
+  through `Loc` now, and the extractor knows about the helpers that take copy as an argument.
+
 ## 0.9.6 — 2026-07-29
 
 ### Added

@@ -43,8 +43,20 @@ public enum Loc {
     ///
     /// It is the seam a language picker in Settings would need too, if this ever grows one.
     public static var language: String {
-        Bundle.preferredLocalizations(from: available, forPreferences: nil).first ?? "en"
+        if let override, available.contains(override) { return override }
+        return Bundle.preferredLocalizations(from: available, forPreferences: nil).first ?? "en"
     }
+
+    /// A language the reader chose in Settings, overriding what the Mac is set to.
+    ///
+    /// The comment above used to end "It is the seam a language picker in Settings would need
+    /// too, if this ever grows one" — this is that. Nil means follow the system, which is the
+    /// default and the right one: an app that ignores the language a Mac is set to is an app
+    /// arguing with a choice already made.
+    ///
+    /// Checked against ``available`` on the way in, so a code for a language this build does
+    /// not carry falls back to the system's rather than to a table of nothing.
+    nonisolated(unsafe) public static var override: String?
 
     /// What the reader sees, in whatever language the machine is set to.
     public static func t(_ english: String) -> String {

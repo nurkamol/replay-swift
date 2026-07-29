@@ -446,6 +446,18 @@ final class Preferences {
         didSet { writeJSON(lastSeenRelease, "lastSeenRelease") }
     }
 
+    /// The language the interface is read in, or empty for whatever the Mac is set to.
+    ///
+    /// Empty is the default and stays the default: following the system is the behaviour
+    /// somebody already chose once, in System Settings. This exists for the case the system
+    /// cannot express — reading an app in a language your Mac is not in.
+    var languageCode: String {
+        didSet {
+            write(languageCode, "languageCode")
+            Loc.override = languageCode.isEmpty ? nil : languageCode
+        }
+    }
+
     /// When a timed pause ends, or nil when recording — or paused with no end.
     ///
     /// Persisted because a pause with a stated end has to outlive a quit to mean anything:
@@ -564,6 +576,7 @@ final class Preferences {
         lastSeenRelease = (defaults.data(forKey: "lastSeenRelease"))
             .flatMap { try? JSONDecoder().decode(Updates.Release.self, from: $0) }
         updateRetryAfter = defaults.object(forKey: "updateRetryAfter") as? Date
+        languageCode = defaults.string(forKey: "languageCode") ?? ""
         pausedUntil = defaults.object(forKey: "pausedUntil") as? Date
         lastRunVersion = defaults.string(forKey: "lastRunVersion") ?? ""
         selfUpdated = defaults.bool(forKey: "selfUpdated")
@@ -597,6 +610,10 @@ final class Preferences {
         // Zero and absent both mean "no goal", so an unset default reads as off.
         let goal = defaults.integer(forKey: "focusGoalMinutes")
         focusGoalMinutes = goal > 0 ? goal : nil
+
+        // After every stored property exists, because this reaches outside `self` — and the
+        // chosen language has to be in force before the first view asks for a word.
+        Loc.override = languageCode.isEmpty ? nil : languageCode
     }
 
     var excludedBundleIDs: Set<String> { Set(excludedApps.map(\.bundleID)) }
@@ -638,6 +655,7 @@ final class Preferences {
         "updateETag",
         "lastSeenRelease",
         "updateRetryAfter",
+        "languageCode",
         "pausedUntil",
         "lastRunVersion",
         "selfUpdated",
@@ -716,6 +734,7 @@ final class Preferences {
         updateETag = fresh.updateETag
         lastSeenRelease = fresh.lastSeenRelease
         updateRetryAfter = fresh.updateRetryAfter
+        languageCode = fresh.languageCode
         pausedUntil = fresh.pausedUntil
         lastRunVersion = fresh.lastRunVersion
         selfUpdated = fresh.selfUpdated
