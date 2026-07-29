@@ -11,16 +11,16 @@
 #
 # In exchange it installs in seconds, needs no Xcode, and lands in /Applications.
 #
-# The alternative is still here and still works: `brew install nurkamol/tap/replay-app` — the
-# same name without `--cask` — builds from source, is never downloaded, and therefore opens
-# with no warning at all, at the cost of a full Xcode and a couple of minutes.
+# The alternative is still here: `brew install nurkamol/tap/replay-app-source` builds from
+# source, is never downloaded, and therefore opens with no warning at all — at the cost of a
+# full Xcode and a couple of minutes.
 #
-# **The shared name is deliberate.** Homebrew allows one cask and one formula to be called the
-# same thing and picks the formula unless `--cask` is given. Naming this `replay` would have
-# collided with the *command-line reader*, so `brew install nurkamol/tap/replay` would hand
-# somebody the CLI when they meant the app. Sharing a name with the app's own source formula
-# instead means the name always denotes the same product and the flag only chooses how it
-# arrives.
+# **This token belongs to the cask, and that was learned the hard way.** The source formula
+# used to be called `replay-app` too, on the reasoning that one name for one product is
+# clearer and `--cask` would choose the delivery. Homebrew resolves a shared token to the
+# formula, so the first person to type `brew install nurkamol/tap/replay-app` got the source
+# build and an error about needing a 15 GB Xcode. The formula is `replay-app-source` now and
+# the plain command does the fast, obvious thing.
 #
 # Both go away the day this is notarised, at which point the cask simply opens.
 cask "replay-app" do
@@ -66,7 +66,7 @@ cask "replay-app" do
 
     The warning is about a missing certificate, not about anything found in the app. To skip
     it entirely, build from source instead — that copy is never downloaded and so is never
-    quarantined (same name, no --cask):
-      brew install nurkamol/tap/replay-app
+    quarantined:
+      brew install nurkamol/tap/replay-app-source
   EOS
 end

@@ -55,7 +55,7 @@ below rather than left as a surprise.
 
 ```sh
 brew tap nurkamol/tap
-brew install --cask nurkamol/tap/replay-app
+brew install nurkamol/tap/replay-app
 ```
 
 Installs to `/Applications` in seconds and needs no developer tools. **The first launch shows
@@ -67,13 +67,13 @@ below, and it opens normally from then on.
 
 ```sh
 brew tap nurkamol/tap
-brew install nurkamol/tap/replay-app     # same name, no --cask: builds from source
+brew install nurkamol/tap/replay-app-source
 ```
 
 Then link it once, so Spotlight and the Dock can find it:
 
 ```sh
-ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
+ln -sfn "$(brew --prefix)/opt/replay-app-source/Replay.app" /Applications/Replay.app
 ```
 
 Slower, and it wants a full Xcode. In exchange **there is no warning at all**: an app compiled
@@ -124,8 +124,8 @@ xattr -dr com.apple.quarantine /Applications/Replay.app
 longer does anything. System Settings is the route now.
 
 **This applies to the prebuilt cask and to the zip from the releases page** — both are
-downloads. It does not apply to the source build (`brew install nurkamol/tap/replay-app`
-without `--cask`) or to `./scripts/make-app.sh`: an app compiled on your own machine was never
+downloads. It does not apply to the source build
+(`brew install nurkamol/tap/replay-app-source`) or to `./scripts/make-app.sh`: an app compiled on your own machine was never
 downloaded, so it is never quarantined and opens with no warning at all. That is the whole of
 the difference between the two routes, and it is the reason both exist.
 
@@ -234,8 +234,9 @@ tools/port-queue.mjs     lists Glaze commits this port still owes
 tools/design-audit.mjs   fails if a view spells a visual constant
 tools/shortcut-audit.mjs fails if a bound key is undocumented, or documented and unbound
 tools/cli-audit.sh       the CLI's exit codes, stream discipline and --json shape
-Formula/                 Homebrew formulae — build from source, so no Developer ID
-                           replay.rb the CLI · replay-app.rb the application
+Casks/replay-app.rb      the prebuilt app, installed from the release zip
+Formula/                 built from source, so never quarantined
+                           replay.rb the CLI · replay-app-source.rb the application
 Resources/AppIcon.icns   the product's icon, carried over from the Glaze app
 docs/                    read these
 scripts/make-app.sh      assemble a runnable .app
@@ -307,9 +308,9 @@ name and how long it was in front is the entire input — which is why "Replay" 
 that you spent four hours in an editor and nothing whatsoever about what you wrote.
 
 **How do I update it?**
-`brew upgrade nurkamol/tap/replay-app` (add `--fetch-HEAD` if you installed with
-`--HEAD`), or `git pull && ./scripts/make-app.sh
-release` from a clone. Since 0.9.3 the in-app banner can install it for you — it downloads the
+`brew upgrade nurkamol/tap/replay-app` for the prebuilt copy, or
+`brew upgrade nurkamol/tap/replay-app-source` if you built it (add `--fetch-HEAD` for
+`--HEAD` installs), or `git pull && ./scripts/make-app.sh release` from a clone. Since 0.9.3 the in-app banner can install it for you — it downloads the
 zip, checks it against the SHA-256 published beside it, and replaces itself only when you press
 the button. The check that finds it is off until you turn it on, and a Homebrew copy is left to
 `brew upgrade`.

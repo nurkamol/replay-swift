@@ -1,6 +1,18 @@
-# The Replay *application*, built on your own machine.
+# The Replay *application*, built on your own machine — the quiet way in.
 #
-# **This is how the app is shared without a Developer ID, and it is not a workaround.**
+# `brew install nurkamol/tap/replay-app-source`
+#
+# **Named `-source` because the default has to be the fast one.** This was `replay-app`, the
+# same token as the cask, on the reasoning that one name for one product is clearer and the
+# `--cask` flag would choose the delivery. That was wrong the first time somebody typed it:
+# Homebrew resolves a shared token to the *formula*, so `brew install nurkamol/tap/replay-app`
+# silently picked this, and this needs a full 15 GB Xcode. The person got an error instead of
+# an app. A default that fails for most people is not a default.
+#
+# Now the plain command installs the cask, and this is the deliberate opt-in it should always
+# have been.
+#
+# **It is how the app is shared without a Developer ID, and it is not a workaround.**
 # Gatekeeper's signing requirement applies to applications *downloaded* from the internet:
 # the quarantine flag is set by the browser that fetched the file. An app Homebrew compiles
 # here was never downloaded, carries no quarantine flag, and opens with no dialog — the same
@@ -9,11 +21,11 @@
 # So a cask would need a certificate and this does not. A cask installs a prebuilt binary
 # from a release page; a formula builds from source. That difference is the whole trick.
 #
-#   brew install --HEAD nurkamol/tap/replay-app
+#   brew install --HEAD nurkamol/tap/replay-app-source
 #
 # Homebrew normally prefers casks for GUI applications, and it is right to — but a cask
 # cannot build, and building is precisely what makes this openable.
-class ReplayApp < Formula
+class ReplayAppSource < Formula
   desc "Private, local timeline of the apps you use — the macOS application"
   homepage "https://github.com/nurkamol/replay-swift"
   url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.8.tar.gz"

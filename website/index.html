@@ -357,7 +357,7 @@
 
     <h3 style="margin-bottom:14px">The quick way — prebuilt</h3>
 <pre>brew tap nurkamol/tap
-brew install --cask nurkamol/tap/replay-app</pre>
+brew install nurkamol/tap/replay-app</pre>
     <p style="color:var(--dim); font-size:.94rem; margin:0 0 40px">
       Straight into <code>/Applications</code>, no developer tools. The first launch shows a
       warning — <a href="#gatekeeper">here is why, and the two clicks past it</a>.
@@ -365,12 +365,12 @@ brew install --cask nurkamol/tap/replay-app</pre>
 
     <h3 style="margin-bottom:14px">The quiet way — built here</h3>
 <pre>brew tap nurkamol/tap
-brew install nurkamol/tap/replay-app    <span class="c"># same name, no --cask</span>
+brew install nurkamol/tap/replay-app-source
 brew install nurkamol/tap/replay        <span class="c"># the command-line reader</span></pre>
     <p style="color:var(--dim); font-size:.94rem; margin:0 0 40px">
       Compiled on your Mac, so it is never quarantined and opens with no warning at all.
       Then link it once so Spotlight and the Dock find it:<br>
-      <code>ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app</code>
+      <code>ln -sfn "$(brew --prefix)/opt/replay-app-source/Replay.app" /Applications/Replay.app</code>
     </p>
 
     <h3 style="margin-bottom:14px">Or download the app</h3>
