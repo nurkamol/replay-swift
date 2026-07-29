@@ -44,8 +44,8 @@ final class WeekModel {
 
     private static func range(from: Int64, to: Int64) -> String {
         let format = Date.FormatStyle.dateTime.month(.wide).day()
-        let first = Date(timeIntervalSince1970: Double(from) / 1000).formatted(format)
-        let last = Date(timeIntervalSince1970: Double(to) / 1000).formatted(format)
+        let first = Date(timeIntervalSince1970: Double(from) / 1000).formatted(format.locale(Loc.locale))
+        let last = Date(timeIntervalSince1970: Double(to) / 1000).formatted(format.locale(Loc.locale))
         return "\(first) – \(last)"
     }
 }

@@ -230,6 +230,6 @@ struct ReplayDayView: View {
     private var clock: String {
         let at = Playback.time(at: progress, in: sessions)
         return Date(timeIntervalSince1970: Double(at) / 1000)
-            .formatted(.dateTime.hour().minute())
+            .formatted(.dateTime.hour().minute().locale(Loc.locale))
     }
 }

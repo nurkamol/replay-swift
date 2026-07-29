@@ -142,7 +142,7 @@ struct ScreensaverView: View {
                 VStack {
                     Spacer()
                     HStack {
-                        Text(now.formatted(.dateTime.hour().minute()))
+                        Text(now.formatted(.dateTime.hour().minute().locale(Loc.locale)))
                             .font(.system(size: Design.Layout.screensaverClock, weight: .light))
                             .monospacedDigit()
                             .foregroundStyle(.white.opacity(Design.Colour.screensaverTertiary))

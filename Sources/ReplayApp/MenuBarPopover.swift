@@ -135,7 +135,7 @@ struct MenuBarPopoverView: View {
             if let until = preferences.pausedUntil {
                 String(
                     format: Loc.t("Paused until %@"),
-                    until.formatted(.dateTime.hour().minute())
+                    until.formatted(.dateTime.hour().minute().locale(Loc.locale))
                 )
             } else {
                 MenuBar.pausedLabel

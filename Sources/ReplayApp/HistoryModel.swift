@@ -148,7 +148,7 @@ func dayLabel(_ dayStart: Int64, today: Int64) -> String {
     if dayStart == today { return "Today" }
     if dayStart == today - dayMillis { return "Yesterday" }
     return Date(timeIntervalSince1970: Double(dayStart) / 1000)
-        .formatted(.dateTime.weekday(.wide).month(.wide).day())
+        .formatted(.dateTime.weekday(.wide).month(.wide).day().locale(Loc.locale))
 }
 
 

@@ -206,7 +206,7 @@ func hourLabel(_ hour: Int) -> String {
     parts.hour = hour
     parts.minute = 0
     guard let date = Calendar.current.date(from: parts) else { return "\(hour):00" }
-    return date.formatted(.dateTime.hour().minute())
+    return date.formatted(.dateTime.hour().minute().locale(Loc.locale))
 }
 
 /// A language's name in its own language, which is how a language picker names languages.
@@ -561,7 +561,7 @@ private struct GeneralTab: View {
                 if !model.isRecording, let until = preferences.pausedUntil {
                     Text(String(
                         format: Loc.t("Recording resumes at %@."),
-                        until.formatted(.dateTime.hour().minute())
+                        until.formatted(.dateTime.hour().minute().locale(Loc.locale))
                     ))
                     .font(Design.Text.detail)
                     .foregroundStyle(.secondary)

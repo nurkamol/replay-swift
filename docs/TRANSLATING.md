@@ -87,6 +87,18 @@ translated and untranslated lines mixed together with no way to tell which is wh
 than not claiming the language at all. `--partial` exists so you can *see* a language running
 before it is finished; it is not a way to ship one.
 
+## Dates and numbers are a different system
+
+The picker chooses which strings table is read. It has no effect on Foundation, which formats
+"Wednesday, July 29" from the *system* locale — so an app could be, and was, entirely
+translated with an English date across the top of it.
+
+`Loc.locale` is the seam: a `Locale` built from the chosen language, or `.current` when the
+picker is on Match System, because a Mac that is set to a language has already been told. Every
+formatter a reader sees goes through it, and `Report.Environment.current` reads it too, so
+exports follow the same rule. When you add a date to a view, `.locale(Loc.locale)` on the format
+style is the whole of the work.
+
 ## What is not translatable yet, and why
 
 The narrative surfaces — Story, the autobiography, the day's own sentences, the morning

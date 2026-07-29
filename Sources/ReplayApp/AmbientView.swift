@@ -81,7 +81,7 @@ struct AmbientView: View {
                     // it gone. It sat at the foot of the screen next to the exit hint, which
                     // is where a footnote goes and not where a clock does.
                     if preferences.ambientClock {
-                        Text(now.formatted(.dateTime.hour().minute()))
+                        Text(now.formatted(.dateTime.hour().minute().locale(Loc.locale)))
                             .font(.system(size: Design.Layout.ambientClock, weight: .light))
                             .monospacedDigit()
                             .foregroundStyle(.white.opacity(Design.Colour.ambientHeadline))
@@ -293,7 +293,7 @@ struct AmbientView: View {
     /// The time a session began, in the locale's own short form.
     private func shortTimeLabel(_ millis: Int64) -> String {
         Date(timeIntervalSince1970: Double(millis) / 1000)
-            .formatted(.dateTime.hour().minute())
+            .formatted(.dateTime.hour().minute().locale(Loc.locale))
     }
 }
 

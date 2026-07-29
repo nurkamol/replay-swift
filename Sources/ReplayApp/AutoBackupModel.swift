@@ -125,7 +125,7 @@ final class AutoBackupModel {
     /// "Yesterday at 3:04 AM", or nothing when it has never run.
     var lastRunLabel: String? {
         preferences.lastAutoBackup.map {
-            $0.formatted(.relative(presentation: .named))
+            $0.formatted(.relative(presentation: .named).locale(Loc.locale))
         }
     }
 }

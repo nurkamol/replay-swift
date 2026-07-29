@@ -36,7 +36,13 @@ public enum Report {
             self.timeZone = timeZone
         }
 
-        public static let current = Environment()
+        /// The reader's own — including the language they chose in Replay, which Foundation
+        /// knows nothing about. Computed rather than a `let`: the picker can change under a
+        /// running app, and a constant captured at launch would keep formatting yesterday's
+        /// answer.
+        public static var current: Environment {
+            Environment(locale: Loc.locale, timeZone: .current)
+        }
     }
 
     public enum Format: String, CaseIterable, Sendable {

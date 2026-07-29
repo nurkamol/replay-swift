@@ -58,6 +58,21 @@ public enum Loc {
     /// not carry falls back to the system's rather than to a table of nothing.
     nonisolated(unsafe) public static var override: String?
 
+    /// The locale everything *formatted* should use: dates, times, counted numbers.
+    ///
+    /// **Strings and formatting are two different systems, and this is the seam between
+    /// them.** The picker chooses which strings table is read; it has no effect at all on
+    /// Foundation, which formats "Wednesday, July 29" from the *system* locale. So an app
+    /// could be — and was — entirely translated with an English date across the top of it.
+    ///
+    /// Only when a language has been chosen explicitly. With the picker on Match System the
+    /// answer is `.current`, which is the Mac's own answer to a question its owner already
+    /// answered in System Settings.
+    public static var locale: Locale {
+        guard let override, available.contains(override) else { return .current }
+        return Locale(identifier: override)
+    }
+
     /// What the reader sees, in whatever language the machine is set to.
     public static func t(_ english: String) -> String {
         record(english)

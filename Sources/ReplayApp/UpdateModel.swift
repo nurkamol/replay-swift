@@ -188,7 +188,7 @@ final class UpdateModel {
             return "GitHub is rate-limiting this connection. Try again later."
         }
         return "GitHub is rate-limiting this connection. It clears at "
-            + when.formatted(.dateTime.hour().minute()) + "."
+            + when.formatted(.dateTime.hour().minute().locale(Loc.locale)) + "."
     }
 
     /// Say that this launch is a new version, so the banner can mention it once.

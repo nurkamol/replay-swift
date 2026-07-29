@@ -106,7 +106,7 @@ struct TodayView: View {
             }
         }
         .navigationTitle(Loc.t("Today"))
-        .navigationSubtitle(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
+        .navigationSubtitle(Date().formatted(.dateTime.weekday(.wide).month(.wide).day().locale(Loc.locale)))
         .onAppear {
             if !memories.loaded { memories.load() }
             contextual.load()
