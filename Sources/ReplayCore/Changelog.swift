@@ -18,7 +18,7 @@ public enum Replay {
             ?? fallbackVersion
 
     /// The version in the source, for when there is no bundle to ask.
-    public static let fallbackVersion = "0.9.4"
+    public static let fallbackVersion = "0.9.5"
 }
 
 /// What each version of Replay actually gained.
@@ -45,6 +45,15 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.5",
+        title: "The update check stops wasting its own attempts",
+        changes: [
+            "**A refused check no longer counts as the day\u{2019}s check.** If GitHub turns the request away \u{2014} usually because too many have come from your network in an hour \u{2014} Replay used to record it as having asked and wait a full day. Meanwhile a check that failed because the Mac was offline retried freely. Exactly backwards, and now only an answer counts.",
+            "**It says when the limit clears** rather than \u{201C}try again later\u{201D}, and does not ask again before then. GitHub names the time in its reply; Replay reads it.",
+            "**The check asks a smaller question.** It sends the tag from last time, so an unchanged answer comes back empty instead of carrying a release it already had. That saves bytes rather than requests \u{2014} measured, GitHub counts it either way, and the release notes say so rather than claiming otherwise.",
+        ]
+    ),
     Release(
         version: "0.9.4",
         title: "A second screen, and backups you never take",

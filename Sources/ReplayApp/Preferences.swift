@@ -423,6 +423,38 @@ final class Preferences {
         didSet { defaults.set(skippedUpdate, forKey: "skippedUpdate") }
     }
 
+    /// The `ETag` GitHub gave with the last successful check.
+    ///
+    /// Sent back as `If-None-Match`, which turns an unchanged answer into a `304` carrying no
+    /// body — so the check moves bytes only on the day something actually changed.
+    ///
+    /// **It does not save rate limit, and the comment here used to say it did.** GitHub
+    /// documents 304s as exempt, and on this *unauthenticated* endpoint they are not:
+    /// measured, three requests decremented `x-ratelimit-remaining` three times whether they
+    /// answered 304 or 200 (`docs/FINDINGS.md`). What reduces requests is not asking —
+    /// `lastUpdateCheck` and ``updateRetryAfter``.
+    var updateETag: String? {
+        didSet { defaults.set(updateETag, forKey: "updateETag") }
+    }
+
+    /// The release that `ETag` belongs to, so a `304` has something to answer with.
+    ///
+    /// Encoded rather than kept in memory: a 304 on the first check after a launch would
+    /// otherwise leave the app knowing nothing, and an update that exists would go unmentioned
+    /// until something changed again.
+    var lastSeenRelease: Updates.Release? {
+        didSet { writeJSON(lastSeenRelease, "lastSeenRelease") }
+    }
+
+    /// When the rate-limit window GitHub named reopens, from `x-ratelimit-reset`.
+    ///
+    /// Nil unless the last reply was a refusal. It only ever delays a check — see
+    /// `Updates.shouldCheck` — because a limit that could bring a check *forward* would be a
+    /// way to ask more often by asking too often.
+    var updateRetryAfter: Date? {
+        didSet { defaults.set(updateRetryAfter, forKey: "updateRetryAfter") }
+    }
+
     var ambientBreath: Bool {
         didSet { write(ambientBreath, "ambientBreath") }
     }
@@ -502,6 +534,10 @@ final class Preferences {
         checkForUpdates = defaults.object(forKey: "checkForUpdates") as? Bool ?? false
         lastUpdateCheck = defaults.object(forKey: "lastUpdateCheck") as? Date
         skippedUpdate = defaults.string(forKey: "skippedUpdate")
+        updateETag = defaults.string(forKey: "updateETag")
+        lastSeenRelease = (defaults.data(forKey: "lastSeenRelease"))
+            .flatMap { try? JSONDecoder().decode(Updates.Release.self, from: $0) }
+        updateRetryAfter = defaults.object(forKey: "updateRetryAfter") as? Date
         let hour = defaults.integer(forKey: "dailySummaryHour")
         dailySummaryHour = hour == 0 ? 18 : hour
         dailySummary = defaults.bool(forKey: "dailySummary")
@@ -570,6 +606,9 @@ final class Preferences {
         "checkForUpdates",
         "lastUpdateCheck",
         "skippedUpdate",
+        "updateETag",
+        "lastSeenRelease",
+        "updateRetryAfter",
         "screensaverExitOnMouseMove",
         "screensaverIdleMinutes",
         "idleDisplay",
@@ -642,6 +681,9 @@ final class Preferences {
         checkForUpdates = fresh.checkForUpdates
         lastUpdateCheck = fresh.lastUpdateCheck
         skippedUpdate = fresh.skippedUpdate
+        updateETag = fresh.updateETag
+        lastSeenRelease = fresh.lastSeenRelease
+        updateRetryAfter = fresh.updateRetryAfter
         dailySummaryHour = fresh.dailySummaryHour
         dailySummary = fresh.dailySummary
         weeklyRecap = fresh.weeklyRecap

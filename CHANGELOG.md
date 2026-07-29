@@ -19,6 +19,40 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## 0.9.5 — 2026-07-29
+
+The update check spending its own attempts badly, and one claim measured rather than
+believed.
+
+### Fixed
+
+- **A refused check counted as the day's check.** The "last checked" stamp was written the
+  moment a reply arrived, whatever it said — so a rate-limited attempt recorded a check and
+  the next one was 24 hours away, while an attempt that failed because the Mac was *offline*
+  threw before the stamp and retried freely. Backwards in both directions: the failure that
+  clears within the hour burned the day, and the one that might last all day did not. Only a
+  `200` or a `304` counts now.
+
+### Added
+
+- **It says when the limit clears.** GitHub names the moment in `x-ratelimit-reset`; the
+  message reads "It clears at 6:05 AM" rather than "try again later", and the daily check will
+  not ask again before then — an attempt inside a window GitHub has already closed can only be
+  refused, and spends one of the sixty an hour that were the problem.
+- **The check asks a smaller question.** It sends `If-None-Match` with the tag from the last
+  answer, so a day when nothing has changed comes back as an empty `304` rather than a release
+  it already had. The release it *did* have is kept between launches, so that empty reply is
+  still a complete answer.
+
+### Measured, and it went the other way
+
+**A `304` does not save rate limit on this endpoint.** GitHub documents conditional requests
+as exempt, and that is written for *authenticated* ones — on the unauthenticated per-IP cap
+this app uses, three requests decremented the counter three times whether they answered `304`
+or `200`. The table is in [docs/FINDINGS.md](docs/FINDINGS.md). `If-None-Match` stays for the
+two reasons that survived measurement, bytes and clarity, and this entry exists because the
+first draft of it claimed the saving.
+
 ## 0.9.4 — 2026-07-29
 
 ### Added

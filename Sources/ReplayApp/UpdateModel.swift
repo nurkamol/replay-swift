@@ -57,7 +57,9 @@ final class UpdateModel {
     /// The daily check. Does nothing at all unless it was turned on.
     func checkIfDue() async {
         guard preferences.checkForUpdates else { return }
-        guard Updates.shouldCheck(lastChecked: preferences.lastUpdateCheck) else { return }
+        guard Updates.shouldCheck(
+            lastChecked: preferences.lastUpdateCheck, notBefore: preferences.updateRetryAfter
+        ) else { return }
         await check(userAsked: false)
     }
 
@@ -82,43 +84,108 @@ final class UpdateModel {
         // distinguishable from another.
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("Replay/\(currentVersion)", forHTTPHeaderField: "User-Agent")
+        // "Has anything changed since this?" — answered `304 Not Modified` with no body on
+        // every day the release list has not moved. It is not a way around the rate limit:
+        // measured on this unauthenticated endpoint, a 304 decrements the same counter a 200
+        // does (`docs/FINDINGS.md`), whatever the documentation says about conditional
+        // requests. It saves bytes and makes "unchanged" a case the code can answer.
+        if let etag = preferences.updateETag {
+            request.setValue(etag, forHTTPHeaderField: "If-None-Match")
+        }
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            preferences.lastUpdateCheck = Date()
-            guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            guard let http = response as? HTTPURLResponse else {
+                if userAsked { failure = "GitHub replied in a way this could not read." }
+                return
+            }
+
+            // Nothing has changed, so the answer is the one already stored. This still counts
+            // as a check — it is a complete, successful answer to the question asked.
+            if Updates.isUnchanged(status: http.statusCode) {
+                preferences.lastUpdateCheck = Date()
+                preferences.updateRetryAfter = nil
+                apply(preferences.lastSeenRelease, userAsked: userAsked)
+                return
+            }
+
+            guard http.statusCode == 200 else {
+                // **A refused check is not a check.** The stamp used to be written the
+                // moment a reply arrived, whatever it said — so a rate-limited attempt
+                // counted as the day's check and the next one was 24 hours away, while an
+                // *offline* attempt threw and retried freely. Exactly backwards: the failure
+                // that clears within the hour burned the day, and the one that might last
+                // all day did not. Only a 200 or a 304 stamps now.
+                let code = http.statusCode
+                if code == 403 || code == 429 {
+                    // GitHub says when the window reopens; believing it is both politer and
+                    // cheaper than guessing, since another attempt inside the window can
+                    // only be refused again.
+                    preferences.updateRetryAfter = Updates.retryAfter(
+                        header: http.value(forHTTPHeaderField: "x-ratelimit-reset")
+                    )
+                }
                 if userAsked {
-                    let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-                    // 404 is the ordinary case before a first release exists, and saying
-                    // "not found" would read as a fault.
                     failure = switch code {
                     // The ordinary case before a first release exists. Saying "not found"
                     // would read as a fault.
                     case 404: "There are no releases yet."
                     // Unauthenticated requests are capped per IP per hour, and this is what
                     // it looks like from here. Hit while testing, and a bare "GitHub replied
-                    // 403" tells somebody nothing they can act on.
-                    case 403, 429: "GitHub is rate-limiting this connection. Try again later."
+                    // 403" tells somebody nothing they can act on — so it says when, if
+                    // GitHub said when.
+                    case 403, 429: rateLimitMessage()
                     default: "GitHub replied \(code)."
                     }
                 }
                 return
             }
+
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             guard let json, let release = Updates.release(from: json) else {
                 if userAsked { failure = "That reply did not look like a release." }
                 return
             }
-            available = Updates.isNewer(release.version, than: currentVersion) ? release : nil
-            if userAsked, available == nil {
-                failure = "Replay \(currentVersion) is the latest version."
-            }
+            preferences.lastUpdateCheck = Date()
+            preferences.updateRetryAfter = nil
+            // Kept together: the tag and the release it belongs to. A stored `ETag` whose
+            // release had been forgotten would turn the next 304 into an answer of nothing.
+            preferences.updateETag = http.value(forHTTPHeaderField: "ETag")
+            preferences.lastSeenRelease = release
+            apply(release, userAsked: userAsked)
         } catch {
             // A failed check is not an event. No retry loop, no backoff, no logging to disk:
             // it will be tried again tomorrow, and a machine that is offline should not
             // accumulate anything because of it.
             if userAsked { failure = "Could not reach GitHub." }
         }
+    }
+
+    /// What a release means for this copy: an offer, or a sentence saying there is none.
+    ///
+    /// Shared by the two paths that can answer — a fresh 200 and a 304 answered from what was
+    /// stored — so the two cannot come to different conclusions about the same release.
+    private func apply(_ release: Updates.Release?, userAsked: Bool) {
+        guard let release else {
+            // A 304 with nothing stored: the tag matched something this copy no longer
+            // remembers. Forget the tag so the next check asks the question in full.
+            preferences.updateETag = nil
+            if userAsked { failure = "Replay \(currentVersion) is the latest version." }
+            return
+        }
+        available = Updates.isNewer(release.version, than: currentVersion) ? release : nil
+        if userAsked, available == nil {
+            failure = "Replay \(currentVersion) is the latest version."
+        }
+    }
+
+    /// "GitHub is rate-limiting this connection" — and when it stops, if GitHub said.
+    private func rateLimitMessage() -> String {
+        guard let when = preferences.updateRetryAfter else {
+            return "GitHub is rate-limiting this connection. Try again later."
+        }
+        return "GitHub is rate-limiting this connection. It clears at "
+            + when.formatted(.dateTime.hour().minute()) + "."
     }
 
     /// Stop offering this one. It comes back if a newer release appears.

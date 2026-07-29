@@ -80,6 +80,70 @@ struct UpdateBehaviour {
         #expect(!Updates.shouldCheck(lastChecked: now.addingTimeInterval(-3600), now: now))
         #expect(Updates.shouldCheck(lastChecked: now.addingTimeInterval(-Updates.checkInterval), now: now))
     }
+
+    // MARK: - Not asking inside a window GitHub has already closed
+
+    @Test("A named rate-limit window holds a due check back until it reopens")
+    func waitsOutTheWindow() {
+        let now = Date()
+        let due = now.addingTimeInterval(-Updates.checkInterval)
+        // Due by the clock, and refused anyway while the window is shut.
+        #expect(!Updates.shouldCheck(
+            lastChecked: due, notBefore: now.addingTimeInterval(600), now: now
+        ))
+        // The moment it reopens, the ordinary rule decides again.
+        #expect(Updates.shouldCheck(
+            lastChecked: due, notBefore: now.addingTimeInterval(-1), now: now
+        ))
+    }
+
+    @Test("A window that has passed never brings a check forward")
+    func neverAsksSooner() {
+        let now = Date()
+        // Not due — checked a minute ago — and an expired window does not change that. A
+        // limit that could *advance* a check would be a way to ask more often by asking
+        // too often.
+        #expect(!Updates.shouldCheck(
+            lastChecked: now.addingTimeInterval(-60), notBefore: now.addingTimeInterval(-60),
+            now: now
+        ))
+    }
+
+    @Test("The reset header is read as a moment, and nonsense as none")
+    func resetHeader() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        #expect(Updates.retryAfter(header: "1000600", now: now)
+            == Date(timeIntervalSince1970: 1_000_600))
+        // Whitespace is the ordinary shape of a header value.
+        #expect(Updates.retryAfter(header: " 1000600 ", now: now) != nil)
+        // A window that has already passed is no reason to wait.
+        #expect(Updates.retryAfter(header: "999999", now: now) == nil)
+        #expect(Updates.retryAfter(header: nil, now: now) == nil)
+        #expect(Updates.retryAfter(header: "", now: now) == nil)
+        #expect(Updates.retryAfter(header: "soon", now: now) == nil)
+    }
+
+    @Test("Only 304 means unchanged")
+    func unchangedStatus() {
+        #expect(Updates.isUnchanged(status: 304))
+        #expect(!Updates.isUnchanged(status: 200))
+        #expect(!Updates.isUnchanged(status: 403))
+    }
+
+    @Test("A release survives being stored and read back, assets included")
+    func releaseRoundTrips() throws {
+        // What a 304 answers from. If this ever stopped round-tripping, an unchanged reply
+        // would come back as an update with no download and the banner would offer a page
+        // instead of an install — quietly, and only for people whose check returned 304.
+        let release = Updates.Release(
+            version: "0.9.5", name: "Replay 0.9.5", notes: "Notes",
+            url: "https://example.invalid/releases/v0.9.5",
+            downloadURL: "https://example.invalid/Replay-0.9.5.zip",
+            checksumURL: "https://example.invalid/Replay-0.9.5.zip.sha256"
+        )
+        let data = try JSONEncoder().encode(release)
+        #expect(try JSONDecoder().decode(Updates.Release.self, from: data) == release)
+    }
 }
 
 /// Installing an update in place, which is the part that can do damage.

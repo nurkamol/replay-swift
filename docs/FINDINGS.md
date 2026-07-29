@@ -5,6 +5,44 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## A conditional request does *not* save rate limit here — measured 2026-07-29
+
+**GitHub's documentation says a `304 Not Modified` does not count against the rate limit.
+On the unauthenticated endpoint this app uses, it does.** Measured directly, reading
+`x-ratelimit-remaining` out of the replies rather than inferring it:
+
+| request | status | `x-ratelimit-remaining` |
+|---|---|---|
+| `If-None-Match: <etag>` | `304` | 4 |
+| `If-None-Match: <etag>` again | `304` | 3 |
+| no conditional header | `200` | 2 |
+
+Three requests, three decrements. The documented exemption is written in the section about
+*authenticated* conditional requests; the unauthenticated cap is counted per IP and appears
+to count every request that reaches it, body or no body.
+
+This matters because it was the reason given for adding `If-None-Match` in the first place,
+and that reason was wrong. The header stays, on the two grounds that survive measurement: a
+304 carries no body, so the check moves bytes only on the day something changed, and
+"unchanged" becomes an answer the code can act on rather than a payload it has to compare.
+Neither is a way to avoid the 60-an-hour cap.
+
+**What actually reduces spend** is doing fewer requests: not counting a refused check as the
+day's check (so the retry is tomorrow rather than a second attempt today), and honouring
+`x-ratelimit-reset` so nothing is sent into a window GitHub has already closed. Both shipped
+in 0.9.5; this table is why the release notes do not claim the third thing.
+
+Re-run it with:
+
+```sh
+etag=$(defaults read app.replay.native updateETag)
+curl -s -o /dev/null -D - -H "If-None-Match: $etag" \
+  https://api.github.com/repos/nurkamol/replay-swift/releases/latest \
+  | grep -iE "^HTTP|x-ratelimit-remaining"
+```
+
+---
+
 ## A self-installed update is not quarantined — measured 2026-07-29
 
 **You meet Gatekeeper once, and never again.** The first copy is downloaded by a browser and

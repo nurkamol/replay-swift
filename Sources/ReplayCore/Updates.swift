@@ -26,7 +26,12 @@ public enum Updates {
     public static let checkInterval: TimeInterval = 24 * 60 * 60
 
     /// A release, as much of it as this app cares about.
-    public struct Release: Equatable, Sendable {
+    ///
+    /// `Codable` so the last one seen can be kept between launches. That is not a cache for
+    /// speed: a conditional request answered `304 Not Modified` carries no body at all, so
+    /// without a stored copy the app would come back from that reply knowing nothing — and
+    /// would have to spend a second request to learn what it already knew yesterday.
+    public struct Release: Equatable, Sendable, Codable {
         public var version: String
         public var name: String
         public var notes: String
@@ -177,8 +182,38 @@ public enum Updates {
     }
 
     /// Whether enough time has passed to ask again.
-    public static func shouldCheck(lastChecked: Date?, now: Date = Date()) -> Bool {
+    public static func shouldCheck(
+        lastChecked: Date?, notBefore: Date? = nil, now: Date = Date()
+    ) -> Bool {
+        // A window GitHub has already told us is closed. Asking inside it can only produce
+        // the same 403 and spend one of the sixty an hour that were the problem to begin
+        // with. `notBefore` is `x-ratelimit-reset` from the last refusal, and it outranks
+        // the daily schedule in one direction only: it can delay a check, never bring one
+        // forward.
+        if let notBefore, now < notBefore { return false }
         guard let lastChecked else { return true }
         return now.timeIntervalSince(lastChecked) >= checkInterval
     }
+
+    /// When GitHub says the rate-limit window reopens, from `x-ratelimit-reset`.
+    ///
+    /// The header is whole seconds since 1970. Anything else — absent, empty, not a number,
+    /// or a time already past — is `nil`, which the caller reads as "no reason to wait".
+    /// Deliberately not clamped to some maximum: if GitHub says an hour, the honest thing is
+    /// to wait an hour rather than to decide it cannot have meant it.
+    public static func retryAfter(header: String?, now: Date = Date()) -> Date? {
+        guard let header = header?.trimmingCharacters(in: .whitespaces), !header.isEmpty,
+              let epoch = TimeInterval(header)
+        else { return nil }
+        let when = Date(timeIntervalSince1970: epoch)
+        return when > now ? when : nil
+    }
+
+    /// Whether a reply means "nothing has changed since the copy you already have".
+    ///
+    /// Its own function because the *consequence* is the interesting part: a 304 carries no
+    /// body, so the caller has to answer from what it stored last time rather than from this
+    /// reply. It is **not** a free request on this endpoint — see `docs/FINDINGS.md`, where
+    /// the counter was measured decrementing on a 304 exactly as it does on a 200.
+    public static func isUnchanged(status: Int) -> Bool { status == 304 }
 }
