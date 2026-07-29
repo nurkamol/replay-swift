@@ -1,14 +1,22 @@
+%@ active
 %@ active today
 %@ app
 %@ apps
+%@ away
 %@ days
+%@ days ago
+%@ focus
 %@ minutes
+%@ not recorded
 %@ result
 %@ results
 %@ session
+%@ Session
 %@ sessions
 %1$@ · %2$@ apps · %3$@ switches
+%1$@ %2$@ Session
 %1$@ active · %2$@
+%1$@ in %2$@
 A calm look back at yesterday when you open Replay in the morning — and one memory to carry into today.
 A clock above the day's total, for a screen you glance at rather than sit in front of.
 A look back every Sunday evening at the week just gone.
@@ -24,17 +32,21 @@ Activity history
 Activity tracking
 Actual Size
 Add a note…
+Afternoon
 All memories are generated locally. Nothing is uploaded.
 Ambient mode
 Ambient Mode
 Any time — from the menu bar or Privacy ▸ Activity tracking. Replay stops recording immediately, and your history is left untouched.
 Anything from 15m to 16 hours.
+applications
 Apps
 At
 Auto-start when idle
 Automatic backup
+Before the day ends — what would you like to remember about it?
 Blue
 Bookmark this session
+Both write while Replay is running — a background courtesy, not a daemon, so a Mac that was off has nothing to catch up. Each keeps its eight most recent and removes only its own.
 Browse by date
 Can ambient mode drift in on its own too?
 Can I delete a single day?
@@ -53,6 +65,7 @@ Clear History…
 Clear search
 Collections
 Commands
+Communication
 Compact database
 Couldn't open %@
 Custom target
@@ -66,6 +79,7 @@ Data ▸ Export report saves a slice as Markdown, PDF, HTML, CSV, or JSON — th
 Deletes all activity, settings, and preferences, then returns to the welcome screen.
 Deletes every event, headline, note and bookmark. There is no undo.
 Deleting rows frees space inside the database file without shrinking the file itself; the room is kept for future writes. Replay rewrites the file after a large deletion so the space returns to your disk, and Data ▸ Storage ▸ Compact database does it on demand and tells you how much came back.
+Development
 Different lenses on the same local history. Collections gather your sessions by the kind of work they were. Projects surface the app combinations that keep recurring, and let you name them. The Canvas lays your projects, apps, collections, chapters and moments out as an explorable space you can pan and zoom — click a memory to focus what connects to it, double-click to open it, or open a synced timeline beside it. Nothing to set up; it fills in as Replay runs.
 Dismiss the screensaver on a mouse click or tap.
 Dismiss the screensaver on any key. Esc and the ✕ always close it, whatever these are set to.
@@ -76,6 +90,7 @@ Dock badge
 Does Replay ever use the network?
 Drift ambient mode in after this long with no activity, while Replay is focused. Any key or movement wakes it.
 Either drifts in only while Replay's own window is in front, so it never appears over another app. Never means neither does, and both can still be opened by hand from the sidebar, the View menu or ⌘K. What starts on its own leaves the way it came: any key, click or movement returns you — including in ambient mode, which stays put when you open it yourself, since that is the point of it.
+Evening
 Events
 Every page is holding live data, so there is little to recover — compaction has real work to do after you delete history.
 Everything stays on this Mac
@@ -119,15 +134,20 @@ How sure Replay must be before surfacing a memory. Higher means rarer, but only 
 I deleted history but the size on disk didn't change — why?
 Import…
 In a single database file in your own user folder — the Privacy tab shows the exact path. It never leaves this Mac: no cloud, no account, no network.
+in total
 It notices which application is frontmost using macOS’s standard app-switch signal, and records the app’s name and how long it stayed in front. Never what’s inside a window, never your keystrokes, never content.
 Keep activity for
 Keep ambient mode up while you carry on working, instead of it closing the moment you touch the keyboard. It takes the whole screen it is on, so this only applies when that is a screen other than the one Replay's window is on — otherwise there would be nothing to work in.
 Keep the drift to a span of the day — an evening, or the hours you are at this desk. Outside it nothing starts on its own, and both can still be opened by hand.
 Language
+Late night
 Layers
 Leave it open while you work
 Less
+Library
 Light
+longest focus
+Looking back
 Match System
 Match the system or lock to a single appearance.
 Memories
@@ -137,6 +157,7 @@ min
 MIT licensed. Built on this Mac, and it stays here.
 Moments
 More
+Morning
 Morning briefing
 Most often here on %@.
 Most used this week
@@ -144,6 +165,7 @@ Mostly %@
 Never
 Never record %@
 No goal
+No keyboard or mouse activity
 No. The daily, weekly, and “on this day” recaps are built entirely from your local data and delivered by macOS. Nothing is uploaded, and there’s no account behind them.
 None for the tracking itself. Replay reads which app is frontmost through macOS’s standard app-switch signal, which any app can observe — so it needs no Accessibility, Automation, or App Management permission, and it never inspects your window contents. Privacy ▸ Recording shows a live check that it’s working, with links into System Settings if you’re on a managed Mac that asks for Accessibility anyway.
 Note
@@ -174,6 +196,7 @@ Orange
 Pause for…
 Pause recording
 Permission
+Pick up where you left off
 Pink
 Press Esc to exit
 Privacy
@@ -181,6 +204,7 @@ Projects
 Purple
 Range
 Read Replay in a language your Mac is not set to. Anything this build has not been translated into stays in English rather than showing you a key.
+Recent
 Recent sessions
 Recentre the canvas
 Recording
@@ -195,15 +219,21 @@ Replay reads which app is frontmost through macOS's standard signal. It needs no
 Replay shows at most one memory a day, and most days it shows none. The briefing is a look back at yesterday, and it is gone by lunchtime. Everything either says is read from your own history on this Mac.
 Replay sometimes surfaces a memory on its own — what is that?
 Replay This Day
+Replay wasn’t running or tracking was paused
 Report
+Report on a schedule
+Research
 Reset Replay
 Reset Replay?
 Reset…
 Save
+scattered
+scattered focus
 Scope
 Screensaver
 Search
 Search your memory
+sessions
 Settings
 Shortcuts
 Show on
@@ -231,6 +261,7 @@ The application you are in right now, with its icon. Turn it off for a screen ot
 The day's total is always shown — it is what the screen is for. These are the things around it, and two of them are here because an ambient screen is usually a second screen, and a second screen is often one other people can see. A screen left open takes no keyboard, so Escape does not reach it: close it with ⇧⌘A, the View menu, or the ✕ in its corner.
 The screen
 The system's own material, with its edge and its light.
+The system's own material, with its edge and its light. Reduce Transparency in System Settings overrides this and makes every surface solid.
 The view Replay shows when the window opens.
 Theme
 Theme colour
@@ -240,6 +271,7 @@ Timeline
 Timeline panel
 Today
 Today · %@
+Today at %@
 Today in History
 TOP APP
 Tracked
@@ -261,6 +293,7 @@ Which permissions does Replay need?
 Which screen the screensaver and ambient mode take. Replay follows the keyboard unless you name one; a named screen that is unplugged falls back to the keyboard's and is remembered for when it returns.
 Why is Memories empty?
 Window
+Write a report of the period that has just finished — yesterday, or the week just gone — into a folder you choose. A backup is insurance you hope never to open; this is the one file here meant to be read.
 Write the same full backup on a schedule, without being asked. Nothing leaves this Mac — it is a file in a folder you choose, and Replay keeps the eight most recent and removes its own older ones.
 Written from your own history and handed to macOS already composed. Nothing is uploaded, and Replay asks for permission only when you switch one of these on.
 Yellow
@@ -269,6 +302,7 @@ Yes — open a session and use the ⋯ menu at the foot of it, or right-click th
 Yes — Privacy ▸ Excluded applications. Excluding an app also erases the history already recorded for it, so it leaves no trace.
 Yes, and it is the same delay. Settings ▸ Display opens with the choice: which of the two takes the screen when you have been quiet, and after how long. It arrives only while Replay's own window is in front, so it never covers another app — and an ambient screen that started itself leaves on any key, click or movement. One you open by hand stays until you close it, which is what a second monitor is for.
 Yes, three ways: the ⋯ menu on that day's divider in the Timeline, the same ⋯ menu on the day's own page, or Data ▸ Storage ▸ Delete a single day. Any of them removes that day's sessions, its summary, its reflection, and any notes or bookmarks on it, and leaves every other day alone. For bigger sweeps, Data ▸ Storage can stop keeping raw activity past 90 days, 6 months, or a year, and Privacy ▸ Clear History erases everything.
+Yesterday
 Your data
 Zoom %@
 Zoom in

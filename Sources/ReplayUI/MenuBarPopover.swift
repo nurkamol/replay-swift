@@ -215,7 +215,7 @@ struct MenuBarPopoverView: View {
                         }
                     }
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(session.title)
+                        Text(session.localizedTitle)
                             .font(Design.Text.detail)
                             .lineLimit(1)
                         Text(formatRange(session.startedAt, session.endedAt))

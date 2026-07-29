@@ -627,7 +627,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         let hosting = NSHostingController(
             rootView: Themed(preferences: preferences) {
                 NoteView(
-                    sessionTitle: session.title,
+                    sessionTitle: session.localizedTitle,
                     sessionStart: session.startedAt,
                     annotations: model.annotations,
                     onClose: { [weak self] in self?.closeNotePanel() }

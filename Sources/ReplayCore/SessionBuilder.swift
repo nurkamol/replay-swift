@@ -68,15 +68,42 @@ public func dayPart(of epochMillis: Int64, calendar: Calendar = .current) -> Str
     return "Late night"
 }
 
-/// Name a session from its apps: "Morning in Code", "Evening Research Session".
+/// What a session's title is made of, before it is a sentence.
 ///
-/// One dominant app names the session after itself; otherwise a category with
-/// enough of the time names it; otherwise it stays plain.
-func nameSession(
+/// A title is assembled at runtime — "Late night in Terminal" — so there is no whole string
+/// in the source for a translator to be given, and a table of half-clauses cannot be put into
+/// a language whose word order differs from English, which is most of them. This is the shape
+/// the decision produces; ``english`` renders the contract and `Loc.sessionTitle` renders the
+/// reader's language, both from the same branch. One decision, two renderings, so the two can
+/// never disagree about which one a session got.
+public enum SessionTitle: Equatable, Sendable {
+    /// One app held most of the session: "Morning in Xcode".
+    case inApp(part: String, app: String)
+    /// No single app, but a category held enough: "Evening Research Session".
+    case category(part: String, category: SessionCategory)
+    /// Neither: "Morning Session".
+    case plain(part: String)
+
+    /// The English title, which is the contract the parity suite checks character for
+    /// character. Nothing here may change without the reference changing first.
+    public var english: String {
+        switch self {
+        case let .inApp(part, app): "\(part) in \(app)"
+        case let .category(part, category): "\(part) \(category.rawValue) Session"
+        case let .plain(part): "\(part) Session"
+        }
+    }
+}
+
+/// Decide what a session is called, from its apps.
+///
+/// One dominant app names the session after itself; otherwise a category with enough of the
+/// time names it; otherwise it stays plain.
+public func sessionTitle(
     apps: [SessionApp], startedAt: Int64, calendar: Calendar = .current
-) -> (title: String, category: SessionCategory) {
+) -> (title: SessionTitle, category: SessionCategory) {
     let part = dayPart(of: startedAt, calendar: calendar)
-    guard let top = apps.first else { return ("\(part) Session", .other) }
+    guard let top = apps.first else { return (.plain(part: part), .other) }
 
     var byCategory: [SessionCategory: Double] = [:]
     for app in apps {
@@ -92,12 +119,20 @@ func nameSession(
     let topCategoryShare = ranked.first?.value ?? 0
 
     if top.share >= 0.65 {
-        return ("\(part) in \(top.applicationName)", topCategory ?? .other)
+        return (.inApp(part: part, app: top.applicationName), topCategory ?? .other)
     }
     if let topCategory, topCategoryShare >= 0.4 {
-        return ("\(part) \(topCategory.rawValue) Session", topCategory)
+        return (.category(part: part, category: topCategory), topCategory)
     }
-    return ("\(part) Session", .other)
+    return (.plain(part: part), .other)
+}
+
+/// Name a session from its apps: "Morning in Code", "Evening Research Session".
+func nameSession(
+    apps: [SessionApp], startedAt: Int64, calendar: Calendar = .current
+) -> (title: String, category: SessionCategory) {
+    let named = sessionTitle(apps: apps, startedAt: startedAt, calendar: calendar)
+    return (named.title.english, named.category)
 }
 
 /// Fold a run's rows into per-application totals, most time first.

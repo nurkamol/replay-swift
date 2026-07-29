@@ -239,7 +239,7 @@ struct ScreensaverView: View {
                         }
                     }
                     .opacity(Design.Colour.screensaverIconOpacity)
-                    Text(session.title)
+                    Text(session.localizedTitle)
                         .font(Design.Text.screensaverTitle)
                         .foregroundStyle(.white.opacity(Design.Colour.screensaverSecondary))
                         .multilineTextAlignment(.center)

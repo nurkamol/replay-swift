@@ -1146,7 +1146,7 @@ struct CanvasView: View {
         } label: {
             HStack(spacing: Design.Space.inline) {
                 VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                    Text(session.title)
+                    Text(session.localizedTitle)
                         .font(Design.Text.detail.weight(.medium))
                         .lineLimit(1)
                         .truncationMode(.tail)

@@ -95,7 +95,7 @@ struct AmbientView: View {
                     }
                     if preferences.ambientCurrentSession, let session = currentSession {
                         Text(
-                            "\(session.title) · since "
+                            "\(session.localizedTitle) · since "
                                 + shortTimeLabel(session.startedAt)
                         )
                         .font(Design.Text.body)

@@ -1337,6 +1337,12 @@ enum SurfaceStyle: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Translated here, and the caller composes verbatim.
+    ///
+    /// It has to be this way round. Only the *selected* style's line is ever shown, so the
+    /// runtime key recorder can see at most one of the three, and the source scanner finds
+    /// keys by looking for `Loc.t("…")` — so a bare literal here would leave two of them
+    /// invisible to both, and a language would report complete while missing them.
     var detail: String {
         switch self {
         case .solid: Loc.t("A flat surface. The quietest, and the easiest to read over.")

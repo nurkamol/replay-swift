@@ -79,7 +79,7 @@ private struct ProjectCard: View {
                     }
                     Spacer(minLength: Design.Space.inline)
                     HStack(spacing: Design.Space.snug) {
-                        Text(relativeDayLabel(
+                        Text(RuntimeCopy.relativeDayLabel(
                             project.lastActive,
                             now: Int64(Date().timeIntervalSince1970 * 1000)
                         ))

@@ -68,7 +68,7 @@ struct AppsView: View {
                 .font(Design.Text.figure)
                 .monospacedDigit()
                 .contentTransition(.numericText())
-            Text(label).font(Design.Text.subtitle).foregroundStyle(.secondary)
+            Text(Loc.t(label)).font(Design.Text.subtitle).foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(String(format: Loc.t("%1$@ %2$@"), value, label))

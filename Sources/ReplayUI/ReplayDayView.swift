@@ -105,7 +105,7 @@ struct ReplayDayView: View {
                     dayPart(of: session.startedAt), session.category.rawValue
                 ))
                     .cardLabelStyle()
-                Text(session.title)
+                Text(session.localizedTitle)
                     .font(Design.Text.playbackTitle)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)

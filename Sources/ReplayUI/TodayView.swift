@@ -241,7 +241,9 @@ private struct HeadlineCard: View {
                 if let focus = summary.focus {
                     Stat(
                         value: formatDurationShort(focus.averageStretchSeconds),
-                        label: "\(focus.quality.rawValue) focus"
+                        label: String(
+                            format: Loc.t("%@ focus"), Loc.t(focus.quality.rawValue)
+                        )
                     )
                 }
                 if let longest = summary.longestSession {
@@ -296,7 +298,7 @@ private struct HeadlineCard: View {
         var body: some View {
             HStack(spacing: Design.Space.snug) {
                 Text(value).font(.callout.weight(.semibold)).monospacedDigit()
-                Text(label).font(.callout).foregroundStyle(.secondary)
+                Text(Loc.t(label)).font(.callout).foregroundStyle(.secondary)
             }
         }
     }
@@ -322,17 +324,24 @@ struct SessionCard: View {
     /// colour and shape on screen.
     private var accessibilityDescription: String {
         var parts = [
-            session.title,
+            session.localizedTitle,
             formatRange(session.startedAt, session.endedAt),
-            "\(formatDurationShort(session.activeSeconds)) active",
+            String(format: Loc.t("%@ active"), formatDurationShort(session.activeSeconds)),
             Loc.count(session.apps.count, "%@ app", "%@ apps"),
         ]
-        if annotation.bookmarked { parts.append("bookmarked") }
+        if annotation.bookmarked { parts.append(Loc.t("bookmarked")) }
         if !annotation.tags.isEmpty {
-            parts.append("tagged \(annotation.tags.joined(separator: ", "))")
+            // The separator is translated too: a list reads with a different mark in some
+            // languages, and this string is spoken rather than seen.
+            parts.append(
+                String(
+                    format: Loc.t("tagged %@"),
+                    annotation.tags.joined(separator: Loc.t(", "))
+                )
+            )
         }
         if !annotation.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            parts.append("has a note")
+            parts.append(Loc.t("has a note"))
         }
         return parts.joined(separator: ", ")
     }
@@ -356,7 +365,7 @@ struct SessionCard: View {
                         }
                     }
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(session.title).font(Design.Text.itemTitle)
+                        Text(session.localizedTitle).font(Design.Text.itemTitle)
                         Text(String(
                             format: Loc.t("%1$@ · %2$@ apps · %3$@ switches"),
                             formatRange(session.startedAt, session.endedAt),
@@ -524,7 +533,7 @@ struct BreakRow: View {
     let gap: ActivityBreak
 
     /// The words come from `ReplayCore`, where the parity suite can reach them.
-    private var described: BreakDescription { describeBreak(gap) }
+    private var described: BreakDescription { RuntimeCopy.describeBreak(gap) }
     private var label: String { described.title }
     private var detail: String { described.detail }
 
@@ -657,9 +666,11 @@ struct ResumeCard: View {
                 size: Design.Icon.resume
             )
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text(target.isEarlierDay ? "Continue where you left off" : "Pick up where you left off")
+                Text(target.isEarlierDay
+                    ? Loc.t("Continue where you left off")
+                    : Loc.t("Pick up where you left off"))
                     .cardLabelStyle()
-                Text(target.session.title)
+                Text(target.session.localizedTitle)
                     .font(Design.Text.itemTitle)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -696,7 +707,7 @@ struct ResumeCard: View {
     }
 
     private var detail: String {
-        "\(target.app.applicationName) · \(formatWhen(target.session.endedAt, now: now)) · "
+        "\(target.app.applicationName) · \(RuntimeCopy.formatWhen(target.session.endedAt, now: now)) · "
             + formatDurationShort(target.session.activeSeconds)
     }
 
@@ -949,7 +960,7 @@ struct PastReflectionCard: View {
                     .font(.title3)
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(String(format: Loc.t("YOU WROTE, %@"), "\(relativeDayLabel(reflection.dayStart, now: now).uppercased())"))
+                    Text(String(format: Loc.t("YOU WROTE, %@"), "\(RuntimeCopy.relativeDayLabel(reflection.dayStart, now: now).uppercased())"))
                         .font(Design.Text.cardLabel)
                         .foregroundStyle(.tertiary)
                         .kerning(Design.Text.labelKerning)

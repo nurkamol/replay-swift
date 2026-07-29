@@ -201,7 +201,7 @@ final class SettingsModel {
         let days = ([today] + summaries.map(\.dayStart).filter { $0 < today })
             .reduce(into: [Int64]()) { seen, day in if !seen.contains(day) { seen.append(day) } }
             .sorted(by: >)
-        return days.map { ($0, relativeDayLabel($0, now: now())) }
+        return days.map { ($0, RuntimeCopy.relativeDayLabel($0, now: now())) }
     }
 
     /// Delete one day and everything written about it.
