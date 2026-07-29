@@ -68,6 +68,7 @@ Blurred, with depth but no shine.
 Bookmark this session
 Bookmarked
 Bookmarks
+Both write while Replay is running — a background courtesy, not a daemon, so a Mac that was off has nothing to catch up. Each keeps its eight most recent and removes only its own.
 Bring back %@
 Bring the whole field back
 Browse by date
@@ -85,6 +86,7 @@ Check for updates
 Check Now
 Choose
 Choose a day
+Choose a folder for Replay to write reports into.
 Choose apps Replay should never record. Excluding one also removes its history.
 Choose…
 Clear activity history?
@@ -99,6 +101,7 @@ Compact database
 Continue
 Couldn't open %@
 Couldn't write that backup: %@
+Couldn't write that report: %@
 Custom target
 Daily focus
 Daily rhythm
@@ -194,7 +197,8 @@ Keep activity for
 Keep ambient mode up while you carry on working, instead of it closing the moment you touch the keyboard. It takes the whole screen it is on, so this only applies when that is a screen other than the one Replay's window is on — otherwise there would be nothing to work in.
 Keep the drift to a span of the day — an evening, or the hours you are at this desk. Outside it nothing starts on its own, and both can still be opened by hand.
 Language
-Last written %@.
+Last backup %@.
+Last report %@.
 Layers
 Leave it empty to go back to the name Replay chose.
 Leave it open while you work
@@ -239,6 +243,7 @@ Nothing collected yet
 Nothing has been written yet. Choosing a folder with a schedule set writes the first copy straight away, and the rest arrive while Replay is running — it is a background courtesy, not a daemon, so a Mac that was off has nothing to catch up.
 Nothing matches
 Nothing matches.
+Nothing recorded in that period — no report written.
 Nothing recorded yet today.
 Nothing recorded yet. Your sessions will appear here as you work.
 Nothing to map yet
@@ -331,6 +336,8 @@ Replay sometimes surfaces a memory on its own — what is that?
 Replay This Day
 Replay will stop recording it, and will erase everything it has already recorded for it. That cannot be undone — un-excluding later resumes recording but does not bring the history back.
 Report
+Report folder
+Report on a schedule
 Reset Replay
 Reset Replay?
 Reset…
@@ -424,6 +431,8 @@ What's New
 When idle, show
 Where does my data live?
 Where should Replay keep its backups?
+Where should Replay write its reports?
+Where the reports go. Markdown or HTML, because a report that arrives on its own might cover a busy week, and PDF is one page with a pointer to HTML.
 Where those copies go. Somewhere that is itself backed up is the point: a second copy on the same disk survives a mistake, not a failure.
 Where your time went this month.
 Where your time went this week.
@@ -436,8 +445,11 @@ Which way it goes
 Why is Memories empty?
 Window
 Works alongside
+Write a report of the period that has just finished — yesterday, or the week just gone — into a folder you choose. A backup is insurance you hope never to open; this is the one file here meant to be read.
+Write one now
 Write the same full backup on a schedule, without being asked. Nothing leaves this Mac — it is a file in a folder you choose, and Replay keeps the eight most recent and removes its own older ones.
 Written from your own history and handed to macOS already composed. Nothing is uploaded, and Replay asks for permission only when you switch one of these on.
+Wrote %@ to %@
 Years
 Yellow
 Yes — a Reflection. On Today, and on any past day you open, there’s a line to jot what you’d like to remember. It’s kept locally with everything else and turns up in Search. You can also press Replay Day on Today to watch the day play back as a short movie.

@@ -24,6 +24,7 @@ struct SettingsView: View {
     let notifications: NotificationsModel
     let updates: UpdateModel
     let backups: AutoBackupModel
+    let reports: ReportScheduleModel
 
     /// The panes, in the order they are worth reaching for.
     /// Not private: the Help menu opens Settings on a chosen pane.
@@ -113,7 +114,7 @@ struct SettingsView: View {
                 case .data:
                     DataTab(
                         settings: settings, export: export, preferences: preferences,
-                        backups: backups
+                        backups: backups, reports: reports
                     )
                 case .display: DisplayTab(preferences: preferences)
                 case .shortcuts: ShortcutsTab()
@@ -821,6 +822,7 @@ private struct DataTab: View {
     let export: ExportModel
     @Bindable var preferences: Preferences
     let backups: AutoBackupModel
+    let reports: ReportScheduleModel
 
     @State private var confirmingClear = false
     @State private var confirmingReset = false
@@ -831,6 +833,19 @@ private struct DataTab: View {
     @State private var format: Report.Format = .markdown
 
     private var matching: Int { export.count(scope) }
+
+    /// " Last backup 2 hours ago. Last report yesterday." — appended to the section's footer,
+    /// and only for whichever has actually run.
+    private var scheduleAges: String {
+        var parts: [String] = []
+        if let backup = backups.lastRunLabel {
+            parts.append(String(format: Loc.t("Last backup %@."), backup))
+        }
+        if let report = reports.lastRunLabel {
+            parts.append(String(format: Loc.t("Last report %@."), report))
+        }
+        return parts.isEmpty ? "" : " " + parts.joined(separator: " ")
+    }
 
     var body: some View {
         PaneForm {
@@ -917,20 +932,59 @@ private struct DataTab: View {
                 } else if let status = backups.status {
                     Text(status).foregroundStyle(.secondary).font(Design.Text.detail)
                 }
+                Picker(
+                    OwnSettingsRow.scheduledReport.label,
+                    selection: $preferences.reportCadence
+                ) {
+                    ForEach(AutoBackup.Cadence.allCases, id: \.self) { cadence in
+                        Text(cadence.label).tag(cadence)
+                    }
+                }
+                .explains(own: .scheduledReport)
+                if preferences.reportCadence != .off {
+                    LabeledContent(OwnSettingsRow.reportFolder.label) {
+                        HStack(spacing: Design.Space.inline) {
+                            Picker(Loc.t("Format"), selection: $preferences.reportFormat) {
+                                ForEach(ReportScheduleModel.formats, id: \.self) {
+                                    Text($0.label).tag($0)
+                                }
+                            }
+                            .labelsHidden()
+                            .fixedSize()
+                            Text(reports.folderLabel ?? Loc.t("None chosen"))
+                                .foregroundStyle(reports.folderLabel == nil ? .secondary : .primary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Button(Loc.t("Choose…")) { reports.chooseFolder() }
+                            Button(Loc.t("Write one now")) { reports.runNow() }
+                                .disabled(reports.folderLabel == nil)
+                        }
+                    }
+                    .explains(own: .reportFolder)
+                }
+                if let error = reports.errorMessage {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.red)
+                        .font(Design.Text.detail)
+                } else if let status = reports.status {
+                    Text(status).foregroundStyle(.secondary).font(Design.Text.detail)
+                }
             } header: {
                 // Not "Automatic backup": that is the row's own name, and a section headed
                 // with the same words as its first row reads as a stutter.
                 Text(Loc.t("On a schedule"))
             } footer: {
+                // One footer for two schedules, so it says what is true of both rather than
+                // reporting one of them as if it were the section. It used to be the backup's
+                // alone, which read as "nothing has been written yet" directly under a line
+                // saying a report had just been written.
                 Footnote(
-                    backups.lastRunLabel.map {
-                        String(format: Loc.t("Last written %@."), $0)
-                    } ?? Loc.t(
-                        "Nothing has been written yet. Choosing a folder with a schedule set "
-                            + "writes the first copy straight away, and the rest arrive "
-                            + "while Replay is running — it is a background courtesy, not a "
-                            + "daemon, so a Mac that was off has nothing to catch up."
+                    Loc.t(
+                        "Both write while Replay is running — a background courtesy, not a "
+                            + "daemon, so a Mac that was off has nothing to catch up. Each "
+                            + "keeps its eight most recent and removes only its own."
                     )
+                        + scheduleAges
                 )
             }
 

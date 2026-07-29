@@ -159,6 +159,36 @@ final class AppModel {
         reload()
     }
 
+    /// The report entries a scope covers, from one fetch wide enough for any of them.
+    ///
+    /// Here rather than in `ExportModel` because two features need it — the export panel and
+    /// the scheduled report — and two copies of a range query is how two features come to
+    /// disagree about what "this week" means.
+    func reportEntries(for scope: Report.Scope) -> [Report.Entry] {
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        let todayStart = startOfLocalDay(now)
+        let from = todayStart - Int64(Report.fetchDays - 1) * dayMillis
+        let to = todayStart + dayMillis
+
+        do {
+            // The store's range query reaches back on purpose, so runs that began before the
+            // window are dropped here — the same rule every day-scoped view follows (SPEC §5).
+            let events = try store.sessions(from: from, to: to)
+                .filter { $0.startedAt >= from }
+            let sessions = Report.sessions(in: events, now: now)
+            let annotations = Dictionary(
+                uniqueKeysWithValues: try store.annotations(from: from, to: to)
+                    .map { ($0.sessionStart, $0) }
+            )
+            return Report.select(
+                scope, sessions: sessions, annotations: annotations, todayStart: todayStart
+            )
+        } catch {
+            errorMessage = "\(error)"
+            return []
+        }
+    }
+
     func setReflection(_ text: String) {
         do {
             reflection = try store.setReflection(

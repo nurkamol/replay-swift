@@ -43,30 +43,11 @@ final class ExportModel {
         exportReport(format, label: scope.label, entries: selection(scope))
     }
 
-    /// The sessions a scope covers, derived from one fetch wide enough for any of them.
+    /// The sessions a scope covers. Lives on `AppModel` now, because the scheduled report
+    /// needs exactly the same selection and two copies of a range query is how two features
+    /// come to disagree about what "this week" means.
     private func selection(_ scope: Report.Scope) -> [Report.Entry] {
-        let now = Int64(Date().timeIntervalSince1970 * 1000)
-        let todayStart = startOfLocalDay(now)
-        let from = todayStart - Int64(Report.fetchDays - 1) * dayMillis
-        let to = todayStart + dayMillis
-
-        do {
-            // The store's range query reaches back on purpose, so runs that began before the
-            // window are dropped here — the same rule every day-scoped view follows (SPEC §5).
-            let events = try model.store.sessions(from: from, to: to)
-                .filter { $0.startedAt >= from }
-            let sessions = Report.sessions(in: events, now: now)
-            let annotations = Dictionary(
-                uniqueKeysWithValues: try model.store.annotations(from: from, to: to)
-                    .map { ($0.sessionStart, $0) }
-            )
-            return Report.select(
-                scope, sessions: sessions, annotations: annotations, todayStart: todayStart
-            )
-        } catch {
-            errorMessage = "\(error)"
-            return []
-        }
+        model.reportEntries(for: scope)
     }
 
     /// Save a report of these sessions, pairing each with what was written on it.

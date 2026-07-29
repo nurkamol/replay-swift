@@ -58,6 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var updates = UpdateModel(preferences: preferences)
     /// Off unless somebody chose a folder and a schedule; see `AutoBackupModel`.
     private lazy var backups = AutoBackupModel(model: model, preferences: preferences)
+    /// Off unless somebody chose a folder and a schedule; see `ReportScheduleModel`.
+    private lazy var reports = ReportScheduleModel(model: model, preferences: preferences)
     private var window: NSWindow?
     private var settingsWindow: NSWindow?
     private var screensaverWindow: NSWindow?
@@ -190,8 +192,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // `isDue` compares calendar days, so an hourly tick writes one file a day, not
         // twenty-four.
         backups.runIfDue()
+        reports.runIfDue()
         backupWatch = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.backups.runIfDue() }
+            Task { @MainActor in
+                self?.backups.runIfDue()
+                self?.reports.runIfDue()
+            }
         }
     }
 
@@ -1047,6 +1053,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     model: model, settings: settings, export: export,
                     preferences: preferences, contextual: contextual,
                     notifications: notifications, updates: updates, backups: backups,
+                    reports: reports,
                     initialPane: settingsPane ?? .general
                 )
                 // Same reason as the main window's: a language is chosen *in* this window,

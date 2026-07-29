@@ -71,6 +71,7 @@
 "Bookmark this session" = "Bu seansni xatcho‘plash";
 "Bookmarked" = "Xatcho‘plangan";
 "Bookmarks" = "Xatcho‘plar";
+"Both write while Replay is running — a background courtesy, not a daemon, so a Mac that was off has nothing to catch up. Each keeps its eight most recent and removes only its own." = "Ikkalasi ham Replay ishlab turganda yozadi — bu fon xizmati emas, oddiy xushmuomalalik; o‘chiq turgan Mac’da qoldirilgan ish bo‘lmaydi. Har biri o‘zining eng so‘nggi sakkiztasini saqlaydi va faqat o‘zinikini o‘chiradi.";
 "Bring back %@" = "%@ ni qaytarish";
 "Bring the whole field back" = "Butun maydonni qaytarish";
 "Browse by date" = "Sana bo‘yicha ko‘rish";
@@ -88,6 +89,7 @@
 "Check Now" = "Hozir tekshirish";
 "Choose" = "Tanlash";
 "Choose a day" = "Kun tanlang";
+"Choose a folder for Replay to write reports into." = "Replay hisobot yozadigan jildni tanlang.";
 "Choose apps Replay should never record. Excluding one also removes its history." = "Replay hech qachon yozmasligi kerak bo‘lgan ilovalarni tanlang. Ilovani chiqarib tashlash uning tarixini ham o‘chiradi.";
 "Choose…" = "Tanlash…";
 "Clear activity history?" = "Faoliyat tarixi tozalansinmi?";
@@ -102,6 +104,7 @@
 "Continue" = "Davom etish";
 "Couldn't open %@" = "%@ ochilmadi";
 "Couldn't write that backup: %@" = "Zaxira yozilmadi: %@";
+"Couldn't write that report: %@" = "Hisobot yozilmadi: %@";
 "Custom target" = "O‘z maqsadingiz";
 "Daily focus" = "Kunlik fokus";
 "Daily rhythm" = "Kunlik ritm";
@@ -197,7 +200,8 @@
 "Keep ambient mode up while you carry on working, instead of it closing the moment you touch the keyboard. It takes the whole screen it is on, so this only applies when that is a screen other than the one Replay's window is on — otherwise there would be nothing to work in." = "Klaviaturaga tegishingiz bilan yopilib qolmasdan, siz ishlayotganingizda ambient rejimi ochiq tursin. U turgan ekranni butunlay egallaydi, shuning uchun bu faqat Replay oynasi turgan ekrandan boshqa ekran bo‘lgandagina amal qiladi — aks holda ishlash uchun joy qolmaydi.";
 "Keep the drift to a span of the day — an evening, or the hours you are at this desk. Outside it nothing starts on its own, and both can still be opened by hand." = "Buni kunning ma’lum oralig‘i bilan cheklang — oqshom yoki shu stol yonida bo‘ladigan soatlaringiz. Undan tashqarida hech narsa o‘zi ochilmaydi, ikkalasini ham qo‘lda ochsa bo‘ladi.";
 "Language" = "Til";
-"Last written %@." = "Oxirgi marta %@ yozilgan.";
+"Last backup %@." = "Oxirgi zaxira %@.";
+"Last report %@." = "Oxirgi hisobot %@.";
 "Layers" = "Qatlamlar";
 "Leave it empty to go back to the name Replay chose." = "Replay tanlagan nomga qaytish uchun bo‘sh qoldiring.";
 "Leave it open while you work" = "Ishlayotganingizda ochiq qolsin";
@@ -242,6 +246,7 @@
 "Nothing has been written yet. Choosing a folder with a schedule set writes the first copy straight away, and the rest arrive while Replay is running — it is a background courtesy, not a daemon, so a Mac that was off has nothing to catch up." = "Hali hech narsa yozilmagan. Jadval belgilangan holda jild tanlansa, birinchi nusxa darhol yoziladi, qolganlari Replay ishlab turganda paydo bo‘ladi — bu fon xizmati emas, oddiy xushmuomalalik; o‘chiq turgan Mac’da qoldirilgan ish bo‘lmaydi.";
 "Nothing matches" = "Hech narsa mos kelmadi";
 "Nothing matches." = "Hech narsa mos kelmadi.";
+"Nothing recorded in that period — no report written." = "Bu davrda hech narsa yozilmagan — hisobot yozilmadi.";
 "Nothing recorded yet today." = "Bugun hali hech narsa yozilmagan.";
 "Nothing recorded yet. Your sessions will appear here as you work." = "Hali hech narsa yozilmagan. Ishlaganingiz sari seanslaringiz shu yerda paydo bo‘ladi.";
 "Nothing to map yet" = "Hali xaritaga soladigan narsa yo‘q";
@@ -334,6 +339,8 @@
 "Replay This Day" = "Shu kunni qayta o‘ynatish";
 "Replay will stop recording it, and will erase everything it has already recorded for it. That cannot be undone — un-excluding later resumes recording but does not bring the history back." = "Replay uni yozishni to‘xtatadi va u haqda yozilgan hamma narsani o‘chiradi. Buni ortga qaytarib bo‘lmaydi — keyinroq ro‘yxatdan chiqarsangiz yozish qayta boshlanadi, lekin tarix qaytmaydi.";
 "Report" = "Hisobot";
+"Report folder" = "Hisobot jildi";
+"Report on a schedule" = "Jadval bo‘yicha hisobot";
 "Reset Replay" = "Replay’ni tiklash";
 "Reset Replay?" = "Replay tiklansinmi?";
 "Reset…" = "Tiklash…";
@@ -427,6 +434,8 @@
 "When idle, show" = "Bo‘sh turganda ko‘rsatilsin";
 "Where does my data live?" = "Ma’lumotlarim qayerda turadi?";
 "Where should Replay keep its backups?" = "Replay zaxiralarni qayerda saqlasin?";
+"Where should Replay write its reports?" = "Replay hisobotlarni qayerga yozsin?";
+"Where the reports go. Markdown or HTML, because a report that arrives on its own might cover a busy week, and PDF is one page with a pointer to HTML." = "Hisobotlar qayerga tushadi. Markdown yoki HTML — chunki o‘zi keladigan hisobot band haftani qamrashi mumkin, PDF esa bir sahifa va qolgani uchun HTML’ga yo‘naltiradi.";
 "Where those copies go. Somewhere that is itself backed up is the point: a second copy on the same disk survives a mistake, not a failure." = "O‘sha nusxalar qayerga tushadi. Gap shundaki, o‘zi ham zaxiralanadigan joy tanlang: bitta diskdagi ikkinchi nusxa xatodan qutqaradi, nosozlikdan emas.";
 "Where your time went this month." = "Shu oy vaqtingiz qayerga ketgani.";
 "Where your time went this week." = "Shu hafta vaqtingiz qayerga ketgani.";
@@ -439,8 +448,11 @@
 "Why is Memories empty?" = "Nega Xotiralar bo‘sh?";
 "Window" = "Oyna";
 "Works alongside" = "Birga ishlaydi";
+"Write a report of the period that has just finished — yesterday, or the week just gone — into a folder you choose. A backup is insurance you hope never to open; this is the one file here meant to be read." = "Endigina tugagan davr — kecha yoki o‘tgan hafta — haqidagi hisobotni siz tanlagan jildga yozish. Zaxira — ochmaslikka umid qiladigan sug‘urta; bu esa shu yerdagi o‘qish uchun mo‘ljallangan yagona fayl.";
+"Write one now" = "Hozir yozish";
 "Write the same full backup on a schedule, without being asked. Nothing leaves this Mac — it is a file in a folder you choose, and Replay keeps the eight most recent and removes its own older ones." = "O‘sha to‘liq zaxirani so‘ralmasdan, jadval bo‘yicha yozib turish. Hech narsa shu Mac’dan chiqmaydi — bu siz tanlagan jilddagi fayl; Replay eng so‘nggi sakkiztasini saqlaydi va o‘zining eskilarini o‘chiradi.";
 "Written from your own history and handed to macOS already composed. Nothing is uploaded, and Replay asks for permission only when you switch one of these on." = "O‘z tarixingizdan yozilib, macOS’ga tayyor holda beriladi. Hech narsa yuklanmaydi va Replay ruxsatni faqat shulardan birini yoqqaningizda so‘raydi.";
+"Wrote %@ to %@" = "%@ %@ fayliga yozildi";
 "Years" = "Yillar";
 "Yellow" = "Sariq";
 "Yes — a Reflection. On Today, and on any past day you open, there’s a line to jot what you’d like to remember. It’s kept locally with everything else and turns up in Search. You can also press Replay Day on Today to watch the day play back as a short movie." = "Ha — Mulohaza. Bugun bo‘limida va ochgan har qanday o‘tgan kunda eslab qolmoqchi bo‘lganingizni yozadigan satr bor. U qolgan hamma narsa bilan birga shu yerda saqlanadi va Qidiruvda chiqadi. Bugun bo‘limidagi Replay kuni tugmasini bosib, kunni qisqa film sifatida ko‘rish ham mumkin.";

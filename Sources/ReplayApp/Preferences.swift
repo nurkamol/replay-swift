@@ -469,6 +469,25 @@ final class Preferences {
         didSet { defaults.set(pausedUntil, forKey: "pausedUntil") }
     }
 
+    /// A report on a schedule: how often, where, in what, and when the last one went.
+    ///
+    /// Off with no folder until both are chosen, exactly like the backup beside it.
+    var reportCadence: AutoBackup.Cadence {
+        didSet { write(reportCadence.rawValue, "reportCadence") }
+    }
+
+    var reportFolder: String {
+        didSet { write(reportFolder, "reportFolder") }
+    }
+
+    var reportFormat: Report.Format {
+        didSet { write(reportFormat.rawValue, "reportFormat") }
+    }
+
+    var lastReport: Date? {
+        didSet { defaults.set(lastReport, forKey: "lastReport") }
+    }
+
     /// The version that ran last time, so a launch can tell it is a new one.
     ///
     /// Written on every launch, which makes this true for *any* way the bundle changed —
@@ -578,6 +597,12 @@ final class Preferences {
         lastSeenRelease = (defaults.data(forKey: "lastSeenRelease"))
             .flatMap { try? JSONDecoder().decode(Updates.Release.self, from: $0) }
         updateRetryAfter = defaults.object(forKey: "updateRetryAfter") as? Date
+        reportCadence = (defaults.string(forKey: "reportCadence")
+            .flatMap(AutoBackup.Cadence.init)) ?? .off
+        reportFolder = defaults.string(forKey: "reportFolder") ?? ""
+        reportFormat = (defaults.string(forKey: "reportFormat")
+            .flatMap(Report.Format.init)) ?? .markdown
+        lastReport = defaults.object(forKey: "lastReport") as? Date
         languageCode = defaults.string(forKey: "languageCode") ?? ""
         pausedUntil = defaults.object(forKey: "pausedUntil") as? Date
         lastRunVersion = defaults.string(forKey: "lastRunVersion") ?? ""
@@ -657,6 +682,10 @@ final class Preferences {
         "updateETag",
         "lastSeenRelease",
         "updateRetryAfter",
+        "reportCadence",
+        "reportFolder",
+        "reportFormat",
+        "lastReport",
         "languageCode",
         "pausedUntil",
         "lastRunVersion",
@@ -736,6 +765,10 @@ final class Preferences {
         updateETag = fresh.updateETag
         lastSeenRelease = fresh.lastSeenRelease
         updateRetryAfter = fresh.updateRetryAfter
+        reportCadence = fresh.reportCadence
+        reportFolder = fresh.reportFolder
+        reportFormat = fresh.reportFormat
+        lastReport = fresh.lastReport
         languageCode = fresh.languageCode
         pausedUntil = fresh.pausedUntil
         lastRunVersion = fresh.lastRunVersion

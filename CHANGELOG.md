@@ -19,6 +19,27 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## Unreleased
+
+### Added
+
+- **A report on a schedule.** Settings ▸ Data writes a report of the period that has just
+  *finished* — yesterday, or the week just gone — into a folder you choose, as Markdown or
+  HTML, keeping the eight most recent and removing only its own. The sibling of the scheduled
+  backup and deliberately the same shape, with one difference worth stating: a backup is
+  insurance you hope never to open, and this is the one file in the app meant to be read.
+  - Past tense on purpose. A report of a day at two in the afternoon is wrong by six.
+  - A period with nothing in it writes no file. A folder that fills with "nothing happened"
+    is a folder somebody stops opening.
+  - Not PDF: that is one page with a pointer to HTML, which is right for a document somebody
+    asked for and wrong for a file that arrives on its own and might cover a busy week.
+
+### Fixed
+
+- **The schedules section reported one schedule as if it were both.** Its footer was the
+  backup's, so "Nothing has been written yet" sat directly under a line saying a report had
+  just been written.
+
 ## 0.9.7 — 2026-07-29
 
 ### Added

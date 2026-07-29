@@ -168,6 +168,8 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
     case displayScreen
     case ambientStaysOpen
     case automaticBackup
+    case scheduledReport
+    case reportFolder
     case backupFolder
     case screensaverClock
     case ambientClock
@@ -188,6 +190,8 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
         case .displayScreen: "Show on"
         case .ambientStaysOpen: "Leave it open while you work"
         case .automaticBackup: "Automatic backup"
+        case .scheduledReport: "Report on a schedule"
+        case .reportFolder: "Report folder"
         case .backupFolder: "Backup folder"
         case .screensaverClock, .ambientClock: "Show the time"
         case .ambientCurrentApp: "Show the current application"
@@ -219,6 +223,13 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
                 + "moment you touch the keyboard. It takes the whole screen it is on, so "
                 + "this only applies when that is a screen other than the one Replay's "
                 + "window is on — otherwise there would be nothing to work in."
+        case .scheduledReport:
+            "Write a report of the period that has just finished — yesterday, or the week "
+                + "just gone — into a folder you choose. A backup is insurance you hope never "
+                + "to open; this is the one file here meant to be read."
+        case .reportFolder:
+            "Where the reports go. Markdown or HTML, because a report that arrives on its own "
+                + "might cover a busy week, and PDF is one page with a pointer to HTML."
         case .automaticBackup:
             "Write the same full backup on a schedule, without being asked. Nothing leaves "
                 + "this Mac — it is a file in a folder you choose, and Replay keeps the "
