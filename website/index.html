@@ -275,7 +275,7 @@
       <a class="btn btn-ghost" href="#install">Install with Homebrew</a>
       <a class="btn btn-ghost" href="https://github.com/nurkamol/replay-swift">Source on GitHub</a>
     </div>
-    <p class="under">macOS 26 or later · Free and open source · Not yet signed — <a href="#gatekeeper">what that means</a></p>
+    <p class="under">macOS 14 Sonoma or later · Free and open source · Not yet signed — <a href="#gatekeeper">what that means</a></p>
     <div class="hero-shot shot">
       <img src="img/today.jpg" alt="Replay's Today view: a headline of hours active, a focus goal, and the day's sessions listed in order." width="1600" height="1076">
     </div>
@@ -349,16 +349,26 @@
   <div class="wrap">
     <div class="section-head">
       <h2>Install it</h2>
-      <p>Two ways in. Homebrew compiles Replay on your machine, which means macOS never marks it
-      as downloaded and it opens with no warning at all — that is why it is first.</p>
+      <p>Two ways, trading the same thing in opposite directions. A prebuilt download is
+      installed in seconds and asks you for one trip through System Settings the first time.
+      A build from source takes a couple of minutes and wants Xcode, and opens with no warning
+      at all — because nothing was downloaded, so macOS never marks it.</p>
     </div>
 
-    <h3 style="margin-bottom:14px">With Homebrew</h3>
+    <h3 style="margin-bottom:14px">The quick way — prebuilt</h3>
 <pre>brew tap nurkamol/tap
+brew install --cask nurkamol/tap/replay-app</pre>
+    <p style="color:var(--dim); font-size:.94rem; margin:0 0 40px">
+      Straight into <code>/Applications</code>, no developer tools. The first launch shows a
+      warning — <a href="#gatekeeper">here is why, and the two clicks past it</a>.
+    </p>
 
-brew install nurkamol/tap/replay-app    <span class="c"># the application</span>
+    <h3 style="margin-bottom:14px">The quiet way — built here</h3>
+<pre>brew tap nurkamol/tap
+brew install nurkamol/tap/replay-app    <span class="c"># same name, no --cask</span>
 brew install nurkamol/tap/replay        <span class="c"># the command-line reader</span></pre>
     <p style="color:var(--dim); font-size:.94rem; margin:0 0 40px">
+      Compiled on your Mac, so it is never quarantined and opens with no warning at all.
       Then link it once so Spotlight and the Dock find it:<br>
       <code>ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app</code>
     </p>
@@ -372,8 +382,10 @@ brew install nurkamol/tap/replay        <span class="c"># the command-line reade
 
     <div class="note" id="gatekeeper">
       <h3>“Apple could not verify Replay is free of malware”</h3>
-      <p>You will see this if you download the app rather than build it, and it offers only
-      <strong>Move to Trash</strong> or <strong>Cancel</strong> — which reads far worse than it is.
+      <p>You will see this if you download the app rather than build it — the prebuilt cask and
+      the release zip both count, because Homebrew marks a cask download exactly as a browser
+      would. It offers only <strong>Move to Trash</strong> or <strong>Cancel</strong>, which
+      reads far worse than it is.
       The message is about a <strong>missing certificate, not about anything found in the app</strong>.
       Every unsigned Mac app gets it. A Developer ID costs 99 USD a year and this project does
       not have one yet.</p>

@@ -43,28 +43,50 @@ implementation, and the claims above are the ones the design is built around —
 
 ## Install
 
-Three ways in. Homebrew and a source build compile on your machine, so they are never
-quarantined and open with no warning at all — which is why they are first. The zipped app on
-the [releases page](https://github.com/nurkamol/replay-swift/releases/latest) needs no tools,
-and costs you one trip through System Settings the first time you open it; that is explained
-in full below rather than left as a surprise.
+**Requires macOS 14 Sonoma or newer.**
 
-### With Homebrew
+Two ways to get the app, and they trade the same thing in opposite directions. A prebuilt
+download installs in seconds and costs you one trip through System Settings the first time you
+open it. A build from source takes a couple of minutes and needs Xcode, and opens with no
+warning at all — because nothing was downloaded, so macOS never marks it. Both are explained
+below rather than left as a surprise.
+
+### The quick way — prebuilt
 
 ```sh
 brew tap nurkamol/tap
-
-brew install nurkamol/tap/replay-app    # the application
-brew install nurkamol/tap/replay        # the command-line reader
+brew install --cask nurkamol/tap/replay-app
 ```
 
-Then link the app once, so Spotlight and the Dock can find it:
+Installs to `/Applications` in seconds and needs no developer tools. **The first launch shows
+a warning** — Replay has no Apple Developer ID yet, so macOS refuses a downloaded app it
+cannot check. One trip through System Settings, described in *[If you see a warning](#if-you-see-a-warning)*
+below, and it opens normally from then on.
+
+### The quiet way — built here
+
+```sh
+brew tap nurkamol/tap
+brew install nurkamol/tap/replay-app     # same name, no --cask: builds from source
+```
+
+Then link it once, so Spotlight and the Dock can find it:
 
 ```sh
 ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
 ```
 
-That builds v0.9.8. Add `--HEAD` to either one to build the current `main` instead.
+Slower, and it wants a full Xcode. In exchange **there is no warning at all**: an app compiled
+on your own machine was never downloaded, so it is never quarantined. Add `--HEAD` to build the
+current `main` instead of v0.9.8.
+
+### The command-line reader
+
+```sh
+brew install nurkamol/tap/replay        # `replay today`, `replay week --json`
+```
+
+A CLI is never quarantined either way, so this one has no caveats.
 
 ### Or from source
 
@@ -75,14 +97,14 @@ cd replay-swift
 open build/Replay.app
 ```
 
-### If you downloaded a build
+### If you see a warning
 
 **You will see a warning the first time, and it is not about this app.**
 
-macOS marks *everything* downloaded through a browser with a quarantine flag, and refuses to
-open anything under that flag unless it carries a paid Apple Developer ID signature. Replay
-does not have one yet, so the message is about a missing certificate rather than anything
-found in the app.
+macOS marks *everything downloaded* with a quarantine flag — by a browser, by `curl`, or by
+Homebrew installing a cask — and refuses to open anything under that flag unless it carries a
+paid Apple Developer ID signature. Replay does not have one yet, so the message is about a
+missing certificate rather than anything found in the app.
 
 What you will see: **"Apple could not verify Replay is free of malware"**, offering only
 *Move to Trash* or *Cancel*. To open it anyway:
@@ -101,9 +123,11 @@ xattr -dr com.apple.quarantine /Applications/Replay.app
 **Apple removed it in macOS 15**; it is still the advice in most projects' READMEs and it no
 longer does anything. System Settings is the route now.
 
-**None of this applies to the two routes above.** Homebrew and a source build compile on your
-machine, so nothing is ever downloaded and nothing is ever quarantined — they open with no
-warning at all. That is the reason they are listed first rather than as a fallback.
+**This applies to the prebuilt cask and to the zip from the releases page** — both are
+downloads. It does not apply to the source build (`brew install nurkamol/tap/replay-app`
+without `--cask`) or to `./scripts/make-app.sh`: an app compiled on your own machine was never
+downloaded, so it is never quarantined and opens with no warning at all. That is the whole of
+the difference between the two routes, and it is the reason both exist.
 
 ### Why there is no *signed* download
 
