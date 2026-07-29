@@ -97,10 +97,10 @@ struct Sky: View {
 
         return Design.Sky.Stop(
             hour: now,
-            top: lower.top.mix(with: upper.top, by: t),
-            middle: lower.middle.mix(with: upper.middle, by: t),
-            bottom: lower.bottom.mix(with: upper.bottom, by: t),
-            glow: lower.glow.mix(with: upper.glow, by: t),
+            top: lower.top.blended(with: upper.top, by: t),
+            middle: lower.middle.blended(with: upper.middle, by: t),
+            bottom: lower.bottom.blended(with: upper.bottom, by: t),
+            glow: lower.glow.blended(with: upper.glow, by: t),
             glowAt: UnitPoint(
                 x: lower.glowAt.x + (upper.glowAt.x - lower.glowAt.x) * t,
                 y: lower.glowAt.y + (upper.glowAt.y - lower.glowAt.y) * t
@@ -111,4 +111,34 @@ struct Sky: View {
     }
 
     private func smooth(_ t: Double) -> Double { t * t * (3 - 2 * t) }
+}
+
+extension Color {
+    /// Two colours mixed, on every macOS this app runs on.
+    ///
+    /// `Color.mix(with:by:)` arrived in macOS 15 and is used only by the sky, four times.
+    /// Where it exists it is what runs — the sky is a designed surface and its anchors were
+    /// chosen against the system's own perceptual blend, so nothing about how it looks on a
+    /// current Mac may change to accommodate an older one.
+    ///
+    /// Below 15 the components are interpolated in sRGB instead. That is a slightly
+    /// different curve through the middle of a blend — perceptual mixing keeps more
+    /// saturation halfway between two colours — so the sky on macOS 14 is fractionally
+    /// flatter at the transitions and identical at every anchor. Worth stating, and not
+    /// worth reimplementing Oklab to avoid.
+    func blended(with other: Color, by amount: Double) -> Color {
+        if #available(macOS 15, *) { return mix(with: other, by: amount) }
+        let t = min(1, max(0, amount))
+        guard
+            let from = NSColor(self).usingColorSpace(.sRGB),
+            let to = NSColor(other).usingColorSpace(.sRGB)
+        else { return t < 0.5 ? self : other }
+        return Color(
+            .sRGB,
+            red: from.redComponent + (to.redComponent - from.redComponent) * t,
+            green: from.greenComponent + (to.greenComponent - from.greenComponent) * t,
+            blue: from.blueComponent + (to.blueComponent - from.blueComponent) * t,
+            opacity: from.alphaComponent + (to.alphaComponent - from.alphaComponent) * t
+        )
+    }
 }
