@@ -155,6 +155,23 @@ behaviour first and constants second, and generate anything that matches-by-luck
       · This port's screensaver already solves the hard parts (a borderless full-screen
         window, the exit affordance, the arm delay), so most of this is the view.
 
+## 2c · Previews, now that there can be any
+
+- [ ] `S` **A `#Preview` on each surface, added as that surface is next touched.** Not a
+      sweep: a preview written away from a change is a preview nobody looks at. The one on
+      `FocusGoalCard` is the pattern — two states side by side in a `#if DEBUG` block, real
+      values through the type's own factory rather than a fixture.
+      · Possible since 2026-07-29, when the interface moved to `Sources/ReplayUI/`. Xcode
+        cannot preview an executable target: it wants `ENABLE_DEBUG_DYLIB`, which SwiftPM
+        has no way to express, and its own error suggests a library instead. Measured with
+        a throwaway target before moving anything.
+      · **Select the `ReplayUI` scheme.** With `Replay-Package` active Xcode resolves the
+        preview back to the executable and refuses — the error names `ReplayApp` even for a
+        file in `ReplayUI`, which reads as the split having failed when it has not.
+      · This does not replace `./tools/screenshots.sh`. The canvas is the fast way to see
+        *one* surface while changing it; the sheet is the only way to see all of them, and
+        it is what has actually caught the layout bugs.
+
 ## 3 · Waiting on a decision, not on work
 
 These are not blocked by difficulty. They are blocked because they are somebody's call.

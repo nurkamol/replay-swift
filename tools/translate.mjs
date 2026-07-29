@@ -106,7 +106,7 @@ function collectKeys() {
   const keys = new Set();
 
   // 1. Anything a view wraps itself.
-  for (const dir of ["Sources/ReplayApp", "Sources/ReplayCore"]) {
+  for (const dir of ["Sources/ReplayUI", "Sources/ReplayApp", "Sources/ReplayCore"]) {
     for (const file of swiftFiles(join(ROOT, dir))) {
       const source = joinConcatenations(readFileSync(file, "utf8"));
       for (const match of source.matchAll(/Loc\.t\(\s*"((?:[^"\\]|\\.)*)"/g)) {

@@ -872,6 +872,11 @@ enum Design {
         static let windowHeight: CGFloat = 760
         static let windowMinWidth: CGFloat = 720
         static let windowMinHeight: CGFloat = 480
+        /// The width an Xcode `#Preview` gives a card, so the canvas shows it at roughly the
+        /// measure it has in the detail column rather than shrink-wrapped to its content.
+        /// Ships in the binary and costs nothing; previews are compiled out of release
+        /// builds by the `#if DEBUG` around them.
+        static let previewWidth: CGFloat = 520
         /// The leading inset a sidebar `List` gives its own rows, matched by anything laid
         /// out beside it rather than inside it — the footer, which otherwise sat two points
         /// to the left of every row above it.

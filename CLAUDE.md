@@ -60,8 +60,16 @@ node tools/release-notes.mjs 0.9.7 --check   # the tag, the build and the change
   current is what `node tools/port-queue.mjs` answers, and only with the Glaze app present.
 - **Commit `spec/` together with the Swift change** that matches it, so every commit says
   which upstream version it corresponds to.
+- **The interface lives in `Sources/ReplayUI/`, a library.** `Sources/ReplayApp/` is five
+  lines of `main.swift` plus `Intents.swift`, and that is deliberate: Xcode's canvas cannot
+  preview an executable target — it wants `ENABLE_DEBUG_DYLIB`, which SwiftPM has no way to
+  express — so the views had to live somewhere it can inject into. `AppDelegate` is the only
+  public symbol; keep it that way. Add `#Preview` blocks (in `#if DEBUG`) as you touch views:
+  the canvas is the fastest way to see one surface, and `./tools/screenshots.sh` still the
+  way to see all of them. Intents stay in `ReplayApp` because `make-app.sh` passes the
+  metadata processor `--module-name ReplayApp`, and moving them fails silently.
 - **No view spells a number.** Every visual constant — radius, spacing, type, motion,
-  colour, icon size, window metric — lives in `Sources/ReplayApp/DesignSystem.swift`, and
+  colour, icon size, window metric — lives in `Sources/ReplayUI/DesignSystem.swift`, and
   `node tools/design-audit.mjs` fails the build if a view hard-codes one. The motion values
   are the reference's own and are checked by the parity suite, so the two apps move alike.
 - **Deployment target is macOS 26**, with `swift-tools-version: 6.2` because `.v26` was

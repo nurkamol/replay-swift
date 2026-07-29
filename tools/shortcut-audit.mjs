@@ -2,7 +2,7 @@
 /**
  * Check that the shortcut catalogue and the app agree.
  *
- * `Sources/ReplayApp/Shortcuts.swift` is the single list the View menu is built from and the
+ * `Sources/ReplayUI/Shortcuts.swift` is the single list the View menu is built from and the
  * Settings table renders. That covers the shortcuts a menu owns: change one and both move.
  *
  * It cannot cover the ones a SwiftUI view binds. `.keyboardShortcut` is a view modifier and
@@ -27,7 +27,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const VIEWS = resolve(HERE, "..", "Sources", "ReplayApp");
+const VIEWS = resolve(HERE, "..", "Sources", "ReplayUI");
 const CATALOGUE = join(VIEWS, "Shortcuts.swift");
 
 const problems = [];

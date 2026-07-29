@@ -31,6 +31,10 @@ let package = Package(
     platforms: [.macOS(.v26)],
     products: [
         .library(name: "ReplayCore", targets: ["ReplayCore"]),
+        // The interface. A product rather than a bare target because Xcode only offers a
+        // scheme for a product, and the canvas needs a scheme to pick something to inject
+        // into — see Sources/ReplayApp/main.swift for why the views live in a library.
+        .library(name: "ReplayUI", targets: ["ReplayUI"]),
         .executable(name: "ReplayApp", targets: ["ReplayApp"]),
         .executable(name: "replay-parity", targets: ["ReplayParity"]),
         // A one-off diagnostic, kept because it answers a question that decides the App
@@ -48,7 +52,11 @@ let package = Package(
         // `.lproj` directories are treated as localisations rather than as folders that
         // happen to have a dot in the name.
         .target(name: "ReplayCore", resources: [.process("Resources")]),
-        .executableTarget(name: "ReplayApp", dependencies: ["ReplayCore"]),
+        // The whole interface, in a library so Xcode can preview it. `ReplayApp` is five
+        // lines of top-level code plus the App Intents, which stay in the executable because
+        // the metadata processor is told that module's name.
+        .target(name: "ReplayUI", dependencies: ["ReplayCore"]),
+        .executableTarget(name: "ReplayApp", dependencies: ["ReplayCore", "ReplayUI"]),
 
         // The parity suite lives in its own library so it can run two ways from one
         // implementation: through swift-testing (`swift test`, needs Xcode) and as a
@@ -59,7 +67,9 @@ let package = Package(
         .testTarget(name: "ReplayCoreTests", dependencies: ["ParityKit", "ReplayCore"]),
 
         .testTarget(
-            name: "ReplayAppTests", dependencies: ["ReplayApp", "ReplayCore"],
+            // Tests the interface, which is `ReplayUI` since the split — a library, which
+            // `@testable import` reaches more happily than it ever reached an executable.
+            name: "ReplayAppTests", dependencies: ["ReplayUI", "ReplayCore"],
             // A probe catalogue in a language the app does not ship, so the localisation
             // mechanism can be proved without claiming support for a language nobody has
             // translated. See `Loc.string(_:in:bundle:)`.
