@@ -16,8 +16,8 @@
 class ReplayApp < Formula
   desc "Private, local timeline of the apps you use — the macOS application"
   homepage "https://github.com/nurkamol/replay-swift"
-  url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.6.tar.gz"
-  sha256 "1cf81039b28509d6a68e6a73c7b0630527701983179a9f5ca542cdb6bfc2f55e"
+  url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.7.tar.gz"
+  sha256 "8f05f42cee7c56195076c86535d6ae670e2707c826e27944276f3bb71ac4bcc9"
   license "MIT"
   head "https://github.com/nurkamol/replay-swift.git", branch: "main"
 
