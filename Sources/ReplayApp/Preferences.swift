@@ -446,6 +446,15 @@ final class Preferences {
         didSet { writeJSON(lastSeenRelease, "lastSeenRelease") }
     }
 
+    /// When a timed pause ends, or nil when recording — or paused with no end.
+    ///
+    /// Persisted because a pause with a stated end has to outlive a quit to mean anything:
+    /// "until tomorrow" is a promise about tomorrow, not about this process. An *indefinite*
+    /// pause is deliberately not stored — see ``Pause/stillPaused(until:now:)``.
+    var pausedUntil: Date? {
+        didSet { defaults.set(pausedUntil, forKey: "pausedUntil") }
+    }
+
     /// The version that ran last time, so a launch can tell it is a new one.
     ///
     /// Written on every launch, which makes this true for *any* way the bundle changed —
@@ -555,6 +564,7 @@ final class Preferences {
         lastSeenRelease = (defaults.data(forKey: "lastSeenRelease"))
             .flatMap { try? JSONDecoder().decode(Updates.Release.self, from: $0) }
         updateRetryAfter = defaults.object(forKey: "updateRetryAfter") as? Date
+        pausedUntil = defaults.object(forKey: "pausedUntil") as? Date
         lastRunVersion = defaults.string(forKey: "lastRunVersion") ?? ""
         selfUpdated = defaults.bool(forKey: "selfUpdated")
         let hour = defaults.integer(forKey: "dailySummaryHour")
@@ -628,6 +638,7 @@ final class Preferences {
         "updateETag",
         "lastSeenRelease",
         "updateRetryAfter",
+        "pausedUntil",
         "lastRunVersion",
         "selfUpdated",
         "screensaverExitOnMouseMove",
@@ -705,6 +716,7 @@ final class Preferences {
         updateETag = fresh.updateETag
         lastSeenRelease = fresh.lastSeenRelease
         updateRetryAfter = fresh.updateRetryAfter
+        pausedUntil = fresh.pausedUntil
         lastRunVersion = fresh.lastRunVersion
         selfUpdated = fresh.selfUpdated
         dailySummaryHour = fresh.dailySummaryHour

@@ -118,6 +118,10 @@ struct CanvasView: View {
         var toZoom: CGFloat
         var started: Date
         var seconds: TimeInterval
+        /// The shape it was flying, so an interrupted flight is caught where it actually got
+        /// to. It was assumed to be `easeOutCubic` when that was the only camera curve; a
+        /// story's hop eases at both ends and would be caught in the wrong place.
+        var curve: UnitCurve = Design.Motion.easeOutCubic
     }
 
     private var scale: CGFloat {
@@ -154,9 +158,7 @@ struct CanvasView: View {
         flight = nil
         let elapsed = Date().timeIntervalSince(inFlight.started)
         guard inFlight.seconds > 0, elapsed < inFlight.seconds else { return }
-        let k = CGFloat(
-            Design.Motion.easeOutCubic.value(at: max(0, elapsed / inFlight.seconds))
-        )
+        let k = CGFloat(inFlight.curve.value(at: max(0, elapsed / inFlight.seconds)))
         var still = Transaction()
         still.disablesAnimations = true
         withTransaction(still) {
@@ -284,6 +286,7 @@ struct CanvasView: View {
         on id: String,
         zoom target: CGFloat,
         seconds: TimeInterval,
+        curve: UnitCurve = Design.Motion.easeOutCubic,
         then also: (() -> Void)? = nil
     ) {
         guard let point = canvas.positions[id] else { return }
@@ -293,31 +296,14 @@ struct CanvasView: View {
         flight = Flight(
             fromOffset: offset, toOffset: landing,
             fromZoom: zoom, toZoom: target,
-            started: Date(), seconds: motion.reduced ? 0 : seconds
+            started: Date(), seconds: motion.reduced ? 0 : seconds,
+            curve: curve
         )
-        withAnimation(motion.animation(Design.Motion.camera(seconds))) {
+        withAnimation(motion.animation(.timingCurve(curve, duration: seconds))) {
             zoom = target
             offset = landing
             dragged = .zero
             also?()
-        }
-    }
-
-    /// Lean the camera a little way toward where it is going next.
-    ///
-    /// Linear rather than eased, and that is deliberate: an ease would have a shape, and a
-    /// shape is a movement you notice. A constant crawl is the camera being held rather than
-    /// being moved, which is the difference this is for.
-    private func drift(from stop: String, toward next: String, over seconds: TimeInterval) {
-        guard seconds > 0, !motion.reduced,
-              let here = canvas.positions[stop], let there = canvas.positions[next] else { return }
-        let share = Design.Motion.tourDriftShare
-        let target = CGPoint(
-            x: here.x + (there.x - here.x) * share,
-            y: here.y + (there.y - here.y) * share
-        )
-        withAnimation(Design.Motion.drift(seconds)) {
-            offset = CGSize(width: -target.x * zoom, height: -target.y * zoom)
         }
     }
 
@@ -344,17 +330,28 @@ struct CanvasView: View {
                     zoom: isEnd
                         ? Design.Layout.canvasTourEndZoom
                         : Design.Layout.canvasTourStepZoom,
-                    seconds: flight
+                    seconds: flight,
+                    // Eased at both ends: a hop begins from a camera at rest and should not
+                    // start at full speed. See `Design.Motion.tourFlight`.
+                    curve: Design.Motion.easeInOutCubic
                 )
+                // The panel travels with the camera.
+                //
+                // Without this the timeline beside the field stayed on whatever was selected
+                // when the story began, so the story was two things at once: a camera moving
+                // through a memory, and a list describing a different one. Selecting each
+                // stop as it is reached is what makes the two halves one surface — the same
+                // thing the Glaze version does.
+                if let node = canvas.graph.nodes.first(where: { $0.id == stop }) {
+                    withAnimation(motion.animation(Design.Motion.settle)) { select(node) }
+                }
 
-                // The flight, then the rest of the dwell — spent leaning toward wherever the
-                // camera is going next rather than sitting still, so the story is one
-                // movement instead of a run of separate ones.
+                // Then the dwell, and the dwell is *still*. A camera creeping between stops
+                // was this port's own idea and it is what made a story read as a stutter —
+                // arrive, stop, creep, stop, lurch. Holding a shot is not the same as
+                // freezing it, and the thing that carries the story is the hop.
                 try? await Task.sleep(for: .seconds(flight))
                 if Task.isCancelled { return }
-                if index + 1 < path.count {
-                    drift(from: stop, toward: path[index + 1], over: held)
-                }
                 try? await Task.sleep(for: .seconds(held))
                 if Task.isCancelled { return }
             }

@@ -23,6 +23,12 @@ Developer ID and notarised. Everything before it is a version of the source.
 
 ### Added
 
+- **Pausing can end by itself.** "Pause for…" in the menu bar offers 15 minutes, an hour, or
+  until tomorrow, and recording comes back on its own — including after a quit or a night
+  asleep, because a timed pause is a promise about a span of time rather than about this
+  process. The menu bar and Settings ▸ Privacy both say when it ends. Pausing with no end is
+  still there and still indefinite; the problem this fixes is not pausing, it is forgetting.
+
 - **After an update, Replay says what you got.** The updater replaces the bundle and restarts,
   so "after the update" is really *the next launch* — and until now that launch said nothing at
   all. It now compares the version it is running against the one that ran last time and, if it
@@ -36,6 +42,18 @@ Developer ID and notarised. Everything before it is a version of the source.
   - A **downgrade says nothing**: putting an older copy back is deliberate, and announcing the
     release somebody just escaped would be the app arguing with them.
   - The note is true for one launch and remembers nothing. Read or dismissed, it is gone.
+
+### Fixed
+
+- **Replay Story moved in lurches.** Each stop ran three movements where it should run one: a
+  flight that started at full speed, a lean toward the next stop, and another flight that
+  started at full speed. It arrived, stopped, crept, stopped and jerked away — two stops and a
+  lurch per hop. The lean was this port's own idea and has gone; the dwell is still, and a
+  hop now eases at both ends, because it begins from a camera at rest and nobody asked for it
+  in the instant it happens. The reference's timings are untouched and still contract-checked.
+- **The timeline beside the Canvas now travels with the story.** It stayed on whatever was
+  selected when the story began, so a story was a camera moving through one memory beside a
+  list describing another — the Glaze version keeps the two in step, and now so does this.
 
 ## 0.9.5 — 2026-07-29
 

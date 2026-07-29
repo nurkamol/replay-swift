@@ -67,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var ambientWindow: NSWindow?
     private var idleWatch: Timer?
     private var backupWatch: Timer?
+    private var resumeWatch: Timer?
     private var whatsNewWindow: NSWindow?
     /// The quick-note panel, while it is up.
     private var noteWindow: NSWindow?
@@ -103,6 +104,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // The tracker is told what to skip before the window appears, so an excluded app is
         // never recorded in the gap between launching and looking.
         model.applyExclusions(preferences.excludedBundleIDs)
+        // A timed pause outlives the process it was set in — otherwise "until tomorrow" would
+        // mean "until the next time Replay is opened", which is not what anybody agreed to.
+        // A deadline that passed while the app was closed is simply over, and this is where
+        // that is noticed.
+        if Pause.stillPaused(until: preferences.pausedUntil, now: Date()) {
+            model.setTracking(false)
+        } else {
+            preferences.pausedUntil = nil
+        }
         // The daily update check, if it was ever turned on. Detached and unawaited: a
         // launch must not wait on a network, and a failed check is a non-event that will be
         // tried again tomorrow.
@@ -165,6 +175,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // And the idle watch for whichever display it has been pointed at, if either.
         idleWatch = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.checkIdleDisplay() }
+        }
+
+        // A pause that has run out, put back — at launch and every half minute after.
+        resumeIfPauseIsOver()
+        resumeWatch = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.resumeIfPauseIsOver() }
         }
 
         // A backup if one is owed, and then an hourly look.
@@ -477,6 +493,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 },
                 onOpenSettings: { [weak self] in self?.fromPopover { $0.openSettings() } },
                 onAddNote: { [weak self] in self?.fromPopover { $0.openNotePanel() } },
+                onPause: { [weak self] span in
+                    self?.pause(for: span)
+                    self?.refreshStatusTitle()
+                },
                 onQuit: { [weak self] in self?.fromPopover { $0.quit() } }
             )
             .environment(\.themeTint, preferences.themeColour.resolved)
@@ -1015,8 +1035,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func toggleTracking() {
-        model.setTracking(!model.isRecording)
+        // Resuming by hand clears any deadline: the pause is over because somebody said so,
+        // and a stale "resumes at 3pm" hanging off a recording app would be a lie in the one
+        // place this feature exists to keep honest.
+        setTracking(!model.isRecording, until: nil)
+    }
+
+    /// Pause or resume, and say when it ends.
+    ///
+    /// One door for both, because the deadline and the tracker have to move together — a
+    /// paused tracker with no stored end is an indefinite pause, and a stored end with a
+    /// running tracker is a countdown to nothing.
+    private func setTracking(_ recording: Bool, until: Date?) {
+        preferences.pausedUntil = recording ? nil : until
+        model.setTracking(recording)
         refreshStatusTitle()
+    }
+
+    /// Pause for a span, and let it end itself.
+    private func pause(for span: Pause.Span) {
+        setTracking(false, until: Pause.ends(span, from: Date()))
+    }
+
+    /// Put recording back when a timed pause has run out.
+    ///
+    /// Polled rather than scheduled at the exact moment, because the exact moment is the one
+    /// a sleeping Mac misses: a timer set for 3pm on a laptop that is shut at 2pm fires late
+    /// or not at all, while a comparison against the clock is right the first time it runs
+    /// after waking. Thirty seconds is well inside the resolution anything here is read at.
+    private func resumeIfPauseIsOver() {
+        guard let until = preferences.pausedUntil else { return }
+        guard Pause.isOver(until: until, now: Date()) else { return }
+        setTracking(true, until: nil)
     }
 
     @objc private func quit() { NSApp.terminate(nil) }

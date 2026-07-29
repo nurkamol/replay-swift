@@ -5,6 +5,36 @@ OS version can be re-checked rather than re-argued.
 
 ---
 
+## Replay Story stuttered because of an embellishment, not a shortage — 2026-07-29
+
+**Reported as "it centres the icon, then moves with stuttering, like with 2 stops".** That is
+an exact description of what the code did, and none of it was the reference's.
+
+Each stop ran three movements where it looked like it should run one:
+
+| phase | curve | ends at |
+|---|---|---|
+| flight to the stop (760ms) | ease-**out** cubic | rest |
+| lean toward the next stop (390ms) | ease-in-out cubic | rest |
+| flight to the next stop | ease-**out** cubic — full speed from the first frame | rest |
+
+So the camera arrived, stopped, crept, stopped, and then jerked away. Two stops and a lurch,
+per hop, exactly as described. The lean was this port's own addition, added to stop the dwell
+looking frozen; the ease-*out* flight was inherited from the focus animation, where it is
+right — a double-click should be answered at full speed, because it is an answer.
+
+Neither the curve nor the lean is in the contract (`spec/constants.json` pins the *durations*
+— 760ms flight, 1150ms dwell — and those have not changed). So the fix stays level with the
+reference: the lean is gone, the dwell is still, and a story's hop eases at **both** ends
+(`Design.Motion.tourFlight`), because it begins from a camera at rest and nobody asked for it
+in the instant it happens.
+
+The same pass made the timeline panel follow the camera, which the Glaze version does and this
+port did not: it stayed on whatever was selected when the story began, so a story was a camera
+moving through one memory beside a list describing another.
+
+---
+
 ## A conditional request does *not* save rate limit here — measured 2026-07-29
 
 **GitHub's documentation says a `304 Not Modified` does not count against the rate limit.

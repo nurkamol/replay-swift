@@ -517,9 +517,24 @@ private struct GeneralTab: View {
             Section {
                 Toggle(SettingsRow.activityTracking.label, isOn: Binding(
                     get: { model.isRecording },
-                    set: { model.setTracking($0) }
+                    set: { recording in
+                        // Turning it back on here ends a timed pause too, for the same reason
+                        // the menu bar's does: the pause is over because somebody said so.
+                        preferences.pausedUntil = recording ? nil : preferences.pausedUntil
+                        model.setTracking(recording)
+                    }
                 ))
                     .explains(.activityTracking)
+                // Only while a pause has an end. An indefinite one is visible in the switch
+                // itself, and a line repeating what the switch says is furniture.
+                if !model.isRecording, let until = preferences.pausedUntil {
+                    Text(String(
+                        format: Loc.t("Recording resumes at %@."),
+                        until.formatted(.dateTime.hour().minute())
+                    ))
+                    .font(Design.Text.detail)
+                    .foregroundStyle(.secondary)
+                }
             } header: {
                 Text(Loc.t("Recording"))
             } footer: {

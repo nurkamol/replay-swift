@@ -295,6 +295,12 @@ enum Design {
         static let easeOutCubic = UnitCurve.bezier(
             startControlPoint: .init(x: 0.215, y: 0.61), endControlPoint: .init(x: 0.355, y: 1)
         )
+        /// The same cubic, eased at both ends — for movement nobody asked for in the instant
+        /// it happens. A story's hops are the only thing in the app that travels unprompted,
+        /// and they are the only thing that uses this.
+        static let easeInOutCubic = UnitCurve.bezier(
+            startControlPoint: .init(x: 0.645, y: 0.045), endControlPoint: .init(x: 0.355, y: 1)
+        )
         /// The camera's own flight time, and the two journeys that ask for their own.
         static let cameraSeconds: TimeInterval = 0.560
         static let cameraCentreSeconds: TimeInterval = 0.620
@@ -305,24 +311,28 @@ enum Design {
             .timingCurve(easeOutCubic, duration: seconds)
         }
 
-        /// The lean between two stops of a story.
+        /// A story's hop between two stops, which is **not** the same movement as a focus.
         ///
-        /// Eased at both ends rather than linear, which is what it was. The flight before it
-        /// eases *out* — it ends at rest — so a constant-velocity creep starting from that
-        /// rest is a visible jerk, and the jerk sits exactly where the drift was added to
-        /// remove a seam. Slow in, slow out, and the story reads as one movement.
-        static let easeInOutCubic = UnitCurve.bezier(
-            startControlPoint: .init(x: 0.645, y: 0.045), endControlPoint: .init(x: 0.355, y: 1)
-        )
-        static func drift(_ seconds: TimeInterval) -> Animation {
+        /// `camera` eases *out* only: it is maximally fast at the first frame, which is right
+        /// when somebody has just double-clicked something — the camera answering instantly is
+        /// the response to the click. A story hop has no click behind it. It begins from a
+        /// camera at rest, and starting at full speed from rest is a jerk; ending at zero and
+        /// then jerking again at the next stop is what makes a tour read as a series of
+        /// lurches rather than a journey.
+        ///
+        /// So this eases at both ends. Same duration — the contract pins that — and a shape
+        /// that leaves and arrives at rest, which is the shape of something being *carried*.
+        static func tourFlight(_ seconds: TimeInterval) -> Animation {
             .timingCurve(easeInOutCubic, duration: seconds)
         }
 
         /// Replay Story: how long the camera rests on each stop, and how long it takes to
         /// get between them. The dwell is longer than the flight on purpose — the pause is
-        /// where you read the thing, and the travel is only how you got there.
+        /// where you read the thing, and the travel is only how you got there. Both are the
+        /// reference's own numbers and are contract-checked.
         static let tourDwellSeconds: TimeInterval = 1.150
         static let tourCameraSeconds: TimeInterval = 0.760
+
         /// What the field does while the story plays, which is this port's own and has no
         /// counterpart upstream — the reference's tour is the camera and the lit node, and
         /// nothing else. Kept quiet enough to stay that way in spirit: one breath per stop
@@ -332,16 +342,13 @@ enum Design {
         /// takes less than the dwell on purpose, so it finishes and leaves the stop sitting
         /// still — a ring pulsing the whole time reads as an alert.
         static let tourBreathSeconds: TimeInterval = 0.780
-        /// How far the camera leans toward the next stop while it rests on this one, as a
-        /// share of the distance between them.
-        ///
-        /// The reference flies for 760ms and then dwells for 1150, which leaves 390ms in
-        /// which nothing at all moves — and a camera that stops dead between stops reads as
-        /// a slideshow rather than as travelling. So it spends that time already drifting
-        /// toward wherever it is going next, slowly and linearly, and the flight picks the
-        /// movement up rather than starting it. Small enough that nobody would call it a
-        /// move: it is the difference between a held shot and a frozen one.
-        static let tourDriftShare: CGFloat = 0.07
+
+        /// **The camera used to lean toward the next stop while resting on this one**, over
+        /// the 390ms the reference's dwell leaves after its flight. It was this port's own,
+        /// and it was wrong: a hop that ends at rest, then a slow creep that also ends at
+        /// rest, then a hop that starts at full speed reads as two separate stops and a
+        /// lurch — which is exactly what it looked like. The dwell is still now, and the
+        /// hops ease at both ends. See `Design.Motion.tourFlight`.
 
         /// The field's own breathing, when nothing else is happening.
         ///

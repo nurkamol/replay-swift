@@ -25,6 +25,7 @@ struct MenuBarPopoverView: View {
     var onToggleTracking: () -> Void
     var onOpenSettings: () -> Void
     var onAddNote: () -> Void
+    var onPause: (Pause.Span) -> Void
     var onQuit: () -> Void
 
     /// Ticks the "focused for" line without asking the tracker for anything.
@@ -120,7 +121,18 @@ struct MenuBarPopoverView: View {
 
     private var quietLabel: String {
         switch state {
-        case .paused: MenuBar.pausedLabel
+        case .paused:
+            // A pause with an end says so. "Tracking paused" and "Paused until 2:30 PM" are
+            // different facts, and the second is the one that stops somebody wondering all
+            // afternoon whether they left it off.
+            if let until = preferences.pausedUntil {
+                String(
+                    format: Loc.t("Paused until %@"),
+                    until.formatted(.dateTime.hour().minute())
+                )
+            } else {
+                MenuBar.pausedLabel
+            }
         case .away: MenuBar.awayLabel
         default: MenuBar.waitingLabel
         }
@@ -232,6 +244,10 @@ struct MenuBarPopoverView: View {
                 title: MenuBar.Popover.trackingLabel(isRecording: model.isRecording),
                 action: onToggleTracking
             )
+            // Only while recording, and beside the plain pause rather than replacing it:
+            // stopping indefinitely is still a thing people mean, and burying it inside a
+            // menu of durations would make the simple case the awkward one.
+            if model.isRecording { pauseForRow }
             annotate
             rowDivider
             MenuBarRow(glyph: "square.grid.2x2", title: "Open Replay", shortcut: "⌘1", action: onOpenToday)
@@ -244,6 +260,33 @@ struct MenuBarPopoverView: View {
         // which reads as "armed, press Return" on something whose first item pauses
         // recording. A menu does not open with an item selected, and neither should this.
         .focusEffectDisabled()
+    }
+
+    /// "Pause for…" — the same row shape, opening a menu of ends rather than acting at once.
+    ///
+    /// The point of the whole feature is in this list: a pause somebody chooses the end of
+    /// cannot be forgotten, and forgetting is the only way pausing loses a day of record.
+    private var pauseForRow: some View {
+        Menu {
+            ForEach(Pause.Span.allCases, id: \.self) { span in
+                Button(Loc.t(span.label)) { onPause(span) }
+            }
+        } label: {
+            HStack(spacing: Design.Space.inline) {
+                Image(systemName: "clock.badge.xmark")
+                    .font(Design.Text.detail)
+                    .frame(width: Design.Icon.sidebarColumn)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+                Text(Loc.t("Pause for…")).font(Design.Text.itemTitle)
+                Spacer(minLength: Design.Space.inline)
+            }
+            .padding(.horizontal, Design.Space.cardRoomy)
+            .padding(.vertical, Design.Space.snug)
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
     }
 
     // MARK: - Marking the stretch you are in
