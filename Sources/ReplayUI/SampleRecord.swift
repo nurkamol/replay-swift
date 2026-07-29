@@ -67,6 +67,14 @@ enum SampleRecord {
         .init(name: "Firefox", bundleID: "org.mozilla.firefox", startMinute: 16 * 60 + 39, minutes: 21),
     ]
 
+    /// When the sample day begins, in minutes after midnight.
+    ///
+    /// Exposed because the day is trimmed at the current moment — it never writes the future
+    /// — so before this time "today" is legitimately empty, and a preview of Today opened at
+    /// three in the morning shows the quiet-day state. That is what the real app shows then
+    /// too. Anything else would mean inventing hours that have not happened.
+    static var firstStretchMinute: Int { day.map(\.startMinute).min() ?? 0 }
+
     /// The longest single stretch in the day, in minutes.
     ///
     /// Exposed only so a test can hold it below `Rules.idleStretchSeconds`. That threshold is

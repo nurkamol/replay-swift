@@ -14,15 +14,26 @@ import Testing
 @Suite("The sample record")
 struct SampleRecordBehaviour {
 
-    @Test("It produces a day with something in it")
-    func hasADay() {
+    @Test("It produces a record with something in it")
+    func hasARecord() {
         let model = SampleRecord.model()
         #expect(model.errorMessage == nil)
-        let summary = try? #require(model.summary)
-        #expect(summary != nil)
-        // Not an assertion about the exact figure — the day is trimmed to now, so an early
-        // morning run has less of it than an evening one. Only that it is a day, not a blank.
-        #expect(!model.timeline.isEmpty)
+        // The *record*, not today. The sample day runs 09:12 to 17:00 and is trimmed at the
+        // current moment, so a run at half past midnight writes none of today — correctly,
+        // because that day has not happened. This asserted an empty timeline was a failure
+        // and duly failed at 00:15, which was the fixture being honest rather than broken.
+        #expect(!model.activityByDay().isEmpty)
+    }
+
+    @Test("Today is filled once the day it describes has started")
+    func todayFillsAsTheDayGoes() {
+        // Past the first stretch there must be a today to draw; before it there must not be
+        // one invented. Both directions, so this cannot pass by being vacuous at 3am.
+        let model = SampleRecord.model()
+        let hour = Calendar.current.component(.hour, from: Date())
+        let minute = Calendar.current.component(.minute, from: Date())
+        let started = hour * 60 + minute > SampleRecord.firstStretchMinute
+        #expect(model.timeline.isEmpty != started)
     }
 
     @Test("No stretch is long enough to be read as having walked away")

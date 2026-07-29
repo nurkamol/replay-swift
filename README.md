@@ -64,7 +64,7 @@ Then link the app once, so Spotlight and the Dock can find it:
 ln -sfn "$(brew --prefix)/opt/replay-app/Replay.app" /Applications/Replay.app
 ```
 
-That builds v0.9.7. Add `--HEAD` to either one to build the current `main` instead.
+That builds v0.9.8. Add `--HEAD` to either one to build the current `main` instead.
 
 ### Or from source
 

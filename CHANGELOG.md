@@ -19,9 +19,21 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
-## Unreleased
+## 0.9.8 — 2026-07-30
 
 ### Added
+
+- **Replay runs on macOS 14 Sonoma.** It required macOS 26 before, which is a version most
+  Macs are not on. Exactly two calls in the interface needed something newer — the system's
+  glass material (26) and a colour blend (15) — found by building the app against each floor
+  in turn rather than by reading the code. Both are guarded, so three OS generations gained
+  the app and nothing about it changed on a current Mac.
+  - Below macOS 26 the **Surfaces** setting offers Solid and Frosted, and not Glass. A
+    setting that silently did nothing would be worse than one that is not there.
+  - A `Glass` preference carried over from a newer Mac — in a backup, or across an account —
+    draws as Frosted rather than as nothing.
+  - macOS 13 is not reachable the same way: the models are built on Observation, which begins
+    at 14. That is a rewrite rather than a guard, and it is not planned.
 
 - **A report on a schedule.** Settings ▸ Data writes a report of the period that has just
   *finished* — yesterday, or the week just gone — into a folder you choose, as Markdown or
@@ -34,11 +46,29 @@ Developer ID and notarised. Everything before it is a version of the source.
   - Not PDF: that is one page with a pointer to HTML, which is right for a document somebody
     asked for and wrong for a file that arrives on its own and might cover a busy week.
 
+### Changed
+
+- **The parts of the app you read most are now translated.** A session is called "Late night
+  in Terminal" and a gap "8m not recorded" — sentences the app assembles at runtime, which had
+  no whole string for a translator to be given and so stayed English in every language. Each
+  is now a format string whose pieces a translation can reorder, which matters: in Uzbek the
+  application's name comes first and the time of day after it. Session titles, the gaps
+  between them, the day's headline figures, the sidebar sections, the resume card, the
+  reflection prompt and the relative day and time labels all follow the chosen language.
+  Uzbek is complete at 519 strings.
+  - Still English everywhere: Story, the autobiography, Memories, the morning briefing,
+    Collections and Projects. Those are the same kind of work and are listed as undone in
+    `docs/TRANSLATING.md` rather than left to be discovered.
+
 ### Fixed
 
 - **The schedules section reported one schedule as if it were both.** Its footer was the
   backup's, so "Nothing has been written yet" sat directly under a line saying a report had
   just been written.
+
+- **A VoiceOver label was built from a malformed format string.** One argument was handed to
+  a two-placeholder format on the Chapters screen, mixing positional and non-positional
+  specifiers — both undefined behaviour, and the label is read aloud.
 
 ## 0.9.7 — 2026-07-29
 
