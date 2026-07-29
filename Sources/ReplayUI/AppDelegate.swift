@@ -129,6 +129,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         model.start()
+        #if DEBUG
+        // A development run against an empty scratch record has nothing to draw. `REPLAY_SEED`
+        // fills it once; it does nothing unless `REPLAY_DB` is also set and the record is
+        // empty, so it cannot invent sessions in a database somebody is keeping.
+        SampleRecord.seedIfRequested(model)
+        #endif
         // The tracker is told what to skip before the window appears, so an excluded app is
         // never recorded in the gap between launching and looking.
         model.applyExclusions(preferences.excludedBundleIDs)

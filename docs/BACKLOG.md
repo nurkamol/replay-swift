@@ -158,9 +158,16 @@ behaviour first and constants second, and generate anything that matches-by-luck
 ## 2c · Previews, now that there can be any
 
 - [ ] `S` **A `#Preview` on each surface, added as that surface is next touched.** Not a
-      sweep: a preview written away from a change is a preview nobody looks at. The one on
-      `FocusGoalCard` is the pattern — two states side by side in a `#if DEBUG` block, real
-      values through the type's own factory rather than a fixture.
+      sweep: a preview written away from a change is a preview nobody looks at. Two patterns
+      exist — `FocusGoalCard` for a view that takes plain values, and `TodayView` for one that
+      needs an `AppModel` and five collaborators over it.
+      · **The fixture is `SampleRecord`** (2026-07-29): a believable day and three weeks
+        behind it, in a temporary directory, `#if DEBUG` so none of it ships. Written because
+        every surface worth previewing reads the database, and there was nothing to draw.
+      · Its day is built from stretches *under* `Rules.idleStretchSeconds`. The first version
+        used hour-long blocks and rendered as **46m active** — the app correctly discarding
+        them as "left open and walked away". A fixture has to look like a record a Mac would
+        actually make, and `SampleRecordBehaviour` now asserts it.
       · Possible since 2026-07-29, when the interface moved to `Sources/ReplayUI/`. Xcode
         cannot preview an executable target: it wants `ENABLE_DEBUG_DYLIB`, which SwiftPM
         has no way to express, and its own error suggests a library instead. Measured with
