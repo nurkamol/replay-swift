@@ -18,6 +18,23 @@ import SQLite3
 /// copies of a path is how a feature ends up reading an empty database on somebody else's
 /// Mac and nobody finding out.
 public func defaultDatabaseURL() -> URL {
+    #if DEBUG
+    // `REPLAY_DB` points a development build at a scratch record.
+    //
+    // Running from Xcode otherwise writes straight into the real one — fine for reading,
+    // and wrong the first time somebody steps through a delete or a migration with a
+    // breakpoint. Set it in the scheme's environment (Product ▸ Scheme ▸ Edit Scheme ▸ Run
+    // ▸ Arguments) and the app, the CLI and the intents all agree about where to look,
+    // because they all come through here.
+    //
+    // Debug builds only, deliberately. In a shipped app an environment variable that moves
+    // the record is a way to end up staring at an empty Today with no idea why, and the
+    // `#if` means the released binary cannot be talked into it. `make-app.sh release` and
+    // the Homebrew formula both build with `-c release`, so neither carries this.
+    if let override = ProcessInfo.processInfo.environment["REPLAY_DB"], !override.isEmpty {
+        return URL(fileURLWithPath: (override as NSString).expandingTildeInPath)
+    }
+    #endif
     let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
     return support.appendingPathComponent("app.replay.native/activity.db")
 }

@@ -109,6 +109,23 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 NSApp.terminate(nil)
                 return
             }
+        } else {
+            // No bundle identifier means no bundle: this is the bare executable, which is
+            // what Product ▸ Run gives you in Xcode. Worth one line, because two things are
+            // quietly different and both have cost an afternoon before.
+            //
+            // The guard above cannot run, so this copy and an installed Replay will both
+            // record, into one SQLite file with no busy timeout between them. And there is
+            // no Info.plist, so the version reads as `Replay.version` and the icon is
+            // missing — neither is a bug to chase.
+            let note = """
+                Replay: running without a bundle — Info.plist, icon and version are absent, \
+                and the one-copy-at-a-time guard is off. Quit any installed Replay first.
+                  record: \(defaultDatabaseURL().path)
+                Use ./scripts/make-app.sh for the real bundle, or set REPLAY_DB for a \
+                scratch record.
+                """
+            FileHandle.standardError.write(Data((note + "\n").utf8))
         }
 
         model.start()

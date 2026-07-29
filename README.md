@@ -352,6 +352,42 @@ Command Line Tools alone (Swift 6.2.3) still builds everything and runs
 No external dependencies, on purpose: SQLite from the system, AppKit for the tracker,
 SwiftUI for the UI. Nothing to resolve, nothing to vendor.
 
+### Working in Xcode
+
+There is no `.xcodeproj` and there does not need to be — `xed .` opens the package, and Xcode
+treats it as a workspace with a scheme per product.
+
+```bash
+xed .                    # or: open Package.swift
+```
+
+**Previews:** select the **`ReplayUI`** scheme, then ⌥⌘↩ for the canvas. The scheme matters.
+With `Replay-Package` active Xcode resolves the preview back to the executable and refuses
+with *"the executable target ReplayApp needs ENABLE_DEBUG_DYLIB"* — a setting SwiftPM cannot
+express. That is why the interface lives in `Sources/ReplayUI/`, a library, and
+`Sources/ReplayApp/` is only `main.swift` and the App Intents.
+
+**Running (⌘R)** gives a bare executable, not a bundle, and it says so on stderr at launch.
+Three things differ, none of them bugs to chase:
+
+- **No `Info.plist`**, so the version reads as `Replay.version` and there is no icon.
+- **No one-copy-at-a-time guard** — it keys on the bundle identifier. Quit an installed
+  Replay first, or both record into one SQLite file with no busy timeout between them.
+- **No notifications.** They need a real `.app` to be delivered against; `./scripts/make-app.sh`
+  builds one.
+
+**`REPLAY_DB`** points a development build at a scratch record, so stepping through a delete
+does not touch yours. Set it under Product ▸ Scheme ▸ Edit Scheme ▸ Run ▸ Arguments. The app,
+the CLI and the intents all honour it because they share one path function. Debug builds only
+— a released binary ignores it, so nobody ends up staring at an empty Today.
+
+Both test runners work, and CI uses the first:
+
+```bash
+swift test                                                    # 68 + 99 cases
+xcodebuild -scheme Replay-Package -destination 'platform=macOS' test
+```
+
 ## Licence
 
 [MIT](LICENSE) — Copyright © 2026 Nurkamol Vakhidov.
