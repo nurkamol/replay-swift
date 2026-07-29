@@ -123,3 +123,11 @@ private struct ProjectCard: View {
         .accessibilityHint(Loc.t("Opens this project"))
     }
 }
+
+#if DEBUG
+#Preview("Projects") {
+    let world = PreviewWorld().load()
+    return ProjectsView(projects: world.projects, onOpen: { _ in })
+        .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif

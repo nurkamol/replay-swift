@@ -257,3 +257,11 @@ struct ChapterDetailView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Chapters") {
+    let world = PreviewWorld().load()
+    return ChaptersView(story: world.story, onOpen: { _ in })
+        .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif

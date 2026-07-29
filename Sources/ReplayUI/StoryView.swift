@@ -154,3 +154,11 @@ struct StoryView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Story") {
+    let world = PreviewWorld().load()
+    return StoryView(story: world.story, onOpen: { _ in })
+        .frame(width: Design.Layout.windowWidth, height: Design.Layout.windowHeight)
+}
+#endif

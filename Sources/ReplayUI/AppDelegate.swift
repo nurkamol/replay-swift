@@ -38,7 +38,32 @@ final class ScreensaverWindow: NSWindow {
 public final class AppDelegate: NSObject, NSApplicationDelegate {
     public override init() { super.init() }
 
-    private let model = AppModel()
+    private let model = AppModel(databaseURL: AppDelegate.recordToOpen())
+
+    /// Which record this copy of the app should open.
+    ///
+    /// The real one, unless this is a debug build with no application bundle — which is
+    /// exactly and only what Product ▸ Run in Xcode produces. A development build writing
+    /// into the record you actually keep is fine right up until the first breakpoint in a
+    /// delete, and then it is not fine at all.
+    ///
+    /// **In code rather than in the scheme, deliberately.** The shared scheme sets `REPLAY_DB`
+    /// too, and that is the knob to reach for; but a scheme is a file Xcode may or may not
+    /// have loaded, and safety that depends on a preference pane being right is not safety.
+    /// This holds even if the scheme is missing, edited, or never opened.
+    ///
+    /// Only the app moves. `swift run replay` still reads the real record, because inspecting
+    /// it from a shell is the reason that command exists.
+    private static func recordToOpen() -> URL {
+        #if DEBUG
+        let environment = ProcessInfo.processInfo.environment
+        if environment["REPLAY_DB"] == nil, Bundle.main.bundleURL.pathExtension != "app" {
+            return URL(fileURLWithPath: NSHomeDirectory())
+                .appendingPathComponent("Library/Caches/app.replay.native/dev-activity.db")
+        }
+        #endif
+        return AppModel.defaultDatabaseURL
+    }
     private lazy var history = HistoryModel(model: model)
     private let preferences = Preferences()
     private lazy var settings = SettingsModel(
@@ -121,9 +146,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             let note = """
                 Replay: running without a bundle — Info.plist, icon and version are absent, \
                 and the one-copy-at-a-time guard is off. Quit any installed Replay first.
-                  record: \(defaultDatabaseURL().path)
-                Use ./scripts/make-app.sh for the real bundle, or set REPLAY_DB for a \
-                scratch record.
+                  record: \(Self.recordToOpen().path)
+                A development record, not yours. Use ./scripts/make-app.sh for the real \
+                bundle, or REPLAY_DB to choose another.
                 """
             FileHandle.standardError.write(Data((note + "\n").utf8))
         }
