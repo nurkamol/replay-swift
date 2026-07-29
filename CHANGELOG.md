@@ -19,7 +19,7 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
-## Unreleased
+## 0.9.7 — 2026-07-29
 
 ### Added
 

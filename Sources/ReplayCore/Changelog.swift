@@ -18,7 +18,7 @@ public enum Replay {
             ?? fallbackVersion
 
     /// The version in the source, for when there is no bundle to ask.
-    public static let fallbackVersion = "0.9.6"
+    public static let fallbackVersion = "0.9.7"
 }
 
 /// What each version of Replay actually gained.
@@ -45,6 +45,16 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.7",
+        title: "Replay speaks Uzbek",
+        changes: [
+            "**Replay can be read in another language.** Settings \u{25B8} General \u{25B8} Language lists the languages this build carries and switches immediately \u{2014} no relaunch. Leave it on Match System and nothing changes.",
+            "**Uzbek is the first, and it is complete**: all 423 strings, including the Guide and every Settings explanation. It was machine-translated and wants a native reader, so corrections are welcome and take one command to apply.",
+            "**Translating Replay is now a documented job rather than a favour.** `tools/translate.mjs` writes a CSV a person or a translation service can fill in and turns it back into what ships; `docs/TRANSLATING.md` explains the round trip. A language ships only when it is complete \u{2014} a half-translated app that claims a language is worse than one that does not.",
+            "The sidebar had never been translatable at all: its names come from an enum, which no scan for literal text could see. The most visible column in the app was English in every language, and now is not.",
+        ]
+    ),
     Release(
         version: "0.9.6",
         title: "A pause that ends itself, and a story that moves like one",
