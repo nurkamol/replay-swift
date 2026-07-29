@@ -91,6 +91,28 @@ struct FocusGoalCard: View {
     }
 }
 
+// Xcode's canvas, and the experiment that decides whether this project can have one at all:
+// previews want a library target to inject into, and this is an `.executableTarget`. If the
+// canvas comes up, previews are worth adding as views get touched. See docs/BACKLOG.md.
+//
+// `#if DEBUG` so nothing here reaches a release build.
+#if DEBUG
+#Preview("Focus goal") {
+    VStack(spacing: Design.Space.cardRoomy) {
+        FocusGoalCard(
+            progress: Goals.progress(activeSeconds: 5_400, goalMinutes: 240),
+            streak: 1, goalMinutes: 240, onSetGoal: { _ in }
+        )
+        FocusGoalCard(
+            progress: Goals.progress(activeSeconds: 15_000, goalMinutes: 240),
+            streak: 6, goalMinutes: 240, onSetGoal: { _ in }
+        )
+    }
+    .padding(Design.Space.cardRoomy)
+    .frame(width: Design.Layout.previewWidth)
+}
+#endif
+
 /// A quiet ring rather than a bar: it reads as a dial you are filling, not a deadline you
 /// are running out of.
 private struct ProgressRing: View {

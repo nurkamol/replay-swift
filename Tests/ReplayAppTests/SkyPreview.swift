@@ -1,4 +1,4 @@
-@testable import ReplayApp
+@testable import ReplayUI
 import AppKit
 import Foundation
 import SwiftUI

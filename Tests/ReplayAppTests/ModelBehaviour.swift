@@ -1,4 +1,4 @@
-@testable import ReplayApp
+@testable import ReplayUI
 import Foundation
 import ReplayCore
 import Testing

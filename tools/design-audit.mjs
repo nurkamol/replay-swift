@@ -21,7 +21,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const VIEWS = resolve(HERE, "..", "Sources", "ReplayApp");
+const VIEWS = resolve(HERE, "..", "Sources", "ReplayUI");
 
 /** The one file allowed to contain magic numbers, because it is where they are named. */
 const EXEMPT = new Set(["DesignSystem.swift"]);
@@ -167,7 +167,7 @@ for (const f of findings) {
   console.error(`      ${f.text}`);
 }
 console.error(
-  "\nName these in Sources/ReplayApp/DesignSystem.swift and use the name, so changing a" +
+  "\nName these in Sources/ReplayUI/DesignSystem.swift and use the name, so changing a" +
     "\ntoken still changes the whole app.",
 );
 process.exit(1);

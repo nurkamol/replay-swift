@@ -119,7 +119,7 @@ const counts = new Map();
 /* The mechanism is not copy. `Loc.table` is an identifier that happens to be a word. */
 const SKIP = ["Sources/ReplayCore/Localization.swift"];
 
-for (const file of ["Sources/ReplayCore", "Sources/ReplayApp"].flatMap((d) =>
+for (const file of ["Sources/ReplayCore", "Sources/ReplayUI", "Sources/ReplayApp"].flatMap((d) =>
   swiftFiles(join(ROOT, d))
 )) {
   const rel = relative(ROOT, file);
@@ -181,7 +181,7 @@ for (const file of ["Sources/ReplayCore", "Sources/ReplayApp"].flatMap((d) =>
  *
  * Counts across lines, since a wrapped call is usually written over several. */
 const mismatches = [];
-for (const file of ["Sources/ReplayCore", "Sources/ReplayApp"].flatMap((d) =>
+for (const file of ["Sources/ReplayCore", "Sources/ReplayUI", "Sources/ReplayApp"].flatMap((d) =>
   swiftFiles(join(ROOT, d))
 )) {
   const rel = relative(ROOT, file);

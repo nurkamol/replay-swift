@@ -200,7 +200,8 @@ Sources/ReplayCore/
 Sources/ParityKit/       the parity suite — 965 checks against the reference
 Sources/ReplayParity/    `swift run replay-parity` — the same suite without Xcode
 Sources/ReplayCLI/       `replay` — the record from a shell, needing no Developer ID
-Sources/ReplayApp/       the application — every surface, and DesignSystem.swift
+Sources/ReplayUI/        the interface — every surface, and DesignSystem.swift
+Sources/ReplayApp/       main.swift and the App Intents; the rest is ReplayUI
 Tests/ReplayCoreTests/   `swift test` — the same suite via swift-testing
 Tests/ReplayAppTests/    115 behaviour cases over the app’s own models
 spec/                    GENERATED contract — never hand-edit
