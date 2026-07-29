@@ -77,7 +77,10 @@ struct SettingsView: View {
             List(Pane.allCases, selection: $pane) { item in
                 NavigationLink(value: item) {
                     Label {
-                        Text(item.rawValue)
+                        // `Loc.t`, for the same reason the main sidebar needs it: a pane's
+                        // name is an enum's raw value, so no scan for literal text can see
+                        // it, and this column stayed English in every language.
+                        Text(Loc.t(item.rawValue))
                     } icon: {
                         // A tinted rounded tile rather than a bare glyph — the shape
                         // System Settings uses, and the reason its list reads as a set of
@@ -224,7 +227,10 @@ private struct Footnote: View {
     init(_ text: String) { self.text = text }
 
     var body: some View {
-        Text(text)
+        // Translated here. The extractor collects these strings because they are copy; without
+        // this they were collected, translated, and then never asked for — which is the worst
+        // of the three states, because `status` says the language is complete.
+        Text(Loc.t(text))
             // Both are needed: the frame places a short line, `multilineTextAlignment`
             // places the wrapped ones, which a Form otherwise centres.
             .multilineTextAlignment(.leading)
@@ -350,7 +356,7 @@ private struct GeneralTab: View {
                 // what looking at a row of dots does at a glance. "Match System" leads,
                 // because following the accent already chosen in System Settings is the
                 // right default and the row should say so.
-                LabeledContent("Theme colour") {
+                LabeledContent(Loc.t("Theme colour")) {
                     HStack(spacing: Design.Space.snug) {
                         ForEach(ThemeColour.allCases) { choice in
                             swatch(choice)
@@ -396,7 +402,7 @@ private struct GeneralTab: View {
             }
 
             Section {
-                LabeledContent("Welcome screen") {
+                LabeledContent(Loc.t("Welcome screen")) {
                     Button(Loc.t("Show Welcome")) { preferences.seenWelcome = false }
                 }
             } footer: {
@@ -479,7 +485,7 @@ private struct GeneralTab: View {
                     .onChange(of: preferences.morningBriefing) { _, _ in contextual.load() }
 
                 if !preferences.dismissedMemories.isEmpty {
-                    LabeledContent("Put away") {
+                    LabeledContent(Loc.t("Put away")) {
                         Button(String(format: Loc.t("Bring back %@"), "\(preferences.dismissedMemories.count)")) {
                             preferences.dismissedMemories = []
                             contextual.load()
@@ -635,7 +641,7 @@ private struct PrivacyTab: View {
             // something it is not. A denied state is otherwise invisible: the recaps simply
             // never arrive and nothing says why.
             Section {
-                LabeledContent("Notifications") {
+                LabeledContent(Loc.t("Notifications")) {
                     HStack(spacing: Design.Space.snug) {
                         Image(systemName: notificationGlyph)
                             .foregroundStyle(notificationTint)
@@ -697,7 +703,7 @@ private struct PrivacyTab: View {
             }
 
             Section {
-                LabeledContent("Excluded applications") {
+                LabeledContent(Loc.t("Excluded applications")) {
                     Button(
                         preferences.excludedApps.isEmpty
                             ? "Manage…" : "\(preferences.excludedApps.count) excluded…"
@@ -823,7 +829,7 @@ private struct DataTab: View {
     var body: some View {
         PaneForm {
             Section {
-                LabeledContent("Report") {
+                LabeledContent(Loc.t("Report")) {
                     HStack(spacing: Design.Space.snug) {
                         Picker(Loc.t("Scope"), selection: $scope) {
                             ForEach(Report.Scope.allCases, id: \.self) {
@@ -846,7 +852,7 @@ private struct DataTab: View {
                     }
                 }
 
-                LabeledContent("Full backup") {
+                LabeledContent(Loc.t("Full backup")) {
                     HStack(spacing: Design.Space.inline) {
                         Button(Loc.t("Export…")) { export.exportBackup() }
                         Button(export.busy ? Loc.t("Importing…") : Loc.t("Import…")) {
@@ -965,7 +971,7 @@ private struct DataTab: View {
             }
 
             Section {
-                LabeledContent("Activity history") {
+                LabeledContent(Loc.t("Activity history")) {
                     Button(Loc.t("Clear History…"), role: .destructive) { confirmingClear = true }
                 }
                 LabeledContent(SettingsRow.resetReplay.label) {

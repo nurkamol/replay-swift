@@ -21,7 +21,9 @@ struct ExcludedApp: Codable, Equatable, Identifiable {
 enum LaunchSurface: String, CaseIterable, Identifiable, Codable {
     case today, timeline
     var id: String { rawValue }
-    var label: String { self == .today ? "Today" : "Timeline" }
+    /// Through `Loc`, like every other label a person reads: these reach a `Picker` as a
+    /// `String`, which is SwiftUI's non-localising overload.
+    var label: String { Loc.t(self == .today ? "Today" : "Timeline") }
 }
 
 /// Which full-screen display drifts in after a spell of quiet.
@@ -38,8 +40,8 @@ enum IdleDisplay: String, CaseIterable, Identifiable, Codable {
 
     var label: String {
         switch self {
-        case .screensaver: "Screensaver"
-        case .ambient: "Ambient mode"
+        case .screensaver: Loc.t("Screensaver")
+        case .ambient: Loc.t("Ambient mode")
         }
     }
 
@@ -61,7 +63,7 @@ enum IdleDisplay: String, CaseIterable, Identifiable, Codable {
 enum Appearance: String, CaseIterable, Identifiable, Codable {
     case system, light, dark
     var id: String { rawValue }
-    var label: String { rawValue.capitalized }
+    var label: String { Loc.t(rawValue.capitalized) }
 
     var colorScheme: ColorScheme? {
         switch self {
@@ -89,7 +91,7 @@ enum ThemeColour: String, CaseIterable, Identifiable, Codable {
     var id: String { rawValue }
 
     var label: String {
-        self == .system ? "Match System" : rawValue.capitalized
+        Loc.t(self == .system ? "Match System" : rawValue.capitalized)
     }
 
     /// `nil` means "do not override", which is not the same as any particular colour: it is

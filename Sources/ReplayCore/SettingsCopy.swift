@@ -46,7 +46,22 @@ public enum SettingsRow: String, CaseIterable, Sendable {
     case resetReplay = "Reset Replay"
     case compactDatabase = "Compact database"
 
-    public var label: String { rawValue }
+    /// The row's name, translated.
+    ///
+    /// **Translated here rather than at the call sites, and that is the fix for a whole class
+    /// of miss.** These labels reach a `Picker` or a `Toggle` as a `String`, which selects
+    /// SwiftUI's *non-localising* overload — so every one of the thirty-nine rows in Settings
+    /// showed its English name while the explanation underneath it, which goes through
+    /// `Loc.t`, was translated. One row of a translated app in English is a bug; a column of
+    /// them beside translated prose is the app looking broken.
+    ///
+    /// ``base`` is what the contract compares — the reference's own wording, whatever the
+    /// reader's language — and the parity suite uses that, so this cannot make 200 checks fail
+    /// on a translated machine.
+    public var label: String { Loc.t(rawValue) }
+
+    /// The label as the reference writes it, for the contract rather than for a person.
+    public var base: String { rawValue }
 
     /// The line under the row, as the reference writes it. `nil` where it has none —
     /// the readouts on the Privacy tab are figures rather than settings, and a figure that
@@ -161,7 +176,11 @@ public enum OwnSettingsRow: String, CaseIterable, Sendable {
     case ambientBreath
     case checkForUpdates
 
-    public var label: String {
+    public var label: String { Loc.t(base) }
+
+    /// The English, for the parity suite — these must *not* exist upstream, and that check
+    /// has to compare English against English however the reader's Mac is set.
+    public var base: String {
         switch self {
         case .language: "Language"
         case .idleDisplay: "When idle, show"

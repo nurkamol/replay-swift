@@ -1213,13 +1213,16 @@ public enum ParityKit {
             settingsCopy.rows.map { ($0.label, $0.description) }, uniquingKeysWith: { a, _ in a }
         )
         for row in SettingsRow.allCases {
-            equal(g1, "Settings row: \(row.rawValue)", referenceLabels.contains(row.label), true)
+            // `base`, not `label`: the label is what a reader sees and is translated, and this
+            // compares against the reference's English. On a translated machine the two would
+            // otherwise disagree for a reason that has nothing to do with the port drifting.
+            equal(g1, "Settings row: \(row.rawValue)", referenceLabels.contains(row.base), true)
             // The line under it, where the reference writes one. This is the half a person
             // reads when they are unsure what a switch does, which is the only time they read
             // Settings at all.
             equal(
                 g1, "Settings copy: \(row.rawValue)",
-                row.explanation, referenceCopy[row.label] ?? nil
+                row.explanation, referenceCopy[row.base] ?? nil
             )
         }
 
@@ -1229,7 +1232,7 @@ public enum ParityKit {
         for row in OwnSettingsRow.allCases {
             equal(
                 g1, "own Settings row is not the reference's: \(row.rawValue)",
-                referenceLabels.contains(row.label), false
+                referenceLabels.contains(row.base), false
             )
             equal(
                 g1, "own Settings row explains itself: \(row.rawValue)",

@@ -17,6 +17,7 @@ A calm look back at yesterday when you open Replay in the morning — and one me
 A chapter exists only while the days beneath it do.
 A clock above the day's total, for a screen you glance at rather than sit in front of.
 A curated walk through the best of your history.
+A flat surface. The quietest, and the easiest to read over.
 A look back every Sunday evening at the week just gone.
 A once-a-day reminder of what you were doing on this date in the past.
 A part becomes a ritual once the same app has led it on more than one day. Read only from your history — nothing set, nothing scheduled.
@@ -27,6 +28,7 @@ A quiet look back, before the day begins.
 A quiet walk through the best of your history — the memories, the deep focus, the things you kept.
 A recap of the day's focus, delivered at the time you choose.
 A slow swell on the application's icon, so a screen of live figures does not read as a still picture of one. Off leaves ambient mode completely still. Reduce Motion turns it off either way.
+About
 active
 active today
 Activity history
@@ -55,6 +57,7 @@ Back
 Back up now
 Backed up %@ rows to %@
 Backup folder
+Blurred, with depth but no shine.
 Bookmark this session
 Bookmarked
 Bookmarks
@@ -83,6 +86,7 @@ Clear History
 Clear History…
 Clear search
 Close
+Collections
 Commands
 Compact database
 Continue
@@ -93,6 +97,7 @@ Daily focus
 Daily rhythm
 Daily summary
 Darker is busier. Click a day to replay it.
+Data
 Data ▸ Export report saves a slice as Markdown, PDF, HTML, CSV, or JSON — the HTML report carries app icons and styling, and PDF stays to one page with a pointer to HTML for longer spans. A single day exports from the ⋯ menu on its divider in the Timeline. Full backup exports the whole database, and importing merges rather than overwriting.
 Deletes all activity, settings, and preferences, then returns to the welcome screen.
 Deletes every event, headline, note and bookmark. There is no undo.
@@ -102,6 +107,7 @@ Dismiss
 Dismiss the screensaver on a mouse click or tap.
 Dismiss the screensaver on any key. Esc and the ✕ always close it, whatever these are set to.
 Dismiss the screensaver when the pointer moves. Off by default, so a hand-started screensaver stays until you reach for it.
+Display
 Do the notifications cost anything?
 Dock badge
 Does Replay ever use the network?
@@ -139,13 +145,17 @@ Forget the saved search %@
 Format
 Frequently used apps
 From
+Frosted
 Full backup
 Fullest
+General
 Gentle motion
+Glass
 Go to a surface, an application, a project, a day…
 Goal reached — %@
 Greatest focus
 Growth
+Guide
 Has a note
 Hide the Dock icon and keep Replay running in the menu bar.
 How do I keep a copy of my history?
@@ -264,9 +274,11 @@ Period
 Permanently delete every event Replay has recorded on this Mac.
 Permission
 Press Esc to exit
+Privacy
 Project not found
 Projects
 Projects that mattered
+Put away
 Put the briefing away
 Put this away for good
 Put this away until tomorrow
@@ -299,6 +311,7 @@ Replay shows at most one memory a day, and most days it shows none. The briefing
 Replay sometimes surfaces a memory on its own — what is that?
 Replay This Day
 Replay will stop recording it, and will erase everything it has already recorded for it. That cannot be undone — un-excluding later resumes recording but does not bring the history back.
+Report
 Reset Replay
 Reset Replay?
 Reset…
@@ -314,6 +327,7 @@ Search your memory
 Sessions behind the selection
 Sessions they shared
 Settings…
+Shortcuts
 Show on
 Show the current application
 Show the current session
@@ -326,6 +340,7 @@ Show today's active hours on the Dock icon. Appears once you've been active an h
 Show Welcome
 Showing the most recent %@.
 Skip this version
+Solid
 Source on GitHub
 Speed
 Start it from the Screensaver button at the bottom of the sidebar, from ⌘K ▸ Screensaver, or let it drift in on its own — General ▸ Screensaver can auto-start it after a spell of inactivity. Esc and the ✕ always close it; whether a click, a key, or mouse movement also closes it is up to you in that same section (mouse movement is off by default, so a hand-started screensaver stays put).
@@ -333,6 +348,7 @@ Start Remembering
 Stop Keeping a Goal
 Stop narrowing to %@
 Storage
+Story
 Surface memories
 Surfaces
 Surprise me
@@ -346,10 +362,12 @@ The long view of your work — told back to you, gathered into eras, and reflect
 The museum is still filling
 The screen
 The story of this day
+The system's own material, with its edge and its light.
 The view Replay shows when the window opens.
 The whole of it at a glance — how long you've been building, and everything it holds.
 The whole of it, at a glance — how long you've been building this memory, and everything it holds.
 Theme
+Theme colour
 There is no undo — export a backup first if you want to keep your timeline.
 These three are the screensaver's own, and apply however it was started. Opening either of the two displays closes the other; they are never both up, and neither ever covers the one you are deliberately reading. Escape and the close button always dismiss whichever is up, whatever these say.
 These two apps haven’t been used together in the last 30 days.

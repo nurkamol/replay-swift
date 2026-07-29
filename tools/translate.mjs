@@ -113,6 +113,25 @@ function collectKeys() {
         const text = unescape(match[1]);
         if (isCopy(text)) keys.add(text);
       }
+      // Enum raw values that are read to a person: the sidebar's surface names and the
+      // Settings panes. They reach `Loc.t` as a variable, so nothing that scans for literals
+      // could find them — "Collections", "Story" and "Settings" were missing from the table
+      // entirely, while "Today" and "Search" were in it *by coincidence*, because other files
+      // happen to say `Loc.t("Today")`. A translated sidebar with two English rows in it was
+      // the visible half of that.
+      if (/enum (Surface|Pane)\b/.test(source)) {
+        // Every raw value on the line, not the first. Swift allows several cases per line —
+        // `case general = "General", privacy = "Privacy"` — and a regex anchored on `case`
+        // finds one of them. That is why the Settings sidebar came out half translated:
+        // "Umumiy" and then five English words under it.
+        for (const line of source.split("\n")) {
+          if (!/^\s*case\s/.test(line)) continue;
+          for (const match of line.matchAll(/=\s*"((?:[^"\\]|\\.)*)"/g)) {
+            const text = unescape(match[1]);
+            if (isCopy(text)) keys.add(text);
+          }
+        }
+      }
       // Helpers whose first argument is copy, which then wrap it in `Loc.t` themselves.
       // Without these the sidebar's own names were missing from the table while every audit
       // read clean: they reach `Loc.t` as a *variable*, so no scan for literals can see them.

@@ -1326,17 +1326,17 @@ enum SurfaceStyle: String, CaseIterable, Identifiable, Sendable {
 
     var label: String {
         switch self {
-        case .solid: "Solid"
-        case .frosted: "Frosted"
-        case .glass: "Glass"
+        case .solid: Loc.t("Solid")
+        case .frosted: Loc.t("Frosted")
+        case .glass: Loc.t("Glass")
         }
     }
 
     var detail: String {
         switch self {
-        case .solid: "A flat surface. The quietest, and the easiest to read over."
-        case .frosted: "Blurred, with depth but no shine."
-        case .glass: "The system's own material, with its edge and its light."
+        case .solid: Loc.t("A flat surface. The quietest, and the easiest to read over.")
+        case .frosted: Loc.t("Blurred, with depth but no shine.")
+        case .glass: Loc.t("The system's own material, with its edge and its light.")
         }
     }
 }

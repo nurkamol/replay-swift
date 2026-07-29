@@ -29,6 +29,12 @@ struct MenuBarPopoverView: View {
     var onExcludeCurrent: () -> Void
     var onQuit: () -> Void
 
+    /// Whether the three pause lengths are showing. Not remembered: the panel is rebuilt
+    /// every time it opens, and a menu that reopens half-expanded is a menu that remembers
+    /// something nobody asked it to.
+    @State private var showingPauseSpans = false
+    @Environment(\.motion) private var motion
+
     /// Ticks the "focused for" line without asking the tracker for anything.
     @State private var now = Date()
     private let clock = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -277,31 +283,34 @@ struct MenuBarPopoverView: View {
         .focusEffectDisabled()
     }
 
-    /// "Pause for…" — the same row shape, opening a menu of ends rather than acting at once.
+    /// "Pause for…", and then the three ends, as rows.
     ///
-    /// The point of the whole feature is in this list: a pause somebody chooses the end of
-    /// cannot be forgotten, and forgetting is the only way pausing loses a day of record.
+    /// **It was a `Menu`, and it did not look like the panel it was in.** SwiftUI gives a menu
+    /// its own chrome — an inset, a background, its own idea of a control's shape — so the row
+    /// sat indented inside a rounded box while every other row ran flush edge to edge. In a
+    /// list whose whole design is "equal, quiet rows", one row wearing a button was the only
+    /// thing the eye went to.
+    ///
+    /// So it expands in place instead. The three ends are `MenuBarRow`s like everything else,
+    /// which makes them identical by construction rather than by matching padding twice, and
+    /// the state resets when the panel closes because the panel is rebuilt each time it opens.
+    @ViewBuilder
     private var pauseForRow: some View {
-        Menu {
+        MenuBarRow(
+            glyph: showingPauseSpans ? "clock.badge.checkmark" : "clock.badge.xmark",
+            title: Loc.t("Pause for…"),
+            action: { withAnimation(motion.animation(Design.Motion.inPlace)) { showingPauseSpans.toggle() } }
+        )
+        if showingPauseSpans {
             ForEach(Pause.Span.allCases, id: \.self) { span in
-                Button(Loc.t(span.label)) { onPause(span) }
+                MenuBarRow(
+                    glyph: "circle.dashed",
+                    title: Loc.t(span.label),
+                    indented: true,
+                    action: { onPause(span) }
+                )
             }
-        } label: {
-            HStack(spacing: Design.Space.inline) {
-                Image(systemName: "clock.badge.xmark")
-                    .font(Design.Text.detail)
-                    .frame(width: Design.Icon.sidebarColumn)
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                Text(Loc.t("Pause for…")).font(Design.Text.itemTitle)
-                Spacer(minLength: Design.Space.inline)
-            }
-            .padding(.horizontal, Design.Space.cardRoomy)
-            .padding(.vertical, Design.Space.snug)
-            .contentShape(Rectangle())
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
     }
 
     // MARK: - Marking the stretch you are in
@@ -366,6 +375,10 @@ private struct MenuBarRow: View {
     let glyph: String
     let title: String
     var shortcut: String?
+    /// A row that belongs to the one above it — the pause lengths under "Pause for…". Indented
+    /// by the glyph column rather than by a made-up number, so it lines up with the *titles*
+    /// above it and reads as a continuation of the list rather than as a second list.
+    var indented = false
     let action: () -> Void
 
     @State private var hovering = false
@@ -390,7 +403,8 @@ private struct MenuBarRow: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .padding(.horizontal, Design.Space.cardRoomy)
+            .padding(.leading, Design.Space.cardRoomy + (indented ? Design.Icon.sidebarColumn : 0))
+            .padding(.trailing, Design.Space.cardRoomy)
             .padding(.vertical, Design.Space.snug)
             // Before the background, so the whole band is the target rather than the text.
             .contentShape(Rectangle())
