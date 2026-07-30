@@ -185,10 +185,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         let launchNote = Updates.launchNote(
             previous: preferences.lastRunVersion,
             current: Replay.version,
-            selfUpdated: preferences.selfUpdated
+            selfUpdated: preferences.selfUpdated,
+            reinstalled: preferences.reinstalled
         )
         preferences.lastRunVersion = Replay.version
         preferences.selfUpdated = false
+        preferences.reinstalled = false
         // A pinned "open on" is an instruction and wins; otherwise come back to where the
         // window was left, which is what a Mac app does.
         if let pinned = Navigation.Surface(rawValue: preferences.launchSurface.label),
@@ -212,6 +214,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         switch launchNote {
         case .whatsNew: openWhatsNew()
         case .quietly: updates.noteInstalled(Replay.version)
+        // A banner, not a window. Somebody who reinstalled the version they already had is
+        // not asking what is new in it — they are asking whether the thing they pressed did
+        // anything, and a line at the top of the window answers that without taking over.
+        case .reinstalled: updates.noteReinstalled(Replay.version)
         case .nothing: break
         }
 

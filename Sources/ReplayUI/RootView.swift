@@ -311,6 +311,7 @@ struct RootView: View {
                 } else if let installed = updates.installed {
                     InstalledBanner(
                         version: installed,
+                        reinstalled: updates.wasReinstall,
                         onWhatsNew: {
                             onOpenWhatsNew()
                             // Read is read: the note has done its job and should not be

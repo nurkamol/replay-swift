@@ -366,6 +366,7 @@
 "Reflections" = "Mulohazalar";
 "Reinstall" = "Qayta o‘rnatish";
 "Reinstall fetches the published build of this version and replaces this copy. Useful when a release was rebuilt under the same version, or when a copy is damaged. Your record is untouched." = "Qayta o‘rnatish bu versiyaning e’lon qilingan yig‘masini olib, ushbu nusxani almashtiradi. Reliz o‘sha versiya ostida qayta yig‘ilganda yoki nusxa shikastlanganda asqotadi. Yozuvlaringizga tegilmaydi.";
+"Reinstalled Replay %@" = "Replay %@ qayta o‘rnatildi";
 "Remove tag %@" = "%@ tegini olib tashlash";
 "Removes Replay from this list, so it can be added again" = "Replay’ni bu ro‘yxatdan olib tashlaydi — keyin qayta qo‘shsa bo‘ladi";
 "Rename chapter" = "Bob nomini o‘zgartirish";

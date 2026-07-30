@@ -316,6 +316,53 @@ struct UpdateInstallBehaviour {
 @Suite("Reinstall")
 struct ReinstallBehaviour {
 
+    @Test("A reinstall is announced, because no version comparison can find it")
+    func reinstallIsNoted() {
+        // The gap this closes: the version is identical by definition, so every other note is
+        // decided by a comparison that must answer "nothing". Pressing the button and getting
+        // silence is the one outcome that leaves somebody no better off than before.
+        #expect(
+            Updates.launchNote(
+                previous: "0.9.8", current: "0.9.8", selfUpdated: true, reinstalled: true
+            ) == .reinstalled
+        )
+    }
+
+    @Test("Without the flag, the same version still says nothing")
+    func sameVersionStaysQuiet() {
+        #expect(
+            Updates.launchNote(
+                previous: "0.9.8", current: "0.9.8", selfUpdated: true, reinstalled: false
+            ) == .nothing
+        )
+    }
+
+    @Test("A stale flag cannot dress an ordinary update up as a reinstall")
+    func realUpdateWins() {
+        // The flag is cleared on every launch, but a crash between install and launch could
+        // leave it set. A version that genuinely moved is an update whatever the flag says.
+        #expect(
+            Updates.launchNote(
+                previous: "0.9.7", current: "0.9.8", selfUpdated: true, reinstalled: true
+            ) == .whatsNew
+        )
+        #expect(
+            Updates.launchNote(
+                previous: "0.9.7", current: "0.9.8", selfUpdated: false, reinstalled: true
+            ) == .quietly
+        )
+    }
+
+    @Test("A first run is still silent, flag or not")
+    func firstRunStaysSilent() {
+        #expect(
+            Updates.launchNote(
+                previous: nil, current: "0.9.8", selfUpdated: true, reinstalled: true
+            ) == .nothing
+        )
+    }
+
+
     private static func model(id: String = UUID().uuidString) throws -> UpdateModel {
         let defaults = try #require(UserDefaults(suiteName: "replay.tests.\(id)"))
         return UpdateModel(preferences: Preferences(defaults: defaults), currentVersion: "0.9.8")

@@ -224,6 +224,14 @@ public enum Updates {
         /// a bundle dragged into place. Worth mentioning, not worth a window taking the
         /// screen — SPEC §8's "never interrupt" is about exactly this difference.
         case quietly
+        /// The same version, deliberately installed again.
+        ///
+        /// **The case a version comparison cannot see.** Every other note here is decided by
+        /// whether the number went up; a reinstall's number is identical by definition, so
+        /// without a flag the answer is `.nothing` and the app comes back from a swap saying
+        /// nothing at all. Somebody pressed a button because they believed their copy was
+        /// wrong, and silence is the one response that leaves them no better off.
+        case reinstalled
     }
 
     /// Decide from the two versions and how the change happened.
@@ -232,13 +240,18 @@ public enum Updates {
     /// done it deliberately, and a window announcing the release they were escaping would be
     /// the app arguing with them.
     public static func launchNote(
-        previous: String?, current: String, selfUpdated: Bool
+        previous: String?, current: String, selfUpdated: Bool, reinstalled: Bool = false
     ) -> LaunchNote {
         // No previous version means a first run — or the first run after this was added,
         // which is the same thing as far as anyone can tell. Announcing a release to somebody
         // who has just installed the app is telling them what they already chose.
         guard let previous, !previous.isEmpty else { return .nothing }
-        guard isNewer(current, than: previous) else { return .nothing }
+        guard isNewer(current, than: previous) else {
+            // Same version — or older. A reinstall is the one reason that is worth saying,
+            // and only because somebody asked for it seconds ago. Checked after `isNewer` so
+            // a stale flag can never dress an ordinary update up as a reinstall.
+            return reinstalled ? .reinstalled : .nothing
+        }
         return selfUpdated ? .whatsNew : .quietly
     }
 

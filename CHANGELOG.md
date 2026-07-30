@@ -31,6 +31,10 @@ Developer ID and notarised. Everything before it is a version of the source.
   - Also the repair for a bundle that is merely damaged — right version, wrong contents.
   - Never automatic and never suggested. The same download, checksum and swap as an ordinary
     update, with only the "is it newer?" test skipped. Your record is untouched.
+  - **It says so afterwards.** A reinstall comes back at the version it left, so the note that
+    normally follows an update — decided by comparing versions — had nothing to compare and
+    said nothing at all. Pressing a button and getting silence is the one outcome that leaves
+    you no better off, so the banner now reads *Reinstalled Replay 0.9.8*.
 
 - **The permissions Replay does not use now have rows, in Settings ▸ Privacy and on the welcome
   screen.** Each says where it stands and what it is for; **Reset** takes back anything granted

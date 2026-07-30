@@ -226,14 +226,28 @@ final class UpdateModel {
             if failure == nil { failure = "There is nothing published to reinstall." }
             return
         }
+        // Before the swap, because after it this process is gone. Cleared on the next launch
+        // whether or not the note is shown, so a failed install cannot leave a flag that
+        // makes some later ordinary launch claim to be a reinstall.
+        preferences.reinstalled = true
         await install(release)
+        // Still here means the install did not happen — it relaunches on success. Take the
+        // claim back rather than leaving it for a launch that was never a reinstall.
+        if install != .done { preferences.reinstalled = false }
     }
 
+    /// Whether the version this launch is reporting arrived by a reinstall rather than an
+    /// update, so the banner can say the true thing rather than the near-enough one.
+    private(set) var wasReinstall = false
+
     /// Say that this launch is a new version, so the banner can mention it once.
-    func noteInstalled(_ version: String) { installed = version }
+    func noteInstalled(_ version: String) { installed = version; wasReinstall = false }
+
+    /// Say that this launch is the same version, deliberately installed again.
+    func noteReinstalled(_ version: String) { installed = version; wasReinstall = true }
 
     /// Put the "installed" note away. Nothing remembers it: it is true for one launch.
-    func dismissInstalled() { installed = nil }
+    func dismissInstalled() { installed = nil; wasReinstall = false }
 
     /// Stop offering this one. It comes back if a newer release appears.
     func dismiss() {
@@ -350,6 +364,11 @@ struct UpdateBanner: View {
 /// there is no state worth keeping about a note whose whole content is "this happened".
 struct InstalledBanner: View {
     let version: String
+    /// The same banner for two arrivals, because they mean the same thing to the person
+    /// reading it: the app was replaced and the record was not. Only the first line differs —
+    /// "Updated to" would be false after a reinstall, and a banner that misdescribes what just
+    /// happened is worse than none.
+    var reinstalled = false
     let onWhatsNew: () -> Void
     let onDismiss: () -> Void
 
@@ -361,8 +380,13 @@ struct InstalledBanner: View {
                 // that reports something having gone right rather than describing a day.
                 .foregroundStyle(Design.Colour.met)
             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                Text(String(format: Loc.t("Updated to Replay %@"), "\(version)"))
-                    .font(Design.Text.itemTitle)
+                Text(String(
+                    format: reinstalled
+                        ? Loc.t("Reinstalled Replay %@")
+                        : Loc.t("Updated to Replay %@"),
+                    "\(version)"
+                ))
+                .font(Design.Text.itemTitle)
                 Text(Loc.t("Your record is untouched — an update replaces the app, not the history."))
                     .font(Design.Text.detail)
                     .foregroundStyle(.secondary)

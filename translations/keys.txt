@@ -363,6 +363,7 @@ Reflection
 Reflections
 Reinstall
 Reinstall fetches the published build of this version and replaces this copy. Useful when a release was rebuilt under the same version, or when a copy is damaged. Your record is untouched.
+Reinstalled Replay %@
 Remove tag %@
 Removes Replay from this list, so it can be added again
 Rename chapter

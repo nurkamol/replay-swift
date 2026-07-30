@@ -505,6 +505,16 @@ final class Preferences {
         didSet { write(selfUpdated, "selfUpdated") }
     }
 
+    /// Set just before a *reinstall* replaces the bundle, and cleared on the next launch.
+    ///
+    /// Separate from ``selfUpdated`` because it answers a different question. That one asks
+    /// "did the app replace itself", which distinguishes a window from a banner. This asks
+    /// "was the version deliberately installed over itself" — the only thing that makes a
+    /// launch at an unchanged version worth remarking on at all.
+    var reinstalled: Bool {
+        didSet { write(reinstalled, "reinstalled") }
+    }
+
     /// When the rate-limit window GitHub named reopens, from `x-ratelimit-reset`.
     ///
     /// Nil unless the last reply was a refusal. It only ever delays a check — see
@@ -607,6 +617,7 @@ final class Preferences {
         pausedUntil = defaults.object(forKey: "pausedUntil") as? Date
         lastRunVersion = defaults.string(forKey: "lastRunVersion") ?? ""
         selfUpdated = defaults.bool(forKey: "selfUpdated")
+        reinstalled = defaults.bool(forKey: "reinstalled")
         let hour = defaults.integer(forKey: "dailySummaryHour")
         dailySummaryHour = hour == 0 ? 18 : hour
         dailySummary = defaults.bool(forKey: "dailySummary")
@@ -689,6 +700,7 @@ final class Preferences {
         "languageCode",
         "pausedUntil",
         "lastRunVersion",
+        "reinstalled",
         "selfUpdated",
         "screensaverExitOnMouseMove",
         "screensaverIdleMinutes",
