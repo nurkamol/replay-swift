@@ -23,6 +23,15 @@ Developer ID and notarised. Everything before it is a version of the source.
 
 ### Added
 
+- **Reinstall, in Settings ▸ About.** Downloads the published build of the version you are
+  already on and replaces this copy.
+  - **A version number stops being the whole truth when a release is rebuilt under it.** Two
+    builds then share a number, "check for updates" correctly answers "you are up to date", and
+    a copy of the earlier one has no way forward. That happened to this very release, twice.
+  - Also the repair for a bundle that is merely damaged — right version, wrong contents.
+  - Never automatic and never suggested. The same download, checksum and swap as an ordinary
+    update, with only the "is it newer?" test skipped. Your record is untouched.
+
 - **The permissions Replay does not use now have rows, in Settings ▸ Privacy and on the welcome
   screen.** Each says where it stands and what it is for; **Reset** takes back anything granted
   earlier, which was previously impossible from inside the app.

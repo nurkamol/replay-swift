@@ -147,6 +147,7 @@
 "Dock badge" = "Dock nishoni";
 "Does Replay ever use the network?" = "Replay tarmoqdan foydalanadimi?";
 "Done" = "Tayyor";
+"Downloads this version again and replaces this copy" = "Bu versiyani qaytadan yuklab olib, ushbu nusxani almashtiradi";
 "Drift ambient mode in after this long with no activity, while Replay is focused. Any key or movement wakes it." = "Replay fokusda turganda, shuncha vaqt harakatsizlikdan so‘ng ambient rejimi sekin paydo bo‘lsin. Istalgan tugma yoki harakat uni uyg‘otadi.";
 "Drift the screensaver in after this long with no activity, while Replay is focused. Any key or movement wakes it." = "Replay fokusda turganda, shuncha vaqt harakatsizlikdan so‘ng skrinseyver sekin paydo bo‘lsin. Istalgan tugma yoki harakat uni uyg‘otadi.";
 "Edit the note" = "Eslatmani tahrirlash";
@@ -363,6 +364,8 @@
 "Reduce Transparency in System Settings overrides this and makes every surface solid." = "Tizim sozlamalaridagi “Shaffoflikni kamaytirish” buni bekor qiladi va har bir yuzani qattiq qiladi.";
 "Reflection" = "Mulohaza";
 "Reflections" = "Mulohazalar";
+"Reinstall" = "Qayta o‘rnatish";
+"Reinstall fetches the published build of this version and replaces this copy. Useful when a release was rebuilt under the same version, or when a copy is damaged. Your record is untouched." = "Qayta o‘rnatish bu versiyaning e’lon qilingan yig‘masini olib, ushbu nusxani almashtiradi. Reliz o‘sha versiya ostida qayta yig‘ilganda yoki nusxa shikastlanganda asqotadi. Yozuvlaringizga tegilmaydi.";
 "Remove tag %@" = "%@ tegini olib tashlash";
 "Removes Replay from this list, so it can be added again" = "Replay’ni bu ro‘yxatdan olib tashlaydi — keyin qayta qo‘shsa bo‘ladi";
 "Rename chapter" = "Bob nomini o‘zgartirish";

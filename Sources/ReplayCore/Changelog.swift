@@ -49,6 +49,7 @@ public let releases: [Release] = [
         version: "0.9.8",
         title: "Three OS generations, and words you can read",
         changes: [
+            "**Reinstall**, in Settings \u{25B8} About: downloads the published build of the version you already have and replaces this copy. For when a release was rebuilt under the same version \u{2014} where \"check for updates\" rightly says you are up to date and there is no way forward \u{2014} or when a copy is simply damaged. Never automatic, and your record is untouched.",
             "**The permissions Replay does not use now have rows**, in Settings \u{25B8} Privacy and on the welcome screen. Each says where it stands, Accessibility\u{2019}s button asks macOS to add Replay to the list so only the switch is left, and **Reset** takes back anything granted earlier \u{2014} which could not be done from inside the app at all before. Nothing here is required; every row off is the state Replay is built for.",
             "**Replay runs on macOS 14 Sonoma.** It needed macOS 26 before \u{2014} a version most Macs are not on. Two calls in the interface wanted something newer, both are guarded now, and nothing about the app changed on a current Mac.",
             "**Below macOS 26 the Surfaces setting offers Solid and Frosted, and not Glass.** A setting that silently did nothing would be worse than one that is not there. A Glass preference carried over from a newer Mac draws as Frosted.",

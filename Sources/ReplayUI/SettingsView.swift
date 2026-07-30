@@ -1266,12 +1266,35 @@ private struct AboutTab: View {
                 .explains(own: .checkForUpdates)
                 HStack(spacing: Design.Space.snug) {
                     Button(Loc.t("Check Now")) { Task { await updates.checkNow() } }
-                        .disabled(updates.checking)
+                        .disabled(updates.checking || updates.install != .idle)
+                    // Deliberately quiet, and deliberately here rather than anywhere the app
+                    // can raise on its own. Nothing suggests this; it is for somebody who has
+                    // decided their copy is wrong.
+                    Button(Loc.t("Reinstall")) { Task { await updates.reinstall() } }
+                        .disabled(updates.checking || updates.install != .idle)
+                        .help(Loc.t("Downloads this version again and replaces this copy"))
                     if updates.checking { ProgressView().controlSize(.small) }
+                    if let step = updates.install.label {
+                        HStack(spacing: Design.Space.tight) {
+                            ProgressView().controlSize(.small)
+                            Text(Loc.t(step))
+                                .font(Design.Text.detail).foregroundStyle(.secondary)
+                        }
+                    }
                     if let failure = updates.failure {
                         Text(failure).font(Design.Text.detail).foregroundStyle(.secondary)
                     }
                 }
+                // Said once, plainly, because "reinstall the version I already have" reads as
+                // a contradiction until you know why it exists.
+                Text(Loc.t(
+                    "Reinstall fetches the published build of this version and replaces this "
+                        + "copy. Useful when a release was rebuilt under the same version, or "
+                        + "when a copy is damaged. Your record is untouched."
+                ))
+                .font(Design.Text.micro)
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.top, Design.Space.block)
             .frame(maxWidth: Design.Layout.readableWidth)

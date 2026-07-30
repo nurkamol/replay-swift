@@ -25,6 +25,13 @@ import SwiftUI
 final class UpdateModel {
     /// A release newer than this build, once one has been found.
     private(set) var available: Updates.Release?
+    /// The newest release GitHub reported, **whether or not it is newer than this build**.
+    ///
+    /// `available` answers "is there an update"; this answers "what is published". They are
+    /// the same object most of the time and differ in exactly the case ``reinstall()`` exists
+    /// for: a release whose artifacts were replaced under a version number this copy already
+    /// claims. Then `available` is correctly nil — nothing is newer — and this is not.
+    private(set) var latest: Updates.Release?
     /// The version this launch arrived as, when it arrived by an update rather than by being
     /// installed. Drives the quieter half of the banner: *installed*, not *available*.
     private(set) var installed: String?
@@ -176,6 +183,7 @@ final class UpdateModel {
             if userAsked { failure = "Replay \(currentVersion) is the latest version." }
             return
         }
+        latest = release
         available = Updates.isNewer(release.version, than: currentVersion) ? release : nil
         if userAsked, available == nil {
             failure = "Replay \(currentVersion) is the latest version."
@@ -189,6 +197,36 @@ final class UpdateModel {
         }
         return "GitHub is rate-limiting this connection. It clears at "
             + when.formatted(.dateTime.hour().minute().locale(Loc.locale)) + "."
+    }
+
+    /// Install the published build of this version again, over the top of this one.
+    ///
+    /// **For when the version number is not the whole truth.** Ordinarily a version answers
+    /// "which build is this", and comparing numbers is enough — that is what `available` does.
+    /// It stops being enough when a release's artifacts are replaced under a tag that has
+    /// already gone out: two builds then share a number, the comparison says "you are up to
+    /// date", and a copy of the older one has no route forward. That happened to 0.9.8 and is
+    /// what this is for.
+    ///
+    /// It is also the repair for a bundle that is merely damaged — a half-finished copy, a
+    /// file removed by hand — where the app is the right version and the wrong contents.
+    ///
+    /// The same download, checksum and swap as an ordinary update; only the "is it newer?"
+    /// gate is skipped. It is never automatic and never suggested: nothing offers this, it is
+    /// a button somebody presses having decided their copy is wrong.
+    func reinstall() async {
+        guard case .idle = install else { return }
+        failure = nil
+        // A check first if nothing is known yet — and after it, `latest` holds whatever is
+        // published even though `available` will be nil for a matching version.
+        if latest == nil { await check(userAsked: true) }
+        guard let release = latest else {
+            // `check` has already set a failure that says why (offline, rate-limited, no
+            // releases). Replacing it with something vaguer would lose the reason.
+            if failure == nil { failure = "There is nothing published to reinstall." }
+            return
+        }
+        await install(release)
     }
 
     /// Say that this launch is a new version, so the banner can mention it once.

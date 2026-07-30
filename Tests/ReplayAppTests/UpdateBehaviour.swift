@@ -1,6 +1,7 @@
 import Foundation
 import ReplayCore
 import Testing
+@testable import ReplayUI
 
 /// Deciding whether a release is newer, without a network.
 ///
@@ -302,5 +303,48 @@ struct UpdateInstallBehaviour {
         let release = Updates.release(from: json)
         #expect(release?.downloadURL == "https://e/zip")
         #expect(release?.checksumURL == "https://e/sha")
+    }
+}
+
+/// Reinstalling a version this copy already claims.
+///
+/// The reason it exists: a version number answers "which build is this" only while one build
+/// wears one number. Replace a release's artifacts under a tag that has already shipped and
+/// two builds share it — `isNewer` then correctly says "up to date" and a copy of the older one
+/// has no way forward. 0.9.8 was rebuilt that way, which is what prompted the button.
+@MainActor
+@Suite("Reinstall")
+struct ReinstallBehaviour {
+
+    private static func model(id: String = UUID().uuidString) throws -> UpdateModel {
+        let defaults = try #require(UserDefaults(suiteName: "replay.tests.\(id)"))
+        return UpdateModel(preferences: Preferences(defaults: defaults), currentVersion: "0.9.8")
+    }
+
+    @Test("The same version is still not an update, which is the whole problem")
+    func sameVersionIsNotAnUpdate() throws {
+        // Pinning the behaviour reinstall works around rather than changes. If this ever
+        // reports true, the updater has started offering same-version installs on its own and
+        // the button is redundant — and something else is wrong.
+        #expect(!Updates.isNewer("0.9.8", than: "0.9.8"))
+    }
+
+    @Test("Nothing is offered before a check has found anything")
+    func nothingKnownYet() throws {
+        let updates = try Self.model()
+        #expect(updates.available == nil)
+        // `latest` is what reinstall reads, and it must start empty rather than assuming the
+        // running version is what is published.
+        #expect(updates.latest == nil)
+    }
+
+    @Test("Reinstall is never automatic")
+    func neverAutomatic() throws {
+        let updates = try Self.model()
+        // Off unless somebody turned the check on, and a reinstall is a button either way:
+        // no state here should imply an install is about to happen.
+        #expect(updates.install == .idle)
+        #expect(updates.failure == nil)
+        #expect(updates.installed == nil)
     }
 }

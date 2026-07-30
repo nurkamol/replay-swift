@@ -144,6 +144,7 @@ Do the notifications cost anything?
 Dock badge
 Does Replay ever use the network?
 Done
+Downloads this version again and replaces this copy
 Drift ambient mode in after this long with no activity, while Replay is focused. Any key or movement wakes it.
 Drift the screensaver in after this long with no activity, while Replay is focused. Any key or movement wakes it.
 Edit the note
@@ -360,6 +361,8 @@ Red
 Reduce Transparency in System Settings overrides this and makes every surface solid.
 Reflection
 Reflections
+Reinstall
+Reinstall fetches the published build of this version and replaces this copy. Useful when a release was rebuilt under the same version, or when a copy is damaged. Your record is untouched.
 Remove tag %@
 Removes Replay from this list, so it can be added again
 Rename chapter
