@@ -31,6 +31,11 @@ Developer ID and notarised. Everything before it is a version of the source.
     leaving somebody to press `+` and find Replay in `/Applications` by hand.
   - **App Management has no button of that kind, because macOS offers none.** No app can read
     or request it, so the row says so rather than showing a tick that would be a guess.
+  - **Every row offers a way in and, where there is something to undo, a way out** — so a
+    permission can be granted, taken back and granted again without leaving Settings. App
+    Management always offers **Reset**, precisely because macOS will not say whether it is on:
+    hiding the button until a permission "looks" granted would have made the one thing nobody
+    can check also the one thing nobody could undo.
   - Nothing here is required and the rows never imply otherwise: no red, no warnings, no
     "action needed". Every row off is the state Replay is built for.
   - No password is ever asked for. macOS collects authorisation in its own window; an app that

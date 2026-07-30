@@ -42,6 +42,19 @@ struct PermissionsBehaviour {
         #expect(!PermissionsModel.Kind.appManagement.readable)
     }
 
+    @Test("Anything that cannot be read can still be taken back")
+    func unreadableIsStillResettable() {
+        // The hole this closes: `Reset` was shown only when `granted == true`, and App
+        // Management's state is never readable — so the one permission nobody can check was
+        // also the one nobody could undo. `tccutil` succeeds against an absent entry, so
+        // offering it costs nothing and withholding it cost everything.
+        for kind in PermissionsModel.Kind.allCases where !kind.readable {
+            // The view's condition is `granted != false`; this pins the value it reads.
+            let permission = PermissionsModel().permissions.first { $0.kind == kind }
+            #expect(permission?.granted != false)
+        }
+    }
+
     @Test("A row exists for every kind, and an unreadable one says nothing rather than no")
     func rowsMatchKinds() {
         let permissions = PermissionsModel()

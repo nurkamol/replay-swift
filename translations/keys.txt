@@ -322,6 +322,7 @@ Opens this application's history
 Opens this chapter
 Opens this collection
 Opens this day
+Opens this pane in System Settings
 Opens this project
 Orange
 Part of the chapter
@@ -360,6 +361,7 @@ Reduce Transparency in System Settings overrides this and makes every surface so
 Reflection
 Reflections
 Remove tag %@
+Removes Replay from this list, so it can be added again
 Rename chapter
 Rename project
 Rename…

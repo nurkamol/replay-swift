@@ -51,27 +51,38 @@ struct PermissionsList: View {
 
             Spacer(minLength: Design.Space.inline)
 
-            // Granted → the useful action is taking it back. Not granted, or unknown → open
-            // the pane. "Add to List" only for Accessibility, because it is the only one macOS
-            // will prompt for; offering it beside App Management would be a button that does
-            // nothing, which is worse than no button.
-            if permission.granted == true {
-                Button(Loc.t("Reset")) { permissions.reset(permission.kind) }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-            } else if permission.kind == .accessibility {
-                Button(Loc.t("Add to List")) {
-                    permissions.requestAccessibility()
-                    permissions.open(permission.kind)
+            // **Both directions, always.** The first version showed `Reset` on a granted row
+            // and nothing else, which quietly made this a one-way door: having taken a
+            // permission back there was no way to look at the pane again from here, and
+            // granting-then-resetting-then-granting is exactly the loop somebody debugging a
+            // managed Mac needs. Every row now offers a way in and, when there is something to
+            // undo, a way out.
+            HStack(spacing: Design.Space.tight) {
+                // `Add to List` only for Accessibility — the one macOS will prompt for. Beside
+                // App Management it would be a button that does nothing, which is worse than
+                // no button, so that row gets the plain pane link.
+                if permission.kind == .accessibility, permission.granted != true {
+                    Button(Loc.t("Add to List")) {
+                        permissions.requestAccessibility()
+                        permissions.open(permission.kind)
+                    }
+                    .help(Loc.t("Puts Replay in the list so you only have to turn it on"))
+                } else {
+                    Button(Loc.t("Open")) { permissions.open(permission.kind) }
+                        .help(Loc.t("Opens this pane in System Settings"))
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .help(Loc.t("Puts Replay in the list so you only have to turn it on"))
-            } else {
-                Button(Loc.t("Open")) { permissions.open(permission.kind) }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                // Offered when it is granted — and also when macOS will not say. App
+                // Management cannot be read, so hiding `Reset` unless `granted == true` meant
+                // the one permission nobody can check was also the one nobody could take back.
+                // `tccutil` succeeds against an entry that is not there, so the button is
+                // harmless when there was nothing to undo and essential when there was.
+                if permission.granted != false {
+                    Button(Loc.t("Reset")) { permissions.reset(permission.kind) }
+                        .help(Loc.t("Removes Replay from this list, so it can be added again"))
+                }
             }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
     }
 
