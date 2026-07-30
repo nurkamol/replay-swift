@@ -19,7 +19,7 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
-## 0.9.8 — 2026-07-30
+## Unreleased
 
 ### Added
 
@@ -36,6 +36,10 @@ Developer ID and notarised. Everything before it is a version of the source.
 - **Update messages are translated too.** The eleven sentences that appear when a check or an
   install fails were English in every language — which is the worst moment to meet a language
   you did not choose.
+
+## 0.9.8 — 2026-07-30
+
+### Added
 
 - **Reinstall, in Settings ▸ About.** Downloads the published build of the version you are
   already on and replaces this copy.
