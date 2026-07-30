@@ -19,7 +19,7 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
-## Unreleased
+## 0.9.8 — 2026-07-30
 
 ### Added
 
@@ -41,10 +41,6 @@ Developer ID and notarised. Everything before it is a version of the source.
   - No password is ever asked for. macOS collects authorisation in its own window; an app that
     put up a password field to approve a toggle would be collecting a credential it has no
     business seeing, and it would not work anyway.
-
-## 0.9.8 — 2026-07-30
-
-### Added
 
 - **Replay runs on macOS 14 Sonoma.** It required macOS 26 before, which is a version most
   Macs are not on. Exactly two calls in the interface needed something newer — the system's

@@ -49,6 +49,7 @@ public let releases: [Release] = [
         version: "0.9.8",
         title: "Three OS generations, and words you can read",
         changes: [
+            "**The permissions Replay does not use now have rows**, in Settings \u{25B8} Privacy and on the welcome screen. Each says where it stands, Accessibility\u{2019}s button asks macOS to add Replay to the list so only the switch is left, and **Reset** takes back anything granted earlier \u{2014} which could not be done from inside the app at all before. Nothing here is required; every row off is the state Replay is built for.",
             "**Replay runs on macOS 14 Sonoma.** It needed macOS 26 before \u{2014} a version most Macs are not on. Two calls in the interface wanted something newer, both are guarded now, and nothing about the app changed on a current Mac.",
             "**Below macOS 26 the Surfaces setting offers Solid and Frosted, and not Glass.** A setting that silently did nothing would be worse than one that is not there. A Glass preference carried over from a newer Mac draws as Frosted.",
             "**The parts you read most are translated.** A session is called \"Late night in Terminal\" and a gap \"8m not recorded\" \u{2014} sentences assembled as you go, which had no whole string for a translator to be given. Titles, gaps, the headline figures, the sidebar and the time labels now follow the language you chose. Uzbek is complete at 519 strings.",
