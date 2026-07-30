@@ -117,9 +117,15 @@ and those are what the parity suite compares against `spec/`.
 the sidebar sections, the resume card, the reflection prompt, the relative day and time labels,
 and the session card's VoiceOver sentence.
 
-**Not done:** the narrative surfaces — Story, the autobiography, Memories and its moments, the
-morning briefing, Collections and Projects. `MemoryProducers.swift` alone assembles thirty-nine
-of them. One surface at a time, when that surface is being touched anyway.
+**Done (2026-07-30):** Memories, in full — its seven moment cards, the on-this-day range names,
+the heatmap's months and weekday initials, and the update messages that appear when a check or
+an install fails. `Moment` carries a `facts` payload so the sentence can be assembled again in
+another language; the English on it is untouched.
+
+**Not done:** the rest of the narrative surfaces — Story, the autobiography, the morning
+briefing, Collections and Projects. Roughly sixty assembled sentences across `Moments`,
+`Autobiography`, `DayStory`, `Canvas` and `Resume`. One surface at a time, when that surface is
+being touched anyway.
 
 ### Two traps, both of which have already happened here
 

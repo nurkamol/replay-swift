@@ -106,7 +106,7 @@ final class UpdateModel {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse else {
-                if userAsked { failure = "GitHub replied in a way this could not read." }
+                if userAsked { failure = Loc.t("GitHub replied in a way this could not read.") }
                 return
             }
 
@@ -153,7 +153,7 @@ final class UpdateModel {
 
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             guard let json, let release = Updates.release(from: json) else {
-                if userAsked { failure = "That reply did not look like a release." }
+                if userAsked { failure = Loc.t("That reply did not look like a release.") }
                 return
             }
             preferences.lastUpdateCheck = Date()
@@ -167,7 +167,7 @@ final class UpdateModel {
             // A failed check is not an event. No retry loop, no backoff, no logging to disk:
             // it will be tried again tomorrow, and a machine that is offline should not
             // accumulate anything because of it.
-            if userAsked { failure = "Could not reach GitHub." }
+            if userAsked { failure = Loc.t("Could not reach GitHub.") }
         }
     }
 
@@ -180,23 +180,27 @@ final class UpdateModel {
             // A 304 with nothing stored: the tag matched something this copy no longer
             // remembers. Forget the tag so the next check asks the question in full.
             preferences.updateETag = nil
-            if userAsked { failure = "Replay \(currentVersion) is the latest version." }
+            if userAsked { failure = String(format: Loc.t("Replay %@ is the latest version."), currentVersion) }
             return
         }
         latest = release
         available = Updates.isNewer(release.version, than: currentVersion) ? release : nil
         if userAsked, available == nil {
-            failure = "Replay \(currentVersion) is the latest version."
+            failure = String(format: Loc.t("Replay %@ is the latest version."), currentVersion)
         }
     }
 
     /// "GitHub is rate-limiting this connection" — and when it stops, if GitHub said.
     private func rateLimitMessage() -> String {
         guard let when = preferences.updateRetryAfter else {
-            return "GitHub is rate-limiting this connection. Try again later."
+            return Loc.t("GitHub is rate-limiting this connection. Try again later.")
         }
-        return "GitHub is rate-limiting this connection. It clears at "
-            + when.formatted(.dateTime.hour().minute().locale(Loc.locale)) + "."
+        // One sentence with the time inside it, not two glued together: the clause order
+        // differs by language and a join cannot express that.
+        return String(
+            format: Loc.t("GitHub is rate-limiting this connection. It clears at %@."),
+            when.formatted(.dateTime.hour().minute().locale(Loc.locale))
+        )
     }
 
     /// Install the published build of this version again, over the top of this one.
@@ -223,7 +227,7 @@ final class UpdateModel {
         guard let release = latest else {
             // `check` has already set a failure that says why (offline, rate-limited, no
             // releases). Replacing it with something vaguer would lose the reason.
-            if failure == nil { failure = "There is nothing published to reinstall." }
+            if failure == nil { failure = Loc.t("There is nothing published to reinstall.") }
             return
         }
         // Before the swap, because after it this process is gone. Cleared on the next launch
@@ -496,7 +500,7 @@ extension UpdateModel {
         guard let downloadURL = release.downloadURL.flatMap(URL.init(string:)),
               let checksumURL = release.checksumURL.flatMap(URL.init(string:))
         else {
-            failure = "That release has nothing to install."
+            failure = Loc.t("That release has nothing to install.")
             return
         }
 
@@ -565,7 +569,10 @@ extension UpdateModel {
             failure = error.text
         } catch {
             install = .idle
-            failure = "The update could not be installed: \(error.localizedDescription)"
+            failure = String(
+                format: Loc.t("The update could not be installed: %@"),
+                error.localizedDescription
+            )
         }
     }
 

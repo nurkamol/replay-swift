@@ -47,11 +47,16 @@ public enum Heatmap {
         case week, month, year
         public var id: String { rawValue }
 
+        /// Translated here, so the source scanner can see the three literals.
+        ///
+        /// `Loc.t` at the call site instead would be handed a variable and the keys would be
+        /// invisible to every scan — which is what happened: the picker was wrapped, the words
+        /// were never in the catalogue, and it went on reading English in a translated app.
         public var label: String {
             switch self {
-            case .week: "Week"
-            case .month: "Month"
-            case .year: "Year"
+            case .week: Loc.t("Week")
+            case .month: Loc.t("Month")
+            case .year: Loc.t("Year")
             }
         }
 

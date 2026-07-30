@@ -28,6 +28,35 @@ public struct Moment: Equatable, Sendable {
     public var appPath: String?
     /// A day to open when the moment is chosen.
     public var dayStart: Int64?
+    /// The values ``title`` and ``detail`` were assembled from, kept so they can be assembled
+    /// again in another language.
+    ///
+    /// The English above is the reference's own wording and stays exactly as it is; this is
+    /// what lets `RuntimeCopy.moment(_:)` say the same thing in a language whose word order
+    /// differs. Without it the whole of Memories reads English inside a translated frame,
+    /// which is what it did until now.
+    public var facts = Facts()
+
+    /// Whatever a moment needs to be re-said. Not every field is used by every kind — `kind`
+    /// already discriminates, so this stays one flat value rather than seven associated ones,
+    /// and adding a producer does not mean adding a case to a second type.
+    public struct Facts: Equatable, Sendable {
+        /// A duration being described, in seconds.
+        public var seconds = 0
+        /// A count: applications in a day, days in a run, days since the beginning.
+        public var count = 0
+        /// An application's display name. Never translated — a proper noun.
+        public var app: String?
+        /// The instant being described, for a clock or a relative day.
+        public var at: Int64 = 0
+
+        public init(seconds: Int = 0, count: Int = 0, app: String? = nil, at: Int64 = 0) {
+            self.seconds = seconds
+            self.count = count
+            self.app = app
+            self.at = at
+        }
+    }
 }
 
 /// All-history facts, gathered beyond any bounded window.
@@ -95,7 +124,12 @@ public func detectMoments(
             title: "Your longest focus",
             detail: "\(formatDurationShort(longest.activeSeconds)) without switching away"
                 + "\(inApp) — \(relativeDay(longest.startedAt)).",
-            dayStart: startOfLocalDay(longest.startedAt, calendar: calendar)
+            dayStart: startOfLocalDay(longest.startedAt, calendar: calendar),
+            facts: .init(
+                seconds: longest.activeSeconds,
+                app: longest.apps.first?.applicationName,
+                at: longest.startedAt
+            )
         ))
     }
 
@@ -109,7 +143,8 @@ public func detectMoments(
             title: "Your most active day",
             detail: "\(formatDurationShort(peak.activeSeconds)) active on "
                 + "\(memoryDateLabel(peak.dayStart, calendar: calendar, locale: locale))\(mostly).",
-            dayStart: peak.dayStart
+            dayStart: peak.dayStart,
+            facts: .init(seconds: peak.activeSeconds, app: peak.topAppName, at: peak.dayStart)
         ))
     }
 
@@ -133,7 +168,8 @@ public func detectMoments(
             key: "mix-\(busiest.day)",
             title: "Your busiest mix",
             detail: "\(busiest.count) different apps in a single day — \(relativeDay(busiest.day)).",
-            dayStart: busiest.day
+            dayStart: busiest.day,
+            facts: .init(count: busiest.count, at: busiest.day)
         ))
     }
 
@@ -156,7 +192,8 @@ public func detectMoments(
             detail: "You were still going at "
                 + "\(clockLabel(latestNight.at, calendar: calendar, locale: locale)) — "
                 + "\(relativeDay(latestNight.at)).",
-            dayStart: startOfLocalDay(latestNight.at, calendar: calendar)
+            dayStart: startOfLocalDay(latestNight.at, calendar: calendar),
+            facts: .init(at: latestNight.at)
         ))
     }
 
@@ -185,7 +222,8 @@ public func detectMoments(
             key: "streak-\(bestEnd)",
             title: "A steady stretch",
             detail: "You were active \(bestRun) days in a row, ending \(relativeDay(bestEnd)).",
-            dayStart: bestEnd
+            dayStart: bestEnd,
+            facts: .init(count: bestRun, at: bestEnd)
         ))
     }
 
@@ -202,7 +240,8 @@ public func detectMoments(
                     detail: "You opened \(app.applicationName) for the first time "
                         + "\(relativeDay(app.firstAt)).",
                     appPath: app.appPath,
-                    dayStart: startOfLocalDay(app.firstAt, calendar: calendar)
+                    dayStart: startOfLocalDay(app.firstAt, calendar: calendar),
+                    facts: .init(app: app.applicationName, at: app.firstAt)
                 ))
             }
         }
@@ -220,7 +259,8 @@ public func detectMoments(
                 : "You've been building this memory for \(days) "
                     + "\(days == 1 ? "day" : "days") — since "
                     + "\(memoryDateLabel(firstDay, calendar: calendar, locale: locale)).",
-            dayStart: firstDay
+            dayStart: firstDay,
+            facts: .init(count: days, at: firstDay)
         ))
     }
 
@@ -247,7 +287,11 @@ public func pickDailyQuote(
 /// two disagreeing on a string that looks identical in a terminal. Folding is the smaller
 /// wrong: it keeps the two apps saying the same thing, and the difference is a runtime's ICU
 /// version rather than anything either app decided.
-private func clockLabel(_ millis: Int64, calendar: Calendar, locale: Locale) -> String {
+/// "5:00 AM" — a time of day, in the reader's locale.
+///
+/// Internal rather than private since `RuntimeCopy` re-says the night-owl moment and must
+/// format the clock the same way the English one does.
+func clockLabel(_ millis: Int64, calendar: Calendar, locale: Locale) -> String {
     let formatter = DateFormatter()
     formatter.calendar = calendar
     formatter.locale = locale

@@ -122,7 +122,7 @@ struct MemoriesView: View {
         }
         .background(.background)
         .navigationTitle(Loc.t("Memories"))
-        .navigationSubtitle("What you were doing on this date before")
+        .navigationSubtitle(Loc.t("What you were doing on this date before"))
         .onAppear { memories.load() }
     }
 
@@ -156,8 +156,13 @@ struct MemoriesView: View {
                                 .foregroundStyle(.tint)
                                 .frame(width: Design.Icon.glyphColumn)
                             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                                Text(moment.title).font(Design.Text.itemTitle)
-                                Text(moment.detail)
+                                // Re-said rather than read: `moment.title`/`.detail` are the
+                                // reference's English, and this surface is nothing but those
+                                // sentences — so reading them directly left Memories in
+                                // English inside a translated app.
+                                let said = RuntimeCopy.moment(moment, now: Int64(Date().timeIntervalSince1970 * 1000))
+                                Text(said.title).font(Design.Text.itemTitle)
+                                Text(said.detail)
                                     .font(Design.Text.detail)
                                     .foregroundStyle(.secondary)
                                     // Wraps rather than truncates: at half width most of
@@ -249,12 +254,12 @@ private struct MemoryRow: View {
         Button(action: onOpen) {
             HStack(spacing: Design.Space.card) {
                 VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                    Text(memory.range.label)
+                    Text(Loc.t(memory.range.label))
                         .font(Design.Text.cardLabel)
                         .foregroundStyle(.tertiary)
                         .kerning(Design.Text.labelKerning)
                         .textCase(.uppercase)
-                    Text(fullDayLabel(memory.range.dayStart))
+                    Text(fullDayLabel(memory.range.dayStart, locale: Loc.locale))
                         .font(Design.Text.itemTitle)
                     if let top = memory.summary.topAppName {
                         Text(String(format: Loc.t("Mostly %@"), "\(top)"))
@@ -278,7 +283,7 @@ private struct MemoryRow: View {
         .card(border: Design.Colour.fillStrong)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(memory.range.label), \(fullDayLabel(memory.range.dayStart)), "
+            "\(Loc.t(memory.range.label)), \(fullDayLabel(memory.range.dayStart, locale: Loc.locale)), "
                 + "\(formatDurationShort(memory.summary.activeSeconds)) active"
                 + (memory.summary.topAppName.map { ", mostly \($0)" } ?? "")
         )
@@ -301,7 +306,7 @@ struct TodayInHistoryCard: View {
                     .font(.title3)
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(memory.range.label)
+                    Text(Loc.t(memory.range.label))
                         .font(Design.Text.cardLabel)
                         .foregroundStyle(.tertiary)
                         .kerning(Design.Text.labelKerning)
@@ -436,7 +441,7 @@ struct Heatmap: View {
             if let hovered, let seconds = byDay[hovered], seconds > 0 {
                 Text(String(
                     format: Loc.t("%1$@ · %2$@"),
-                    fullDayLabel(hovered), formatDurationShort(seconds)
+                    fullDayLabel(hovered, locale: Loc.locale), formatDurationShort(seconds)
                 ))
                     .font(Design.Text.micro)
                     .foregroundStyle(.secondary)
@@ -632,8 +637,8 @@ struct Heatmap: View {
             .accessibilityElement()
             .accessibilityLabel(
                 seconds > 0
-                    ? "\(fullDayLabel(day)), \(formatDurationShort(seconds))"
-                    : "\(fullDayLabel(day)), nothing recorded"
+                    ? "\(fullDayLabel(day, locale: Loc.locale)), \(formatDurationShort(seconds))"
+                    : "\(fullDayLabel(day, locale: Loc.locale)), nothing recorded"
             )
             .accessibilityAddTraits(seconds > 0 ? .isButton : [])
     }
@@ -681,7 +686,11 @@ struct Heatmap: View {
     /// enough in that week to own it, or a month starting on a Saturday would label a column
     /// that is almost entirely the month before.
     private func monthLabel(startingWeek week: [Int64], at index: Int, in weeks: [[Int64]]) -> String? {
-        let calendar = Calendar.current
+        // The chosen language's month names. `Calendar.current` carries the *system* locale,
+        // so a Mac in English drew "Aug Sep Oct" across the top of an otherwise translated
+        // heatmap — the dates were right and the words were somebody else's.
+        var calendar = Calendar.current
+        calendar.locale = Loc.locale
         guard let first = week.first else { return nil }
         let month = calendar.component(.month, from: date(first))
         guard calendar.component(.day, from: date(first)) <= ReplayCore.Heatmap.monthLabelMaxDate
@@ -699,7 +708,9 @@ struct Heatmap: View {
     /// because en-US says so drew the same seven days a different way from the rest of the
     /// app. One definition of a week, and this reads from it.
     private var weekdayInitials: [String] {
-        let symbols = Calendar.current.veryShortStandaloneWeekdaySymbols
+        var calendar = Calendar.current
+        calendar.locale = Loc.locale
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
         // `veryShortStandaloneWeekdaySymbols` is Sunday-first regardless of locale, so
         // Monday is index 1.
         return (0..<7).map { symbols[($0 + 1) % 7] }
@@ -707,6 +718,9 @@ struct Heatmap: View {
 
     private func weekdayShort(_ day: Int64) -> String {
         let formatter = DateFormatter()
+        // The chosen language, not the Mac's. Every other date on this surface follows the
+        // picker in Settings, and a heatmap labelled in a third language reads as a bug.
+        formatter.locale = Loc.locale
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter.string(from: date(day))
     }

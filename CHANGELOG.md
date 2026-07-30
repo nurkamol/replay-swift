@@ -23,6 +23,20 @@ Developer ID and notarised. Everything before it is a version of the source.
 
 ### Added
 
+- **Memories reads in your language.** The surface that exists to be read was the one still in
+  English: its frame translated and every card inside it said *"Your longest focus"*, *"A late
+  night"*, *"Where it began"*. All seven now follow the chosen language, along with the
+  on-this-day names, the heatmap's months and weekday initials, and the dates throughout.
+  - Word order moves with it. In Uzbek the application's name leads — *"Firefox ilovasida 2h
+    13m…"* — which is what positional arguments are for and what glueing clauses together
+    could never produce.
+  - The English is untouched: it is the reference's own wording, and a `facts` payload on each
+    moment is what lets the sentence be assembled a second time rather than replaced.
+
+- **Update messages are translated too.** The eleven sentences that appear when a check or an
+  install fails were English in every language — which is the worst moment to meet a language
+  you did not choose.
+
 - **Reinstall, in Settings ▸ About.** Downloads the published build of the version you are
   already on and replaces this copy.
   - **A version number stops being the whole truth when a release is rebuilt under it.** Two

@@ -117,6 +117,116 @@ public enum RuntimeCopy {
             return String(format: Loc.t("%@ days ago"), days)
         }
     }
+
+    // ── Memories ──────────────────────────────────────────────────────────────
+
+    /// A moment's title and detail in the reader's language.
+    ///
+    /// Memories is the surface this was written for. Its frame translated and every card
+    /// inside it stayed English, because each card is a sentence assembled from a number, an
+    /// application's name and a day — the exact shape that has no key.
+    ///
+    /// The English on `Moment` is the reference's own wording and is left alone; this reads
+    /// `Moment.facts` and says the same thing again. Where a producer has nothing to say the
+    /// English is returned unchanged, so a kind added upstream degrades to English rather
+    /// than to nothing.
+    public static func moment(
+        _ moment: Moment, now: Int64, calendar: Calendar = .current
+    ) -> (title: String, detail: String) {
+        let facts = moment.facts
+        let duration = formatDurationShort(facts.seconds)
+        let when = relativeDay(facts.at, now: now, calendar: calendar)
+        let date = memoryDateLabel(facts.at, calendar: calendar, locale: Loc.locale)
+
+        switch moment.kind {
+        case .longestFocus:
+            let title = Loc.t("Your longest focus")
+            // Two shapes rather than one with an empty middle: a language that puts the app
+            // before the duration cannot be served by gluing ", in X" onto the end.
+            guard let app = facts.app else {
+                return (title, String(
+                    format: Loc.t("%1$@ without switching away — %2$@."), duration, when
+                ))
+            }
+            return (title, String(
+                format: Loc.t("%1$@ without switching away, in %2$@ — %3$@."),
+                duration, app, when
+            ))
+
+        case .peakDay:
+            let title = Loc.t("Your most active day")
+            guard let app = facts.app else {
+                return (title, String(format: Loc.t("%1$@ active on %2$@."), duration, date))
+            }
+            return (title, String(
+                format: Loc.t("%1$@ active on %2$@, mostly in %3$@."), duration, date, app
+            ))
+
+        case .busyMix:
+            return (
+                Loc.t("Your busiest mix"),
+                String(
+                    format: Loc.t("%1$@ different apps in a single day — %2$@."),
+                    "\(facts.count)", when
+                )
+            )
+
+        case .nightOwl:
+            return (
+                Loc.t("A late night"),
+                String(
+                    format: Loc.t("You were still going at %1$@ — %2$@."),
+                    clockLabel(facts.at, calendar: calendar, locale: Loc.locale), when
+                )
+            )
+
+        case .streak:
+            return (
+                Loc.t("A steady stretch"),
+                String(
+                    format: Loc.t("You were active %1$@ days in a row, ending %2$@."),
+                    "\(facts.count)", when
+                )
+            )
+
+        case .newApp:
+            guard let app = facts.app else { return (moment.title, moment.detail) }
+            return (
+                String(format: Loc.t("First time in %@"), app),
+                String(format: Loc.t("You opened %1$@ for the first time %2$@."), app, when)
+            )
+
+        case .origin:
+            let title = Loc.t("Where it began")
+            guard facts.count > 0 else {
+                return (title, Loc.t("You started building this memory today."))
+            }
+            return (title, String(
+                format: Loc.t("You've been building this memory for %1$@ days — since %2$@."),
+                "\(facts.count)", date
+            ))
+        }
+    }
+
+    /// "today", "yesterday", "6 days ago", "on Saturday, July 25" — in the reader's language.
+    ///
+    /// Mirrors the private helper inside `moments(...)`, which produces the English. Kept in
+    /// step by ``MomentCopyBehaviour``, which walks every kind and checks the two agree about
+    /// which branch a day falls in.
+    public static func relativeDay(
+        _ millis: Int64, now: Int64, calendar: Calendar = .current
+    ) -> String {
+        let today = startOfLocalDay(now, calendar: calendar)
+        let day = startOfLocalDay(millis, calendar: calendar)
+        let diff = Int((Double(today - day) / Double(dayMillis)).rounded())
+        if diff <= 0 { return Loc.t("today") }
+        if diff == 1 { return Loc.t("yesterday") }
+        if diff < 7 { return String(format: Loc.t("%@ days ago"), "\(diff)") }
+        return String(
+            format: Loc.t("on %@"),
+            memoryDateLabel(day, calendar: calendar, locale: Loc.locale)
+        )
+    }
 }
 
 public extension ActivitySession {
