@@ -141,6 +141,7 @@ struct RootView: View {
     @Bindable var palette: CommandPaletteModel
     let timelineLayers: TimelineLayersModel
     let notifications: NotificationsModel
+    let permissions: PermissionsModel
 
     /// Given so the sidebar button can reach it — the automatic one only appears in some
     /// configurations, and a sidebar you cannot put away is not a sidebar.
@@ -186,6 +187,7 @@ struct RootView: View {
             } else {
                 WelcomeView(
                     model: model, preferences: preferences, notifications: notifications,
+                    permissions: permissions,
                     onFinish: {
                         withAnimation(motion.animation(Design.Motion.settle)) {
                             preferences.seenWelcome = true

@@ -85,6 +85,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var palette = CommandPaletteModel(model: model, apps: apps, projects: projects)
     private lazy var timelineLayers = TimelineLayersModel(model: model)
     private lazy var notifications = NotificationsModel(model: model, preferences: preferences)
+    /// The permissions Replay does not use — read so Privacy can say where they stand, and
+    /// reset from there. Nothing here is requested unless somebody presses a button.
+    private let permissions = PermissionsModel()
     private let navigation = Navigation()
     private var statusItem: NSStatusItem?
     private var menuBarPopover: NSPopover?
@@ -723,6 +726,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 palette: palette,
                 timelineLayers: timelineLayers,
                 notifications: notifications,
+                permissions: permissions,
                 onOpenSettings: { [weak self] in self?.openSettings() },
                 onOpenScreensaver: { [weak self] in self?.openScreensaver() },
                 onOpenAmbient: { [weak self] in self?.openAmbient() },
@@ -1109,8 +1113,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 SettingsView(
                     model: model, settings: settings, export: export,
                     preferences: preferences, contextual: contextual,
-                    notifications: notifications, updates: updates, backups: backups,
-                    reports: reports,
+                    notifications: notifications, permissions: permissions,
+                    updates: updates, backups: backups, reports: reports,
                     initialPane: settingsPane ?? .general
                 )
                 // Same reason as the main window's: a language is chosen *in* this window,

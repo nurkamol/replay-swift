@@ -44,12 +44,14 @@ A quiet walk through the best of your history — the memories, the deep focus, 
 A recap of the day's focus, delivered at the time you choose.
 A slow swell on the application's icon, so a screen of live figures does not read as a still picture of one. Off leaves ambient mode completely still. Reduce Motion turns it off either way.
 About
+Accessibility
 active
 active today
 Activity history
 Activity tracking
 Actual Size
 Add a note…
+Add to List
 Afternoon
 All collections
 All memories are generated locally. Nothing is uploaded.
@@ -57,6 +59,7 @@ Ambient mode
 Ambient Mode
 Any time — from the menu bar or Privacy ▸ Activity tracking. Replay stops recording immediately, and your history is left untouched.
 Anything from 15m to 16 hours.
+App Management
 Appears in
 applications
 Apps
@@ -116,6 +119,7 @@ Compact database
 Continue
 Continue where you left off
 Couldn't open %@
+Couldn't reset %@.
 Couldn't write that backup: %@
 Couldn't write that report: %@
 Custom target
@@ -184,6 +188,7 @@ Gentle motion
 Glass
 Go to a surface, an application, a project, a day…
 Goal reached — %@
+Granted — not needed, and safe to remove
 Graphite
 Greatest focus
 Green
@@ -228,6 +233,7 @@ Library
 Light
 longest focus
 Looking back
+macOS does not let an app read this one
 Match System
 Match the system or lock to a single appearance.
 Memories
@@ -265,6 +271,9 @@ No. The daily, weekly, and “on this day” recaps are built entirely from your
 None chosen
 None for the tracking itself. Replay reads which app is frontmost through macOS’s standard app-switch signal, which any app can observe — so it needs no Accessibility, Automation, or App Management permission, and it never inspects your window contents. Privacy ▸ Recording shows a live check that it’s working, with links into System Settings if you’re on a managed Mac that asks for Accessibility anyway.
 Not today
+Not used by Replay
+Not used. Replay never modifies another application.
+Not used. Replay reads the frontmost application from macOS itself.
 Note
 Nothing collected yet
 Nothing has been written yet. Choosing a folder with a schedule set writes the first copy straight away, and the rest arrive while Replay is running — it is a background courtesy, not a daemon, so a Mac that was off has nothing to catch up.
@@ -280,6 +289,7 @@ Now
 Now in %@
 Observe which apps you use to build your private timeline.
 of %@
+Off, which is all Replay needs
 OK
 Older raw events are removed past this window. Keeping everything never deletes a thing; your day-by-day headlines are kept either way, so history and streaks survive.
 On a schedule
@@ -289,6 +299,7 @@ Once a day, ask GitHub whether a newer Replay exists. This is the only thing in 
 Once Replay has recorded a few days, it will begin telling the story of each week, month, and year back to you here.
 Once you have used a few, Replay will rank them here by the time you spent in each.
 One quick check
+Only a bundled copy of Replay has permissions to reset.
 Only at certain hours
 Only if you ask it to, and it is off when you install it. Settings ▸ About can check GitHub once a day for a newer version. That request sends nothing — no account, no identifier, nothing about your record — and is the same one your browser makes opening the releases page. It tells you and stops there: nothing is downloaded or installed on your behalf. Leave it off and Replay opens no connection at all, ever.
 Only the recaps use this. Replay records, remembers and shows your history whether or not it is granted.
@@ -333,6 +344,7 @@ Put the briefing away
 Put this away for good
 Put this away until tomorrow
 Put this memory away for now
+Puts Replay in the list so you only have to turn it on
 Quit Replay
 Range
 Read Replay in a language your Mac is not set to. Anything this build has not been translated into stays in English rather than showing you a key.
@@ -360,6 +372,7 @@ Replay Day
 Replay hasn’t recorded this application in the last 30 days.
 Replay reads which app is frontmost through macOS’s standard signal — it needs no Accessibility, Automation, or App Management permission to do it, and never looks inside your windows. The links are only for verifying, or a locked-down Mac.
 Replay reads which app is frontmost through macOS's standard signal. It needs no Accessibility, Automation, or Screen Recording permission, and never looks inside your windows.
+Replay records with none of these. They are here so a managed Mac can be checked, and so anything granted earlier can be taken back — "Reset" removes Replay from that list in System Settings.
 Replay shows at most one memory a day, and most days it shows none. The briefing is a look back at yesterday, and it is gone by lunchtime. Everything either says is read from your own history on this Mac.
 Replay sometimes surfaces a memory on its own — what is that?
 Replay This Day
@@ -369,6 +382,7 @@ Report
 Report folder
 Report on a schedule
 Research
+Reset
 Reset Replay
 Reset Replay?
 Reset…

@@ -22,6 +22,7 @@ struct SettingsView: View {
     @Bindable var preferences: Preferences
     let contextual: ContextualMemoryModel
     let notifications: NotificationsModel
+    let permissions: PermissionsModel
     let updates: UpdateModel
     let backups: AutoBackupModel
     let reports: ReportScheduleModel
@@ -105,11 +106,15 @@ struct SettingsView: View {
         } detail: {
             Group {
                 switch pane {
-                case .general: GeneralTab(model: model, preferences: preferences, contextual: contextual, notifications: notifications)
+                case .general:
+                    GeneralTab(
+                        model: model, preferences: preferences, contextual: contextual,
+                        notifications: notifications, permissions: permissions
+                    )
                 case .privacy:
                     PrivacyTab(
                         model: model, settings: settings, preferences: preferences,
-                        notifications: notifications
+                        notifications: notifications, permissions: permissions
                     )
                 case .data:
                     DataTab(
@@ -282,6 +287,7 @@ private struct GeneralTab: View {
     /// immediately rather than at the next launch.
     let contextual: ContextualMemoryModel
     let notifications: NotificationsModel
+    let permissions: PermissionsModel
 
     /// Asking is what prompts macOS. Switching one *off* never asks — a request should only
     /// ever follow from wanting the thing it is for.
@@ -602,6 +608,7 @@ private struct PrivacyTab: View {
     @Bindable var preferences: Preferences
     /// The one permission Replay ever asks for, so Privacy can state where it stands.
     let notifications: NotificationsModel
+    let permissions: PermissionsModel
 
     @State private var managingExclusions = false
 
@@ -689,6 +696,29 @@ private struct PrivacyTab: View {
                 )
             }
             .task { await notifications.refreshPermission() }
+
+            // The permissions Replay does *not* use, and where they stand.
+            //
+            // The note above this section used to argue against exactly this list, on the
+            // grounds that it would be one real entry padded out with reassurances and would
+            // imply the app is waiting on something it is not. The second half of that still
+            // decides the design — nothing here is red, nothing says "action needed", and the
+            // healthy state is every row off. What changed is the first half: the welcome
+            // screen's two buttons opened System Settings and abandoned somebody there to
+            // press `+` and hunt for Replay in /Applications, and a permission granted once
+            // out of caution could not be taken back from inside the app at all.
+            Section {
+                PermissionsList(permissions: permissions)
+            } header: {
+                Text(Loc.t("Not used by Replay"))
+            } footer: {
+                Footnote(
+                    "Replay records with none of these. They are here so a managed Mac can be "
+                        + "checked, and so anything granted earlier can be taken back — "
+                        + "\"Reset\" removes Replay from that list in System Settings."
+                )
+            }
+            .onAppear { permissions.refresh() }
 
             if let info = settings.info {
                 Section {

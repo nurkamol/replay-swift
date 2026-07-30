@@ -19,6 +19,24 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## Unreleased
+
+### Added
+
+- **The permissions Replay does not use now have rows, in Settings ▸ Privacy and on the welcome
+  screen.** Each says where it stands and what it is for; **Reset** takes back anything granted
+  earlier, which was previously impossible from inside the app.
+  - **Accessibility's button asks macOS to prompt**, which puts Replay *in the list* — so all
+    that is left is the switch. The two buttons here before opened System Settings and stopped,
+    leaving somebody to press `+` and find Replay in `/Applications` by hand.
+  - **App Management has no button of that kind, because macOS offers none.** No app can read
+    or request it, so the row says so rather than showing a tick that would be a guess.
+  - Nothing here is required and the rows never imply otherwise: no red, no warnings, no
+    "action needed". Every row off is the state Replay is built for.
+  - No password is ever asked for. macOS collects authorisation in its own window; an app that
+    put up a password field to approve a toggle would be collecting a credential it has no
+    business seeing, and it would not work anyway.
+
 ## 0.9.8 — 2026-07-30
 
 ### Added

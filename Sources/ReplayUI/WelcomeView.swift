@@ -16,6 +16,7 @@ struct WelcomeView: View {
     let model: AppModel
     @Bindable var preferences: Preferences
     let notifications: NotificationsModel
+    let permissions: PermissionsModel
     let onFinish: () -> Void
 
     @Environment(\.motion) private var motion
@@ -224,15 +225,15 @@ struct WelcomeView: View {
                 .font(Design.Text.micro)
                 .foregroundStyle(.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
-                // Two panes, not three. "Privacy & Security" was the parent category of the
-                // other two and opened the same place less precisely — and a third button
-                // under a green tick reads as a third thing you ought to be doing, which
-                // argues against the sentence directly above it. These two name specific
-                // panes somebody on a managed Mac might genuinely be sent to.
-                HStack(spacing: Design.Space.inline) {
-                    settingsLink("Accessibility", "Privacy_Accessibility")
-                    settingsLink("App Management", "Privacy_AppBundles")
-                }
+                // Rows rather than two bare buttons. The buttons opened System Settings and
+                // stopped there, leaving somebody to press `+` and find Replay in
+                // /Applications by hand — which is the step that actually costs them. Each row
+                // now says where it stands, and Accessibility's button asks macOS to prompt,
+                // which puts Replay in the list so only the switch is left.
+                //
+                // Still no red, no warning, no "action needed": every row off is the healthy
+                // state, and the sentence above says so.
+                PermissionsList(permissions: permissions, compact: true)
             }
             .padding(Design.Space.section)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -261,15 +262,6 @@ struct WelcomeView: View {
         .padding(Design.Space.page)
     }
 
-    private func settingsLink(_ title: String, _ pane: String) -> some View {
-        Button(title) {
-            NSWorkspace.shared.open(
-                URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)")!
-            )
-        }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
-    }
 
     // ── shared ────────────────────────────────────────────────────────────────
 
