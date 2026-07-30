@@ -25,7 +25,7 @@
 # Both go away the day this is notarised, at which point the cask simply opens.
 cask "replay-app" do
   version "0.9.8"
-  sha256 "71a55d1ed4ce6308bdeba031df0525f1d075abed66beea65e96a53a1fea2316c"
+  sha256 "7bfaf533bae6ef56895082f753a994dc5b8acb8b05d7eb016f9bad1dbeb95b52"
 
   url "https://github.com/nurkamol/replay-swift/releases/download/v#{version}/Replay-#{version}.zip",
       verified: "github.com/nurkamol/replay-swift/"
