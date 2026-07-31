@@ -28,7 +28,7 @@ struct AutobiographyView: View {
         }
         .background(.background)
         .navigationTitle(Loc.t("Autobiography"))
-        .navigationSubtitle(NarrativeCopy.autobiographySubtitle)
+        .navigationSubtitle(Loc.t(NarrativeCopy.autobiographySubtitle))
         .onAppear {
             if !story.loaded { story.load() }
             if selected == nil { selected = story.periods.first }
@@ -99,7 +99,7 @@ struct AutobiographyView: View {
             HStack(spacing: Design.Space.snug) {
                 Spacer(minLength: 0)
                 Image(systemName: "lock").font(Design.Text.micro)
-                Text(NarrativeCopy.autobiographyFootnote).font(Design.Text.micro)
+                Text(Loc.t(NarrativeCopy.autobiographyFootnote)).font(Design.Text.micro)
                 Spacer(minLength: 0)
             }
             .foregroundStyle(.tertiary)
@@ -110,9 +110,9 @@ struct AutobiographyView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label(NarrativeCopy.autobiographyEmptyTitle, systemImage: "text.book.closed")
+            Label(Loc.t(NarrativeCopy.autobiographyEmptyTitle), systemImage: "text.book.closed")
         } description: {
-            Text(NarrativeCopy.autobiographyEmptyDetail)
+            Text(Loc.t(NarrativeCopy.autobiographyEmptyDetail))
         }
     }
 }

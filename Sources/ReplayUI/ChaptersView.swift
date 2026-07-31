@@ -26,17 +26,17 @@ struct ChaptersView: View {
         }
         .background(.background)
         .navigationTitle(Loc.t("Chapters"))
-        .navigationSubtitle(NarrativeCopy.chaptersSubtitle)
+        .navigationSubtitle(Loc.t(NarrativeCopy.chaptersSubtitle))
         .onAppear { if !story.loaded { story.load() } }
     }
 
     private var empty: some View {
         ContentUnavailableView {
-            Label(NarrativeCopy.chaptersEmptyTitle, systemImage: "book")
+            Label(Loc.t(NarrativeCopy.chaptersEmptyTitle), systemImage: "book")
         } description: {
             // The reference's own, and it says the thing the paraphrase left out: how much
             // history is enough. "A few of those" is not an answer; "a week or two" is.
-            Text(NarrativeCopy.chaptersEmptyDetail)
+            Text(Loc.t(NarrativeCopy.chaptersEmptyDetail))
         }
     }
 }

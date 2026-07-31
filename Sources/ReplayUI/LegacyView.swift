@@ -38,7 +38,7 @@ struct LegacyView: View {
         }
         .background(.background)
         .navigationTitle(Loc.t("My Story"))
-        .navigationSubtitle(NarrativeCopy.legacySubtitle)
+        .navigationSubtitle(Loc.t(NarrativeCopy.legacySubtitle))
         .onAppear {
             if !story.loaded { story.load() }
             byDay = model.activityByDay()
@@ -100,7 +100,7 @@ struct LegacyView: View {
 
     private func years(_ legacy: Legacy) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text(NarrativeCopy.legacySections[0]).sectionLabelStyle()
+            Text(Loc.t(NarrativeCopy.legacySections[0])).sectionLabelStyle()
             FlowRow(spacing: Design.Space.inline) {
                 ForEach(legacy.years, id: \.self) { year in
                     Button(action: onOpenAutobiography) {
@@ -124,7 +124,7 @@ struct LegacyView: View {
 
     private func favourites(_ legacy: Legacy) -> some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text(NarrativeCopy.legacySections[2]).sectionLabelStyle()
+            Text(Loc.t(NarrativeCopy.legacySections[2])).sectionLabelStyle()
             VStack(spacing: 0) {
                 ForEach(legacy.favourites, id: \.key) { app in
                     Button {
@@ -172,7 +172,7 @@ struct LegacyView: View {
     /// says that in one look where a figure only asserts it.
     private var growth: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text(NarrativeCopy.legacySections[1]).sectionLabelStyle()
+            Text(Loc.t(NarrativeCopy.legacySections[1])).sectionLabelStyle()
             Heatmap(byDay: byDay, onOpenDay: onOpenDay)
                 .padding(Design.Space.section)
                 .card(border: Design.Colour.borderQuiet)
@@ -181,9 +181,9 @@ struct LegacyView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label(NarrativeCopy.legacyEmptyTitle, systemImage: "archivebox")
+            Label(Loc.t(NarrativeCopy.legacyEmptyTitle), systemImage: "archivebox")
         } description: {
-            Text(NarrativeCopy.legacyEmptyDetail)
+            Text(Loc.t(NarrativeCopy.legacyEmptyDetail))
         }
     }
 }

@@ -153,9 +153,9 @@ struct RelationshipView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label(NarrativeCopy.relationshipEmptyTitle, systemImage: "arrow.left.arrow.right")
+            Label(Loc.t(NarrativeCopy.relationshipEmptyTitle), systemImage: "arrow.left.arrow.right")
         } description: {
-            Text(NarrativeCopy.relationshipEmptyDetail)
+            Text(Loc.t(NarrativeCopy.relationshipEmptyDetail))
         }
     }
 }

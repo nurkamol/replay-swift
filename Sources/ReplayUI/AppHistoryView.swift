@@ -169,11 +169,11 @@ struct AppHistoryView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label(NarrativeCopy.appHistoryEmptyTitle, systemImage: "clock")
+            Label(Loc.t(NarrativeCopy.appHistoryEmptyTitle), systemImage: "clock")
         } description: {
             // Names the window. "The kept history" is not something a reader can put a
             // number to, and the number is the answer to "why is this empty".
-            Text(NarrativeCopy.appHistoryEmptyDetail)
+            Text(Loc.t(NarrativeCopy.appHistoryEmptyDetail))
         }
     }
 }

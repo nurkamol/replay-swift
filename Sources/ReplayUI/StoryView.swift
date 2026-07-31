@@ -36,16 +36,16 @@ struct StoryView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle(NarrativeCopy.storyTitle)
-        .navigationSubtitle(NarrativeCopy.storySubtitle)
+        .navigationTitle(Loc.t(NarrativeCopy.storyTitle))
+        .navigationSubtitle(Loc.t(NarrativeCopy.storySubtitle))
         .onAppear { story.load() }
     }
 
     private func hub(
         _ index: Int, _ glyph: String, _ target: Navigation.StoryTarget
     ) -> some View {
-        let title = NarrativeCopy.storyHub[index].title
-        let detail = NarrativeCopy.storyHub[index].detail
+        let title = Loc.t(NarrativeCopy.storyHub[index].title)
+        let detail = Loc.t(NarrativeCopy.storyHub[index].detail)
         return Button {
             onOpen(target)
         } label: {
@@ -83,15 +83,15 @@ struct StoryView: View {
     /// deliberately no suggestion attached to it (SPEC §8).
     private var rituals: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text(NarrativeCopy.ritualsLabel).sectionLabelStyle()
+            Text(Loc.t(NarrativeCopy.ritualsLabel)).sectionLabelStyle()
             if story.rituals.slots.isEmpty && story.rituals.firstApp == nil {
                 // The section stays and explains itself rather than vanishing. Omitting it
                 // was the same mistake Memories made: the only person who ever sees this
                 // state is someone new, and they were shown three hub cards and no hint
                 // that a fourth thing was coming.
                 VStack(spacing: Design.Space.hairline) {
-                    Text(NarrativeCopy.ritualsEmptyTitle).font(Design.Text.itemTitle)
-                    Text(NarrativeCopy.ritualsEmptyDetail)
+                    Text(Loc.t(NarrativeCopy.ritualsEmptyTitle)).font(Design.Text.itemTitle)
+                    Text(Loc.t(NarrativeCopy.ritualsEmptyDetail))
                         .font(Design.Text.detail)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -114,7 +114,7 @@ struct StoryView: View {
 
                 // The rule, said out loud. Without it a ritual reads as something the app
                 // decided, and the last clause is the whole point: nothing was scheduled.
-                Text(NarrativeCopy.ritualsFootnote)
+                Text(Loc.t(NarrativeCopy.ritualsFootnote))
                     .font(Design.Text.micro)
                     .foregroundStyle(.tertiary)
                     .fixedSize(horizontal: false, vertical: true)

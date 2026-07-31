@@ -26,10 +26,10 @@ struct MuseumView: View {
                         milestones
                     }
                     if !museum.deepestFocus.isEmpty {
-                        sessions(NarrativeCopy.museumSections[1], museum.deepestFocus).settlesIn(2)
+                        sessions(Loc.t(NarrativeCopy.museumSections[1]), museum.deepestFocus).settlesIn(2)
                     }
                     if !museum.bookmarked.isEmpty {
-                        sessions(NarrativeCopy.museumSections[2], museum.bookmarked).settlesIn(3)
+                        sessions(Loc.t(NarrativeCopy.museumSections[2]), museum.bookmarked).settlesIn(3)
                     }
                     if !museum.reflections.isEmpty { reflections }
                     if !museum.topProjects.isEmpty { projects }
@@ -39,7 +39,7 @@ struct MuseumView: View {
         }
         .background(.background)
         .navigationTitle(Loc.t("Museum"))
-        .navigationSubtitle(NarrativeCopy.museumSubtitle)
+        .navigationSubtitle(Loc.t(NarrativeCopy.museumSubtitle))
         .onAppear { museum.load() }
     }
 
@@ -66,7 +66,7 @@ struct MuseumView: View {
 
     private var milestones: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text(NarrativeCopy.museumSections[0]).sectionLabelStyle()
+            Text(Loc.t(NarrativeCopy.museumSections[0])).sectionLabelStyle()
             VStack(spacing: Design.Space.snug) {
                 // Without the featured moment: it is already above, in a larger frame, and
                 // saying the same thing twice on one screen reads as a bug.
@@ -131,7 +131,7 @@ struct MuseumView: View {
 
     private var reflections: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text(NarrativeCopy.museumSections[3]).sectionLabelStyle()
+            Text(Loc.t(NarrativeCopy.museumSections[3])).sectionLabelStyle()
             VStack(spacing: Design.Space.snug) {
                 ForEach(museum.reflections, id: \.dayStart) { reflection in
                     Button {
@@ -159,7 +159,7 @@ struct MuseumView: View {
 
     private var projects: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
-            Text(NarrativeCopy.museumSections[4]).sectionLabelStyle()
+            Text(Loc.t(NarrativeCopy.museumSections[4])).sectionLabelStyle()
             VStack(spacing: 0) {
                 ForEach(museum.topProjects) { named in
                     Button {
@@ -213,9 +213,9 @@ struct MuseumView: View {
 
     private var empty: some View {
         ContentUnavailableView {
-            Label(NarrativeCopy.museumEmptyTitle, systemImage: "building.columns")
+            Label(Loc.t(NarrativeCopy.museumEmptyTitle), systemImage: "building.columns")
         } description: {
-            Text(NarrativeCopy.museumEmptyDetail)
+            Text(Loc.t(NarrativeCopy.museumEmptyDetail))
         }
     }
 }

@@ -29,6 +29,13 @@ Developer ID and notarised. Everything before it is a version of the source.
   are compared against the reference by the parity suite, so they still return English and
   the translation happens at the view layer — the same seam `SessionTitle.english` uses.
 
+- **Story, Chapters, Autobiography, the Museum and the Legacy view read in your language.**
+  `NarrativeCopy` holds the prose those five surfaces are made of, and every one of its
+  sentences was already a key and already translated — the views just never looked any of
+  them up. `Text(NarrativeCopy.storyTitle)` renders the English constant whatever language
+  the app is in, so five surfaces stayed English while `status` reported Uzbek complete and
+  the Uzbek sat in the catalogue unused. Thirty-three render sites, now looked up.
+
 - **The command palette reads in your language.** All of it: the commands, their
   descriptions, and the group headings above them. It was rendering `Text(item.title)` with
   no lookup at all, so ⌘K opened an English window in a translated app — and matching was
