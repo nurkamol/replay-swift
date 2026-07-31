@@ -15,6 +15,11 @@ struct UpdateBehaviour {
 
     @Test("A newer version is newer, in each position")
     func ordering() {
+        // The two-digit patch, which is where a string comparison goes wrong: "0.9.10" sorts
+        // *below* "0.9.9" as text, so an app on 0.9.9 would be offered nothing and an app on
+        // 0.9.10 would be offered a downgrade. Pinned the release before it first mattered.
+        #expect(Updates.isNewer("0.9.10", than: "0.9.9"))
+        #expect(!Updates.isNewer("0.9.9", than: "0.9.10"))
         #expect(Updates.isNewer("0.10.0", than: "0.9.0"))
         #expect(Updates.isNewer("1.0.0", than: "0.9.9"))
         #expect(Updates.isNewer("0.9.1", than: "0.9.0"))

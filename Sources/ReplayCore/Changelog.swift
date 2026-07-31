@@ -18,7 +18,7 @@ public enum Replay {
             ?? fallbackVersion
 
     /// The version in the source, for when there is no bundle to ask.
-    public static let fallbackVersion = "0.9.9"
+    public static let fallbackVersion = "0.9.10"
 }
 
 /// What each version of Replay actually gained.
@@ -45,6 +45,18 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.10",
+        title: "It reads in your language",
+        changes: [
+            "**Counted things follow your language\u{2019}s own rules.** \"3 sessions\" used to pick its form by asking whether the number was 1 \u{2014} which is English\u{2019}s rule, not a rule. Russian has four forms and 21 takes the same one as 1 while 11 takes neither; Arabic has six. Every count in the app now uses the forms your language actually has.",
+            "**Five surfaces of writing were translated all along and never shown.** Story, Chapters, Autobiography, the Museum and the Legacy view held their words in one place, and the screens rendered the English original instead of asking for your language \u{2014} so they stayed English while the translation sat unused.",
+            "**The command palette reads in your language.** \u{2318}K opened an English window inside a translated app, and searching it in another language found nothing, because it matched on the English names.",
+            "**The time controls read in your language** \u{2014} Today, This Week, This Month on Apps; All time, Week, Month in Search; Last 7 Days and Last 30 Days on the Timeline \u{2014} along with the line under each heading.",
+            "**Your rituals read in your language.** \"Morning tends to lead with\" was an English tail with the time of day pasted on the front, which no language that orders it differently could use. It is one sentence now.",
+            "Five counted things \u{2014} days, visits, switches \u{2014} had never reached the translation table at all, and appeared in English in a language reported as complete.",
+        ]
+    ),
     Release(
         version: "0.9.9",
         title: "Installing and updating stop asking",
