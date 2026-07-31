@@ -188,16 +188,51 @@ public enum Loc {
         string(english, in: "en")
     }
 
-    /// A counted noun: "1 session", "14 sessions".
+    /// A counted noun: "1 session", "14 sessions", "21 сессия", "11 сессий".
     ///
-    /// Two forms, and the limit is worth stating plainly rather than discovering later:
-    /// English has two, and plenty of languages do not. Russian has three, Arabic six, and
-    /// Japanese does not inflect for number at all. The real answer is a `.stringsdict`,
-    /// which expresses those rules per language — and this is the seam it would go behind,
-    /// since every counted noun in the app already comes through here. Adding it before
-    /// there is a translator would be building for a language nobody has chosen.
+    /// **The plural form comes from the language's own rules, not from `n == 1`.** English
+    /// has two forms and picking by `n == 1` is right; Russian has four and Arabic six, and
+    /// there it is simply wrong — Russian 21 takes the same form as 1, and 11 does not, so
+    /// no test of `n == 1` can ever produce correct Russian.
+    ///
+    /// A `.stringsdict` states those forms per language, and Foundation resolves them
+    /// against the locale's CLDR rules. It is consulted *before* `Replay.strings` for the
+    /// same table, so the lookup below returns `%#@n@` — a reference to a variable rather
+    /// than a sentence — whenever the language has an entry. `String(format:locale:)` then
+    /// picks the form. The locale has to be passed explicitly for the same reason every
+    /// formatter in this app takes it: the picker chooses the strings table and has no
+    /// effect at all on Foundation's own idea of the current locale.
+    ///
+    /// **The two-form path is still here and is not dead code.** A language whose
+    /// `.stringsdict` has no entry for this noun — or one carrying no `.stringsdict` at all —
+    /// falls back to it, which degrades to the old behaviour rather than to nothing. Both
+    /// forms therefore remain keys in their own right, and both are still translated.
     public static func count(_ n: Int, _ singular: String, _ plural: String) -> String {
-        String(format: t(n == 1 ? singular : plural), "\(n)")
+        // Both forms are keys and both are translated, so both are recorded — the two-form
+        // fallback needs them, and a recorder that only wrote down the branch this call took
+        // would report a noun as reachable or not depending on the number it was handed.
+        record(singular)
+        record(plural)
+        return counted(n, singular, plural, in: language, locale: locale)
+    }
+
+    /// The whole of ``count(_:_:_:)``, with everything it reads from global state passed in.
+    ///
+    /// Only so a test can ask for a language this build does not ship. Russian is the useful
+    /// one — four plural categories against English's two — and it is the smallest thing that
+    /// can tell a real plural rule apart from `n == 1`.
+    public static func counted(
+        _ n: Int, _ singular: String, _ plural: String,
+        in language: String, bundle: Bundle? = nil, locale: Locale
+    ) -> String {
+        let format = string(singular, in: language, bundle: bundle)
+        // `%#@` is what a `.stringsdict` hands back, and nothing else in the catalogue
+        // contains it — a plain translation is a sentence, not a variable reference.
+        if format.contains("%#@") {
+            return String(format: format, locale: locale, n)
+        }
+        let form = string(n == 1 ? singular : plural, in: language, bundle: bundle)
+        return String(format: form, "\(n)")
     }
 
     /// Every key the base catalog defines, for the audit to check against the source.

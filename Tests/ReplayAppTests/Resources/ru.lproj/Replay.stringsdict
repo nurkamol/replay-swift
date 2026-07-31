@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- A fixture, not a shipped language. Russian is here because it has four plural
+     categories and English has two, so it is the smallest thing that can tell a real
+     plural rule apart from `n == 1`. Written by hand to match what tools/translate.mjs
+     generates; ReplayAppTests asserts the two agree. -->
+<plist version="1.0">
+<dict>
+  <key>%@ session</key>
+  <dict>
+    <key>NSStringLocalizedFormatKey</key>
+    <string>%#@n@</string>
+    <key>n</key>
+    <dict>
+      <key>NSStringFormatSpecTypeKey</key>
+      <string>NSStringPluralRuleType</string>
+      <key>NSStringFormatValueTypeKey</key>
+      <string>d</string>
+      <key>one</key>
+      <string>%d сессия</string>
+      <key>few</key>
+      <string>%d сессии</string>
+      <key>many</key>
+      <string>%d сессий</string>
+      <key>other</key>
+      <string>%d сессии</string>
+    </dict>
+  </dict>
+</dict>
+</plist>

@@ -19,6 +19,35 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
+## Unreleased
+
+### Added
+
+- **Counted nouns follow the language's own plural rules.** "3 sessions" was chosen by
+  `n == 1`, which is English's rule rather than *a* rule. Russian has four forms — 21 takes
+  the same one as 1, and 11 takes neither — and Arabic has six, so every counted noun in
+  either would have been wrong however carefully the two English forms were translated. Each
+  is now a `.stringsdict` entry with one form per category, resolved by Foundation against
+  the locale's CLDR rules.
+  - The categories come from ICU rather than a hand-kept table: `translate.mjs` asks
+    `Intl.PluralRules`, the same CLDR data Foundation uses, so Arabic scaffolds 36 plural
+    rows, Russian 24 and Japanese 6, and nothing here can fall behind a CLDR release.
+  - English ships no `.stringsdict` — its rule *is* `n == 1` — so the two-form path stays as
+    the fallback for any noun a language has not finished, and the contract is untouched.
+
+### Fixed
+
+- **Five counted nouns were never in the catalogue at all.** `%@ day`, `%@ visit`,
+  `%@ visits`, `%@ switch` and `%@ switches` reach `Loc` through `Loc.count` rather than
+  `Loc.t`, which the key scanner does not read — so they were missing from `keys.txt`, from
+  every CSV, and rendered in English while `status` reported Uzbek at 100%. The count could
+  not see them, which is the third distinct way scanning source for strings has been wrong
+  here. Now collected, and asserted by a test.
+
+- **`status` no longer calls the new plural rows orphaned.** Twelve rows per language
+  reported as dead would be an invitation to delete them — and a bulk orphan sweep has
+  already destroyed correct translations in this project once.
+
 ## 0.9.9 — 2026-07-31
 
 ### Fixed

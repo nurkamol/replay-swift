@@ -71,6 +71,59 @@ const swiftFiles = (dir) =>
    for SQL and for shell scripts here, never for copy. */
 const LITERAL = /"((?:[^"\\]|\\.)*)"/g;
 
+/* ── counted nouns ────────────────────────────────────────────────────────────
+ *
+ * `Loc.count(n, "%@ session", "%@ sessions")`. Both forms are copy and neither was ever
+ * collected: the scan above looks for `Loc.t("…")` and these arrive through a different
+ * call, so `%@ day`, `%@ visit`, `%@ visits`, `%@ switch` and `%@ switches` were absent
+ * from the catalogue entirely and rendered in English in every language. `%@ days` and
+ * `%@ session` were present only because the runtime recorder happened to catch them.
+ *
+ * They also need more than two forms. English has two; Russian has four and Arabic six,
+ * and picking by `n == 1` is simply wrong in both — Russian 21 takes the same form as 1,
+ * and 11 does not. So each one becomes a row per plural category *of the target language*,
+ * written into a `.stringsdict` that Foundation resolves with the locale's own CLDR rules.
+ */
+const COUNTED =
+  /Loc\.count\([^,]+,\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"\s*\)/g;
+
+/** The row a translator fills for one plural category: `plural:few:%@ session`. */
+const PLURAL_PREFIX = "plural:";
+const pluralRow = (category, singular) => `${PLURAL_PREFIX}${category}:${singular}`;
+
+/**
+ * Which plural categories a language actually has, from ICU rather than from a table here.
+ *
+ * Node ships CLDR, so this is the same data Foundation will use at runtime — no hand-kept
+ * list to fall behind, and no chance of inventing a category a language does not have. It
+ * is why `ar` gets six rows, `ru` four, and `ja` one.
+ */
+function pluralCategories(language) {
+  try {
+    const found = new Intl.PluralRules(language).resolvedOptions().pluralCategories;
+    // CLDR's own order, so the rows read predictably rather than alphabetically.
+    return ["zero", "one", "two", "few", "many", "other"].filter((c) => found.includes(c));
+  } catch {
+    return ["one", "other"];
+  }
+}
+
+/** Every `(singular, plural)` pair the app counts with, sorted and deduplicated. */
+function collectCounted() {
+  const pairs = new Map();
+  for (const dir of ["Sources/ReplayUI", "Sources/ReplayApp", "Sources/ReplayCore"]) {
+    for (const file of swiftFiles(join(ROOT, dir))) {
+      const source = joinConcatenations(readFileSync(file, "utf8"));
+      for (const match of source.matchAll(COUNTED)) {
+        pairs.set(unescape(match[1]), unescape(match[2]));
+      }
+    }
+  }
+  return [...pairs.entries()]
+    .map(([singular, plural]) => ({ singular, plural }))
+    .sort((a, b) => a.singular.localeCompare(b.singular, "en"));
+}
+
 /* `\u{2019}` is a Swift escape, and the *runtime* string has the character in it — so a key
    left escaped is a key that can never match anything. Found by translating: three of the
    longest strings in the app carried a literal `\u{2019}` into the table. */
@@ -182,6 +235,13 @@ function collectKeys() {
     }
   }
 
+  // 4. Both forms of every counted noun. They reach `Loc` through `Loc.count` rather than
+  //    `Loc.t`, so no scan above could see them, and five of the eleven were missing.
+  for (const { singular, plural } of collectCounted()) {
+    keys.add(singular);
+    keys.add(plural);
+  }
+
   return [...keys].sort((a, b) => a.localeCompare(b, "en"));
 }
 
@@ -212,6 +272,54 @@ function parseCSV(text) {
 const stringsEscape = (s) =>
   s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
 
+const xmlEscape = (s) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/**
+ * The `.stringsdict` — one entry per counted noun, one form per plural category.
+ *
+ * Foundation reads this *before* `Replay.strings` for the same table, hands back the
+ * `%#@n@` reference, and resolves it against the locale's CLDR rules when the format is
+ * applied. That is what makes 21 take Russian's `one` form and 11 its `many` form, which no
+ * amount of `n == 1` can do.
+ *
+ * `%@` becomes `%d` on the way in. The CSV says `%@` everywhere, because to a translator it
+ * is simply "the value goes here" — but a plural rule has to be given a *number* to reason
+ * about, so the specifier type is `d` and the forms have to match it.
+ */
+function stringsdict(language, entries) {
+  const body = entries
+    .map(({ singular, forms }) => {
+      const cases = Object.entries(forms)
+        .map(([category, text]) =>
+          `      <key>${category}</key>\n` +
+          `      <string>${xmlEscape(text.replace("%@", "%d"))}</string>`
+        )
+        .join("\n");
+      return (
+        `  <key>${xmlEscape(singular)}</key>\n` +
+        `  <dict>\n` +
+        `    <key>NSStringLocalizedFormatKey</key>\n    <string>%#@n@</string>\n` +
+        `    <key>n</key>\n` +
+        `    <dict>\n` +
+        `      <key>NSStringFormatSpecTypeKey</key>\n      <string>NSStringPluralRuleType</string>\n` +
+        `      <key>NSStringFormatValueTypeKey</key>\n      <string>d</string>\n` +
+        `${cases}\n` +
+        `    </dict>\n  </dict>`
+      );
+    })
+    .join("\n");
+  return (
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" ` +
+    `"http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n` +
+    `<!-- Replay — ${language}. Generated by tools/translate.mjs from ` +
+    `translations/${language}.csv.\n` +
+    `     Do not edit by hand: edit the CSV and rebuild. -->\n` +
+    `<plist version="1.0">\n<dict>\n${body}\n</dict>\n</plist>\n`
+  );
+}
+
 // ── commands ──────────────────────────────────────────────────────────────────
 
 const [command, argument] = process.argv.slice(2);
@@ -230,9 +338,23 @@ if (command === "keys") {
     ? new Map(parseCSV(readFileSync(path, "utf8")).slice(1).map((r) => [r[0], r[1] ?? ""]))
     : new Map();
   mkdirSync(OUT, { recursive: true });
-  const rows = [["english", argument]].concat(
-    keys.map((key) => [key, existing.get(key) ?? ""])
-  );
+
+  // One row per plural category of *this* language, seeded from the two-form translation
+  // that is already there. A two-category language therefore arrives fully filled and its
+  // translator has nothing extra to do; Russian gets four rows with `one` and `other` filled
+  // and `few`/`many` blank, which is exactly the work that is genuinely new.
+  const pluralRows = [];
+  for (const { singular, plural } of collectCounted()) {
+    for (const category of pluralCategories(argument)) {
+      const key = pluralRow(category, singular);
+      const seed = category === "one" ? existing.get(singular) : existing.get(plural);
+      pluralRows.push([key, existing.get(key) || seed || ""]);
+    }
+  }
+
+  const rows = [["english", argument]]
+    .concat(keys.map((key) => [key, existing.get(key) ?? ""]))
+    .concat(pluralRows);
   writeFileSync(path, rows.map((r) => r.map(csvCell).join(",")).join("\n") + "\n");
   const kept = keys.filter((k) => existing.get(k)).length;
   console.log(
@@ -257,7 +379,14 @@ if (command === "keys") {
   }
   const dir = join(LPROJ, `${argument}.lproj`);
   mkdirSync(dir, { recursive: true });
-  const body = done
+  // Plural rows go to the .stringsdict, everything else to the .strings. The two-form keys
+  // stay in the .strings as well, and deliberately: they are what `Loc.count` falls back to
+  // when a language has no plural entry for a noun, and a half-filled .stringsdict should
+  // degrade to the old behaviour rather than to nothing.
+  const plain = done.filter(([key]) => !key.startsWith(PLURAL_PREFIX));
+  const plurals = done.filter(([key]) => key.startsWith(PLURAL_PREFIX));
+
+  const body = plain
     .map(([key, value]) => `"${stringsEscape(key)}" = "${stringsEscape(value)}";`)
     .join("\n");
   writeFileSync(
@@ -266,7 +395,35 @@ if (command === "keys") {
       ` * Do not edit by hand: edit the CSV and rebuild, or the next build will overwrite you. */\n\n` +
       body + "\n"
   );
-  console.log(`${argument}.lproj — ${done.length} strings${missing ? `, ${missing} still English` : ""}`);
+
+  // Grouped back into one entry per noun. A noun with no filled categories is left out
+  // entirely rather than written half-empty: a `.stringsdict` entry missing the category a
+  // number lands in returns nothing at all, which would be worse than the two-form fallback.
+  const grouped = new Map();
+  for (const [key, value] of plurals) {
+    const rest = key.slice(PLURAL_PREFIX.length);
+    const split = rest.indexOf(":");
+    const category = rest.slice(0, split);
+    const singular = rest.slice(split + 1);
+    if (!grouped.has(singular)) grouped.set(singular, {});
+    grouped.get(singular)[category] = value;
+  }
+  const wanted = pluralCategories(argument);
+  const entries = [...grouped.entries()]
+    .filter(([, forms]) => wanted.every((c) => forms[c]))
+    .map(([singular, forms]) => ({ singular, forms }));
+  const dropped = grouped.size - entries.length;
+
+  if (entries.length > 0) {
+    writeFileSync(join(dir, "Replay.stringsdict"), stringsdict(argument, entries));
+  }
+
+  console.log(
+    `${argument}.lproj — ${plain.length} strings${missing ? `, ${missing} still English` : ""}` +
+      `; ${entries.length} counted nouns across ${wanted.length} plural ` +
+      `${wanted.length === 1 ? "category" : "categories"} (${wanted.join(", ")})` +
+      `${dropped ? `, ${dropped} incomplete and left to the two-form fallback` : ""}`
+  );
 } else if (command === "record") {
   // Merge a run's log into the recorded set. Union rather than replace: one run visits the
   // surfaces that run visited, and nothing else — a missing key is evidence of a gap in the
@@ -296,7 +453,22 @@ if (command === "keys") {
   for (const language of languages) {
     const rows = parseCSV(readFileSync(join(OUT, `${language}.csv`), "utf8")).slice(1);
     const done = rows.filter(([, v]) => v && v.trim().length).length;
-    const stale = rows.filter(([k]) => !keys.includes(k)).length;
+    // A `plural:` row is not a key and never will be — it is one form of a counted noun,
+    // and the key it belongs to is the singular after the second colon. Counting them as
+    // orphans would be a lie with teeth: this file's own warning is that somebody sweeping
+    // "orphans" in bulk has already deleted correct translations here once, and twelve rows
+    // per language reported as dead is exactly the invitation to do it again.
+    const known = new Set(keys);
+    const counted = new Set(collectCounted().map(({ singular }) => singular));
+    const stale = rows.filter(([k]) => {
+      if (!k.startsWith(PLURAL_PREFIX)) return !known.has(k);
+      const rest = k.slice(PLURAL_PREFIX.length);
+      const singular = rest.slice(rest.indexOf(":") + 1);
+      // Orphaned only if the app stopped counting that noun, or the language stopped
+      // having that category — both real, and both worth removing.
+      const category = rest.slice(0, rest.indexOf(":"));
+      return !counted.has(singular) || !pluralCategories(language).includes(category);
+    }).length;
     const shipped = existsSync(join(LPROJ, `${language}.lproj`)) ? "shipped" : "not shipped";
     const percent = rows.length ? Math.round((done / rows.length) * 100) : 0;
     console.log(

@@ -5,6 +5,7 @@
 %@ apps
 %@ away
 %@ break
+%@ day
 %@ days
 %@ days ago
 %@ focus
@@ -16,9 +17,13 @@
 %@ Session
 %@ sessions
 %@ stayed in front, no switching
+%@ switch
+%@ switches
 %@ tags
 %@ to close
 %@ to go
+%@ visit
+%@ visits
 %1$@ · %2$@ apps · %3$@ switches
 %1$@ %2$@ Session
 %1$@ active · %2$@
