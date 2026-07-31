@@ -58,16 +58,6 @@ cask "replay-app" do
 
   app "Replay.app"
 
-  # **Quit Replay before Homebrew replaces the bundle.** Without this, `brew upgrade --cask`
-  # swaps the application directory out from under a running process — and this particular
-  # process holds an open SQLite handle it writes to every few seconds. A launcher survives
-  # that; a recorder can lose the tail of the day, and the record is the entire product with
-  # no cloud copy to restore from.
-  #
-  # Homebrew reopens it afterwards on its own (`Cask::Upgrade.reopen_apps_after_upgrade`
-  # reads exactly this stanza), so an upgrade ends with Replay running again.
-  uninstall quit: "app.replay.native"
-
   # **This is the one line here that removes a macOS security check, so it says so.**
   #
   # Homebrew tags the download as a web download; macOS then refuses to launch it because the
@@ -86,6 +76,20 @@ cask "replay-app" do
     system_command "/usr/bin/xattr",
                    args: ["-dr", "com.apple.quarantine", "#{appdir}/Replay.app"]
   end
+
+  # **Quit Replay before Homebrew replaces the bundle.** Without this, `brew upgrade --cask`
+  # swaps the application directory out from under a running process — and this particular
+  # process holds an open SQLite handle it writes to every few seconds. A launcher survives
+  # that; a recorder can lose the tail of the day, and the record is the entire product with
+  # no cloud copy to restore from.
+  #
+  # Homebrew reopens it afterwards on its own (`Cask::Upgrade.reopen_apps_after_upgrade`
+  # reads exactly this stanza), so an upgrade ends with Replay running again.
+  #
+  # **Below `postflight`, and that is not a preference.** `Cask/StanzaOrder` fixes the order —
+  # postflight, then uninstall, then zap, then caveats — and the tap's own CI runs `brew style`
+  # and fails on it. It has no effect on when either one runs.
+  uninstall quit: "app.replay.native"
 
   # `zap` and not `uninstall`: removing an app should not remove somebody's history unless
   # they ask for it. `brew uninstall --cask replay-app` leaves the record where it is, and

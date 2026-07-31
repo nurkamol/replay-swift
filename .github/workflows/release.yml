@@ -380,6 +380,14 @@ jobs:
           grep -q "^  sha256 \"$SHA\"$" "$CASK" || { echo "::error::sha256 did not take"; exit 1; }
           # It has to be loadable Ruby, checked before it can break `brew install` for everyone.
           ruby -c "$CASK"
+          # …and it has to pass `brew style`, which is more than syntax and is what the tap's
+          # own CI runs. 0.9.9 shipped with `postflight` and `uninstall` the wrong way round,
+          # turning test-bot red on a tap that was otherwise fine — because this step checked
+          # that the file parsed and stopped there. `brew style` needs a real tap to inspect,
+          # so the file is staged into the tapped copy and checked there.
+          brew tap nurkamol/tap
+          cp "$CASK" "$(brew --repository nurkamol/tap)/Casks/replay-app.rb"
+          brew style nurkamol/tap
           cd "$RUNNER_TEMP/tap"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
