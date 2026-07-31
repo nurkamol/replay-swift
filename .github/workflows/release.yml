@@ -217,7 +217,9 @@ jobs:
           # Prepended to the search list so `security find-identity` in make-app.sh sees it.
           security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
           rm -f "$RUNNER_TEMP/selfsign.p12"
-          security find-identity -v -p codesigning "$KEYCHAIN"
+          # No `-v`: it filters to certificates that chain to a trusted root, which a
+          # self-signed one never does. With it this prints "0 valid identities found".
+          security find-identity -p codesigning "$KEYCHAIN"
 
       # One text, written once, in CHANGELOG.md. An unsigned run prepends how to install,
       # because a release page with no download and no explanation reads as a mistake.

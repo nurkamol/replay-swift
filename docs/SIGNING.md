@@ -58,8 +58,14 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
   -addext "extendedKeyUsage=critical,codeSigning"
 
 # Bundle it as a .p12. The password is not optional — `security import` rejects an empty one.
+#
+# The three `pbe`/`macalg` flags are required on OpenSSL 3, which is what Homebrew installs.
+# Its default algorithms produce a file macOS cannot read, and the error it gives is
+# "MAC verification failed during PKCS12 import (wrong password?)" — which sends you off
+# checking the password, where there is nothing wrong.
 openssl pkcs12 -export -inkey /tmp/replay-key.pem -in /tmp/replay-cert.pem \
-  -name "Replay Self-Signed" -out /tmp/replay.p12 -passout pass:replay
+  -name "Replay Self-Signed" -out /tmp/replay.p12 -passout pass:replay \
+  -certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1
 
 # Into the login keychain, where codesign can reach it without prompting.
 security import /tmp/replay.p12 -k ~/Library/Keychains/login.keychain-db \
@@ -68,11 +74,17 @@ security import /tmp/replay.p12 -k ~/Library/Keychains/login.keychain-db \
 rm -f /tmp/replay-key.pem /tmp/replay-cert.pem /tmp/replay.p12
 ```
 
-Check it took:
+Check it took — **without `-v`**:
 
 ```sh
-security find-identity -v -p codesigning | grep "Replay Self-Signed"
+security find-identity -p codesigning | grep "Replay Self-Signed"
 ```
+
+`-v` filters to identities that chain to a trusted root, and a self-signed certificate never
+does: with it you get `0 valid identities found`, and the identity you just imported looks
+absent. What you should see instead is the certificate listed with `CSSMERR_TP_NOT_TRUSTED`
+beside it, which is not a problem — `codesign` signs with it regardless. Only *verifying*
+against a trust policy cares, and nothing here does.
 
 From here `./scripts/make-app.sh release` uses it automatically and says so.
 

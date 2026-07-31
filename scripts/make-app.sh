@@ -201,8 +201,12 @@ if [ -n "${REPLAY_SIGN_IDENTITY:-}" ]; then
         --sign "$REPLAY_SIGN_IDENTITY" "$APP" \
       && echo "Signed with $REPLAY_SIGN_IDENTITY (hardened runtime)." \
       || { echo "signing failed with $REPLAY_SIGN_IDENTITY" >&2; exit 1; }
-elif security find-identity -v -p codesigning 2>/dev/null \
+elif security find-identity -p codesigning 2>/dev/null \
        | grep -qF "$SELF_SIGNED_IDENTITY"; then
+    # No `-v`. It means "valid", and a self-signed certificate is never valid in that sense:
+    # it chains to no trusted root, so `find-identity -v` reports `0 valid identities found`
+    # and this branch is never taken. The failure is silent — the build just comes out ad-hoc
+    # and nothing says why — which is how it was written the first time.
     # `--timestamp=none` is required, not preferred: Apple's timestamp server signs for
     # certificates it recognises, and refuses this one. Without the flag codesign fails.
     codesign --force --deep --timestamp=none \
