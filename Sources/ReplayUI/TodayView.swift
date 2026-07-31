@@ -926,7 +926,13 @@ struct QuoteLine: View {
                 Image(systemName: "quote.opening")
                     .font(Design.Text.detail)
                     .foregroundStyle(.tint)
-                Text(moment.detail)
+                // The same moment Memories shows, said the same way. This read
+                // `moment.detail` — the English contract — so the day's quote stayed English
+                // on Today after Memories had been translated. Found by the strings audit
+                // once it began reporting the variables it renders.
+                Text(RuntimeCopy.moment(
+                    moment, now: Int64(Date().timeIntervalSince1970 * 1000)
+                ).detail)
                     .font(Design.Text.body)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -937,7 +943,11 @@ struct QuoteLine: View {
         .buttonStyle(.row)
         .disabled(moment.dayStart == nil)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(moment.detail)
+        // VoiceOver hears what the eye reads. This spoke the English while the card showed
+        // the reader's language — the two disagreeing is worse than either alone.
+        .accessibilityLabel(RuntimeCopy.moment(
+            moment, now: Int64(Date().timeIntervalSince1970 * 1000)
+        ).detail)
     }
 }
 

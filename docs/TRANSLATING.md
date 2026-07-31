@@ -136,6 +136,14 @@ were a key. Three Uzbek sentences reached `translations/keys.txt` that way. The 
 value is translated exactly once, at one end or the other, and helpers that compose from parts
 take them verbatim.
 
+**Never sweep orphans in bulk.** `status` calls a row "orphaned" when the key list does not
+contain it — and the key list is built by scanning for `Loc.t("…")` literals, which cannot see
+a lookup written as `Loc.t(someVariable)`. So a *correct, used* translation can look orphaned.
+This has already happened: the day parts "morning", "afternoon" and "evening" were asked for
+through a variable, never appeared as keys, and a tidy-up deleted them — after which a day's
+story read "…that evening" in the middle of an Uzbek sentence. Remove a row only when you know
+which call site you deleted, and prefer fixing the lookup so the scanner can see it.
+
 **A count is not proof.** `translate.mjs status` counts the keys that exist. Copy that never
 reaches `Loc` at all is not a key, so it is not counted, and a language can report 100% while a
 whole surface is in English. Two things find that: the runtime recorder — which sees only what

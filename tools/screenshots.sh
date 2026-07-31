@@ -277,6 +277,47 @@ capture "note-panel"
 osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
 sleep 1
 
+# ── The three surfaces this script could not reach ────────────────────────────
+#
+# A reopened day, the welcome screen and What's New were captured by nobody for weeks — which
+# is how a day's narration reached `main` translated and unlooked-at, and how two improvised
+# captures went wrong and caught *other applications' windows* instead. A surface the harness
+# cannot reach is a surface that gets verified by hand, badly, or not at all.
+#
+# All three are driven the way a person reaches them: the palette for a day, the Help menu for
+# the other two. Nothing here guesses at a coordinate.
+
+# A past day, opened. The palette lists the last fortnight under "Days"; yesterday is the one
+# certain to have something in it, and its label is what the palette matches on.
+palette_go "Yesterday"
+sleep 3
+capture "day-reopened"
+
+# What's New — a real window, in the Help menu beside the welcome screen.
+osa -e 'tell application "Replay" to activate' -e 'delay 0.4' \
+    -e 'tell application "System Events" to tell process "Replay" to click menu item "What'"'"'s New" of menu 1 of menu bar item "Help" of menu bar 1' \
+    >/dev/null 2>&1 || true
+sleep 3
+capture "whats-new"
+osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
+sleep 1
+
+# The welcome screen, which is the first thing anybody sees and the last thing anybody looks
+# at. Shown through the Help menu rather than by unsetting `seenWelcome`, so the run does not
+# have to put a preference back afterwards — a harness that edits settings and crashes leaves
+# somebody else's app changed.
+osa -e 'tell application "Replay" to activate' -e 'delay 0.4' \
+    -e 'tell application "System Events" to tell process "Replay" to click menu item "Welcome to Replay" of menu 1 of menu bar item "Help" of menu bar 1' \
+    >/dev/null 2>&1 || true
+sleep 3
+capture "welcome"
+# Page two carries the permission rows, which is the half worth seeing.
+osa -e 'tell application "System Events" to key code 36' >/dev/null 2>&1 || true
+sleep 2
+capture "welcome-permissions"
+osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
+sleep 1
+
 # ── The two full-screen modes ─────────────────────────────────────────────────
 #
 # Whole-display captures, because that is what they are. Esc closes both, and the script

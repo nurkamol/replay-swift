@@ -63,6 +63,10 @@ const CALLS = [
   "alert",
 ];
 
+/* Calls that put a *variable* on screen. Whatever it holds is what a reader sees, so each of
+   these is a place the literal scan is blind. */
+const RENDERS = ["Text", "Label", "navigationTitle", "navigationSubtitle"];
+
 /* Strings that are identifiers rather than words. */
 const NOT_WORDS = [
   /^[a-z0-9]+([.-][a-z0-9]+)+$/i,      // bundle ids, symbol names, reverse-dns
@@ -114,6 +118,8 @@ const isWord = (s) => {
 const isOnlyInterpolation = (s) => withoutInterpolation(s).trim().length === 0;
 
 const findings = [];
+/* Places that render a variable — see the note in the walk below. */
+const renders = [];
 const counts = new Map();
 
 /* The mechanism is not copy. `Loc.table` is an identifier that happens to be a word. */
@@ -154,6 +160,28 @@ for (const file of ["Sources/ReplayCore", "Sources/ReplayUI", "Sources/ReplayApp
           findings.push({ file: rel, line: index + 1, call: "copy", text });
           counts.set(rel, (counts.get(rel) ?? 0) + 1);
           break; // one finding per line, however many shapes match it
+        }
+      }
+    }
+
+    /* A literal is not the only way English reaches the screen.
+       `Text(label)` renders whatever a variable holds, and a variable can hold a literal
+       handed in from a call site — `Stat(label: "applications")`, `figure(v, "in total")`,
+       `tile("Total", v)`. None of those is a quoted string in a watched call, so the scan
+       above cannot see them, and the audit reported "0 hard-coded" while the headline
+       figures, the sidebar sections, the search placeholder and the heatmap's range picker
+       were all English in every language. Four separate times.
+       This cannot be decided statically — the variable may already be translated — so these
+       are *reported*, not failed. A number nobody can dismiss is the point: the audit stops
+       implying a completeness it was never able to check. */
+    if (rel.startsWith("Sources/ReplayUI/")) {
+      for (const render of RENDERS) {
+        const re = new RegExp(`\\b${render}\\(\\s*([A-Za-z_][\\w.]*)\\s*[,)]`, "g");
+        for (const match of line.matchAll(re)) {
+          const expr = match[1];
+          if (/^(Loc|String|Image|Text)\b/.test(expr)) continue;   // already looked up, or not copy
+          if (/^(verbatim|systemImage)$/.test(expr)) continue;      // argument labels, not values
+          renders.push({ file: rel, line: index + 1, call: render, expr });
         }
       }
     }
@@ -256,5 +284,20 @@ if (byFile.length > 0 && !LIST) {
   const top = byFile.slice(0, 5).map(([f, n]) => `${n} in ${f.split("/").pop()}`);
   console.log(`  most of them: ${top.join(", ")} — \`--list\` for all of them.`);
 } else if (byFile.length === 0) {
-  console.log("  every string a reader sees goes through Loc.");
+  console.log("  every *literal* a reader sees goes through Loc.");
+}
+
+/* And the part no scan can settle. */
+if (renders.length > 0) {
+  const files = new Set(renders.map((r) => r.file)).size;
+  console.log(
+    `  ${renders.length} place${renders.length === 1 ? "" : "s"} render a variable across ` +
+      `${files} files — each is only translated if whatever it holds already was. ` +
+      `\`--list\` for all of them.`
+  );
+  if (LIST) {
+    for (const r of renders.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)) {
+      console.log(`  ${r.file}:${r.line}  ${r.call}(${r.expr})`);
+    }
+  }
 }

@@ -97,3 +97,66 @@ struct MomentCopyBehaviour {
         #expect(said.detail.contains("today"))
     }
 }
+
+/// A day's story, said twice.
+///
+/// `DayStory.build` is compared against `spec/` character for character, so the English cannot
+/// move — which makes the risk here a *silent* one: a line added to the enum without a
+/// counterpart in `RuntimeCopy` compiles, renders English, and looks fine to every check.
+@Suite("Day story copy")
+struct DayStoryCopyBehaviour {
+
+    private static let everyLine: [DayStory.Line] = [
+        .openedMorning(app: "Mail"),
+        .openedAfternoon(app: "Firefox"),
+        .openedEvening(app: "Xcode"),
+        .openedOther(part: "Late night", app: "Terminal"),
+        .longestFocus(duration: "1h 20m", app: "Xcode", part: "Afternoon"),
+        .longestFocus(duration: "45m", app: "Terminal", part: "Late night"),
+        .ranged(apps: 7, sessions: 12),
+        .woundDown(app: "Notes"),
+    ]
+
+    @Test("The English is still exactly the reference's")
+    func englishUnchanged() {
+        #expect(DayStory.Line.openedMorning(app: "Mail").english == "You began the morning in Mail.")
+        #expect(
+            DayStory.Line.openedOther(part: "Late night", app: "Terminal").english
+                == "You started in the small hours, in Terminal."
+        )
+        #expect(
+            DayStory.Line.longestFocus(duration: "1h 20m", app: "Xcode", part: "Afternoon").english
+                == "Your longest focus was 1h 20m in Xcode that afternoon."
+        )
+        #expect(
+            DayStory.Line.longestFocus(duration: "45m", app: "Terminal", part: "Late night").english
+                == "Your longest focus was 45m in Terminal in the small hours."
+        )
+        #expect(
+            DayStory.Line.ranged(apps: 7, sessions: 12).english
+                == "In all you moved through 7 apps across 12 sessions."
+        )
+        // One of each, so the plural rule is pinned in both directions.
+        #expect(
+            DayStory.Line.ranged(apps: 1, sessions: 1).english
+                == "In all you moved through 1 app across 1 session."
+        )
+    }
+
+    @Test("Every line can be said in another language, and none falls back to nothing")
+    func everyLineIsSaid() {
+        Loc.override = nil
+        for line in Self.everyLine {
+            let said = RuntimeCopy.dayStory(line)
+            #expect(!said.isEmpty)
+            #expect(said.hasSuffix("."))
+        }
+    }
+
+    @Test("An application's name survives the retelling")
+    func appNamesSurvive() {
+        Loc.override = nil
+        #expect(RuntimeCopy.dayStory(.woundDown(app: "Notes")).contains("Notes"))
+        #expect(RuntimeCopy.dayStory(.openedMorning(app: "Mail")).contains("Mail"))
+    }
+}

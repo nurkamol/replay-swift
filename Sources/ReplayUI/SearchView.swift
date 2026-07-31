@@ -355,13 +355,21 @@ struct SearchView: View {
                 .font(.title3)
                 .foregroundStyle(.tertiary)
 
+            // `Loc.t`, not a bare literal: SwiftUI takes a literal as a `LocalizedStringKey`
+            // and looks it up in `Bundle.main`, where this catalogue is not — so the one
+            // field on this surface stayed English in every language.
             TextField(
-                "A session, a note, a tag, an app",
+                Loc.t("A session, a note, a tag, an app"),
                 text: Binding(get: { search.query }, set: { search.query = $0 })
             )
             .textFieldStyle(.plain)
             .font(.title3)
             .focused($fieldFocused)
+            // A placeholder is not a label. VoiceOver announced this as a bare "text field",
+            // on the surface whose whole purpose is typing into it — found by walking the
+            // accessibility tree rather than by reading the code.
+            .accessibilityLabel(Loc.t("Search"))
+            .accessibilityHint(Loc.t("A session, a note, a tag, an app"))
             // Escape gives the field up rather than clearing the app's state, which is
             // what Escape means everywhere else on the Mac.
             .onExitCommand { fieldFocused = false }

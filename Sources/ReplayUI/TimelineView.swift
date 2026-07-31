@@ -220,13 +220,17 @@ struct TimelineView: View {
             }
             if layers.contains(.moments) {
                 ForEach(overlays.moments[day] ?? [], id: \.key) { moment in
-                    overlayRow("sparkles", moment.title, moment.detail, day: day)
+                    // The Timeline's overlay shows the same moments Memories does.
+                    let said = RuntimeCopy.moment(
+                        moment, now: Int64(Date().timeIntervalSince1970 * 1000)
+                    )
+                    overlayRow("sparkles", said.title, said.detail, day: day)
                 }
             }
             if layers.contains(.memories), let earlier = overlays.earlierYears[day] {
                 overlayRow(
                     "clock.arrow.circlepath", "On this date before",
-                    "\(fullDayLabel(earlier.dayStart))"
+                    "\(fullDayLabel(earlier.dayStart, locale: Loc.locale))"
                         + (earlier.topApp.map { " · mostly \($0)" } ?? ""),
                     day: earlier.dayStart
                 )
@@ -402,7 +406,7 @@ private struct DaySection: View {
                     onReplayDay(day.sessions, day.label)
                 }
                 .disabled(day.sessions.isEmpty)
-                Menu("Export This Day") {
+                Menu(Loc.t("Export This Day")) {
                     ForEach(Report.Format.allCases, id: \.self) { format in
                         Button(format.label) {
                             // Named by its date, not by "Today": a file called "Replay
@@ -478,7 +482,12 @@ struct DayView: View {
     let onOpenChapter: (String) -> Void
     let onOpenDay: (Int64) -> Void
 
-    private var story: [String] { DayStory.build(day.sessions) }
+    /// Said in the reader's language. `DayStory.build` is the English contract; this surface
+    /// is nothing but those sentences, so reading it directly left the whole narration in
+    /// English inside a translated app.
+    private var story: [String] {
+        DayStory.lines(day.sessions).map(RuntimeCopy.dayStory)
+    }
 
     var body: some View {
         ScrollView {
@@ -512,7 +521,7 @@ struct DayView: View {
                 ReflectionCard(
                     dayStart: day.dayStart,
                     reflection: reflection,
-                    prompt: "What do you want to remember about this day?",
+                    prompt: Loc.t("What do you want to remember about this day?"),
                     onCommit: onReflect
                 )
 
@@ -527,7 +536,7 @@ struct DayView: View {
                                 .textCase(.uppercase)
                                 .kerning(Design.Text.labelKerning)
                             Spacer()
-                            Menu("Export…") {
+                            Menu(Loc.t("Export…")) {
                                 ForEach(Report.Format.allCases, id: \.self) { format in
                                     Button(format.label) {
                                         export.exportReport(
@@ -564,9 +573,11 @@ struct DayView: View {
             .pageContent()
         }
         .background(.background)
-        .navigationTitle(fullDayLabel(day.dayStart))
+        .navigationTitle(fullDayLabel(day.dayStart, locale: Loc.locale))
         .navigationSubtitle(
-            day.items.isEmpty ? "" : "\(formatDurationShort(day.activeSeconds)) active"
+            day.items.isEmpty
+                ? ""
+                : String(format: Loc.t("%@ active"), formatDurationShort(day.activeSeconds))
         )
         .toolbar {
             if !day.sessions.isEmpty {
@@ -605,7 +616,7 @@ struct DayView: View {
     /// is the system's rather than a `Button` that happens to look like it.
     private var header: some View {
         VStack(alignment: .leading, spacing: Design.Space.hairline) {
-            Text(fullDayLabel(day.dayStart))
+            Text(fullDayLabel(day.dayStart, locale: Loc.locale))
                 .font(Design.Text.title)
             if !day.items.isEmpty {
                 Text(String(format: Loc.t("%@ active"), "\(formatDurationShort(day.activeSeconds))"))

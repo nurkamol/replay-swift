@@ -40,10 +40,54 @@ public enum DayStory {
         }
     }
 
-    /// A day's story, or an empty array when the day is too thin to narrate honestly.
+    /// One sentence of a day's story, before it is a sentence.
+    ///
+    /// The English below is checked against `spec/` character for character, so it cannot
+    /// move. This is the shape the decision produces, so `RuntimeCopy.dayStory(_:)` can say
+    /// the same thing in another language — where the clause order is not English's. The day
+    /// part travels as its English word because `dayPart(of:)` is contract-checked and returns
+    /// one; both renderings translate it themselves.
+    public enum Line: Equatable, Sendable {
+        case openedMorning(app: String)
+        case openedAfternoon(app: String)
+        case openedEvening(app: String)
+        /// The small hours, and any part the three named cases do not cover.
+        case openedOther(part: String, app: String)
+        case longestFocus(duration: String, app: String, part: String)
+        case ranged(apps: Int, sessions: Int)
+        case woundDown(app: String)
+
+        /// The reference's own wording. Nothing here changes without the reference changing.
+        public var english: String {
+            switch self {
+            case let .openedMorning(app): "You began the morning in \(app)."
+            case let .openedAfternoon(app): "The day opened in the afternoon, in \(app)."
+            case let .openedEvening(app): "The day began in the evening, in \(app)."
+            case let .openedOther(part, app):
+                "You started in \(part == "Late night" ? "the small hours" : part.lowercased()), in \(app)."
+            case let .longestFocus(duration, app, part):
+                "Your longest focus was \(duration) in \(app)"
+                    + (part == "Late night" ? " in the small hours" : " that \(part.lowercased())")
+                    + "."
+            case let .ranged(apps, sessions):
+                "In all you moved through \(apps) \(apps == 1 ? "app" : "apps") across "
+                    + "\(sessions) \(sessions == 1 ? "session" : "sessions")."
+            case let .woundDown(app): "The day wound down in \(app)."
+            }
+        }
+    }
+
+    /// A day's story as English sentences — the contract.
     public static func build(
         _ sessions: [ActivitySession], calendar: Calendar = .current
     ) -> [String] {
+        lines(sessions, calendar: calendar).map(\.english)
+    }
+
+    /// The same story, as the decisions behind it.
+    public static func lines(
+        _ sessions: [ActivitySession], calendar: Calendar = .current
+    ) -> [Line] {
         guard !sessions.isEmpty else { return [] }
 
         let ordered = sessions.sorted { $0.startedAt < $1.startedAt }
@@ -68,27 +112,31 @@ public enum DayStory {
             }
         }
 
-        var sentences: [String] = []
+        var sentences: [Line] = []
 
-        if let opening = opening(first, calendar) { sentences.append(opening) }
+        if let app = first.apps.first?.applicationName {
+            switch dayPart(of: first.startedAt, calendar: calendar) {
+            case "Morning": sentences.append(.openedMorning(app: app))
+            case "Afternoon": sentences.append(.openedAfternoon(app: app))
+            case "Evening": sentences.append(.openedEvening(app: app))
+            case let part: sentences.append(.openedOther(part: part, app: app))
+            }
+        }
 
         // The stretch that anchored the day — worth a sentence when it was real focus and
         // not simply the opening session again.
         if longest.activeSeconds >= longestFocusSeconds, longest.startedAt != first.startedAt,
            let app = longest.apps.first?.applicationName {
-            sentences.append(
-                "Your longest focus was \(formatDurationShort(longest.activeSeconds)) in \(app)"
-                    + "\(partSuffix(longest.startedAt, calendar))."
-            )
+            sentences.append(.longestFocus(
+                duration: formatDurationShort(longest.activeSeconds),
+                app: app,
+                part: dayPart(of: longest.startedAt, calendar: calendar)
+            ))
         }
 
         // How far the day ranged — only when it genuinely moved around.
         if sessions.count >= rangingSessions || distinctApps.count >= rangingApps {
-            let apps = distinctApps.count
-            sentences.append(
-                "In all you moved through \(apps) \(apps == 1 ? "app" : "apps") across "
-                    + "\(sessions.count) \(sessions.count == 1 ? "session" : "sessions")."
-            )
+            sentences.append(.ranged(apps: distinctApps.count, sessions: sessions.count))
         }
 
         // Where it settled — only when the day ended somewhere other than it began, in a
@@ -97,7 +145,7 @@ public enum DayStory {
            last.startedAt != first.startedAt,
            dayPart(of: last.startedAt, calendar: calendar)
                != dayPart(of: first.startedAt, calendar: calendar) {
-            sentences.append("The day wound down in \(lastApp).")
+            sentences.append(.woundDown(app: lastApp))
         }
 
         return sentences

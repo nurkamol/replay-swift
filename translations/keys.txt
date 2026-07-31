@@ -48,6 +48,7 @@ A quiet day
 A quiet look back, before the day begins.
 A quiet walk through the best of your history — the memories, the deep focus, the things you kept.
 A recap of the day's focus, delivered at the time you choose.
+A session, a note, a tag, an app
 A slow swell on the application's icon, so a screen of live figures does not read as a still picture of one. Off leaves ambient mode completely still. Reduce Motion turns it off either way.
 A steady stretch
 About
@@ -59,6 +60,7 @@ Activity tracking
 Actual Size
 Add a note…
 Add to List
+afternoon
 Afternoon
 All collections
 All memories are generated locally. Nothing is uploaded.
@@ -157,6 +159,7 @@ Drift ambient mode in after this long with no activity, while Replay is focused.
 Drift the screensaver in after this long with no activity, while Replay is focused. Any key or movement wakes it.
 Edit the note
 Either drifts in only while Replay's own window is in front, so it never appears over another app. Never means neither does, and both can still be opened by hand from the sidebar, the View menu or ⌘K. What starts on its own leaves the way it came: any key, click or movement returns you — including in ambient mode, which stays put when you open it yourself, since that is the point of it.
+evening
 Evening
 Events
 Every day
@@ -179,6 +182,7 @@ Exit the screensaver
 Export
 Export the entire database as JSON, or import one — importing merges, never overwrites.
 Export this day
+Export This Day
 Export…
 Favourite applications
 First time in %@
@@ -226,6 +230,8 @@ Import…
 Importing…
 in %@
 In a single database file in your own user folder — the Privacy tab shows the exact path. It never leaves this Mac: no cloud, no account, no network.
+In all you moved through %1$@ across %2$@.
+in the small hours
 in total
 It notices which application is frontmost using macOS’s standard app-switch signal, and records the app’s name and how long it stayed in front. Never what’s inside a window, never your keystrokes, never content.
 Jump to
@@ -258,6 +264,7 @@ MIT licensed. Built on this Mac, and it stays here.
 Moments
 Month
 More
+morning
 Morning
 Morning briefing
 Most often here on %@.
@@ -453,14 +460,21 @@ tag
 Tag
 tagged %@
 Takes that day's sessions, summary, reflection, and any notes or bookmarks with it, and leaves every other day untouched. Any day can also be deleted — or exported on its own — from the ⋯ menu on its divider in the Timeline.
+that afternoon
+that evening
+that morning
 That release has nothing to install.
 That reply did not look like a release.
 That’s Contextual Memory Intelligence: when something becomes relevant — you return to an app after a while away, an anniversary comes round, a bookmark has been sitting unopened — Replay quietly surfaces it on Today, and stays silent when nothing is worth saying. Every card can be dismissed, and you can tune how often it speaks, or turn it off entirely, in Settings ▸ General ▸ Contextual memories.
 The application you are in right now, with its icon. Turn it off for a screen other people can see.
+The day began in the evening, in %@.
+The day opened in the afternoon, in %@.
+The day wound down in %@.
 The day's total is always shown — it is what the screen is for. These are the things around it, and two of them are here because an ambient screen is usually a second screen, and a second screen is often one other people can see. A screen left open takes no keyboard, so Escape does not reach it: close it with ⇧⌘A, the View menu, or the ✕ in its corner.
 The long view of your work — told back to you, gathered into eras, and reflected in the rhythms you fall into.
 The museum is still filling
 The screen
+the small hours
 The story of this day
 The system's own material, with its edge and its light.
 The system's own material, with its edge and its light. Reduce Transparency in System Settings overrides this and makes every surface solid.
@@ -499,6 +513,7 @@ Weekly recap
 Welcome screen
 Welcome to Replay
 What are Collections, Projects, and the Canvas?
+What do you want to remember about this day?
 What is stored
 What is this about?
 What led its days
@@ -541,14 +556,16 @@ Yes, three ways: the ⋯ menu on that day's divider in the Timeline, the same �
 yesterday
 Yesterday
 Yesterday at %@
+You began the morning in %@.
 You have %@.
 You have this
 You opened %1$@ for the first time %2$@.
 You started building this memory today.
-You were active %1$@ days in a row, ending %2$@.
+You started in %1$@, in %2$@.
+You were active %1$@ in a row, ending %2$@.
 You were still going at %1$@ — %2$@.
 YOU WROTE, %@
-You've been building this memory for %1$@ days — since %2$@.
+You've been building this memory for %1$@ — since %2$@.
 Your busiest mix
 Your data
 Your history divided into the eras it naturally fell into.
@@ -556,6 +573,7 @@ Your history told back to you, a month or a year at a time.
 Your history, divided into the eras it naturally fell into — and yours to name.
 Your history, told back to you — a week, a month, or a year at a time, only from what you actually did.
 Your longest focus
+Your longest focus was %1$@ in %2$@, %3$@.
 Your most active day
 Your record is untouched — an update replaces the app, not the history.
 Your rituals

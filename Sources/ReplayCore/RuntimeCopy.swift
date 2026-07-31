@@ -184,8 +184,8 @@ public enum RuntimeCopy {
             return (
                 Loc.t("A steady stretch"),
                 String(
-                    format: Loc.t("You were active %1$@ days in a row, ending %2$@."),
-                    "\(facts.count)", when
+                    format: Loc.t("You were active %1$@ in a row, ending %2$@."),
+                    Loc.count(facts.count, "%@ day", "%@ days"), when
                 )
             )
 
@@ -201,10 +201,76 @@ public enum RuntimeCopy {
             guard facts.count > 0 else {
                 return (title, Loc.t("You started building this memory today."))
             }
+            // `Loc.count`, not a bare "%@ days": the English branch beside this one has a
+            // singular and dropping it here meant a memory one day old read "for 1 days".
+            // Correct in Uzbek by accident — it does not inflect after a numeral — and wrong
+            // in English and in every language that does.
             return (title, String(
-                format: Loc.t("You've been building this memory for %1$@ days — since %2$@."),
-                "\(facts.count)", date
+                format: Loc.t("You've been building this memory for %1$@ — since %2$@."),
+                Loc.count(facts.count, "%@ day", "%@ days"), date
             ))
+        }
+    }
+
+    /// One line of a day's story, in the reader's language.
+    ///
+    /// The four openings stay four separate sentences rather than one with a slot in it. They
+    /// are not variations on a phrase — "You began the morning in X" and "The day opened in
+    /// the afternoon, in X" put the subject in different places — and a translator handed a
+    /// stem plus a word cannot recover that.
+    public static func dayStory(_ line: DayStory.Line) -> String {
+        switch line {
+        case let .openedMorning(app):
+            return String(format: Loc.t("You began the morning in %@."), app)
+        case let .openedAfternoon(app):
+            return String(format: Loc.t("The day opened in the afternoon, in %@."), app)
+        case let .openedEvening(app):
+            return String(format: Loc.t("The day began in the evening, in %@."), app)
+        case let .openedOther(part, app):
+            return String(
+                format: Loc.t("You started in %1$@, in %2$@."), partWord(part), app
+            )
+        case let .longestFocus(duration, app, part):
+            return String(
+                format: Loc.t("Your longest focus was %1$@ in %2$@, %3$@."),
+                duration, app, partPhrase(part)
+            )
+        case let .ranged(apps, sessions):
+            return String(
+                format: Loc.t("In all you moved through %1$@ across %2$@."),
+                Loc.count(apps, "%@ app", "%@ apps"),
+                Loc.count(sessions, "%@ session", "%@ sessions")
+            )
+        case let .woundDown(app):
+            return String(format: Loc.t("The day wound down in %@."), app)
+        }
+    }
+
+    /// "the morning", "the small hours" — a part of the day as prose rather than a label.
+    ///
+    /// Separate from ``dayPart(_:)``, which translates the label a session title uses. English
+    /// happens to reuse the same words in both; most languages will not, and a shared key
+    /// would force them to.
+    private static func partWord(_ english: String) -> String {
+        // Spelled out, not `Loc.t(english.lowercased())`. That handed the scanner a variable,
+        // so "morning", "afternoon" and "evening" were never keys — and the orphan sweep then
+        // deleted the translations somebody had written, because nothing could prove they
+        // were used. The story read "…that evening" in the middle of an Uzbek sentence.
+        switch english {
+        case "Morning": return Loc.t("morning")
+        case "Afternoon": return Loc.t("afternoon")
+        case "Evening": return Loc.t("evening")
+        default: return Loc.t("the small hours")
+        }
+    }
+
+    /// "that afternoon", "in the small hours" — the time anchor on the focus sentence.
+    private static func partPhrase(_ english: String) -> String {
+        switch english {
+        case "Morning": return Loc.t("that morning")
+        case "Afternoon": return Loc.t("that afternoon")
+        case "Evening": return Loc.t("that evening")
+        default: return Loc.t("in the small hours")
         }
     }
 

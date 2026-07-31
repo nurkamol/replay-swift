@@ -29,6 +29,11 @@ struct ReflectionCard: View {
             }
 
             TextField(Loc.t(prompt), text: $value, axis: .vertical)
+                // The prompt is a placeholder, and a placeholder is not announced. Without
+                // this VoiceOver reached the one writable thing on Today and said "text
+                // field" — the question it is asking never reaching the person answering it.
+                .accessibilityLabel(Loc.t("Reflection"))
+                .accessibilityHint(Loc.t(prompt))
                 .textFieldStyle(.plain)
                 .font(.callout)
                 .lineLimit(1...10)

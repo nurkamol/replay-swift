@@ -46,9 +46,13 @@ struct MuseumView: View {
     /// One moment given the room, chosen from the day itself so it is the same all day and
     /// different tomorrow.
     private func featured(_ moment: Moment) -> some View {
-        VStack(alignment: .leading, spacing: Design.Space.snug) {
-            Text(moment.title).cardLabelStyle()
-            Text(moment.detail)
+        // Said in the reader's language, like Memories. `moment.title`/`.detail` are the
+        // English contract; reading them directly left the Museum in English after Memories
+        // had been translated — the same bug, on a third surface.
+        let said = RuntimeCopy.moment(moment, now: Int64(Date().timeIntervalSince1970 * 1000))
+        return VStack(alignment: .leading, spacing: Design.Space.snug) {
+            Text(said.title).cardLabelStyle()
+            Text(said.detail)
                 .font(Design.Text.prose)
                 .lineSpacing(Design.Text.proseLineSpacing)
                 .fixedSize(horizontal: false, vertical: true)
@@ -79,8 +83,11 @@ struct MuseumView: View {
                                 .foregroundStyle(.tint)
                                 .frame(width: Design.Icon.glyphColumn)
                             VStack(alignment: .leading, spacing: Design.Space.hairline) {
-                                Text(moment.title).font(Design.Text.itemTitle)
-                                Text(moment.detail)
+                                let said = RuntimeCopy.moment(
+                                    moment, now: Int64(Date().timeIntervalSince1970 * 1000)
+                                )
+                                Text(said.title).font(Design.Text.itemTitle)
+                                Text(said.detail)
                                     .font(Design.Text.detail)
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)

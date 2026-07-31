@@ -51,6 +51,7 @@
 "A quiet look back, before the day begins." = "Kun boshlanishidan oldin — orqaga tinch nazar.";
 "A quiet walk through the best of your history — the memories, the deep focus, the things you kept." = "Tarixingizning eng yaxshi qismlari bo‘ylab tinch sayr — xotiralar, chuqur fokus, saqlab qo‘yganlaringiz.";
 "A recap of the day's focus, delivered at the time you choose." = "Kun fokusining xulosasi — siz tanlagan vaqtda yetkaziladi.";
+"A session, a note, a tag, an app" = "Seans, izoh, teg yoki ilova";
 "A slow swell on the application's icon, so a screen of live figures does not read as a still picture of one. Off leaves ambient mode completely still. Reduce Motion turns it off either way." = "Ilova belgisining sekin kengayishi — jonli raqamlar ekrani qotib qolgan rasmdek ko‘rinmasligi uchun. O‘chirilsa, ambient rejimi butunlay harakatsiz bo‘ladi. “Harakatni kamaytirish” uni baribir o‘chiradi.";
 "A steady stretch" = "Barqaror davr";
 "About" = "Haqida";
@@ -63,6 +64,7 @@
 "Add a note…" = "Eslatma qo‘shish…";
 "Add to List" = "Ro‘yxatga qo‘shish";
 "Afternoon" = "Tushdan keyin";
+"afternoon" = "tushdan keyin";
 "All collections" = "Barcha to‘plamlar";
 "All memories are generated locally. Nothing is uploaded." = "Barcha xotiralar shu yerda hosil qilinadi. Hech narsa yuklanmaydi.";
 "Ambient mode" = "Ambient rejimi";
@@ -161,6 +163,7 @@
 "Edit the note" = "Eslatmani tahrirlash";
 "Either drifts in only while Replay's own window is in front, so it never appears over another app. Never means neither does, and both can still be opened by hand from the sidebar, the View menu or ⌘K. What starts on its own leaves the way it came: any key, click or movement returns you — including in ambient mode, which stays put when you open it yourself, since that is the point of it." = "Ikkalasi ham faqat Replay oynasi oldinda turganda paydo bo‘ladi, shuning uchun boshqa ilova ustiga hech qachon chiqmaydi. “Hech qachon” — hech biri chiqmaydi degani; ikkalasini ham yon panel, View menyusi yoki ⌘K orqali qo‘lda ochish mumkin. O‘zi ochilgani o‘zi ketadi: istalgan tugma, bosish yoki harakat sizni qaytaradi — shu jumladan ambient rejimida ham; o‘zingiz ochsangiz esa u joyida qoladi, chunki butun gap shunda.";
 "Evening" = "Kechqurun";
+"evening" = "kechqurun";
 "Events" = "Hodisalar";
 "Every day" = "Har kuni";
 "Every page is holding live data, so there is little to recover — compaction has real work to do after you delete history." = "Har bir sahifada jonli ma’lumot bor, shuning uchun qaytariladigan narsa kam — tarixni o‘chirganingizdan keyin ixchamlashning ishi bo‘ladi.";
@@ -182,6 +185,7 @@
 "Export" = "Eksport";
 "Export the entire database as JSON, or import one — importing merges, never overwrites." = "Butun bazani JSON sifatida eksport qiling yoki bittasini import qiling — import qo‘shib boradi, hech qachon ustiga yozmaydi.";
 "Export this day" = "Shu kunni eksport qilish";
+"Export This Day" = "Bu kunni eksport qilish";
 "Export…" = "Eksport…";
 "Favourite applications" = "Sevimli ilovalar";
 "First time in %@" = "%@ ilovasida birinchi marta";
@@ -229,6 +233,8 @@
 "Import…" = "Import…";
 "in %@" = "%@ ichida";
 "In a single database file in your own user folder — the Privacy tab shows the exact path. It never leaves this Mac: no cloud, no account, no network." = "O‘z foydalanuvchi jildingizdagi bitta baza faylida — aniq manzil Maxfiylik bo‘limida ko‘rsatilgan. U shu Mac’dan hech qachon chiqmaydi: bulut yo‘q, hisob yo‘q, tarmoq yo‘q.";
+"In all you moved through %1$@ across %2$@." = "Jami %2$@ davomida %1$@ ko‘rib chiqdingiz.";
+"in the small hours" = "tun yarmida";
 "in total" = "jami";
 "It notices which application is frontmost using macOS’s standard app-switch signal, and records the app’s name and how long it stayed in front. Never what’s inside a window, never your keystrokes, never content." = "U macOS’ning ilova almashuvi haqidagi standart signali orqali qaysi ilova oldinda ekanini sezadi va ilova nomi bilan qancha vaqt oldinda turganini yozadi. Oyna ichidagi narsalarni emas, tugma bosishlaringizni emas, mazmunni esa hech qachon.";
 "Jump to" = "O‘tish";
@@ -262,6 +268,7 @@
 "Month" = "Oy";
 "More" = "Ko‘p";
 "Morning" = "Ertalab";
+"morning" = "ertalab";
 "Morning briefing" = "Ertalabki xulosa";
 "Most often here on %@." = "Ko‘pincha %@ shu yerda.";
 "Most used this week" = "Shu haftada eng ko‘p ishlatilgan";
@@ -456,14 +463,21 @@
 "Tag" = "Teg";
 "tagged %@" = "%@ deb belgilangan";
 "Takes that day's sessions, summary, reflection, and any notes or bookmarks with it, and leaves every other day untouched. Any day can also be deleted — or exported on its own — from the ⋯ menu on its divider in the Timeline." = "O‘sha kunning seanslari, xulosasi, mulohazasi va undagi eslatma yoki xatcho‘plarni birga olib ketadi, qolgan kunlarga tegmaydi. Istalgan kunni Vaqt chizig‘idagi ajratgich yonidagi ⋯ menyusidan ham o‘chirish — yoki alohida eksport qilish — mumkin.";
+"that afternoon" = "o‘sha tushdan keyin";
+"that evening" = "o‘sha kechqurun";
+"that morning" = "o‘sha ertalab";
 "That release has nothing to install." = "Bu relizda o‘rnatiladigan narsa yo‘q.";
 "That reply did not look like a release." = "Bu javob relizga o‘xshamadi.";
 "That’s Contextual Memory Intelligence: when something becomes relevant — you return to an app after a while away, an anniversary comes round, a bookmark has been sitting unopened — Replay quietly surfaces it on Today, and stays silent when nothing is worth saying. Every card can be dismissed, and you can tune how often it speaks, or turn it off entirely, in Settings ▸ General ▸ Contextual memories." = "Bu — Kontekstli Xotira Intellekti: biror narsa ahamiyatli bo‘lib qolganda — ancha vaqtdan keyin ilovaga qaytsangiz, yubiley kelsa, xatcho‘p ochilmay yotgan bo‘lsa — Replay uni Bugun bo‘limida sokin ko‘rsatadi, aytishga arziydigan narsa bo‘lmasa jim turadi. Har bir kartani yopish mumkin; qanchalik tez-tez gapirishini Sozlamalar ▸ Umumiy ▸ Kontekstli xotiralar bo‘limida sozlaysiz yoki butunlay o‘chirasiz.";
 "The application you are in right now, with its icon. Turn it off for a screen other people can see." = "Hozir ishlayotgan ilovangiz, belgisi bilan. Boshqalar ko‘radigan ekran uchun o‘chirib qo‘ying.";
+"The day began in the evening, in %@." = "Kun kechqurun %@ ilovasida boshlandi.";
+"The day opened in the afternoon, in %@." = "Kun tushdan keyin %@ ilovasida ochildi.";
+"The day wound down in %@." = "Kun %@ ilovasida yakunlandi.";
 "The day's total is always shown — it is what the screen is for. These are the things around it, and two of them are here because an ambient screen is usually a second screen, and a second screen is often one other people can see. A screen left open takes no keyboard, so Escape does not reach it: close it with ⇧⌘A, the View menu, or the ✕ in its corner." = "Kun jamisi doim ko‘rsatiladi — ekran shuning uchun. Bular uning atrofidagi narsalar, ulardan ikkitasi shu yerda, chunki ambient ekrani odatda ikkinchi ekran bo‘ladi, ikkinchi ekranni esa ko‘pincha boshqalar ham ko‘radi. Ochiq qoldirilgan ekran klaviaturani olmaydi, shuning uchun Escape unga yetib bormaydi: uni ⇧⌘A, View menyusi yoki burchagidagi ✕ bilan yoping.";
 "The long view of your work — told back to you, gathered into eras, and reflected in the rhythms you fall into." = "Ishingizga uzoq nazar — sizga qaytarib aytiladi, davrlarga jamlanadi va odat bo‘lib qolgan ritmlaringizda aks etadi.";
 "The museum is still filling" = "Muzey hali to‘lmoqda";
 "The screen" = "Ekran";
+"the small hours" = "tun yarmida";
 "The story of this day" = "Shu kunning hikoyasi";
 "The system's own material, with its edge and its light." = "Tizimning o‘z materiali — qirrasi va yorug‘i bilan.";
 "The system's own material, with its edge and its light. Reduce Transparency in System Settings overrides this and makes every surface solid." = "Tizimning o‘z materiali, cheti va yorug‘i bilan. Tizim sozlamalaridagi “Shaffoflikni kamaytirish” buni bekor qiladi va har bir sirtni qattiq qiladi.";
@@ -502,6 +516,7 @@
 "Welcome screen" = "Xush kelibsiz ekrani";
 "Welcome to Replay" = "Replay’ga xush kelibsiz";
 "What are Collections, Projects, and the Canvas?" = "To‘plamlar, Loyihalar va Kanva nima?";
+"What do you want to remember about this day?" = "Bu kun haqida nimani eslab qolmoqchisiz?";
 "What is stored" = "Nima saqlanadi";
 "What is this about?" = "Bu nima haqida?";
 "What led its days" = "Kunlariga nima yetakchilik qilgan";
@@ -544,14 +559,16 @@
 "Yesterday" = "Kecha";
 "yesterday" = "kecha";
 "Yesterday at %@" = "Kecha soat %@";
+"You began the morning in %@." = "Ertalabni %@ ilovasida boshladingiz.";
 "You have %@." = "Sizda %@ bor.";
 "You have this" = "Sizda shu bor";
 "You opened %1$@ for the first time %2$@." = "%1$@ ilovasini %2$@ birinchi marta ochgansiz.";
 "You started building this memory today." = "Bu xotirani bugun to‘plashni boshladingiz.";
-"You were active %1$@ days in a row, ending %2$@." = "Ketma-ket %1$@ kun faol bo‘ldingiz, %2$@ tugadi.";
+"You started in %1$@, in %2$@." = "%1$@da, %2$@ ilovasida boshladingiz.";
+"You were active %1$@ in a row, ending %2$@." = "Ketma-ket %1$@ faol bo‘ldingiz, %2$@ tugadi.";
 "You were still going at %1$@ — %2$@." = "%1$@ da hali ham ishlayotgan edingiz — %2$@.";
 "YOU WROTE, %@" = "SIZ YOZGANSIZ, %@";
-"You've been building this memory for %1$@ days — since %2$@." = "Bu xotirani %1$@ kundan beri to‘playapsiz — %2$@ dan boshlab.";
+"You've been building this memory for %1$@ — since %2$@." = "Bu xotirani %1$@ to‘playapsiz — %2$@ dan boshlab.";
 "Your busiest mix" = "Eng sershovqin kuningiz";
 "Your data" = "Ma’lumotlaringiz";
 "Your history divided into the eras it naturally fell into." = "Tarixingiz o‘zi tabiiy ravishda bo‘lingan davrlarga ajratilgan.";
@@ -559,6 +576,7 @@
 "Your history, divided into the eras it naturally fell into — and yours to name." = "Tarixingiz o‘zi tabiiy ravishda bo‘lingan davrlarga ajratilgan — nomini o‘zingiz qo‘yasiz.";
 "Your history, told back to you — a week, a month, or a year at a time, only from what you actually did." = "Tarixingiz sizga qaytarib aytiladi — bir hafta, bir oy yoki bir yildan, faqat siz haqiqatan qilgan ishlardan.";
 "Your longest focus" = "Eng uzoq diqqatingiz";
+"Your longest focus was %1$@ in %2$@, %3$@." = "Eng uzoq diqqatingiz %3$@ %2$@ ilovasida %1$@ bo‘ldi.";
 "Your most active day" = "Eng faol kuningiz";
 "Your record is untouched — an update replaces the app, not the history." = "Yozuvingizga tegilmagan — yangilanish ilovani almashtiradi, tarixni emas.";
 "Your rituals" = "Odatlaringiz";

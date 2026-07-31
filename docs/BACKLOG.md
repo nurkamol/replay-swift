@@ -179,6 +179,20 @@ behaviour first and constants second, and generate anything that matches-by-luck
         *one* surface while changing it; the sheet is the only way to see all of them, and
         it is what has actually caught the layout bugs.
 
+## 2d · Accessibility
+
+- [x] **VoiceOver labelling, audited by walking the tree.** Done 2026-07-30. All 9 surfaces
+      and all 7 Settings panes: ~280 actionable controls, **2 unlabelled**, both text fields
+      whose only description was a placeholder — Today's reflection and the Search field.
+      SwiftUI does not promote a placeholder to a label, so VoiceOver reached the one writable
+      thing on Today and said "text field". Both now carry a label and a hint.
+      · The auditor is a small Swift program against the AX APIs; AppleScript cannot do it,
+        because `entire contents` returns nothing for this window. Worth rebuilding rather
+        than hunting by hand if this is ever re-run.
+      · **Never heard spoken.** This checks that every control has something to say, not that
+        what it says is right or that the reading order makes sense. A person with VoiceOver
+        actually on should still walk it before 1.0.
+
 ## 3 · Waiting on a decision, not on work
 
 These are not blocked by difficulty. They are blocked because they are somebody's call.
