@@ -26,6 +26,17 @@
 #
 # An API key rather than a stored notarytool profile, because a runner has no keychain
 # worth storing one in and a password would have to be typed by somebody.
+#
+# Secrets it uses if they exist, and shrugs off if they do not
+# ------------------------------------------------------------
+#   SELF_SIGN_P12_BASE64      base64 of the `Replay Self-Signed` .p12   — docs/SIGNING.md
+#   SELF_SIGN_P12_PASSWORD    its password
+#   HOMEBREW_TAP_TOKEN        a token that can push to nurkamol/homebrew-tap
+#
+# The first two keep every unsigned release carrying the *same* identity, which is what lets
+# Homebrew hand a reader's Gatekeeper approval forward instead of prompting again on every
+# update. The third bumps the cask automatically, so its checksum cannot go stale — which it
+# did once, by hand, between 0.9.7 and 0.9.8.
 
 name: release
 
@@ -172,6 +183,42 @@ jobs:
           spctl --assess --type open --context context:primary-signature -vv \
             "build/Replay-$VERSION.dmg"
 
+      # The middle tier: a certificate nobody trusts, but the *same* one every time.
+      #
+      # An ad-hoc signature's designated requirement is the code hash, so it changes with
+      # every build, and macOS treats each release as a different program. Homebrew 6 reads
+      # that requirement on upgrade and carries a reader's "Open Anyway" forward only when it
+      # matches — so under ad-hoc signing every update prompted again, forever. The in-app
+      # updater churned the identity the same way. docs/SIGNING.md has the whole argument and
+      # the commands that produce these two secrets.
+      #
+      # Absent secrets are not an error: `make-app.sh` falls back to ad-hoc on its own.
+      - name: Import the self-signed certificate
+        if: env.SIGNED != '1'
+        env:
+          P12_BASE64: ${{ secrets.SELF_SIGN_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.SELF_SIGN_P12_PASSWORD }}
+        run: |
+          if [ -z "$P12_BASE64" ]; then
+            echo "::warning::No SELF_SIGN_P12_BASE64. This build will be ad-hoc signed, so"
+            echo "::warning::everyone upgrading to it re-approves Replay in System Settings."
+            exit 0
+          fi
+          KEYCHAIN="$RUNNER_TEMP/replay-selfsign.keychain-db"
+          PASSWORD="$(uuidgen)"
+          security create-keychain -p "$PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$PASSWORD" "$KEYCHAIN"
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/selfsign.p12"
+          security import "$RUNNER_TEMP/selfsign.p12" -k "$KEYCHAIN" \
+            -P "$P12_PASSWORD" -A -T /usr/bin/codesign
+          # Without this codesign blocks on a keychain prompt no one is there to answer.
+          security set-key-partition-list -S apple-tool:,apple: -k "$PASSWORD" "$KEYCHAIN" >/dev/null
+          # Prepended to the search list so `security find-identity` in make-app.sh sees it.
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+          rm -f "$RUNNER_TEMP/selfsign.p12"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
       # One text, written once, in CHANGELOG.md. An unsigned run prepends how to install,
       # because a release page with no download and no explanation reads as a mistake.
       # `ditto`, never `zip`. A `.app` is a directory of symlinks and extended attributes,
@@ -180,6 +227,8 @@ jobs:
       # into whatever folder it was opened in.
       - name: Zip the application
         if: env.SIGNED != '1'
+        env:
+          P12_BASE64: ${{ secrets.SELF_SIGN_P12_BASE64 }}
         run: |
           ./scripts/make-app.sh release
           ditto -c -k --keepParent --sequesterRsrc \
@@ -189,6 +238,16 @@ jobs:
           # Apple silicon at all, which is a worse failure than the Gatekeeper prompt and
           # would look identical to the person who hit it.
           codesign --verify --deep --strict "build/Replay.app"
+
+          # Which identity actually landed. `make-app.sh` chooses silently between three, and
+          # the difference is invisible in the artefact but decides whether every reader
+          # re-approves this build in System Settings — so it is asserted, not assumed.
+          codesign -d -r- "build/Replay.app" 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
+          if [ -n "$P12_BASE64" ] && grep -q "designated => cdhash" "$RUNNER_TEMP/requirement.txt"; then
+            echo "::error::The certificate was imported but the app came out ad-hoc anyway."
+            echo "::error::Its identity would change again, and every upgrade would prompt."
+            exit 1
+          fi
 
       # Does the thing we are about to publish actually open?
       #
@@ -217,16 +276,30 @@ jobs:
         run: |
           if [ "$SIGNED" != "1" ]; then
             cat > "$RUNNER_TEMP/notes.md" <<PREAMBLE
-          ## Download
+          ## Install
+
+          **Homebrew is the recommended way**, and the only one with nothing to click
+          through — the tap clears the quarantine flag on install and on every upgrade:
+
+          \`\`\`sh
+          brew trust --tap nurkamol/tap
+          brew install --cask nurkamol/tap/replay-app
+          \`\`\`
+
+          \`brew trust\` is required by Homebrew 6 before it will load any third-party tap.
+          Skipping it looks like a broken tap rather than a consent prompt.
+
+          Also in the tap: \`nurkamol/tap/replay\` (the command-line reader) and
+          \`nurkamol/tap/replay-app-source\`, which compiles on your Mac and needs a full Xcode.
+
+          ### Or the zip
 
           **[Replay-$VERSION.zip](https://github.com/nurkamol/replay-swift/releases/download/v$VERSION/Replay-$VERSION.zip)** — unzip it and drag \`Replay.app\` to Applications.
 
-          ### macOS will refuse to open it the first time. Here is why, and what to do.
-
-          Replay has no Apple Developer ID yet, so macOS marks it as unverified and shows
-          **"Apple could not verify Replay is free of malware"** — offering only *Move to
-          Trash* or *Cancel*. That message is about a **missing certificate, not about
-          anything found in the app**. Every unsigned app gets it.
+          **macOS will refuse to open this one the first time.** Replay has no Apple Developer
+          ID yet, so a downloaded copy shows **"Apple could not verify Replay is free of
+          malware"**, offering only *Move to Trash* or *Cancel*. That message is about a
+          **missing certificate, not about anything found in the app**.
 
           To open it:
 
@@ -243,19 +316,8 @@ jobs:
           **Right-click ▸ Open does not work.** That bypass existed for years and Apple
           removed it in macOS 15. It is still the advice in most projects' READMEs.
 
-          ### Or skip all of that
-
-          Homebrew compiles it on your machine, so it is never downloaded, never quarantined,
-          and opens with no warning at all:
-
-          \`\`\`sh
-          brew tap nurkamol/tap
-          brew install nurkamol/tap/replay-app    # the application
-          brew install nurkamol/tap/replay        # the command-line reader
-          \`\`\`
-
-          A signed, notarised disk image — no warnings, nothing to click through — appears
-          here the day there is a certificate. The workflow that builds it is already written.
+          A signed, notarised disk image — no warnings on any route — appears here the day
+          there is a certificate. The workflow that builds it is already written.
 
           ---
 
@@ -277,6 +339,60 @@ jobs:
           # fails before this step if the image is missing or unnotarised.
           fail_on_unmatched_files: false
 
+      # Publish the cask: this repository's copy is the source, the tap is a mirror.
+      #
+      # Two problems, one step. The version and checksum used to be typed into the tap by hand
+      # after the release existed — two numbers copied between two repositories by a person,
+      # and 0.9.8 duly shipped for a while carrying 0.9.7's sha256 against a 0.9.8 URL, so
+      # every install failed on a checksum mismatch that reads as a corrupted download rather
+      # than a mistake in the tap. And the rest of the file was copied across by hand too, so
+      # a `postflight` or an `uninstall quit:` added here reached nobody until somebody
+      # remembered to paste it.
+      #
+      # So the whole file goes, and only then are the two generated lines substituted. Nothing
+      # can drift: the sha is computed from the artefact uploaded by this same job. Without the
+      # token it warns and skips — a missing secret should not fail a release that is
+      # otherwise finished — and the tap is updated by hand as before.
+      - name: Publish the Homebrew cask
+        if: env.SIGNED != '1'
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::warning::No HOMEBREW_TAP_TOKEN — the tap still describes the previous"
+            echo "::warning::release. Copy Casks/replay-app.rb into nurkamol/homebrew-tap by"
+            echo "::warning::hand and set its version and sha256 from Replay-$VERSION.zip.sha256."
+            exit 0
+          fi
+          SHA="$(shasum -a 256 "build/Replay-$VERSION.zip" | awk '{print $1}')"
+          echo "Replay-$VERSION.zip is $SHA"
+          git clone --depth 1 \
+            "https://x-access-token:${TAP_TOKEN}@github.com/nurkamol/homebrew-tap.git" "$RUNNER_TEMP/tap"
+          CASK="$RUNNER_TEMP/tap/Casks/replay-app.rb"
+          cp Casks/replay-app.rb "$CASK"
+          sed -i '' -E "s|^  version \".*\"|  version \"$VERSION\"|" "$CASK"
+          sed -i '' -E "s|^  sha256 \".*\"|  sha256 \"$SHA\"|" "$CASK"
+          # Both substitutions have to have landed. A `sed` that matched nothing is silent,
+          # and a silently-unbumped cask is the exact failure this step exists to prevent.
+          grep -q "^  version \"$VERSION\"$" "$CASK" || { echo "::error::version did not take"; exit 1; }
+          grep -q "^  sha256 \"$SHA\"$" "$CASK" || { echo "::error::sha256 did not take"; exit 1; }
+          # It has to be loadable Ruby, checked before it can break `brew install` for everyone.
+          ruby -c "$CASK"
+          cd "$RUNNER_TEMP/tap"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/replay-app.rb
+          if git diff --cached --quiet; then
+            echo "The tap already matches this release."
+          else
+            git commit -m "replay-app $VERSION"
+            git push
+          fi
+
       - name: Destroy the signing keychain
         if: always() && env.SIGNED == '1'
         run: security delete-keychain "$RUNNER_TEMP/replay-signing.keychain-db" || true
+
+      - name: Destroy the self-signing keychain
+        if: always() && env.SIGNED != '1'
+        run: security delete-keychain "$RUNNER_TEMP/replay-selfsign.keychain-db" || true

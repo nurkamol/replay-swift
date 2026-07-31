@@ -45,28 +45,35 @@ implementation, and the claims above are the ones the design is built around —
 
 **Requires macOS 14 Sonoma or newer.**
 
-Two ways to get the app, and they trade the same thing in opposite directions. A prebuilt
-download installs in seconds and costs you one trip through System Settings the first time you
-open it. A build from source takes a couple of minutes and needs Xcode, and opens with no
-warning at all — because nothing was downloaded, so macOS never marks it. Both are explained
-below rather than left as a surprise.
-
 ### The quick way — prebuilt
 
 ```sh
-brew tap nurkamol/tap
-brew install nurkamol/tap/replay-app
+brew trust --tap nurkamol/tap
+brew install --cask nurkamol/tap/replay-app
 ```
 
-Installs to `/Applications` in seconds and needs no developer tools. **The first launch shows
-a warning** — Replay has no Apple Developer ID yet, so macOS refuses a downloaded app it
-cannot check. One trip through System Settings, described in *[If you see a warning](#if-you-see-a-warning)*
-below, and it opens normally from then on.
+Installs to `/Applications` in seconds, needs no developer tools, and **opens with no
+warning**. Two notes on those two lines, because both are load-bearing:
+
+- **`brew trust` is not optional.** Homebrew 6 refuses to load a third-party tap until you
+  have said you trust it, and the refusal reads like a broken tap rather than a consent
+  prompt. If you have hit a confusing error installing from any tap lately, this is why.
+- **`--cask`, and the full path.** `replay-app` is the cask; `replay-app-source` is the
+  formula that compiles. They used to share a name, Homebrew resolved it to the formula, and
+  people asking for the two-second install got a demand for a 15 GB Xcode instead.
+
+**How it opens without a warning, stated plainly.** Replay is not notarised by Apple, so a
+downloaded copy would normally be refused. The tap clears the quarantine flag on install and
+on every upgrade — which means macOS did not check this app for you. What checked it is
+Homebrew, against the SHA-256 in the cask: a real integrity check, but one published by the
+same project that publishes the app. If you would rather Apple's check applied, take the
+source route below; it is compiled on your Mac and never downloaded, so there is nothing to
+check and nothing to skip.
 
 ### The quiet way — built here
 
 ```sh
-brew tap nurkamol/tap
+brew trust --tap nurkamol/tap
 brew install nurkamol/tap/replay-app-source
 ```
 
@@ -83,6 +90,7 @@ current `main` instead of v0.9.8.
 ### The command-line reader
 
 ```sh
+brew trust --tap nurkamol/tap
 brew install nurkamol/tap/replay        # `replay today`, `replay week --json`
 ```
 
@@ -101,7 +109,9 @@ open build/Replay.app
 
 ### If you see a warning
 
-**You will see a warning the first time, and it is not about this app.**
+**This is for the zip from the releases page.** The Homebrew cask clears the flag for you and
+the source build never has one, so if you took either route above you should not meet this at
+all — and if you do, something is wrong worth reporting.
 
 macOS marks *everything downloaded* with a quarantine flag — by a browser, by `curl`, or by
 Homebrew installing a cask — and refuses to open anything under that flag unless it carries a
@@ -125,11 +135,16 @@ xattr -dr com.apple.quarantine /Applications/Replay.app
 **Apple removed it in macOS 15**; it is still the advice in most projects' READMEs and it no
 longer does anything. System Settings is the route now.
 
-**This applies to the prebuilt cask and to the zip from the releases page** — both are
-downloads. It does not apply to the source build
-(`brew install nurkamol/tap/replay-app-source`) or to `./scripts/make-app.sh`: an app compiled on your own machine was never
-downloaded, so it is never quarantined and opens with no warning at all. That is the whole of
-the difference between the two routes, and it is the reason both exist.
+**Where the flag comes from, and who clears it.** The zip and the cask are both downloads and
+both get marked. The cask clears the mark itself in a `postflight` step, which is why the
+quick route is quiet — and the cask's caveats say so out loud rather than letting it look like
+the app was approved. The source build (`brew install nurkamol/tap/replay-app-source`) and
+`./scripts/make-app.sh` were never downloaded, so there is no mark to clear.
+
+**Updating does not send you back here.** Every build carries the same stable signature, so
+Homebrew hands your approval forward to the new version instead of asking again — see
+[docs/SIGNING.md](docs/SIGNING.md) for why that stopped working under the ad-hoc signature
+this used to have, where every single update meant another trip through System Settings.
 
 ### Why there is no *signed* download
 

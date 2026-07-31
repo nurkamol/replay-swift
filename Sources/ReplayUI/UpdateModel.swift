@@ -508,7 +508,10 @@ extension UpdateModel {
         let parent = bundle.deletingLastPathComponent()
         let reason = Updates.installability(
             bundlePath: bundle.path,
-            isWritable: FileManager.default.isWritableFile(atPath: parent.path)
+            isWritable: FileManager.default.isWritableFile(atPath: parent.path),
+            hasCaskReceipt: Updates.caskReceiptPaths.contains {
+                FileManager.default.fileExists(atPath: $0)
+            }
         )
         guard reason.canInstall else {
             failure = Updates.refusal(reason)

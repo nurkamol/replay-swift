@@ -11,6 +11,9 @@ version ships today and is the reference implementation** — it lives at
   are checked automatically; these rules are the ones that get ported wrong.
 - `docs/SYNC.md` — how the generated contract works and the change loop.
 - `docs/PORTING-MAP.md` — Glaze API → native equivalent, scope, risks.
+- `docs/SIGNING.md` — the three signing tiers and why the middle one exists. Read before
+  touching `make-app.sh`'s signing block, the cask, or anything about updates: the identity
+  a build carries decides whether a reader re-approves Replay on every single update.
 - `docs/PARITY.md` — status ledger. Update it in the same commit as the code.
 - `docs/BACKLOG.md` — **the only list of remaining work**, in the order it is worth doing.
   (`docs/ROADMAP.md` is retired and kept as history — it argued for features that are all
@@ -36,6 +39,7 @@ node tools/design-audit.mjs     # fails if any view hard-codes a value instead o
 node tools/strings-audit.mjs    # how much copy a translator can reach; --list for all of it
 node tools/version-audit.mjs    # the version agrees in all four places it is written down
 node tools/shortcut-audit.mjs   # fails if a bound key is undocumented, or documented and unbound
+node tools/symbol-audit.mjs     # every SF Symbol exists on the deployment target's macOS
 ./tools/cli-audit.sh            # the CLI's exit codes, stream discipline and --json shape
 swift run replay -- today       # the record from a shell; `replay help` for the rest
 ./scripts/make-app.sh           # assemble a runnable .app
@@ -104,10 +108,20 @@ node tools/release-notes.mjs 0.9.7 --check   # the tag, the build and the change
 ## Where things stand
 
 The core is done and verified: storage, session derivation, and the tracker all match the
-Glaze app — 965 checks. **The UI is largely built**: an application menu, a menu bar item,
-Today (headline, focus goal, reflection), the Timeline, a reopened past day, Search, Memories, Collections, a
-session's notes/tags/bookmarks, Settings, and export — reports as Markdown, CSV, JSON or
-HTML, plus full backups, and a screensaver. Counted against the reference's own router, this port has **all 20 of its routes**, and since
-2026-07-28 both of its display modes — the screensaver and ambient mode. (A route count was
-never a completeness measure: ambient mode is a *mode*, and the count could not see it.) What
-is left is in `docs/BACKLOG.md` — the Settings copy, the surfaces nobody has audited, and signing, which is blocked on a Developer ID rather than on code. `docs/PARITY.md` is the ledger of what is already true.
+Glaze app — **971 checks**. **The UI is built**: all 20 of the reference's routes and both of
+its display modes, plus a good deal it does not have — scheduled reports, a CLI, App Intents,
+in-app updates, a language picker, permission rows.
+
+**Parity with the reference is not the remaining work.** `node tools/port-queue.mjs` reports
+nothing owed, and `docs/BACKLOG.md` §1 and §2 are closed. What is left is this port's own:
+
+- **Runtime-assembled copy in the other languages.** Memories and the day's story are done;
+  the autobiography, the morning briefing, Collections and Projects are not. Roughly fifty
+  sentences. See `docs/TRANSLATING.md`, and **do not trust a coverage percentage** — it counts
+  keys that exist, and copy that never reaches `Loc` is not one. Running the app in another
+  language and *looking* is the only thing that has ever found these.
+- **Previews on the remaining surfaces** — 12 of 25, added as a surface is touched.
+- Signing, and the widget behind it. Not to be raised; it will be raised when it is time.
+
+`docs/PARITY.md` is the ledger of what is already true, including a table of this port's own
+work that the reference has no contract for.

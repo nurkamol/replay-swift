@@ -6,9 +6,10 @@
 # and run as a menu-bar app — a faster development loop than a full Xcode build, and it
 # works with Command Line Tools alone.
 #
-# The ad-hoc signature below is NOT enough to distribute: that needs a Developer ID
-# signature and notarisation, and a stable Xcode rather than the beta. See
-# docs/PORTING-MAP.md.
+# The signature below is NOT enough to distribute: that needs a Developer ID signature and
+# notarisation, and a stable Xcode rather than the beta. See docs/PORTING-MAP.md. What it
+# *is* enough for is staying the same identity from one build to the next, which is what
+# keeps a Gatekeeper approval and a TCC grant alive across an update — docs/SIGNING.md.
 #
 #   ./scripts/make-app.sh [debug|release]
 
@@ -172,20 +173,45 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Ad-hoc signature: enough for local launch, not for distribution.
-# A Developer ID if one was handed in, ad-hoc otherwise.
+# Three tiers of signature, best available wins. See docs/SIGNING.md.
 #
-# `REPLAY_SIGN_IDENTITY` is how `make-dmg.sh --release` and the release workflow ask for a
-# real signature. Deep and hardened-runtime, because notarisation refuses anything less, and
-# `--options runtime` has to be on the app before the disk image is built rather than after.
+#   1. A Developer ID, if `REPLAY_SIGN_IDENTITY` was handed in. Deep and hardened-runtime,
+#      because notarisation refuses anything less, and `--options runtime` has to be on the
+#      app before the disk image is built rather than after.
+#   2. `Replay Self-Signed`, if that certificate is in the keychain. Not trusted by anyone,
+#      but *stable*, which is the part that matters.
+#   3. Ad-hoc. Runs here and nowhere else.
+#
+# **Why tier 2 exists.** An ad-hoc signature has no identity: its designated requirement is
+# the code hash, so it changes with every single build. macOS keys two things to that
+# requirement — a Gatekeeper "Open Anyway" approval, and any TCC grant — and Homebrew 6 keys
+# a third: `Cask::Upgrade` compares the old and new designated requirements and carries the
+# user's approval forward only when they match (`inherit_user_approval!`), otherwise printing
+# "the signer changed so macOS will prompt at next launch". Under ad-hoc signing that branch
+# is taken on *every* upgrade, so every update sent the reader back through System Settings.
+# The same churn hit the in-app updater, which replaces this bundle with a downloaded one.
+#
+# A self-signed certificate fixes all three and costs nothing. It does not make the first
+# launch any quieter — macOS treats self-signed and unsigned identically on first contact —
+# and it is not a substitute for a Developer ID.
+SELF_SIGNED_IDENTITY="Replay Self-Signed"
+
 if [ -n "${REPLAY_SIGN_IDENTITY:-}" ]; then
     codesign --force --deep --options runtime --timestamp \
         --sign "$REPLAY_SIGN_IDENTITY" "$APP" \
       && echo "Signed with $REPLAY_SIGN_IDENTITY (hardened runtime)." \
       || { echo "signing failed with $REPLAY_SIGN_IDENTITY" >&2; exit 1; }
+elif security find-identity -v -p codesigning 2>/dev/null \
+       | grep -qF "$SELF_SIGNED_IDENTITY"; then
+    # `--timestamp=none` is required, not preferred: Apple's timestamp server signs for
+    # certificates it recognises, and refuses this one. Without the flag codesign fails.
+    codesign --force --deep --timestamp=none \
+        --sign "$SELF_SIGNED_IDENTITY" "$APP" \
+      && echo "Signed with $SELF_SIGNED_IDENTITY — stable across builds, trusted by nobody." \
+      || { echo "signing failed with $SELF_SIGNED_IDENTITY" >&2; exit 1; }
 else
     codesign --force --sign - "$APP" >/dev/null 2>&1 \
-      && echo "Signed ad-hoc — runs here, and nowhere else." \
+      && echo "Signed ad-hoc — runs here, and nowhere else. (docs/SIGNING.md)" \
       || echo "Could not sign; the app may still run locally."
 fi
 

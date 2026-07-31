@@ -350,26 +350,29 @@
     <div class="section-head">
       <h2>Install it</h2>
       <p>Two ways, trading the same thing in opposite directions. A prebuilt download is
-      installed in seconds and asks you for one trip through System Settings the first time.
-      A build from source takes a couple of minutes and wants Xcode, and opens with no warning
-      at all — because nothing was downloaded, so macOS never marks it.</p>
+      installed in seconds. A build from source takes a couple of minutes and wants Xcode. Both
+      open without a warning; they get there differently, and the difference is worth a
+      sentence.</p>
     </div>
 
     <h3 style="margin-bottom:14px">The quick way — prebuilt</h3>
-<pre>brew tap nurkamol/tap
-brew install nurkamol/tap/replay-app</pre>
+<pre>brew trust --tap nurkamol/tap
+brew install --cask nurkamol/tap/replay-app</pre>
     <p style="color:var(--dim); font-size:.94rem; margin:0 0 40px">
-      Straight into <code>/Applications</code>, no developer tools. The first launch shows a
-      warning — <a href="#gatekeeper">here is why, and the two clicks past it</a>.
+      Straight into <code>/Applications</code>, no developer tools. <strong>The first line is
+      not optional</strong> — Homebrew 6 will not load a third-party tap until you say you
+      trust it, and the refusal looks like a broken tap rather than a consent prompt.
+      It opens with no warning because the tap clears the quarantine flag for you —
+      <a href="#gatekeeper">which means macOS did not check it, and here is what did</a>.
     </p>
 
     <h3 style="margin-bottom:14px">The quiet way — built here</h3>
-<pre>brew tap nurkamol/tap
+<pre>brew trust --tap nurkamol/tap
 brew install nurkamol/tap/replay-app-source
 brew install nurkamol/tap/replay        <span class="c"># the command-line reader</span></pre>
     <p style="color:var(--dim); font-size:.94rem; margin:0 0 40px">
-      Compiled on your Mac, so it is never quarantined and opens with no warning at all.
-      Then link it once so Spotlight and the Dock find it:<br>
+      Compiled on your Mac, so it is never downloaded, never quarantined, and there is no
+      check to skip. Then link it once so Spotlight and the Dock find it:<br>
       <code>ln -sfn "$(brew --prefix)/opt/replay-app-source/Replay.app" /Applications/Replay.app</code>
     </p>
 
@@ -382,13 +385,18 @@ brew install nurkamol/tap/replay        <span class="c"># the command-line reade
 
     <div class="note" id="gatekeeper">
       <h3>“Apple could not verify Replay is free of malware”</h3>
-      <p>You will see this if you download the app rather than build it — the prebuilt cask and
-      the release zip both count, because Homebrew marks a cask download exactly as a browser
-      would. It offers only <strong>Move to Trash</strong> or <strong>Cancel</strong>, which
-      reads far worse than it is.
-      The message is about a <strong>missing certificate, not about anything found in the app</strong>.
-      Every unsigned Mac app gets it. A Developer ID costs 99 USD a year and this project does
-      not have one yet.</p>
+      <p>You will see this if you <strong>download the zip</strong> from the releases page.
+      It offers only <strong>Move to Trash</strong> or <strong>Cancel</strong>, which reads far
+      worse than it is: the message is about a
+      <strong>missing certificate, not about anything found in the app</strong>. Every unsigned
+      Mac app gets it. A Developer ID costs 99 USD a year and this project does not have one
+      yet.</p>
+      <p><strong>The Homebrew cask does not show it, and you should know why.</strong> The tap
+      clears the quarantine flag after installing, so macOS never runs its check. What replaces
+      that check is Homebrew verifying the download against the SHA-256 in the cask — a real
+      check, but one published by the same project that publishes the app. If you would rather
+      Apple’s check applied, build from source: that copy is compiled on your Mac and never
+      downloaded, so there is nothing to skip.</p>
       <ol>
         <li>Try to open Replay once, and dismiss the warning.</li>
         <li>Open <strong>System Settings ▸ Privacy &amp; Security</strong>, scroll down, click <strong>Open Anyway</strong>.</li>

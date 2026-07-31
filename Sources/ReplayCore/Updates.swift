@@ -79,14 +79,36 @@ public enum Updates {
         public var canInstall: Bool { self == .ready }
     }
 
+    /// Where Homebrew records that it installed the *cask*, under either standard prefix.
+    ///
+    /// A cask is the one Homebrew install that leaves nothing on the bundle to recognise: the
+    /// application is **moved into `/Applications`** and is a real directory there, identical
+    /// to a hand-dragged copy. Its only trace is this receipt.
+    ///
+    /// Two paths and not `brew --prefix`, because the app must not shell out to decide, and
+    /// these are the prefixes Homebrew actually uses — Apple silicon and Intel. A prefix
+    /// somewhere else is not detected, and that case falls back to offering the update, which
+    /// is the same behaviour as before this existed.
+    public static let caskReceiptPaths = [
+        "/opt/homebrew/Caskroom/replay-app",
+        "/usr/local/Caskroom/replay-app",
+    ]
+
     /// Decide from a bundle path alone, so it is testable without touching a filesystem.
     ///
-    /// `writable` is passed in rather than looked up for the same reason.
+    /// `isWritable` and `hasCaskReceipt` are passed in rather than looked up for the same
+    /// reason. Neither has a default: the safe answer is the restrictive one, and a parameter
+    /// a caller can forget would default to the permissive one.
     public static func installability(
-        bundlePath: String, isWritable: Bool
+        bundlePath: String, isWritable: Bool, hasCaskReceipt: Bool
     ) -> Installability {
-        // Homebrew keeps everything under a Cellar, whatever the prefix.
+        // Homebrew keeps a *formula* build under a Cellar, whatever the prefix.
         if bundlePath.contains("/Cellar/") { return .managedByHomebrew }
+        // A *cask* is in /Applications like anything else, so the receipt is the only tell.
+        // Missing this shipped a real hazard the day 0.9.8 added the cask: this copy would
+        // cheerfully overwrite a Homebrew-managed app, leaving `brew` describing a version it
+        // no longer has and the next `brew upgrade` overwriting the newer one with an older.
+        if hasCaskReceipt { return .managedByHomebrew }
         if bundlePath.contains("/AppTranslocation/") { return .translocated }
         if !isWritable { return .notWritable }
         return .ready
@@ -98,7 +120,7 @@ public enum Updates {
         case .ready:
             nil
         case .managedByHomebrew:
-            "Replay was installed with Homebrew. Run `brew upgrade nurkamol/tap/replay-app` "
+            "Replay was installed with Homebrew. Run `brew upgrade --cask nurkamol/tap/replay-app` "
                 + "so Homebrew and this copy stay in agreement."
         case .translocated:
             "macOS is running Replay from a temporary read-only copy, which happens to an "

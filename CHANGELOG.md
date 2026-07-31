@@ -21,6 +21,50 @@ Developer ID and notarised. Everything before it is a version of the source.
 
 ## Unreleased
 
+### Fixed
+
+- **`brew upgrade` no longer swaps the bundle out from under a running Replay.** The cask had
+  no `uninstall quit:`, so an upgrade replaced the application directory while the process was
+  still in it — holding an open SQLite handle it writes to every few seconds. A launcher
+  survives that; a recorder can lose the tail of the day, and the record is the product, with
+  no cloud copy to restore from. Homebrew now quits Replay first and reopens it afterwards.
+
+- **The in-app updater no longer overwrites a Homebrew-managed copy.** It recognised a
+  *formula* build by its `/Cellar/` path, but a **cask moves the app into `/Applications`**,
+  where it is indistinguishable from a copy dragged there by hand. So from the day 0.9.8
+  shipped a cask, the updater would replace it — leaving `brew` describing a version it no
+  longer had, and the next `brew upgrade` putting the older one back. It now checks
+  Homebrew's own receipt under both prefixes.
+
+### Changed
+
+- **Every build carries the same signature, so an update stops asking again.** Replay was
+  signed ad-hoc, and an ad-hoc signature has no identity: its designated requirement is the
+  code hash, so it changed with every build. Homebrew 6 compares that requirement across an
+  upgrade and carries a reader's Gatekeeper approval forward only when it matches — otherwise
+  printing *"the signer changed so macOS will prompt at next launch"*. That branch was taken
+  **every time**, so each update meant another trip through System Settings, forever rather
+  than once. A stable self-signed certificate fixes it, and fixes the same churn in the
+  in-app updater. It is not a Developer ID and does not make the *first* launch any quieter.
+  [docs/SIGNING.md](docs/SIGNING.md) has the whole argument and the commands.
+
+- **The tap clears the quarantine flag, and says so.** Installing the cask no longer ends at
+  a dialog offering only *Move to Trash*. What that trades is stated in the cask's caveats, in
+  the README and on the site rather than buried: macOS did not check the app, Homebrew checked
+  the download against the cask's SHA-256 instead, and that is a check published by the same
+  project that publishes the app. The source build remains the route for anyone who would
+  rather Apple's check applied.
+
+- **`brew trust --tap nurkamol/tap` is now the first line of every install instruction.**
+  Homebrew 6 refuses to load a third-party tap until it is trusted, and the refusal reads like
+  a broken tap rather than a consent prompt — which is what several confusing install errors
+  turned out to be.
+
+- **The cask's version and checksum are bumped by the release workflow**, from the artefact it
+  just built. They used to be copied between two repositories by hand, and 0.9.8 duly shipped
+  for a while carrying 0.9.7's checksum against a 0.9.8 URL: every install failed, and failed
+  in a way that reads as a corrupted download rather than a mistake in the tap.
+
 ### Added
 
 - **Memories reads in your language.** The surface that exists to be read was the one still in

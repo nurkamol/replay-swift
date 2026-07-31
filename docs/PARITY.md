@@ -3,7 +3,7 @@
 Where this port stands against the Glaze app. Update it in the same commit as the code —
 a ledger nobody trusts is worse than none.
 
-**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 965 checks
+**Level with:** Glaze 2.3.2 (`spec/constants.json` names the commit) · **Verified by:** `swift test` (or `swift run replay-parity`), 971 checks
 
 Legend: **done** verified · **partial** works, gaps noted · **todo** not started · **later** deliberately deferred
 
@@ -164,6 +164,24 @@ the picture by 0.012 mean brightness — real in a diff, invisible to a person.
 In [BACKLOG.md](BACKLOG.md), not here. This file records what the port *is*; that one records
 what it is *not yet*, in the order it is worth doing. Two lists of the same thing is how a
 document starts lying, and this one has done it twice already — see the two notes above.
+
+## This port's own work, beyond the reference
+
+The reference has none of this, so there is no contract to check it against — which is exactly
+why it belongs in a ledger rather than only in commit messages.
+
+| capability | status | notes |
+|---|---|---|
+| Deployment floor: macOS 14 | done | 2026-07-30. Two APIs begin later — `glassEffect` (26), `Color.mix(with:by:)` (15) — both guarded. Measured by building against each floor; macOS 13 is a rewrite, not a gate (Observation begins at 14). **Compiles for 14; never run on it.** |
+| Interface as a library (`ReplayUI`) | done | 2026-07-29. Xcode cannot preview an executable target. `AppDelegate` is the only public symbol; `Intents.swift` stays in the executable because the metadata processor is told that module's name. |
+| Xcode previews | partial | 12 of 25 view files. `PreviewWorld` + `SampleRecord` make each one cheap; added as a surface is touched. |
+| Scheduled reports | done | 2026-07-29. Writes the period that *finished*; nothing when it is empty; prunes only its own. |
+| Runtime-assembled copy, translated | partial | Session titles, gaps, headline figures, sidebar, resume card, time labels, **Memories in full**, the day's story. Left: the autobiography, the morning briefing, Collections, Projects. |
+| Permission rows + reset | done | 2026-07-30. Nothing here is required. Accessibility can be added to the list; App Management cannot be read by any app, so its reset is always offered. |
+| Reinstall | done | 2026-07-30. The case a version comparison cannot see — a release rebuilt under its own tag. |
+| Prebuilt distribution (cask) | done | 2026-07-30, revised 2026-07-31. `brew trust --tap nurkamol/tap` then `brew install --cask nurkamol/tap/replay-app`. The cask clears the quarantine flag in `postflight` and the caveats say what that skips; it quits Replay before replacing the bundle. The source formula is `replay-app-source` and needs Xcode; the CLI needs only Command Line Tools. |
+| Stable signing identity | done | 2026-07-31. `Replay Self-Signed`, chosen by `make-app.sh` between a Developer ID and ad-hoc. Not trust, just *sameness* — it is what lets Homebrew carry a Gatekeeper approval across an upgrade instead of prompting every time. See [SIGNING.md](SIGNING.md). |
+| VoiceOver labelling | done | 2026-07-30. Audited all 9 surfaces and 7 Settings panes by walking the accessibility tree: 2 unlabelled controls out of ~280, both fixed. **Never heard spoken** — a person with the screen reader on should still walk it. |
 
 ## Known divergences to keep an eye on
 

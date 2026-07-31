@@ -201,20 +201,60 @@ struct UpdateInstallBehaviour {
 
     // MARK: - Where it must refuse
 
-    @Test("A Homebrew copy is left to Homebrew")
+    @Test("A Homebrew formula copy is left to Homebrew")
     func homebrew() {
         let path = "/opt/homebrew/Cellar/replay-app/HEAD-abc123/Replay.app"
-        #expect(Updates.installability(bundlePath: path, isWritable: true) == .managedByHomebrew)
+        #expect(
+            Updates.installability(bundlePath: path, isWritable: true, hasCaskReceipt: false)
+                == .managedByHomebrew
+        )
         // Writable is not the question: replacing it would leave brew believing it has a
         // version it no longer has, and the next upgrade would fight this one.
-        #expect(!Updates.installability(bundlePath: path, isWritable: true).canInstall)
+        #expect(
+            !Updates.installability(bundlePath: path, isWritable: true, hasCaskReceipt: false)
+                .canInstall
+        )
         #expect(Updates.refusal(.managedByHomebrew)?.contains("brew upgrade") == true)
+    }
+
+    /// The case the path check cannot see, and the reason the receipt is consulted at all.
+    ///
+    /// A cask *moves* the application into `/Applications`, so its bundle path is
+    /// indistinguishable from a copy somebody dragged there by hand. Before the receipt was
+    /// checked this returned `.ready` and the in-app updater would overwrite a Homebrew-managed
+    /// app — the exact fight `.managedByHomebrew` exists to prevent, reachable from the day
+    /// 0.9.8 shipped a cask.
+    @Test("A cask copy is Homebrew's, even though it lives in /Applications")
+    func homebrewCask() {
+        let path = "/Applications/Replay.app"
+        #expect(
+            Updates.installability(bundlePath: path, isWritable: true, hasCaskReceipt: true)
+                == .managedByHomebrew
+        )
+        // Same path, no receipt: an ordinary drag-installed copy, and that one may update.
+        #expect(
+            Updates.installability(bundlePath: path, isWritable: true, hasCaskReceipt: false)
+                == .ready
+        )
+        // The advice has to name the delivery, or it sends people to the formula.
+        #expect(Updates.refusal(.managedByHomebrew)?.contains("--cask") == true)
+    }
+
+    @Test("The receipt is looked for under both Homebrew prefixes")
+    func receiptPaths() {
+        // Apple silicon and Intel. A missing prefix here reads as "not Homebrew's" and
+        // offers the update, so the list being right is what makes the check work at all.
+        #expect(Updates.caskReceiptPaths.contains("/opt/homebrew/Caskroom/replay-app"))
+        #expect(Updates.caskReceiptPaths.contains("/usr/local/Caskroom/replay-app"))
     }
 
     @Test("A translocated copy has nothing to replace")
     func translocated() {
         let path = "/private/var/folders/xy/AppTranslocation/ABC-123/d/Replay.app"
-        #expect(Updates.installability(bundlePath: path, isWritable: false) == .translocated)
+        #expect(
+            Updates.installability(bundlePath: path, isWritable: false, hasCaskReceipt: false)
+                == .translocated
+        )
         // The advice has to be the thing that actually fixes it.
         #expect(Updates.refusal(.translocated)?.contains("Applications") == true)
     }
@@ -222,14 +262,17 @@ struct UpdateInstallBehaviour {
     @Test("A read-only location refuses rather than half-installing")
     func readOnly() {
         #expect(
-            Updates.installability(bundlePath: "/Applications/Replay.app", isWritable: false)
-                == .notWritable
+            Updates.installability(
+                bundlePath: "/Applications/Replay.app", isWritable: false, hasCaskReceipt: false
+            ) == .notWritable
         )
     }
 
     @Test("An ordinary writable install is ready")
     func ready() {
-        let it = Updates.installability(bundlePath: "/Applications/Replay.app", isWritable: true)
+        let it = Updates.installability(
+            bundlePath: "/Applications/Replay.app", isWritable: true, hasCaskReceipt: false
+        )
         #expect(it == .ready)
         #expect(it.canInstall)
         #expect(Updates.refusal(.ready) == nil)
@@ -239,8 +282,20 @@ struct UpdateInstallBehaviour {
     func precedence() {
         // A Cellar path is always Homebrew's even if this account can write to it.
         #expect(
-            Updates.installability(bundlePath: "/opt/homebrew/Cellar/x/Replay.app", isWritable: true)
-                == .managedByHomebrew
+            Updates.installability(
+                bundlePath: "/opt/homebrew/Cellar/x/Replay.app",
+                isWritable: true,
+                hasCaskReceipt: false
+            ) == .managedByHomebrew
+        )
+        // And a receipt outranks translocation: a cask copy running translocated is still
+        // Homebrew's to replace, and telling somebody to move it would be the wrong fix.
+        #expect(
+            Updates.installability(
+                bundlePath: "/private/var/folders/x/AppTranslocation/A/d/Replay.app",
+                isWritable: true,
+                hasCaskReceipt: true
+            ) == .managedByHomebrew
         )
     }
 
