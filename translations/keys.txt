@@ -21,6 +21,7 @@
 %@ switch
 %@ switches
 %@ tags
+%@ tends to lead with
 %@ this week
 %@ to close
 %@ to go
@@ -589,6 +590,7 @@ You have this
 You opened %1$@ for the first time %2$@.
 You started building this memory today.
 You started in %1$@, in %2$@.
+You usually begin with
 You were active %1$@ in a row, ending %2$@.
 You were still going at %1$@ — %2$@.
 YOU WROTE, %@

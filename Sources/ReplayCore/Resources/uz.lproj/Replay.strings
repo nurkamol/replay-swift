@@ -24,6 +24,7 @@
 "%@ switch" = "%@ almashish";
 "%@ switches" = "%@ almashish";
 "%@ tags" = "%@ teg";
+"%@ tends to lead with" = "%@ odatda shu bilan boshlanadi:";
 "%@ this week" = "shu hafta %@";
 "%@ to close" = "yopish uchun %@";
 "%@ to go" = "%@ qoldi";
@@ -592,6 +593,7 @@
 "You opened %1$@ for the first time %2$@." = "%1$@ ilovasini %2$@ birinchi marta ochgansiz.";
 "You started building this memory today." = "Bu xotirani bugun to‘plashni boshladingiz.";
 "You started in %1$@, in %2$@." = "%1$@da, %2$@ ilovasida boshladingiz.";
+"You usually begin with" = "Siz odatda shundan boshlaysiz:";
 "You were active %1$@ in a row, ending %2$@." = "Ketma-ket %1$@ faol bo‘ldingiz, %2$@ tugadi.";
 "You were still going at %1$@ — %2$@." = "%1$@ da hali ham ishlayotgan edingiz — %2$@.";
 "YOU WROTE, %@" = "SIZ YOZGANSIZ, %@";

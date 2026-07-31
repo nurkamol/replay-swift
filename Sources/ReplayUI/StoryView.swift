@@ -103,10 +103,10 @@ struct StoryView: View {
             } else {
                 VStack(spacing: 0) {
                     if let first = story.rituals.firstApp {
-                        ritual("sunrise", "You usually begin with", first)
+                        ritual("sunrise", Loc.t("You usually begin with"), first)
                     }
                     ForEach(story.rituals.slots, id: \.part) { slot in
-                        ritual(glyph(for: slot.part), "\(slot.part) tends to lead with", slot.app)
+                        ritual(glyph(for: slot.part), RuntimeCopy.ritualLead(part: slot.part), slot.app)
                     }
                 }
                 .padding(Design.Space.snug)

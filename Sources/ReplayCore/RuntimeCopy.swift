@@ -43,7 +43,28 @@ public enum RuntimeCopy {
     ///
     /// Translated through `Loc.t` like any other word. They arrive here as English strings
     /// rather than as a type because `dayPart(of:)` is contract-checked and returns one.
-    public static func dayPart(_ english: String) -> String { Loc.t(english) }
+    public static func dayPart(_ english: String) -> String {
+        // Spelled out for the same reason `partWord` below is: `Loc.t(english)` hands the key
+        // scanner a variable, so these four exist in the catalogue only because other files
+        // happen to name them. That is translation by coincidence, and an orphan sweep has
+        // already deleted a set of day parts here once on exactly that reasoning.
+        switch english {
+        case "Morning": Loc.t("Morning")
+        case "Afternoon": Loc.t("Afternoon")
+        case "Evening": Loc.t("Evening")
+        case "Late night": Loc.t("Late night")
+        default: Loc.t(english)
+        }
+    }
+
+    /// "Morning tends to lead with", as one sentence a translator can reorder.
+    ///
+    /// The app itself follows in the view, as an icon and a name, so this is the half that
+    /// can move — which is the same shape the reference uses. A language that needs the
+    /// application first cannot have it here; that would take the row itself being rebuilt.
+    public static func ritualLead(part: String) -> String {
+        String(format: Loc.t("%@ tends to lead with"), dayPart(part))
+    }
 
     /// A gap in the day, in the reader's language.
     ///

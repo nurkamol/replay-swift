@@ -29,6 +29,12 @@ Developer ID and notarised. Everything before it is a version of the source.
   are compared against the reference by the parity suite, so they still return English and
   the translation happens at the view layer — the same seam `SessionTitle.english` uses.
 
+- **The rituals on Story read in your language** — the first of the runtime-assembled
+  surfaces to be converted. "Morning tends to lead with" was built by pasting the day part
+  onto an English tail, which is untranslatable into any language that orders it differently;
+  it is one format string with a positional argument now, and the part goes through the same
+  spelled-out switch the day's story uses.
+
 - **Story, Chapters, Autobiography, the Museum and the Legacy view read in your language.**
   `NarrativeCopy` holds the prose those five surfaces are made of, and every one of its
   sentences was already a key and already translated — the views just never looked any of
