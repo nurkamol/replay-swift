@@ -18,7 +18,7 @@ public enum Replay {
             ?? fallbackVersion
 
     /// The version in the source, for when there is no bundle to ask.
-    public static let fallbackVersion = "0.9.8"
+    public static let fallbackVersion = "0.9.9"
 }
 
 /// What each version of Replay actually gained.
@@ -45,6 +45,18 @@ public struct Release: Equatable, Sendable, Identifiable {
 }
 
 public let releases: [Release] = [
+    Release(
+        version: "0.9.9",
+        title: "Installing and updating stop asking",
+        changes: [
+            "**An update no longer sends you to System Settings \u{2014} not once, and not every time.** Replay used to be signed in a way that gave it no fixed identity, so macOS read each new version as a different application and asked you to approve it again on every single update. Every build now carries the same signature, and your approval carries across.",
+            "**Installing with Homebrew opens straight away.** The tap clears the download flag that macOS uses to block unsigned apps. Worth knowing what that means: macOS did not check this copy, Homebrew checked it against a published checksum instead \u{2014} and that is a check published by the same project that publishes the app. If you would rather Apple\u{2019}s check applied, `brew install nurkamol/tap/replay-app-source` builds it on your own Mac.",
+            "**An upgrade no longer interrupts a recording.** Homebrew used to replace Replay while it was still running and writing to your record, which could lose the end of a day. It closes Replay first now, and opens it again afterwards.",
+            "**Replay stopped offering to update a copy Homebrew installed.** It could recognise one kind of Homebrew install and not the other, so it would replace a copy Homebrew was managing \u{2014} leaving the two disagreeing about which version you had.",
+            "**Memories reads in your language.** All seven cards, the on-this-day names, the heatmap\u{2019}s months and weekday initials, and every date on the surface. So does a day you reopen: its story, its headline, the reflection prompt and the export menus.",
+            "**The messages that appear when an update fails are translated**, which is the worst moment to be handed a language you did not choose.",
+        ]
+    ),
     Release(
         version: "0.9.8",
         title: "Three OS generations, and words you can read",

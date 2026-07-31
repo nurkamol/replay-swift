@@ -19,7 +19,7 @@ independently — the document asserted both schemes at once.)
 **1.0.0 is reserved for the first build that can be handed to somebody**: signed with a
 Developer ID and notarised. Everything before it is a version of the source.
 
-## Unreleased
+## 0.9.9 — 2026-07-31
 
 ### Fixed
 
@@ -80,6 +80,22 @@ Developer ID and notarised. Everything before it is a version of the source.
 - **Update messages are translated too.** The eleven sentences that appear when a check or an
   install fails were English in every language — which is the worst moment to meet a language
   you did not choose.
+
+- **A day you reopen reads in your language.** Six English strings were sitting on that
+  surface — the time-of-day word in the story, the headline date, the toolbar subtitle, the
+  reflection prompt, and both Export menus — and nobody had ever seen them, because the
+  screenshot harness drove 21 surfaces and a past day was not one of them. It drives 25 now:
+  a reopened day, the welcome screen's two pages, and What's New.
+  - One of the six was self-inflicted, and is the useful half. The day parts are looked up
+    through a variable, which the key scanner cannot see, so their translations looked
+    orphaned and a tidy-up deleted them. `docs/TRANSLATING.md` now carries the rule: never
+    sweep orphans in bulk.
+
+- **Every SF Symbol is checked against the oldest macOS this app supports.** A symbol newer
+  than the deployment target draws *nothing* — no crash, no warning, a gap where an icon
+  should be, on a Mac the developer does not own. `tools/symbol-audit.mjs` reads Apple's own
+  availability manifest and fails the build instead. All 52 in use are safe on macOS 14; that
+  was true by luck until now.
 
 ## 0.9.8 — 2026-07-30
 

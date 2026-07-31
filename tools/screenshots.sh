@@ -134,7 +134,14 @@ VERSION_IN_BUILD="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionStrin
     "$APP/Contents/Info.plist" 2>/dev/null || true)"
 [ -n "$VERSION_IN_BUILD" ] && defaults write "$DOMAIN" lastRunVersion -string "$VERSION_IN_BUILD"
 
-pkill -f "$APP" 2>/dev/null || true
+# Any Replay, not just this one. `pkill -f "$APP"` matched only the build directory, so with
+# an installed /Applications/Replay.app running, the copy launched below saw it, handed over
+# the front and terminated (AppDelegate's one-at-a-time guard) — and every screenshot after
+# that was of the *installed* version. A harness that silently photographs the wrong build is
+# worse than no harness, because the pictures look right.
+osa -e 'tell application "Replay" to quit' >/dev/null 2>&1 || true
+sleep 2
+pkill -f "Replay.app/Contents/MacOS/Replay" 2>/dev/null || true
 sleep 1
 # `open` does not pass the environment on, so a key-logging run launches the binary directly.
 # Same bundle either way — what matters is that `Loc` can see `REPLAY_LOG_KEYS`.
