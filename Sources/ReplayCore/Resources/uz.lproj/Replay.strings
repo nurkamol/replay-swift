@@ -19,10 +19,12 @@
 "%@ session" = "%@ seans";
 "%@ Session" = "%@ seansi";
 "%@ sessions" = "%@ seans";
+"%@ shared" = "%@ birgalikda";
 "%@ stayed in front, no switching" = "%@ oldinda qoldi, almashish bo‘lmadi";
 "%@ switch" = "%@ almashish";
 "%@ switches" = "%@ almashish";
 "%@ tags" = "%@ teg";
+"%@ this week" = "shu hafta %@";
 "%@ to close" = "yopish uchun %@";
 "%@ to go" = "%@ qoldi";
 "%@ visit" = "%@ tashrif";
@@ -30,6 +32,7 @@
 "%1$@ · %2$@ apps · %3$@ switches" = "%1$@ · %2$@ ilova · %3$@ almashuv";
 "%1$@ %2$@ Session" = "%1$@ %2$@ seansi";
 "%1$@ active · %2$@" = "%1$@ faol · %2$@";
+"%1$@ active across %2$@." = "%2$@ davomida %1$@ faol.";
 "%1$@ active on %2$@, mostly in %3$@." = "%2$@ kuni %1$@ faol, asosan %3$@ ilovasida.";
 "%1$@ active on %2$@." = "%2$@ kuni %1$@ faol.";
 "%1$@ at %2$@" = "%1$@, soat %2$@";
@@ -47,6 +50,7 @@
 "A curated walk through the best of your history." = "Tarixingizning eng yaxshi qismlari bo‘ylab tanlangan sayr.";
 "A flat surface. The quietest, and the easiest to read over." = "Tekis yuza. Eng tinchi va ustidan o‘qish eng osoni.";
 "A late night" = "Tungi mashg‘ulot";
+"A look back at yesterday." = "Kechagi kunga nazar.";
 "A look back every Sunday evening at the week just gone." = "Har yakshanba oqshomi o‘tgan haftaga nazar.";
 "A once-a-day reminder of what you were doing on this date in the past." = "O‘tmishda shu sanada nima qilganingiz haqida kuniga bir marta eslatma.";
 "A part becomes a ritual once the same app has led it on more than one day. Read only from your history — nothing set, nothing scheduled." = "Kunning bir qismi bir necha kun davomida bitta ilova yetakchilik qilsa, odatga aylanadi. Faqat tarixingizdan o‘qiladi — hech narsa belgilanmaydi, hech narsa rejalashtirilmaydi.";
@@ -57,10 +61,12 @@
 "A quiet walk through the best of your history — the memories, the deep focus, the things you kept." = "Tarixingizning eng yaxshi qismlari bo‘ylab tinch sayr — xotiralar, chuqur fokus, saqlab qo‘yganlaringiz.";
 "A recap of the day's focus, delivered at the time you choose." = "Kun fokusining xulosasi — siz tanlagan vaqtda yetkaziladi.";
 "A session, a note, a tag, an app" = "Seans, izoh, teg yoki ilova";
+"A slow drift through your day" = "Kuningiz boʻylab sekin sayr";
 "A slow swell on the application's icon, so a screen of live figures does not read as a still picture of one. Off leaves ambient mode completely still. Reduce Motion turns it off either way." = "Ilova belgisining sekin kengayishi — jonli raqamlar ekrani qotib qolgan rasmdek ko‘rinmasligi uchun. O‘chirilsa, ambient rejimi butunlay harakatsiz bo‘ladi. “Harakatni kamaytirish” uni baribir o‘chiradi.";
 "A steady stretch" = "Barqaror davr";
 "About" = "Haqida";
 "Accessibility" = "Maxsus imkoniyatlar";
+"Actions" = "Amallar";
 "active" = "faol";
 "active today" = "bugun faol";
 "Activity history" = "Faoliyat tarixi";
@@ -72,13 +78,16 @@
 "Afternoon" = "Tushdan keyin";
 "All collections" = "Barcha to‘plamlar";
 "All memories are generated locally. Nothing is uploaded." = "Barcha xotiralar shu yerda hosil qilinadi. Hech narsa yuklanmaydi.";
+"All time" = "Butun vaqt";
 "Ambient mode" = "Ambient rejimi";
 "Ambient Mode" = "Ambient rejimi";
 "Any time — from the menu bar or Privacy ▸ Activity tracking. Replay stops recording immediately, and your history is left untouched." = "Istalgan vaqtda — menyu panelidan yoki Maxfiylik ▸ Faoliyatni yozib borish orqali. Replay darhol yozishni to‘xtatadi, tarixingiz esa tegilmasdan qoladi.";
 "Anything from 15m to 16 hours." = "15 daqiqadan 16 soatgacha.";
 "App Management" = "Ilovalarni boshqarish";
 "Appears in" = "Qayerda uchraydi";
+"application" = "ilova";
 "applications" = "ilovalar";
+"Applications" = "Ilovalar";
 "Apps" = "Ilovalar";
 "Around this time" = "Shu payt atrofida";
 "As the days add up, Replay gathers the ones that share a character into chapters you can revisit and name — a week or two of history is enough for the first." = "Kunlar to‘planib borgani sari Replay o‘xshash tabiatli kunlarni boblarga jamlaydi — ularni qayta ko‘rish va nomlash mumkin. Birinchisi uchun bir-ikki haftalik tarix yetarli.";
@@ -148,6 +157,7 @@
 "Darker is busier. Click a day to replay it." = "Qanchalik to‘q bo‘lsa, shunchalik band. Kunni bosing — u qayta o‘ynaladi.";
 "Data" = "Ma’lumotlar";
 "Data ▸ Export report saves a slice as Markdown, PDF, HTML, CSV, or JSON — the HTML report carries app icons and styling, and PDF stays to one page with a pointer to HTML for longer spans. A single day exports from the ⋯ menu on its divider in the Timeline. Full backup exports the whole database, and importing merges rather than overwriting." = "Ma’lumotlar ▸ Hisobotni eksport qilish bo‘limi tanlangan qismni Markdown, PDF, HTML, CSV yoki JSON sifatida saqlaydi — HTML hisobotida ilova belgilari va uslub bo‘ladi, PDF esa bir sahifada qoladi va uzunroq oraliqlar uchun HTML’ga yo‘naltiradi. Bitta kunni Vaqt chizig‘idagi ajratgich yonidagi ⋯ menyusidan eksport qilasiz. To‘liq zaxira butun bazani eksport qiladi, import esa ustiga yozmaydi — qo‘shib boradi.";
+"Days" = "Kunlar";
 "Deletes all activity, settings, and preferences, then returns to the welcome screen." = "Barcha faoliyat, sozlama va afzalliklarni o‘chiradi, so‘ng xush kelibsiz ekraniga qaytaradi.";
 "Deletes every event, headline, note and bookmark. There is no undo." = "Har bir hodisa, sarlavha, eslatma va xatcho‘pni o‘chiradi. Ortga qaytarish yo‘q.";
 "Deleting rows frees space inside the database file without shrinking the file itself; the room is kept for future writes. Replay rewrites the file after a large deletion so the space returns to your disk, and Data ▸ Storage ▸ Compact database does it on demand and tells you how much came back." = "Qatorlarni o‘chirish baza fayli ichida joy bo‘shatadi, lekin faylning o‘zini kichraytirmaydi; bu joy keyingi yozuvlar uchun saqlanadi. Katta o‘chirishdan so‘ng Replay faylni qayta yozadi va joy diskingizga qaytadi; Ma’lumotlar ▸ Xotira ▸ Bazani ixchamlash buni talab bo‘yicha bajaradi va qancha joy qaytganini aytadi.";
@@ -174,9 +184,11 @@
 "Every page is holding live data, so there is little to recover — compaction has real work to do after you delete history." = "Har bir sahifada jonli ma’lumot bor, shuning uchun qaytariladigan narsa kam — tarixni o‘chirganingizdan keyin ixchamlashning ishi bo‘ladi.";
 "Every sentence is drawn only from your own local history. Nothing is invented." = "Har bir jumla faqat sizning mahalliy tarixingizdan olinadi. Hech narsa to‘qib chiqarilmaydi.";
 "Every week" = "Har hafta";
+"Everything" = "Hammasi";
 "Everything here was recorded on this Mac and has never left it." = "Bu yerdagi hamma narsa shu Mac’da yozilgan va undan hech qachon chiqmagan.";
 "Everything Replay has gained, newest first." = "Replay qo‘lga kiritgan hamma narsa — eng yangisi birinchi.";
 "Everything stays on this Mac" = "Hammasi shu Mac’da qoladi";
+"Everything you did today." = "Bugun qilgan barcha ishlaringiz.";
 "Exclude and Erase" = "Chiqarib tashlash va o‘chirish";
 "Excluded" = "Chiqarilgan";
 "Excluded applications" = "Chiqarilgan ilovalar";
@@ -192,7 +204,9 @@
 "Export this day" = "Shu kunni eksport qilish";
 "Export This Day" = "Bu kunni eksport qilish";
 "Export…" = "Eksport…";
+"Exported %1$@ to %2$@" = "%1$@ %2$@ ga eksport qilindi";
 "Favourite applications" = "Sevimli ilovalar";
+"Favourites" = "Sevimlilar";
 "First time in %@" = "%@ ilovasida birinchi marta";
 "Fit to the window" = "Oynaga moslash";
 "Focus goal" = "Fokus maqsadi";
@@ -211,6 +225,7 @@
 "GitHub is rate-limiting this connection. Try again later." = "GitHub bu ulanishni cheklamoqda. Keyinroq urinib ko‘ring.";
 "GitHub replied in a way this could not read." = "GitHub o‘qib bo‘lmaydigan javob qaytardi.";
 "Glass" = "Shisha";
+"Go" = "Oʻtish";
 "Go to a surface, an application, a project, a day…" = "Bo‘limga, ilovaga, loyihaga yoki kunga o‘tish…";
 "Goal reached — %@" = "Maqsadga yetildi — %@";
 "Granted — not needed, and safe to remove" = "Berilgan — kerak emas, olib tashlash mumkin";
@@ -249,6 +264,8 @@
 "Keep ambient mode up while you carry on working, instead of it closing the moment you touch the keyboard. It takes the whole screen it is on, so this only applies when that is a screen other than the one Replay's window is on — otherwise there would be nothing to work in." = "Klaviaturaga tegishingiz bilan yopilib qolmasdan, siz ishlayotganingizda ambient rejimi ochiq tursin. U turgan ekranni butunlay egallaydi, shuning uchun bu faqat Replay oynasi turgan ekrandan boshqa ekran bo‘lgandagina amal qiladi — aks holda ishlash uchun joy qolmaydi.";
 "Keep the drift to a span of the day — an evening, or the hours you are at this desk. Outside it nothing starts on its own, and both can still be opened by hand." = "Buni kunning ma’lum oralig‘i bilan cheklang — oqshom yoki shu stol yonida bo‘ladigan soatlaringiz. Undan tashqarida hech narsa o‘zi ochilmaydi, ikkalasini ham qo‘lda ochsa bo‘ladi.";
 "Language" = "Til";
+"Last 30 Days" = "Soʻnggi 30 kun";
+"Last 7 Days" = "Soʻnggi 7 kun";
 "Last backup %@." = "Oxirgi zaxira %@.";
 "Last report %@." = "Oxirgi hisobot %@.";
 "Late night" = "Tunda";
@@ -276,6 +293,7 @@
 "Morning" = "Ertalab";
 "Morning briefing" = "Ertalabki xulosa";
 "Most often here on %@." = "Ko‘pincha %@ shu yerda.";
+"Most used" = "Eng koʻp ishlatilgan";
 "Most used this week" = "Shu haftada eng ko‘p ishlatilgan";
 "Mostly %@" = "Asosan %@";
 "Museum" = "Muzey";
@@ -433,6 +451,7 @@
 "Search" = "Qidiruv";
 "Search for %@ again" = "%@ ni yana qidirish";
 "Search your memory" = "Xotirangizdan qidiring";
+"session" = "seans";
 "sessions" = "seanslar";
 "Sessions behind the selection" = "Tanlov ortidagi seanslar";
 "Sessions they shared" = "Ular birga o‘tkazgan seanslar";
@@ -440,6 +459,7 @@
 "Settings…" = "Sozlamalar…";
 "Shortcuts" = "Tezkor tugmalar";
 "Show on" = "Qaysi ekranda";
+"Show or Hide Sidebar" = "Yon panelni koʻrsatish yoki yashirish";
 "Show the current application" = "Hozirgi ilovani ko‘rsatish";
 "Show the current session" = "Hozirgi seansni ko‘rsatish";
 "Show the introduction again in the main window." = "Tanishtiruvni asosiy oynada yana ko‘rsatish.";
@@ -479,6 +499,7 @@
 "The day opened in the afternoon, in %@." = "Kun tushdan keyin %@ ilovasida ochildi.";
 "The day wound down in %@." = "Kun %@ ilovasida yakunlandi.";
 "The day's total is always shown — it is what the screen is for. These are the things around it, and two of them are here because an ambient screen is usually a second screen, and a second screen is often one other people can see. A screen left open takes no keyboard, so Escape does not reach it: close it with ⇧⌘A, the View menu, or the ✕ in its corner." = "Kun jamisi doim ko‘rsatiladi — ekran shuning uchun. Bular uning atrofidagi narsalar, ulardan ikkitasi shu yerda, chunki ambient ekrani odatda ikkinchi ekran bo‘ladi, ikkinchi ekranni esa ko‘pincha boshqalar ham ko‘radi. Ochiq qoldirilgan ekran klaviaturani olmaydi, shuning uchun Escape unga yetib bormaydi: uni ⇧⌘A, View menyusi yoki burchagidagi ✕ bilan yoping.";
+"The last month, newest first." = "Soʻnggi oy, eng yangisi birinchi.";
 "The long view of your work — told back to you, gathered into eras, and reflected in the rhythms you fall into." = "Ishingizga uzoq nazar — sizga qaytarib aytiladi, davrlarga jamlanadi va odat bo‘lib qolgan ritmlaringizda aks etadi.";
 "The museum is still filling" = "Muzey hali to‘lmoqda";
 "The screen" = "Ekran";
@@ -505,6 +526,7 @@
 "Today · %@" = "Bugun · %@";
 "Today at %@" = "Bugun soat %@";
 "Today in History" = "Tarixda bugun";
+"Today, large enough to read across a room" = "Bugun, xonaning narigi chetidan oʻqish uchun yetarlicha katta";
 "TOP APP" = "ASOSIY ILOVA";
 "Tracked" = "Kuzatilgan";
 "Tracking paused" = "Yozish to‘xtatilgan";
@@ -580,6 +602,7 @@
 "Your history told back to you, a month or a year at a time." = "Tarixingiz sizga qaytarib aytiladi — bir oy yoki bir yildan.";
 "Your history, divided into the eras it naturally fell into — and yours to name." = "Tarixingiz o‘zi tabiiy ravishda bo‘lingan davrlarga ajratilgan — nomini o‘zingiz qo‘yasiz.";
 "Your history, told back to you — a week, a month, or a year at a time, only from what you actually did." = "Tarixingiz sizga qaytarib aytiladi — bir hafta, bir oy yoki bir yildan, faqat siz haqiqatan qilgan ishlardan.";
+"Your last seven days, newest first." = "Soʻnggi yetti kuningiz, eng yangisi birinchi.";
 "Your longest focus" = "Eng uzoq diqqatingiz";
 "Your longest focus was %1$@ in %2$@, %3$@." = "Eng uzoq diqqatingiz %3$@ %2$@ ilovasida %1$@ bo‘ldi.";
 "Your most active day" = "Eng faol kuningiz";

@@ -57,8 +57,11 @@ struct RelationshipView: View {
                     .font(Design.Text.title)
                     .lineLimit(2)
                 Text(
-                    "\(pair.sharedSessions) shared "
-                        + "\(pair.sharedSessions == 1 ? "session" : "sessions") · "
+                    String(
+                        format: Loc.t("%@ shared"),
+                        Loc.count(pair.sharedSessions, "%@ session", "%@ sessions")
+                    )
+                        + " · "
                         + Loc.count(pair.switches, "%@ switch", "%@ switches")
                 )
                 .font(Design.Text.body)

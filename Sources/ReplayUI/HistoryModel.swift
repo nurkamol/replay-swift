@@ -145,8 +145,9 @@ final class HistoryModel {
 /// How a day is named on screen. Relative for the two days people think of by name, and a
 /// plain date for the rest — a date is unambiguous, and "3 days ago" makes you count.
 func dayLabel(_ dayStart: Int64, today: Int64) -> String {
-    if dayStart == today { return "Today" }
-    if dayStart == today - dayMillis { return "Yesterday" }
+    // Spelled out rather than looked up from a variable, so the key scanner can see both.
+    if dayStart == today { return Loc.t("Today") }
+    if dayStart == today - dayMillis { return Loc.t("Yesterday") }
     return Date(timeIntervalSince1970: Double(dayStart) / 1000)
         .formatted(.dateTime.weekday(.wide).month(.wide).day().locale(Loc.locale))
 }

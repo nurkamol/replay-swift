@@ -142,8 +142,11 @@ final class NotificationsModel {
     /// better than pretending the number is live.
     private func dailyBody() -> String {
         guard let summary = model.summary else { return "A quiet day so far." }
-        return "\(formatDurationShort(summary.activeSeconds)) active across "
-            + "\(summary.sessionCount) \(summary.sessionCount == 1 ? "session" : "sessions")."
+        return String(
+            format: Loc.t("%1$@ active across %2$@."),
+            formatDurationShort(summary.activeSeconds),
+            Loc.count(summary.sessionCount, "%@ session", "%@ sessions")
+        )
     }
 
     private func weeklyBody() -> String {

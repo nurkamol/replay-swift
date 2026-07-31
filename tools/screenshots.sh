@@ -77,6 +77,25 @@ restore_appearance () {
 }
 trap restore_appearance EXIT INT TERM
 
+# Build first, every time, unless told not to.
+#
+# **This used to photograph whatever happened to be in build/, and say nothing.** It checked
+# that the app *existed* and not that it was current, so a run straight after an edit produced
+# 25 pictures of the previous build — pictures that look completely right and are evidence of
+# nothing. That is the same failure as the one below it, where a running /Applications copy
+# was captured instead of this one, and it is worse: there is no second app to notice.
+#
+# The whole point of this script is to make looking cheap, and a picture you cannot trust is
+# not cheap, it is expensive. So the build is part of the capture. `--no-build` is there for
+# re-running against a bundle you have deliberately assembled some other way.
+if [ "${1:-}" != "--no-build" ]; then
+    echo "  building       $(basename "$APP")…"
+    if ! "$ROOT/scripts/make-app.sh" release >/dev/null 2>&1; then
+        echo "screenshots: the build failed — run ./scripts/make-app.sh release to see why." >&2
+        exit 1
+    fi
+fi
+
 if [ ! -d "$APP" ]; then
     echo "screenshots: no build at $APP — run ./scripts/make-app.sh first." >&2
     exit 1
@@ -189,14 +208,41 @@ done
 # to be first in an unfiltered list of fifty-two. That is not hypothetical — it is how the
 # first light-mode run captured the desktop twice instead of the two display modes, and the
 # only evidence was "52 results" in the corner of a screenshot.
-palette_go () {  # palette_go <query>
+# What this build calls a thing, in the language it is currently running in.
+#
+# **The palette matches on what the app displays, and the app is not always in English.** Every
+# `palette_go` below passes an English name, so a run in another language typed a query that
+# matched nothing, pressed Return, and went wherever the palette happened to be pointing — and
+# the capture was written anyway, under the name of the surface it never reached. Ambient mode
+# and the screensaver escaped that only because somebody added `in_display_mode` to check.
+#
+# The catalogue in the bundle is the same table the app reads, so it is the right place to ask.
+localise () {  # localise <english>
+    local lang strings
+    lang="$(defaults read "$DOMAIN" languageCode 2>/dev/null || true)"
+    [ -z "$lang" ] && { printf '%s' "$1"; return; }
+    strings="$APP/Contents/Resources/Replay_ReplayCore.bundle/Contents/Resources/$lang.lproj/Replay.strings"
+    [ -f "$strings" ] || { printf '%s' "$1"; return; }
+    plutil -extract "$1" raw -o - "$strings" 2>/dev/null || printf '%s' "$1"
+}
+
+palette_go () {  # palette_go <english-name>
+    local query
+    query="$(localise "$1")"
     osa -e 'tell application "System Events" to key code 53' >/dev/null 2>&1 || true
     sleep 0.5
     osa -e 'tell application "Replay" to activate' -e 'delay 0.6' \
         -e 'tell application "System Events" to keystroke "k" using command down' >/dev/null
     sleep 2
-    osa -e "tell application \"System Events\" to keystroke \"$1\"" >/dev/null
+    osa -e "tell application \"System Events\" to keystroke \"$query\"" >/dev/null
     sleep 2
+    # No check that the query matched anything, and that is a known gap rather than an
+    # oversight. The obvious one — count the palette's rows over AX before pressing Return —
+    # was written and removed: the palette is an overlay *inside* the main window rather than
+    # a window of its own, so the query errored and reported "no match" for every navigation,
+    # including ones that were working. A guard that fails closed on everything is worse than
+    # none. The captures below are checked by looking at them; `in_display_mode` is the one
+    # place a real check exists, because there the failure was silent and total.
     osa -e 'tell application "System Events" to key code 36' >/dev/null
 }
 

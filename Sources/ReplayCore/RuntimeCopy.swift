@@ -308,3 +308,64 @@ public extension ActivitySession {
         )
     }
 }
+
+// MARK: - The spans a surface can be looking at
+
+/// The scope controls: "Today", "This Week", "Last 7 Days", "All time".
+///
+/// **These read from `spec/constants.json`, so the enums cannot be translated where they are
+/// defined.** `AppWindow.label`, `TimeRange.label` and `Search.Span.label` are compared
+/// against the reference by the parity suite; changing what they return would fail 971 checks
+/// for a reason that has nothing to do with the port drifting. Same seam, and same reason, as
+/// `SessionTitle.english` having a counterpart here rather than a translation in place.
+///
+/// **Every case is spelled out rather than looked up from the enum's own value.** A
+/// `Loc.t(window.label)` would be one line and would hand the scanner a variable, so none of
+/// these would become keys — which is exactly how "morning", "afternoon" and "evening" ended
+/// up untranslated and then deleted as orphans. Written this way they are ordinary literals
+/// that `translate.mjs` finds, and the compiler fails if a case is ever added without one.
+extension RuntimeCopy {
+
+    public static func label(_ window: AppWindow) -> String {
+        switch window {
+        case .today: Loc.t("Today")
+        case .week: Loc.t("This Week")
+        case .month: Loc.t("This Month")
+        }
+    }
+
+    public static func subtitle(_ window: AppWindow) -> String {
+        switch window {
+        case .today: Loc.t("Where your time went today.")
+        case .week: Loc.t("Where your time went this week.")
+        case .month: Loc.t("Where your time went this month.")
+        }
+    }
+
+    public static func label(_ range: TimeRange) -> String {
+        switch range {
+        case .today: Loc.t("Today")
+        case .yesterday: Loc.t("Yesterday")
+        case .week: Loc.t("Last 7 Days")
+        case .month: Loc.t("Last 30 Days")
+        }
+    }
+
+    public static func subtitle(_ range: TimeRange) -> String {
+        switch range {
+        case .today: Loc.t("Everything you did today.")
+        case .yesterday: Loc.t("A look back at yesterday.")
+        case .week: Loc.t("Your last seven days, newest first.")
+        case .month: Loc.t("The last month, newest first.")
+        }
+    }
+
+    public static func label(_ span: Search.Span) -> String {
+        switch span {
+        case .all: Loc.t("All time")
+        case .today: Loc.t("Today")
+        case .week: Loc.t("Week")
+        case .month: Loc.t("Month")
+        }
+    }
+}

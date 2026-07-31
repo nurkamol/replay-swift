@@ -22,10 +22,10 @@ struct AppsView: View {
                 } else {
                     let favourites = apps.favourites(pinned: preferences.pinnedApps)
                     if !favourites.isEmpty {
-                        section("Favourites", favourites, glyph: "star.fill")
+                        section(Loc.t("Favourites"), favourites, glyph: "star.fill")
                     }
                     section(
-                        favourites.isEmpty ? "Most used" : "Everything",
+                        favourites.isEmpty ? Loc.t("Most used") : Loc.t("Everything"),
                         apps.stats,
                         glyph: nil
                     )
@@ -35,7 +35,7 @@ struct AppsView: View {
         }
         .background(.background)
         .navigationTitle(Loc.t("Apps"))
-        .navigationSubtitle(apps.window.subtitle)
+        .navigationSubtitle(RuntimeCopy.subtitle(apps.window))
         .onAppear { if !apps.loaded { apps.load() } }
     }
 
@@ -45,7 +45,7 @@ struct AppsView: View {
                 get: { apps.window }, set: { apps.window = $0 }
             )) {
                 ForEach(AppWindow.allCases) { window in
-                    Text(window.label).tag(window)
+                    Text(RuntimeCopy.label(window)).tag(window)
                 }
             }
             .pickerStyle(.segmented)
@@ -54,7 +54,10 @@ struct AppsView: View {
 
             if !apps.stats.isEmpty {
                 HStack(spacing: Design.Space.statGap) {
-                    figure("\(apps.stats.count)", apps.stats.count == 1 ? "application" : "applications")
+                    figure(
+                        "\(apps.stats.count)",
+                        apps.stats.count == 1 ? Loc.t("application") : Loc.t("applications")
+                    )
                     figure(formatDurationShort(apps.totalSeconds), "in total")
                 }
             }

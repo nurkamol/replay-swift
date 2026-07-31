@@ -16,10 +16,12 @@
 %@ session
 %@ Session
 %@ sessions
+%@ shared
 %@ stayed in front, no switching
 %@ switch
 %@ switches
 %@ tags
+%@ this week
 %@ to close
 %@ to go
 %@ visit
@@ -27,6 +29,7 @@
 %1$@ · %2$@ apps · %3$@ switches
 %1$@ %2$@ Session
 %1$@ active · %2$@
+%1$@ active across %2$@.
 %1$@ active on %2$@, mostly in %3$@.
 %1$@ active on %2$@.
 %1$@ at %2$@
@@ -44,6 +47,7 @@ A clock above the day's total, for a screen you glance at rather than sit in fro
 A curated walk through the best of your history.
 A flat surface. The quietest, and the easiest to read over.
 A late night
+A look back at yesterday.
 A look back every Sunday evening at the week just gone.
 A once-a-day reminder of what you were doing on this date in the past.
 A part becomes a ritual once the same app has led it on more than one day. Read only from your history — nothing set, nothing scheduled.
@@ -54,10 +58,12 @@ A quiet look back, before the day begins.
 A quiet walk through the best of your history — the memories, the deep focus, the things you kept.
 A recap of the day's focus, delivered at the time you choose.
 A session, a note, a tag, an app
+A slow drift through your day
 A slow swell on the application's icon, so a screen of live figures does not read as a still picture of one. Off leaves ambient mode completely still. Reduce Motion turns it off either way.
 A steady stretch
 About
 Accessibility
+Actions
 active
 active today
 Activity history
@@ -69,13 +75,16 @@ afternoon
 Afternoon
 All collections
 All memories are generated locally. Nothing is uploaded.
+All time
 Ambient mode
 Ambient Mode
 Any time — from the menu bar or Privacy ▸ Activity tracking. Replay stops recording immediately, and your history is left untouched.
 Anything from 15m to 16 hours.
 App Management
 Appears in
+application
 applications
+Applications
 Apps
 Around this time
 As the days add up, Replay gathers the ones that share a character into chapters you can revisit and name — a week or two of history is enough for the first.
@@ -145,6 +154,7 @@ Dark
 Darker is busier. Click a day to replay it.
 Data
 Data ▸ Export report saves a slice as Markdown, PDF, HTML, CSV, or JSON — the HTML report carries app icons and styling, and PDF stays to one page with a pointer to HTML for longer spans. A single day exports from the ⋯ menu on its divider in the Timeline. Full backup exports the whole database, and importing merges rather than overwriting.
+Days
 Deletes all activity, settings, and preferences, then returns to the welcome screen.
 Deletes every event, headline, note and bookmark. There is no undo.
 Deleting rows frees space inside the database file without shrinking the file itself; the room is kept for future writes. Replay rewrites the file after a large deletion so the space returns to your disk, and Data ▸ Storage ▸ Compact database does it on demand and tells you how much came back.
@@ -171,9 +181,11 @@ Every day
 Every page is holding live data, so there is little to recover — compaction has real work to do after you delete history.
 Every sentence is drawn only from your own local history. Nothing is invented.
 Every week
+Everything
 Everything here was recorded on this Mac and has never left it.
 Everything Replay has gained, newest first.
 Everything stays on this Mac
+Everything you did today.
 Exclude and Erase
 Excluded
 Excluded applications
@@ -189,7 +201,9 @@ Export the entire database as JSON, or import one — importing merges, never ov
 Export this day
 Export This Day
 Export…
+Exported %1$@ to %2$@
 Favourite applications
+Favourites
 First time in %@
 Fit to the window
 Focus goal
@@ -208,6 +222,7 @@ GitHub is rate-limiting this connection. It clears at %@.
 GitHub is rate-limiting this connection. Try again later.
 GitHub replied in a way this could not read.
 Glass
+Go
 Go to a surface, an application, a project, a day…
 Goal reached — %@
 Granted — not needed, and safe to remove
@@ -246,6 +261,8 @@ Keep activity for
 Keep ambient mode up while you carry on working, instead of it closing the moment you touch the keyboard. It takes the whole screen it is on, so this only applies when that is a screen other than the one Replay's window is on — otherwise there would be nothing to work in.
 Keep the drift to a span of the day — an evening, or the hours you are at this desk. Outside it nothing starts on its own, and both can still be opened by hand.
 Language
+Last 30 Days
+Last 7 Days
 Last backup %@.
 Last report %@.
 Late night
@@ -273,6 +290,7 @@ morning
 Morning
 Morning briefing
 Most often here on %@.
+Most used
 Most used this week
 Mostly %@
 Museum
@@ -430,6 +448,7 @@ Scrub the day
 Search
 Search for %@ again
 Search your memory
+session
 sessions
 Sessions behind the selection
 Sessions they shared
@@ -437,6 +456,7 @@ Settings
 Settings…
 Shortcuts
 Show on
+Show or Hide Sidebar
 Show the current application
 Show the current session
 Show the introduction again in the main window.
@@ -476,6 +496,7 @@ The day began in the evening, in %@.
 The day opened in the afternoon, in %@.
 The day wound down in %@.
 The day's total is always shown — it is what the screen is for. These are the things around it, and two of them are here because an ambient screen is usually a second screen, and a second screen is often one other people can see. A screen left open takes no keyboard, so Escape does not reach it: close it with ⇧⌘A, the View menu, or the ✕ in its corner.
+The last month, newest first.
 The long view of your work — told back to you, gathered into eras, and reflected in the rhythms you fall into.
 The museum is still filling
 The screen
@@ -502,6 +523,7 @@ Today
 Today · %@
 Today at %@
 Today in History
+Today, large enough to read across a room
 TOP APP
 Tracked
 Tracking paused
@@ -577,6 +599,7 @@ Your history divided into the eras it naturally fell into.
 Your history told back to you, a month or a year at a time.
 Your history, divided into the eras it naturally fell into — and yours to name.
 Your history, told back to you — a week, a month, or a year at a time, only from what you actually did.
+Your last seven days, newest first.
 Your longest focus
 Your longest focus was %1$@ in %2$@, %3$@.
 Your most active day

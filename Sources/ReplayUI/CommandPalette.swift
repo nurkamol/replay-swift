@@ -74,8 +74,8 @@ final class CommandPaletteModel {
     private func reload() {
         var items: [Item] = Navigation.Surface.allCases.map { surface in
             Item(
-                id: "surface:\(surface.rawValue)", group: "Go", title: surface.rawValue,
-                subtitle: surface.purpose, symbol: surface.symbol,
+                id: "surface:\(surface.rawValue)", group: "Go", title: Loc.t(surface.rawValue),
+                subtitle: Loc.t(surface.purpose), symbol: surface.symbol,
                 action: .surface(surface)
             )
         }
@@ -84,15 +84,16 @@ final class CommandPaletteModel {
             // The reference groups these two under "Display", and they belong together:
             // both take the whole screen, and the choice between them is which one you
             // want, not whether you want one.
-            Item(id: "action:ambient", group: "Display", title: "Ambient Mode",
-                 subtitle: "Today, large enough to read across a room", symbol: "rectangle.on.rectangle",
+            Item(id: "action:ambient", group: "Display", title: Loc.t("Ambient Mode"),
+                 subtitle: Loc.t("Today, large enough to read across a room"),
+                 symbol: "rectangle.on.rectangle",
                  action: .ambient),
-            Item(id: "action:screensaver", group: "Display", title: "Screensaver",
-                 subtitle: "A slow drift through your day", symbol: "sparkles.tv",
+            Item(id: "action:screensaver", group: "Display", title: Loc.t("Screensaver"),
+                 subtitle: Loc.t("A slow drift through your day"), symbol: "sparkles.tv",
                  action: .screensaver),
-            Item(id: "action:settings", group: "Actions", title: "Settings",
+            Item(id: "action:settings", group: "Actions", title: Loc.t("Settings"),
                  subtitle: nil, symbol: "gearshape", action: .settings),
-            Item(id: "action:sidebar", group: "Actions", title: "Show or Hide Sidebar",
+            Item(id: "action:sidebar", group: "Actions", title: Loc.t("Show or Hide Sidebar"),
                  subtitle: nil, symbol: "sidebar.leading", action: .toggleSidebar),
         ]
 
@@ -102,7 +103,9 @@ final class CommandPaletteModel {
                 Item(
                     id: "app:\(bundleID)", group: "Applications",
                     title: stat.applicationName,
-                    subtitle: formatDurationShort(stat.totalSeconds) + " this week",
+                    subtitle: String(
+                        format: Loc.t("%@ this week"), formatDurationShort(stat.totalSeconds)
+                    ),
                     symbol: "app", bundleID: bundleID, appPath: stat.appPath,
                     action: .app(bundleID)
                 )
@@ -113,7 +116,7 @@ final class CommandPaletteModel {
         items += projects.projects.prefix(12).map { named in
             Item(
                 id: "project:\(named.id)", group: "Projects", title: named.name,
-                subtitle: "\(named.project.sessionCount) sessions · "
+                subtitle: Loc.count(named.project.sessionCount, "%@ session", "%@ sessions") + " · "
                     + formatDurationShort(named.project.totalSeconds),
                 symbol: "shippingbox",
                 appPath: named.project.apps.first?.appPath,
@@ -311,7 +314,7 @@ struct CommandPaletteView: View {
                                     .id(item.id)
                             }
                         } header: {
-                            Text(group)
+                            Text(paletteGroupHeading(group))
                                 .sectionLabelStyle()
                                 .padding(.horizontal, Design.Space.section)
                                 .padding(.vertical, Design.Space.snug)
@@ -380,5 +383,27 @@ struct CommandPaletteView: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isChosen ? [.isSelected] : [])
+    }
+}
+
+/// The palette's group headings, spelled out so the key scanner can see them.
+///
+/// `Loc.t(group)` hands the scanner a variable, and this is the third time that has cost
+/// something: "Go", "Actions", "Days" and "Applications" were absent from the catalogue
+/// entirely, while "Display" and "Projects" were in it *by coincidence* — other files happen
+/// to say `Loc.t("Display")`. A heading translated by luck is not translated.
+///
+/// The `default` is deliberate rather than exhaustive: `group` is a plain `String` on `Item`,
+/// so the compiler cannot check this, and a new group should render in English rather than
+/// crash. `translate.mjs` sees the literals either way.
+func paletteGroupHeading(_ group: String) -> String {
+    switch group {
+    case "Go": Loc.t("Go")
+    case "Display": Loc.t("Display")
+    case "Actions": Loc.t("Actions")
+    case "Days": Loc.t("Days")
+    case "Applications": Loc.t("Applications")
+    case "Projects": Loc.t("Projects")
+    default: Loc.t(group)
     }
 }

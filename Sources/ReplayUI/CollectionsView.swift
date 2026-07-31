@@ -121,7 +121,9 @@ struct CollectionsView: View {
         HStack(spacing: Design.Space.block) {
             summary(
                 "\(inCategory.count)",
-                inCategory.count == 1 ? "session" : "sessions"
+                // The label only; `summary` puts the figure beside it. Both forms are still
+                // named so the key scanner can see them.
+                inCategory.count == 1 ? Loc.t("session") : Loc.t("sessions")
             )
             summary(
                 formatDurationShort(inCategory.reduce(0) { $0 + $1.activeSeconds }),
@@ -237,8 +239,7 @@ private struct CollectionRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "\(collection.label), \(formatDurationShort(collection.totalSeconds)) across "
-                + "\(collection.sessionCount) "
-                + "\(collection.sessionCount == 1 ? "session" : "sessions")"
+                + Loc.count(collection.sessionCount, "%@ session", "%@ sessions")
         )
         .accessibilityHint(Loc.t("Opens this collection"))
     }

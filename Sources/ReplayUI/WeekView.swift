@@ -41,11 +41,11 @@ struct WeekView: View {
             figure(summary.activeLabel, "active")
             figure(
                 "\(summary.sessionCount)",
-                summary.sessionCount == 1 ? "session" : "sessions"
+                summary.sessionCount == 1 ? Loc.t("session") : Loc.t("sessions")
             )
             figure(
                 "\(summary.appsUsed)",
-                summary.appsUsed == 1 ? "application" : "applications"
+                summary.appsUsed == 1 ? Loc.t("application") : Loc.t("applications")
             )
         }
         .settlesIn(0)

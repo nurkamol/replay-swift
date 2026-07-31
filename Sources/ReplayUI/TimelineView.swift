@@ -101,7 +101,7 @@ struct TimelineView: View {
         }
         .background(.background)
         .navigationTitle(Loc.t("Timeline"))
-        .navigationSubtitle(history.range.subtitle)
+        .navigationSubtitle(RuntimeCopy.subtitle(history.range))
         .onAppear { if !overlays.loaded { overlays.load() } }
         .toolbar {
             // The range belongs in the chrome rather than the content: it governs the whole
@@ -113,7 +113,7 @@ struct TimelineView: View {
                     set: { history.range = $0 }
                 )) {
                     ForEach(TimeRange.allCases) { range in
-                        Text(range.label).tag(range)
+                        Text(RuntimeCopy.label(range)).tag(range)
                     }
                 }
                 .pickerStyle(.segmented)

@@ -106,8 +106,11 @@ final class ExportModel {
         panel.isExtensionHidden = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
-        let written = "Exported \(entries.count) \(entries.count == 1 ? "session" : "sessions") "
-            + "to \(url.lastPathComponent)"
+        let written = String(
+            format: Loc.t("Exported %1$@ to %2$@"),
+            Loc.count(entries.count, "%@ session", "%@ sessions"),
+            url.lastPathComponent
+        )
 
         do {
             switch format {

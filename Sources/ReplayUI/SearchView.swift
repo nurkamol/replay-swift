@@ -211,7 +211,7 @@ struct SearchView: View {
                 get: { search.span }, set: { search.span = $0 }
             )) {
                 ForEach(Search.Span.allCases) { span in
-                    Text(span.label).tag(span)
+                    Text(RuntimeCopy.label(span)).tag(span)
                 }
             }
             .pickerStyle(.segmented)
@@ -438,8 +438,7 @@ struct SearchView: View {
                     resultRow(
                         glyph: "square.stack",
                         title: collection.label,
-                        detail: "\(collection.sessionCount) "
-                            + (collection.sessionCount == 1 ? "session" : "sessions")
+                        detail: Loc.count(collection.sessionCount, "%@ session", "%@ sessions")
                             + " · \(formatDurationShort(collection.totalSeconds))",
                         open: { onOpenCollection(collection.category) }
                     )
@@ -453,8 +452,7 @@ struct SearchView: View {
                     resultRow(
                         glyph: "shippingbox",
                         title: resolveProjectName(project, names: preferences.projectNames),
-                        detail: "\(project.sessionCount) "
-                            + (project.sessionCount == 1 ? "session" : "sessions")
+                        detail: Loc.count(project.sessionCount, "%@ session", "%@ sessions")
                             + " · \(formatDurationShort(project.totalSeconds))",
                         open: { navigation.open(project: project.id) }
                     )
@@ -471,8 +469,7 @@ struct SearchView: View {
                             size: Design.Icon.listItem
                         ),
                         title: app.applicationName,
-                        detail: "\(app.sessionCount) "
-                            + (app.sessionCount == 1 ? "session" : "sessions")
+                        detail: Loc.count(app.sessionCount, "%@ session", "%@ sessions")
                             + " · \(formatDurationShort(app.seconds))",
                         open: { search.chosenApp = app.applicationName }
                     )

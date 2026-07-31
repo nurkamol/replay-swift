@@ -23,6 +23,17 @@ Developer ID and notarised. Everything before it is a version of the source.
 
 ### Added
 
+- **The scope controls read in your language.** "Today / This Week / This Month" on Apps,
+  "All time / Week / Month" on Search, "Last 7 Days / Last 30 Days" on the Timeline, every
+  page subtitle beneath them, and the section headings on Apps. The enums that define them
+  are compared against the reference by the parity suite, so they still return English and
+  the translation happens at the view layer — the same seam `SessionTitle.english` uses.
+
+- **The command palette reads in your language.** All of it: the commands, their
+  descriptions, and the group headings above them. It was rendering `Text(item.title)` with
+  no lookup at all, so ⌘K opened an English window in a translated app — and matching was
+  against English too, which is why searching it in Uzbek found nothing.
+
 - **Counted nouns follow the language's own plural rules.** "3 sessions" was chosen by
   `n == 1`, which is English's rule rather than *a* rule. Russian has four forms — 21 takes
   the same one as 1, and 11 takes neither — and Arabic has six, so every counted noun in
@@ -36,6 +47,11 @@ Developer ID and notarised. Everything before it is a version of the source.
     the fallback for any noun a language has not finished, and the contract is untouched.
 
 ### Fixed
+
+- **Eleven counted nouns were built by appending "s" in code.** `count == 1 ? "session" :
+  "sessions"`, spelled out across eight files, bypassing `Loc.count` entirely — so they were
+  untranslated *and* carried the English-only rule this release exists to remove. All now go
+  through `Loc.count`.
 
 - **Five counted nouns were never in the catalogue at all.** `%@ day`, `%@ visit`,
   `%@ visits`, `%@ switch` and `%@ switches` reach `Loc` through `Loc.count` rather than

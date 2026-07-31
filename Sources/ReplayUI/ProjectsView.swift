@@ -69,8 +69,8 @@ private struct ProjectCard: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(
-                            "\(project.sessionCount) "
-                                + "\(project.sessionCount == 1 ? "session" : "sessions") · "
+                            Loc.count(project.sessionCount, "%@ session", "%@ sessions")
+                                + " · "
                                 + formatDurationShort(project.totalSeconds)
                         )
                         .font(Design.Text.detail)
