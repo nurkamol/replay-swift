@@ -65,7 +65,11 @@ targets:
       - package: Replay
         product: ReplayUI
     info:
-      path: build/xcode/Info.plist
+      # Committed, alongside the project, rather than written into `build/`. The project
+      # itself is in the repository now, and a project that references a file nobody has is
+      # worse than no project — a fresh clone would fail to build until it happened to run
+      # XcodeGen. Generated all the same: edit the properties below, not the plist.
+      path: Support/Info.plist
       properties:
         CFBundleName: Replay
         CFBundleDisplayName: Replay
