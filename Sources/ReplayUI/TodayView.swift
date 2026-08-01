@@ -24,6 +24,15 @@ struct TodayView: View {
                 if let summary = model.summary, summary.switches > 0 {
                     HeadlineCard(summary: summary)
                         .settlesIn(0)
+                    // The cards that comment on the day, two abreast. Each is a short remark
+                    // — a goal, yesterday, a memory — and none of them is the day itself, so
+                    // stacking them full width made four slabs of mostly empty card between
+                    // the headline and the sessions.
+                    LazyVGrid(
+                        columns: Design.Layout.todaySecondaryColumns,
+                        alignment: .leading,
+                        spacing: Design.Space.block
+                    ) {
                     // Only when one has been asked for. No goal means no card, not an
                     // invitation to set one — the app does not push a target on anybody.
                     if let goal = preferences.focusGoalMinutes {
@@ -75,6 +84,7 @@ struct TodayView: View {
                     // the day itself. Now the day picks one and keeps it until midnight.
                     hero
                         .settlesIn(4)
+                    }
 
                     reflection
                         .settlesIn(5)
@@ -220,6 +230,10 @@ private struct HeadlineCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Design.Space.section) {
+            // The figure and the day's top application share a row rather than stacking.
+            // Both are short, and stacked they left the right half of a 1080pt card empty —
+            // "TOP APP / Firefox" was a full-width slab holding two words and a duration.
+            HStack(alignment: .top, spacing: Design.Space.block) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(formatDurationShort(summary.activeSeconds))
                     .font(Design.Text.hero(heroSize))
@@ -233,6 +247,26 @@ private struct HeadlineCard: View {
                 Text(Loc.t("active"))
                     .font(.title3)
                     .foregroundStyle(.secondary)
+            }
+
+                Spacer(minLength: Design.Space.block)
+                if let top = summary.mostUsed {
+                    HStack(spacing: Design.Space.row) {
+                        AppIcon(bundleID: top.bundleIdentifier, appPath: top.appPath, size: Design.Icon.feature)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(Loc.t("TOP APP"))
+                                .font(Design.Text.cardLabel)
+                                .foregroundStyle(.tertiary)
+                                .kerning(Design.Text.labelKerning)
+                            Text(top.applicationName).font(Design.Text.figure)
+                        }
+                        Text(formatDurationShort(top.seconds))
+                            .font(Design.Text.figure)
+                            .monospacedDigit()
+                    }
+                    .padding(Design.Space.card)
+                    .background(Design.Colour.fill, in: RoundedRectangle(cornerRadius: Design.Radius.card))
+                }
             }
 
             HStack(spacing: Design.Space.statGap) {
@@ -251,24 +285,6 @@ private struct HeadlineCard: View {
                 }
             }
 
-            if let top = summary.mostUsed {
-                HStack(spacing: Design.Space.row) {
-                    AppIcon(bundleID: top.bundleIdentifier, appPath: top.appPath, size: Design.Icon.feature)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(Loc.t("TOP APP"))
-                            .font(Design.Text.cardLabel)
-                            .foregroundStyle(.tertiary)
-                            .kerning(Design.Text.labelKerning)
-                        Text(top.applicationName).font(Design.Text.figure)
-                    }
-                    Spacer()
-                    Text(formatDurationShort(top.seconds))
-                        .font(Design.Text.figure)
-                        .monospacedDigit()
-                }
-                .padding(Design.Space.card)
-                .background(Design.Colour.fill, in: RoundedRectangle(cornerRadius: Design.Radius.card))
-            }
         }
         .padding(Design.Space.block)
         .frame(maxWidth: .infinity, alignment: .leading)

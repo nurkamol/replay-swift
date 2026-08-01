@@ -918,6 +918,22 @@ enum Design {
         /// less a 170pt sidebar and the page gutter still leaves a column wider than the
         /// widest card minimum, so nothing here can be squeezed into overlapping.
         static let pageWidth: CGFloat = 1080
+
+        /// The narrowest one of Today's secondary cards may be before the row folds to one.
+        ///
+        /// Today used to be a single column of full-width cards, and at the default window
+        /// that meant a 1080pt slab holding about 350pt of text — "9h 47m active, mostly
+        /// Terminal" stretched across the page with the right half of it empty. The cards
+        /// that *comment* on the day — the goal, the briefing, a memory, the hero — are short
+        /// and unrelated to each other, so they sit two abreast; the ones that *are* the day
+        /// — the headline and the session list — still run full width.
+        static let todaySecondaryMinimum: CGFloat = 420
+
+        /// `.adaptive`, so a narrow window folds to one column on its own rather than needing
+        /// a size class or a breakpoint to be chosen for it.
+        static let todaySecondaryColumns = [
+            GridItem(.adaptive(minimum: todaySecondaryMinimum), spacing: Space.block)
+        ]
         /// The welcome screen's column, and its page dots.
         static let welcomeWidth: CGFloat = 520
         /// The What's New window, and the dot in front of one of its lines.

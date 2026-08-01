@@ -54,6 +54,13 @@ struct SampleRecordBehaviour {
         // that fails depending on when it runs is worse than one that skips.
         let hour = Calendar.current.component(.hour, from: Date())
         guard hour >= 17 else { return }
+        // And a working day only, which this checked for the time but not the date. `seed`
+        // marks Saturday and Sunday quiet and drops every other stretch, so a weekend fixture
+        // holds about three hours — correct, and less than the four this asserts. The test is
+        // named for a working day; it now also runs on one. Found when a Saturday evening
+        // crossed 17:00 and turned the suite red for a reason nothing had changed.
+        let weekday = Calendar.current.component(.weekday, from: Date())
+        guard weekday != 1, weekday != 7 else { return }
         let active = model.summary?.activeSeconds ?? 0
         #expect(active > 4 * 3600)
         #expect(active < 8 * 3600)
