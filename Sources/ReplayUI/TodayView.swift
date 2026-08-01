@@ -488,7 +488,22 @@ struct SessionCard: View {
             }
         }
         // A bookmarked session gently glows rather than shouting: the same card, warmed.
-        .card(border: annotation.bookmarked ? Design.Colour.markedBorder : Design.Colour.border)
+        //
+        // A step above the cards around it, and that is the whole point of the step. The
+        // sessions *are* the day; the goal, the resume card and a surfaced memory are remarks
+        // about it. They all sat on the same `surfaceQuiet`, so a page of five identical grey
+        // rectangles gave the eye nowhere to go and no way to tell content from commentary.
+        //
+        // **Elevation, not fill.** Two goes at separating these by background colour were
+        // thrown away after looking at them: the fill scale runs from 0.18 to 0.30 of a single
+        // colour over a near-black page, so even its widest step is invisible, and the
+        // neighbouring one is a rounding error. `Elevation.raised` is described in
+        // DesignSystem as "a card the eye should read as an object", which is exactly what
+        // separates a session from a remark about the day — the sessions *are* the day, and
+        // the goal, the resume card and a surfaced memory are commentary on it. They were all
+        // the same flat rectangle, so the page gave the eye nowhere to go.
+        .card(elevation: .raised,
+              border: annotation.bookmarked ? Design.Colour.markedBorder : Design.Colour.border)
         // Escape closes what is open, consistently with every other transient thing on the
         // Mac. Only when something *is* open, so it does not swallow the key otherwise.
         .onExitCommand(perform: expanded ? { withAnimation(motion.animation(Design.Motion.settle)) { expanded = false } } : nil)
