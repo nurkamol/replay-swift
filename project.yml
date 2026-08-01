@@ -107,3 +107,37 @@ targets:
         # the eighteen lines of flag-wrangling make-app.sh has to do by hand — including a
         # retry, because the flags' spelling is not stable across toolchains.
         ENABLE_APP_INTENTS_METADATA: true
+
+# The scheme, spelled out rather than left to Xcode.
+#
+# XcodeGen emits a scheme only when asked, and without one Xcode invents a private,
+# unshared scheme per user — which came out with **no run destination at all**: "the
+# specified run destination name was not found, or there are no valid run destinations for
+# the scheme." The target was fine the whole time; there was simply nothing describing how
+# to run it. A shared scheme in the project is also what makes ⌘R behave the same on any
+# clone rather than depending on whatever Xcode happened to invent locally.
+schemes:
+  Replay:
+    build:
+      targets:
+        Replay: all
+    run:
+      config: Debug
+      # **Without this, ⌘R opens your real history.** `REPLAY_DB` points a development build
+      # at a scratch record, and it is honoured only in a debug build (`#if DEBUG` in
+      # ActivityStore) — which is also why Run and Profile are both Debug here. Two Replays
+      # on one record is not a tidiness problem: `open()` closes any session with no end, so
+      # the second one to launch zeroes the live session of the first.
+      environmentVariables:
+        REPLAY_DB: ~/Library/Caches/app.replay.native/dev-activity.db
+        REPLAY_SEED: "1"
+    test:
+      config: Debug
+    profile:
+      # Debug, to match what Run builds. Profiling the shipped build is a different job:
+      # `./scripts/make-app.sh release` and Instruments against that.
+      config: Debug
+    analyze:
+      config: Debug
+    archive:
+      config: Release
