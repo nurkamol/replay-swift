@@ -340,7 +340,11 @@ private struct DaySection: View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
             header
 
-            ForEach(Array(day.items.enumerated()), id: \.offset) { index, item in
+            // Same collapse as Today's list, and this is where it matters more: a week of
+            // days each ending in a run of identical gap rows is most of the page.
+            ForEach(
+                Array(day.items.collapsingAdjacentBreaks().enumerated()), id: \.offset
+            ) { index, item in
                 // A quiet rule where the day turns over. Not per-hour: sessions routinely
                 // span two or three hours, so an hour rule between every pair would
                 // out-number the sessions it was meant to organise.

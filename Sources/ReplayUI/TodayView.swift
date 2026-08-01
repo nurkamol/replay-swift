@@ -199,7 +199,10 @@ struct TodayView: View {
                 .textCase(.uppercase)
                 .kerning(Design.Text.labelKerning)
 
-            ForEach(Array(model.timeline.enumerated()), id: \.offset) { _, item in
+            // Collapsed for display only; `model.timeline` is what the contract describes.
+            ForEach(
+                Array(model.timeline.collapsingAdjacentBreaks().enumerated()), id: \.offset
+            ) { _, item in
                 switch item {
                 case .session(let session):
                     SessionCard(
