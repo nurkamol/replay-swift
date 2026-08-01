@@ -158,6 +158,13 @@ enum Design {
         /// The smallest readable label; used for counts beside an icon.
         static let micro = Font.caption2
         /// An uppercase section label. Pair with ``Design/Text/labelKerning``.
+        /// A heading over a run of cards — "2 sessions" above the day's list.
+        ///
+        /// Distinct from `sectionLabel` because they were not: a page heading and a label
+        /// printed *inside* a card came out the same size, the same weight and the same grey,
+        /// so "2 SESSIONS" and "FOCUS GOAL" read as the same kind of thing when one names a
+        /// section of the page and the other names a field within one card.
+        static let pageSection = Font.subheadline.weight(.semibold)
         static let sectionLabel = Font.caption.weight(.semibold)
         /// The uppercase micro-label inside a card.
         static let cardLabel = Font.caption2.weight(.semibold)
@@ -609,6 +616,41 @@ enum Design {
             var glowStrength: Double
         }
 
+        /// The one colour that stands for an hour, taken from the sky already written for it.
+        ///
+        /// The app was very nearly monochrome — a blue selection, an orange streak badge, and
+        /// grey everywhere else — while carrying a whole gradient keyed to the time of day and
+        /// using it in exactly one place. A session at four in the morning and a session after
+        /// lunch are different in the one way this app is *about*, and nothing said so.
+        ///
+        /// The glow rather than the gradient: it is the most saturated part of a stop, and a
+        /// four-point bar wants a colour rather than a wash. Nearest stop, not interpolated —
+        /// this labels which part of the day a session fell in, and a boundary that slides is
+        /// harder to read than one that steps.
+        static func accent(atHour hour: Int, dark: Bool) -> Color {
+            let stops = dark ? Self.dark : Self.light
+            // `Stop.hour` is a Double — the stops are not all on whole hours, because the
+            // sky does not change at an even rate and sunrise needs more of them than noon.
+            let wrapped = Double(((hour % 24) + 24) % 24)
+            let nearest = stops.min {
+                abs($0.hour - wrapped) < abs($1.hour - wrapped)
+            }
+            guard let glow = nearest?.glow else { return .accentColor }
+            // Lifted, because a wash and a hairline want opposite things from the same
+            // colour. The stops are tuned for a gradient behind a whole card, where 16:30
+            // is deliberately the washed-out one — saturation 0.33, value 0.48 — and at three
+            // points wide that is not a colour, it is a smudge. The hue is the part that
+            // carries the meaning; saturation and brightness only have to clear the floor.
+            return glow.lifted(
+                minimumSaturation: accentSaturation, minimumBrightness: accentBrightness
+            )
+        }
+
+        /// Floors for ``accent(atHour:dark:)``. High enough to read at three points against a
+        /// card, low enough not to shout over a page whose loudest element is a duration.
+        static let accentSaturation: Double = 0.62
+        static let accentBrightness: Double = 0.72
+
         /// How wide the bloom is, as a fraction of the frame's longer edge.
         static let glowRadius: Double = 0.85
         /// Where the bloom starts fading. Below this it is flat colour, which keeps the
@@ -928,6 +970,10 @@ enum Design {
         /// and unrelated to each other, so they sit two abreast; the ones that *are* the day
         /// — the headline and the session list — still run full width.
         static let todaySecondaryMinimum: CGFloat = 420
+
+        /// The bar down the leading edge of a session, in the colour of the hour it began.
+        static let accentBarWidth: CGFloat = 3
+        static let accentBarHeight: CGFloat = 32
 
         /// `.adaptive`, so a narrow window folds to one column on its own rather than needing
         /// a size class or a breakpoint to be chosen for it.
@@ -1632,5 +1678,27 @@ extension View {
     /// A travelling border while `active`. See ``BorderBeam`` for why there is one use of it.
     func borderBeam(_ active: Bool, radius: CGFloat = Design.Radius.card) -> some View {
         modifier(BorderBeam(active: active, radius: radius))
+    }
+}
+
+
+extension Color {
+    /// The same hue, with saturation and brightness raised to a floor.
+    ///
+    /// `Color` cannot be inspected directly, so this goes through `NSColor` and back. The
+    /// conversion needs a known colour space: an `NSColor` built from a SwiftUI `Color` can be
+    /// in a space with no `saturationComponent` at all, and asking for one raises rather than
+    /// returning something wrong. `deviceRGB` is the safe landing place, and failure falls
+    /// back to the original colour rather than to an assertion.
+    func lifted(minimumSaturation: Double, minimumBrightness: Double) -> Color {
+        guard let rgb = NSColor(self).usingColorSpace(.deviceRGB) else { return self }
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        rgb.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        return Color(
+            hue: hue,
+            saturation: max(saturation, minimumSaturation),
+            brightness: max(brightness, minimumBrightness),
+            opacity: alpha
+        )
     }
 }

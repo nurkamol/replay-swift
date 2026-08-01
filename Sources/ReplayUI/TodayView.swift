@@ -194,7 +194,7 @@ struct TodayView: View {
     private var sessionList: some View {
         VStack(alignment: .leading, spacing: Design.Space.row) {
             Text(Loc.count(model.sessions.count, "%@ session", "%@ sessions"))
-                .font(Design.Text.sectionLabel)
+                .font(Design.Text.pageSection)
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
                 .kerning(Design.Text.labelKerning)
@@ -362,12 +362,24 @@ struct SessionCard: View {
         return parts.joined(separator: ", ")
     }
 
+    /// The hour this session began, for the accent below.
+    private var startHour: Int {
+        Calendar.current.component(
+            .hour, from: Date(timeIntervalSince1970: Double(session.startedAt) / 1000)
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
                 withAnimation(motion.animation(Design.Motion.settle)) { expanded.toggle() }
             } label: {
                 HStack(spacing: Design.Space.card) {
+                    // When this happened, as a colour. The app already draws a sky for the
+                    // time of day and used it in one place; a list of sessions is exactly
+                    // where it earns its keep, because "late night" and "afternoon" is the
+                    // distinction the whole product is about and nothing showed it.
+                    DayPartAccent(hour: startHour)
                     HStack(spacing: Design.Space.tight) {
                         ForEach(session.apps.prefix(4), id: \.applicationName) { app in
                             AppIcon(bundleID: app.bundleIdentifier, appPath: app.appPath, size: Design.Icon.stack)
@@ -1042,3 +1054,21 @@ private func previewToday(goalMinutes: Int?) -> some View {
 #Preview("Today") { previewToday(goalMinutes: nil) }
 #Preview("Today, with a goal") { previewToday(goalMinutes: 240) }
 #endif
+
+
+/// A short bar in the colour of the hour a session began.
+///
+/// Decorative in the accessibility sense — the time is written beside it in words, so this
+/// repeats rather than carries. `.accessibilityHidden` for that reason: a screen reader
+/// announcing a colour that restates the next line is noise.
+private struct DayPartAccent: View {
+    let hour: Int
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: Design.Radius.hair, style: .continuous)
+            .fill(Design.Sky.accent(atHour: hour, dark: scheme == .dark))
+            .frame(width: Design.Layout.accentBarWidth, height: Design.Layout.accentBarHeight)
+            .accessibilityHidden(true)
+    }
+}
