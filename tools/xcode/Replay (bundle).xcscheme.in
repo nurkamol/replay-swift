@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Run the app the way it actually ships: a real bundle, not the bare executable.
+
+   Why this exists
+
+   SwiftPM hands Xcode a plain Mach-O, so ⌘R on the `ReplayApp` scheme launches a binary with
+   no Info.plist. That copy has no version (it falls back to the literal in Changelog.swift),
+   no icon, no App Intents metadata — and no bundle identifier, which means AppDelegate's
+   one-at-a-time guard cannot run at all, because it looks the identifier up to find its own
+   other copies. `AppDelegate.swift` documents that case; this scheme is the answer to it.
+
+   The post-build action assembles build/Replay.app with scripts/make-app.sh, and the Run
+   action launches that bundle instead of the raw binary. The debugger still attaches, so
+   breakpoints work exactly as before.
+
+   **Debug, deliberately, and this is the part not to change.**
+   `REPLAY_DB` is inside `#if DEBUG` (ActivityStore.swift). A release build ignores it and
+   opens the real record — so a release-built bundle launched from here would be a second
+   full Replay writing to your actual history, beside the one already running. `open()`
+   closes any session with no end, so the copy that started second would zero the live
+   session of the first. Debug keeps the scratch record, and the environment below keeps it
+   pointed somewhere harmless.
+
+   Which scheme to pick
+
+   `ReplayApp`       fastest loop, bare binary — logic, models, anything not about the bundle.
+   `Replay (bundle)` slower, correct — icon, version, Intents, the single-instance guard.
+-->
+<Scheme
+   LastUpgradeVersion = "2700"
+   version = "1.3">
+   <BuildAction
+      parallelizeBuildables = "YES"
+      buildImplicitDependencies = "YES">
+      <PostActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Assemble Replay.app"
+               scriptText = "&#10;# Assemble the bundle the Run action below launches.&#10;#&#10;# Debug, not release: `REPLAY_DB` is `#if DEBUG`, so a release build would ignore the&#10;# scratch record in this scheme&apos;s environment and open the real one.&#10;#&#10;# SRCROOT does not exist for a SwiftPM scheme — checked, not assumed — so the root is&#10;# derived from WORKSPACE_PATH, which points at .swiftpm/xcode/package.xcworkspace inside it.&#10;# Output is tee&apos;d because a failed post-action is easy to miss in the report navigator, and&#10;# the symptom would be launching a stale bundle.&#10;set -o pipefail&#10;ROOT=&quot;${SRCROOT:-${WORKSPACE_PATH%%/.swiftpm/*}}&quot;&#10;cd &quot;$ROOT&quot; || exit 1&#10;./scripts/make-app.sh debug 2&gt;&amp;1 | tee &quot;$ROOT/build/make-app.log&quot;&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "ReplayApp"
+                     BuildableName = "ReplayApp"
+                     BlueprintName = "ReplayApp"
+                     ReferencedContainer = "container:">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PostActions>
+      <BuildActionEntries>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ReplayApp"
+               BuildableName = "ReplayApp"
+               BlueprintName = "ReplayApp"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      shouldUseLaunchSchemeArgsEnv = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ReplayCoreTests"
+               BuildableName = "ReplayCoreTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "ReplayAppTests"
+               BuildableName = "ReplayAppTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
+   </TestAction>
+   <LaunchAction
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      launchStyle = "0"
+      useCustomWorkingDirectory = "NO"
+      ignoresPersistentStateOnLaunch = "NO"
+      debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
+      allowLocationSimulation = "YES">
+      <PathRunnable
+         runnableDebuggingMode = "0"
+         FilePath = "@ROOT@/build/Replay.app">
+      </PathRunnable>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "REPLAY_DB"
+            value = "~/Library/Caches/app.replay.native/dev-activity.db"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "REPLAY_SEED"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
+   </LaunchAction>
+   <!-- Debug, not Release, and that is not an oversight: the post action assembles a debug
+        bundle, so profiling a Release configuration here would build one thing and launch
+        another. Profile the shipped build with `./scripts/make-app.sh release` and Instruments
+        directly. -->
+   <ProfileAction
+      buildConfiguration = "Debug"
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      savedToolIdentifier = ""
+      useCustomWorkingDirectory = "NO"
+      debugDocumentVersioning = "YES">
+      <PathRunnable
+         runnableDebuggingMode = "0"
+         FilePath = "@ROOT@/build/Replay.app">
+      </PathRunnable>
+   </ProfileAction>
+   <AnalyzeAction
+      buildConfiguration = "Debug">
+   </AnalyzeAction>
+   <ArchiveAction
+      buildConfiguration = "Release"
+      revealArchiveInOrganizer = "YES">
+   </ArchiveAction>
+</Scheme>

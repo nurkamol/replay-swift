@@ -32,6 +32,7 @@ swift test                      # 971 parity checks + 99 behaviour cases
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 xed .                           # Xcode, no .xcodeproj needed — pick the ReplayUI scheme
                                 #   for previews; REPLAY_DB=… for a scratch record on ⌘R
+./tools/xcode/install-schemes.sh  # writes the "Replay (bundle)" scheme; run once per clone
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token
@@ -66,6 +67,19 @@ node tools/release-notes.mjs 0.9.7 --check   # the tag, the build and the change
   current is what `node tools/port-queue.mjs` answers, and only with the Glaze app present.
 - **Commit `spec/` together with the Swift change** that matches it, so every commit says
   which upstream version it corresponds to.
+- **Two run schemes, and the difference matters.** `ReplayApp` runs the bare executable
+  SwiftPM builds — fastest loop, and what you want for logic. It has *no `Info.plist`*, so
+  that copy has no version, no icon, no App Intents, and **no bundle identifier**, which
+  means `AppDelegate`'s one-at-a-time guard cannot run. `Replay (bundle)` assembles
+  `build/Replay.app` in a build post-action and launches that instead — slower, and the app
+  as it actually ships. Both build **debug** on purpose: `REPLAY_DB` is inside `#if DEBUG`,
+  so a release build ignores the scratch record and opens the real one, and a second Replay
+  on your true history will zero the first one's live session on launch.
+  · The bundle scheme is **generated, not committed** — `./tools/xcode/install-schemes.sh`.
+    Xcode's `PathRunnable` takes no relative path and expands no setting that exists here:
+    `SRCROOT` is undefined for a SwiftPM package, in build settings and in a post-action's
+    environment alike. Both were checked rather than assumed.
+
 - **The interface lives in `Sources/ReplayUI/`, a library.** `Sources/ReplayApp/` is five
   lines of `main.swift` plus `Intents.swift`, and that is deliberate: Xcode's canvas cannot
   preview an executable target — it wants `ENABLE_DEBUG_DYLIB`, which SwiftPM has no way to
