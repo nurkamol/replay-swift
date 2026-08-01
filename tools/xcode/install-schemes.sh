@@ -23,14 +23,24 @@ TEMPLATE="$ROOT/tools/xcode/Replay (bundle).xcscheme.in"
 
 [ -f "$TEMPLATE" ] || { echo "missing $TEMPLATE" >&2; exit 1; }
 
-mkdir -p "$OUT"
-sed "s|@ROOT@|$ROOT|g" "$TEMPLATE" > "$OUT/Replay (bundle).xcscheme"
+# The project supersedes the scheme, so only one of them is ever written.
+#
+# Both solve the same problem — ⌘R running a real bundle instead of a bare executable — and
+# offering both puts two entries in the scheme menu that differ only in how they get there.
+# The project does it natively; the scheme does it with a build post-action because there was
+# no project. Where XcodeGen exists, the scheme is redundant and is removed.
+if command -v xcodegen >/dev/null 2>&1; then
+    rm -f "$OUT/Replay (bundle).xcscheme"
+else
+    mkdir -p "$OUT"
+    sed "s|@ROOT@|$ROOT|g" "$TEMPLATE" > "$OUT/Replay (bundle).xcscheme"
 
 # It has to be well-formed XML. Xcode's own parser is lenient enough to list a scheme with a
 # malformed comment in it — which it did, and the file was invalid — so this asks something
 # stricter before saying it worked.
-python3 -c "import xml.etree.ElementTree as ET, sys; ET.parse(sys.argv[1])" \
-    "$OUT/Replay (bundle).xcscheme"
+    python3 -c "import xml.etree.ElementTree as ET, sys; ET.parse(sys.argv[1])" \
+        "$OUT/Replay (bundle).xcscheme"
+fi
 
 # The project, which is the better of the two routes: Xcode builds a real application
 # target, so ⌘R needs no post-action, and App Intents metadata is generated natively rather
@@ -48,6 +58,8 @@ else
     echo "      itself and use the scheme below."
 fi
 
-echo "Wrote 'Replay (bundle)' scheme → ${OUT#"$ROOT"/}"
-echo "  Reopen the package in Xcode (xed .) and pick it from the scheme menu."
-echo "  ⌘R assembles build/Replay.app and launches that, rather than the bare binary."
+if ! command -v xcodegen >/dev/null 2>&1; then
+    echo "Wrote 'Replay (bundle)' scheme → ${OUT#"$ROOT"/}"
+    echo "  Open the package (xed .) and pick it from the scheme menu."
+    echo "  ⌘R assembles build/Replay.app and launches that, rather than the bare binary."
+fi
