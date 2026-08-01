@@ -42,6 +42,22 @@ found.push({ where: "Replay.fallbackVersion", version: fallback?.[1] });
 const changelog = read("CHANGELOG.md").match(/^## (\d+\.\d+\.\d+)\s+—/m);
 found.push({ where: "CHANGELOG.md (newest)", version: changelog?.[1] });
 
+/* The Xcode project's copy — three settings that all have to agree with the rest.
+ *
+ * `project.yml` exists because SwiftPM cannot describe an application bundle, and the price
+ * of it is that the version is written down in a second place. That price is only worth
+ * paying if the two cannot drift, which is what this checks. Nothing published comes from
+ * the project — `make-app.sh` is still what ships — so a disagreement here would show up as
+ * an Xcode build reporting a version nobody released, which is the confusing kind of wrong. */
+const project = read("project.yml");
+for (const [key, label] of [
+  ["CFBundleShortVersionString", "project.yml (Info.plist)"],
+  ["MARKETING_VERSION", "project.yml (MARKETING_VERSION)"],
+]) {
+  const match = project.match(new RegExp(`${key}:\\s*"([^"]+)"`));
+  found.push({ where: label, version: match?.[1] });
+}
+
 /* The first `version:` inside the `releases` array — the in-app history's newest entry. */
 const source = read("Sources/ReplayCore/Changelog.swift");
 const list = source.slice(source.indexOf("public let releases"));
@@ -61,8 +77,10 @@ if (versions.size > 1) {
   console.error("version audit: the version disagrees with itself.\n");
   for (const f of found) console.error(`  ${f.version.padEnd(10)} ${f.where}`);
   console.error(
-    "\nAll four have to match before a release. The second one is what the update check\n" +
-      "compares against, so a stale value there offers an update to the version already running."
+    `\nAll ${found.length} have to match before a release. \`Replay.fallbackVersion\` is what ` +
+      "the update\ncheck compares against, so a stale value there offers an update to the " +
+      "version already\nrunning; the two in project.yml only reach Xcode, and a build " +
+      "reporting a version nobody\nreleased is the confusing kind of wrong."
   );
   process.exit(1);
 }

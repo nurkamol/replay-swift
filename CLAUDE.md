@@ -32,7 +32,8 @@ swift test                      # 971 parity checks + 99 behaviour cases
 swift run replay-parity         # the same suite without Xcode (CI, SSH, plain CLT)
 xed .                           # Xcode, no .xcodeproj needed — pick the ReplayUI scheme
                                 #   for previews; REPLAY_DB=… for a scratch record on ⌘R
-./tools/xcode/install-schemes.sh  # writes the "Replay (bundle)" scheme; run once per clone
+./tools/xcode/install-schemes.sh  # generates Replay.xcodeproj + schemes; once per clone
+xcodegen generate                 # the project alone, after editing project.yml
 node tools/sync-spec.mjs        # regenerate spec/ from the Glaze sources
 node tools/port-queue.mjs      # what changed in Glaze that this port still owes
 node tools/design-audit.mjs     # fails if any view hard-codes a value instead of a token
@@ -67,6 +68,23 @@ node tools/release-notes.mjs 0.9.7 --check   # the tag, the build and the change
   current is what `node tools/port-queue.mjs` answers, and only with the Glaze app present.
 - **Commit `spec/` together with the Swift change** that matches it, so every commit says
   which upstream version it corresponds to.
+- **`Replay.xcodeproj` is generated from `project.yml`, and nothing published comes from it.**
+  SwiftPM cannot describe an application bundle, so the project exists to give Xcode a real
+  app target: a proper `Info.plist`, the icon, and **App Intents generated natively** rather
+  than by the eighteen lines of flag-wrangling `make-app.sh` needs. Open it rather than
+  `Package.swift` and ⌘R runs the real app.
+  · **The shipping path is untouched and stays that way.** `make-app.sh` assembles what
+    ships, `make-dmg.sh` signs and notarises it, `release.yml` runs both, and the Homebrew
+    formula calls `make-app.sh`. Xcode's Organizer would put a release behind a GUI; these
+    run in CI. Do not migrate them.
+  · Every target but the app still lives in `Package.swift`, so `swift build`, `swift test`
+    and `swift run replay-parity` keep working with Command Line Tools alone.
+  · It signs **ad-hoc** on purpose, and must never carry a development team. A personal
+    Apple ID certificate changes the designated requirement, which is precisely what
+    `docs/SIGNING.md` exists to hold constant across updates.
+  · The price is the version written in two more places. `node tools/version-audit.mjs`
+    now checks **six** and fails when they disagree — the duplication is guarded, not trusted.
+
 - **Two run schemes, and the difference matters.** `ReplayApp` runs the bare executable
   SwiftPM builds — fastest loop, and what you want for logic. It has *no `Info.plist`*, so
   that copy has no version, no icon, no App Intents, and **no bundle identifier**, which

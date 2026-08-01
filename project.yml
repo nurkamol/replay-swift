@@ -1,0 +1,109 @@
+# The Xcode project, for editing and running. Not for shipping.
+#
+# What this is for
+# ================
+# SwiftPM cannot express an application bundle, so `swift build` produces a bare executable
+# and Xcode's ⌘R launches that: no Info.plist, no icon, no App Intents, and no bundle
+# identifier — which is the one that matters, because `AppDelegate` finds its own other copies
+# by looking that identifier up. This project gives Xcode a real app target to build instead.
+#
+# What this is *not* for, and the line is deliberate
+# ==================================================
+# **Nothing published comes from here.** `scripts/make-app.sh` assembles the shipped bundle,
+# `scripts/make-dmg.sh` signs, notarises and staples it, and `.github/workflows/release.yml`
+# runs both. Those are scriptable and run in CI; Xcode's Organizer is a GUI step backwards
+# from that, and it would put the release behind a machine with a person at it.
+#
+# So this file is allowed to duplicate the Info.plist and the version. That duplication is the
+# one real cost of having a project at all, and it is guarded rather than trusted:
+# `tools/version-audit.mjs` fails the build when the version here disagrees with
+# `make-app.sh`, `CHANGELOG.md`, or the in-app release list.
+#
+# The package is still the source of truth for code. Every target except the app itself lives
+# in `Package.swift`, so `swift build`, `swift test` and `swift run replay-parity` keep working
+# with Command Line Tools alone — which is what lets the parity suite run on a machine with no
+# Xcode at all.
+#
+#   ./tools/xcode/install-schemes.sh    # generates Replay.xcodeproj and the run schemes
+#
+# The generated `.xcodeproj` is gitignored on purpose. A committed project file is the part
+# that conflicts, drifts, and ends up disagreeing with the build that actually ships.
+
+name: Replay
+
+options:
+  bundleIdPrefix: app.replay
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  # The generated project is disposable; nothing should be hand-edited inside it.
+  generateEmptyDirectories: false
+
+packages:
+  # The package in this same directory. Every library target — ReplayCore, ReplayUI, ParityKit
+  # — comes from here, so there is exactly one description of the code and Xcode reads it.
+  Replay:
+    path: .
+
+targets:
+  Replay:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/ReplayApp
+      # The icon, as a file rather than an asset catalog: it is carried over from the Glaze
+      # app so the two are visibly one product, and `.icns` is the form it arrives in.
+      # Resources belong in `sources` with a build phase — XcodeGen has no `resources:` key,
+      # and a target-level one is silently ignored, which is how the first build came out
+      # with no icon at all.
+      - path: Resources/AppIcon.icns
+        buildPhase: resources
+    dependencies:
+      # `ReplayUI` pulls in `ReplayCore` transitively. `Intents.swift` stays in this target
+      # rather than the library because the App Intents metadata processor is told this
+      # module's name, and moving it fails silently — see CLAUDE.md.
+      - package: Replay
+        product: ReplayUI
+    info:
+      path: build/xcode/Info.plist
+      properties:
+        CFBundleName: Replay
+        CFBundleDisplayName: Replay
+        CFBundleExecutable: Replay
+        CFBundlePackageType: APPL
+        CFBundleIconFile: AppIcon
+        # Kept in step with scripts/make-app.sh by tools/version-audit.mjs, which fails the
+        # build if the two disagree. Two places is the price of the project; drifting is not.
+        CFBundleShortVersionString: "0.9.10"
+        CFBundleVersion: "0.9.10"
+        LSMinimumSystemVersion: "14.0"
+        NSHighResolutionCapable: true
+        NSHumanReadableCopyright: "Copyright © 2026 Nurkamol Vakhidov. MIT License."
+        # Replay records only which app is frontmost, so it needs no usage descriptions: no
+        # camera, microphone, location, or screen recording. If a key like
+        # NSScreenCaptureUsageDescription ever becomes necessary here, something has gone
+        # wrong — see CLAUDE.md.
+    settings:
+      base:
+        PRODUCT_NAME: Replay
+        PRODUCT_BUNDLE_IDENTIFIER: app.replay.native
+        MARKETING_VERSION: "0.9.10"
+        CURRENT_PROJECT_VERSION: "0.9.10"
+        # Ad-hoc, and that is right for a build that never leaves this machine. Published
+        # builds are signed with the stable `Replay Self-Signed` certificate by make-app.sh,
+        # because a *stable* identity is what lets Homebrew carry a reader's Gatekeeper
+        # approval across an upgrade — see docs/SIGNING.md. Nothing here needs that, and a
+        # fresh clone with no certificate in its keychain should still build.
+        #
+        # **Never set a development team here.** A personal Apple ID certificate would change
+        # the designated requirement, which is the exact thing docs/SIGNING.md exists to keep
+        # constant, and it cannot be used in CI.
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: false
+        SWIFT_VERSION: "6.0"
+        # Xcode runs `appintentsmetadataprocessor` itself for an application target, which is
+        # the eighteen lines of flag-wrangling make-app.sh has to do by hand — including a
+        # retry, because the flags' spelling is not stable across toolchains.
+        ENABLE_APP_INTENTS_METADATA: true

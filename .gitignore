@@ -16,3 +16,8 @@ DerivedData/
 # Generated per machine by tools/xcode/install-schemes.sh — it names an absolute path,
 # because Xcode's PathRunnable takes no relative one and SwiftPM defines no SRCROOT.
 .swiftpm/xcode/xcshareddata/xcschemes/Replay (bundle).xcscheme
+
+# Generated from project.yml by tools/xcode/install-schemes.sh. A committed project file is
+# the part that conflicts, drifts, and ends up disagreeing with the build that ships.
+Replay.xcodeproj/
+build/xcode/

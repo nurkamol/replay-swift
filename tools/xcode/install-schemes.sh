@@ -32,6 +32,22 @@ sed "s|@ROOT@|$ROOT|g" "$TEMPLATE" > "$OUT/Replay (bundle).xcscheme"
 python3 -c "import xml.etree.ElementTree as ET, sys; ET.parse(sys.argv[1])" \
     "$OUT/Replay (bundle).xcscheme"
 
+# The project, which is the better of the two routes: Xcode builds a real application
+# target, so ⌘R needs no post-action, and App Intents metadata is generated natively rather
+# than by the eighteen lines of flag-wrangling in make-app.sh.
+#
+# Optional, because XcodeGen is a tool somebody may not have and the package still opens
+# without it — that is what the scheme above is for.
+if command -v xcodegen >/dev/null 2>&1; then
+    ( cd "$ROOT" && xcodegen generate --spec project.yml --quiet )
+    echo "Generated Replay.xcodeproj from project.yml"
+    echo "  Open that (not Package.swift) — ⌘R builds and runs the real app."
+else
+    echo "note: XcodeGen not installed, so Replay.xcodeproj was not generated."
+    echo "      brew install xcodegen, then re-run this. Without it, open the package"
+    echo "      itself and use the scheme below."
+fi
+
 echo "Wrote 'Replay (bundle)' scheme → ${OUT#"$ROOT"/}"
 echo "  Reopen the package in Xcode (xed .) and pick it from the scheme menu."
 echo "  ⌘R assembles build/Replay.app and launches that, rather than the bare binary."
