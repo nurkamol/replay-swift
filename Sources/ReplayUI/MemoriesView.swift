@@ -131,9 +131,12 @@ struct MemoriesView: View {
         Button {
             if let day = memories.surprise() { onOpenDay(day) }
         } label: {
+            // Its own width, not the page's. `maxWidth: .infinity` made a two-word button
+            // into a 1080-point bar across the top of the surface — the largest control in
+            // the app, for the least important thing on the page.
             Label(Loc.t("Surprise me"), systemImage: "shuffle")
-                .frame(maxWidth: .infinity)
                 .padding(.vertical, Design.Space.row)
+                .padding(.horizontal, Design.Space.block)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.row)
@@ -355,7 +358,30 @@ struct Heatmap: View {
     let byDay: [Int64: Int]
     let onOpenDay: (Int64) -> Void
 
-    @State private var range: Heatmap.Kind = .year
+    @State private var range: Heatmap.Kind
+
+    init(byDay: [Int64: Int], onOpenDay: @escaping (Int64) -> Void) {
+        self.byDay = byDay
+        self.onOpenDay = onOpenDay
+        _range = State(initialValue: Self.widestWorthShowing(byDay: byDay))
+    }
+
+    /// The widest range the record can actually fill, rather than always the widest there is.
+    ///
+    /// This opened on `.year` whatever it held, so a week-old install gave the largest card on
+    /// the surface to eleven empty months and eight filled squares — which reads as "you have
+    /// no history" rather than "you are new here", and it is the same picture either way. The
+    /// grid is the one element here that cannot say anything useful about a record it dwarfs.
+    ///
+    /// Still a `@State`, so the choice is only the opening one: the reader can move to any
+    /// range and the app does not argue with them afterwards.
+    static func widestWorthShowing(byDay: [Int64: Int]) -> Heatmap.Kind {
+        guard let earliest = byDay.keys.min(), let latest = byDay.keys.max() else { return .week }
+        let days = Int((Double(latest - earliest) / Double(dayMillis)).rounded()) + 1
+        if days > Design.Layout.heatmapMonthDays { return .year }
+        if days > Design.Layout.heatmapWeekDays { return .month }
+        return .week
+    }
     @State private var hovered: Int64?
     /// How much room the year grid actually got, so the caption can say whether there is
     /// more of it off to the side. Measured rather than assumed: whether it overflows

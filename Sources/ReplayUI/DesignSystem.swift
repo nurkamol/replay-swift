@@ -972,6 +972,12 @@ enum Design {
         static let todaySecondaryMinimum: CGFloat = 420
 
         /// The bar down the leading edge of a session, in the colour of the hour it began.
+        /// How much history the heatmap wants before it opens on a wider range. Not the
+        /// length of each range but the point at which the next one up stops being mostly
+        /// empty — a fortnight in a month grid reads; a fortnight in a year grid does not.
+        static let heatmapWeekDays = 14
+        static let heatmapMonthDays = 70
+
         static let accentBarWidth: CGFloat = 3
         static let accentBarHeight: CGFloat = 32
 
