@@ -68,6 +68,24 @@ node tools/release-notes.mjs 0.9.7 --check   # the tag, the build and the change
   current is what `node tools/port-queue.mjs` answers, and only with the Glaze app present.
 - **Commit `spec/` together with the Swift change** that matches it, so every commit says
   which upstream version it corresponds to.
+- **Two entry points, and neither does everything. This is a known split, not an oversight.**
+
+  | | `Replay.xcodeproj` | the package (`xed .`) |
+  |---|---|---|
+  | ⌘R the real app | **yes** | no — bare binary, no Info.plist |
+  | ⌘U the suite | **no** | **yes** — both test targets |
+  | previews | yes | yes |
+
+  A SwiftPM test target is not a product, so a project that merely *depends* on the package
+  cannot reference it: the app scheme's test action can only name `Replay.app`, which has no
+  tests, and the package's own schemes report "not currently configured for the test action"
+  when driven through the project. Both checked with `xcodebuild`, not assumed.
+  · So **⌘U in `Replay.xcodeproj` runs nothing at all** — silently, which is the bad kind of
+    nothing. Run the suite from the package, or from `swift test`, which is what CI does.
+  · Closing the split would mean the app target living in `Package.swift` (impossible — SwiftPM
+    cannot describe a bundle) or the library targets moving into the project (which would cost
+    `swift build`/`swift test` on Command Line Tools alone). Neither trade is worth it.
+
 - **`Replay.xcodeproj` is generated from `project.yml`, and nothing published comes from it.**
   SwiftPM cannot describe an application bundle, so the project exists to give Xcode a real
   app target: a proper `Info.plist`, the icon, and **App Intents generated natively** rather
